@@ -15,6 +15,49 @@
  */
 #include "matrix.h"
 
+fvector3::fvector3(float x, float y, float z) {
+    v_[0] = x;
+    v_[1] = y;
+    v_[2] = z;
+}
+
+fvector3::fvector3() : fvector3(0, 0, 0) {
+}
+
+// subscript operator v[0], v[1]
+float fvector3::operator[](int index) const {
+    return v_[index];
+}
+
+// subscript operator v[0], v[1]
+float &fvector3::operator[](int index) {
+    return v_[index];
+}
+
+
+fvector4::fvector4(float x, float y, float z, float w) {
+    v_[0] = x;
+    v_[1] = y;
+    v_[2] = z;
+    v_[3] = w;
+}
+
+fvector4::fvector4() : fvector4(0, 0, 0, 1.0f) {
+}
+
+// subscript operator v[0], v[1]
+float fvector4::operator[](int index) const {
+    return v_[index];
+}
+
+// subscript operator v[0], v[1]
+float &fvector4::operator[](int index) {
+    return v_[index];
+}
+
+
+
+
 fmatrix4x4::fmatrix4x4() {
     memset(m_, 0, sizeof(m_));
 }
@@ -37,32 +80,54 @@ float &fmatrix4x4::operator[](int index) {
     return m_[index];
 }
 
+// multiplication: v2 = M * v1
+fvector3 fmatrix4x4::operator*(const fvector3 &rhs) const {
+    fvector3 ret;
+    float t1[3];
+    t1[0] = m_[0]*rhs[0] + m_[4]*rhs[1] + m_[8]*rhs[2] + m_[12];
+    t1[1] = m_[1]*rhs[0] + m_[5]*rhs[1] + m_[9]*rhs[2] + m_[13];
+    t1[2] = m_[2]*rhs[0] + m_[6]*rhs[1] + m_[10]*rhs[2] + m_[14];
+    memcpy(ret.getp(), t1, sizeof(t1));
+    return ret;
+}
+
+// multiplication: v2 = M * v1
+fvector4 fmatrix4x4::operator*(const fvector4 &rhs) const {
+    fvector4 ret;
+    float t1[4];
+    t1[0] = m_[0]*rhs[0] + m_[4]*rhs[1] + m_[8]*rhs[2] + m_[12]*rhs[3];
+    t1[1] = m_[1]*rhs[0] + m_[5]*rhs[1] + m_[9]*rhs[2] + m_[13]*rhs[3];
+    t1[2] = m_[2]*rhs[0] + m_[6]*rhs[1] + m_[10]*rhs[2] + m_[14]*rhs[3];
+    t1[3] = m_[3]*rhs[0] + m_[7]*rhs[1] + m_[11]*rhs[2] + m_[15]*rhs[3];
+    memcpy(ret.getp(), t1, sizeof(t1));
+    return ret;
+}
+
 
 // multiplication: M3 = M1 * M2
 fmatrix4x4 fmatrix4x4::operator*(const fmatrix4x4 &rhs) const {
     fmatrix4x4 ret;
-    float *A = ret.getp();
     float t1[16];
-    t1[0] = A[0]*rhs[0]  + A[4]*rhs[1]  + A[8]*rhs[2]  + A[12]*rhs[3];
-    t1[1] = A[0]*rhs[4]  + A[4]*rhs[5]  + A[8]*rhs[6]  + A[12]*rhs[7];
-    t1[2] = A[0]*rhs[8]  + A[4]*rhs[9]  + A[8]*rhs[10] + A[12]*rhs[11];
-    t1[3] = A[0]*rhs[12] + A[4]*rhs[13] + A[8]*rhs[14] + A[12]*rhs[15];
+    t1[0] = m_[0]*rhs[0]  + m_[4]*rhs[1]  + m_[8]*rhs[2]  + m_[12]*rhs[3];
+    t1[1] = m_[0]*rhs[4]  + m_[4]*rhs[5]  + m_[8]*rhs[6]  + m_[12]*rhs[7];
+    t1[2] = m_[0]*rhs[8]  + m_[4]*rhs[9]  + m_[8]*rhs[10] + m_[12]*rhs[11];
+    t1[3] = m_[0]*rhs[12] + m_[4]*rhs[13] + m_[8]*rhs[14] + m_[12]*rhs[15];
 
-    t1[4] = A[1]*rhs[0] + A[5]*rhs[1] + A[9]*rhs[2] + A[13]*rhs[3];
-    t1[5] = A[1]*rhs[4] + A[5]*rhs[5] + A[9]*rhs[6] + A[13]*rhs[7];
-    t1[6] = A[1]*rhs[8] + A[5]*rhs[9] + A[9]*rhs[10] + A[13]*rhs[11];
-    t1[7] = A[1]*rhs[12] + A[5]*rhs[13] + A[9]*rhs[14] + A[13]*rhs[15];
+    t1[4] = m_[1]*rhs[0] + m_[5]*rhs[1] + m_[9]*rhs[2] + m_[13]*rhs[3];
+    t1[5] = m_[1]*rhs[4] + m_[5]*rhs[5] + m_[9]*rhs[6] + m_[13]*rhs[7];
+    t1[6] = m_[1]*rhs[8] + m_[5]*rhs[9] + m_[9]*rhs[10] + m_[13]*rhs[11];
+    t1[7] = m_[1]*rhs[12] + m_[5]*rhs[13] + m_[9]*rhs[14] + m_[13]*rhs[15];
 
-    t1[8] = A[2]*rhs[0] + A[6]*rhs[1] + A[10]*rhs[2] + A[14]*rhs[3];
-    t1[9] = A[2]*rhs[4] + A[6]*rhs[5] + A[10]*rhs[6] + A[14]*rhs[7];
-    t1[10] = A[2]*rhs[8] + A[6]*rhs[9] + A[10]*rhs[10] + A[14]*rhs[11];
-    t1[11] = A[2]*rhs[12] + A[6]*rhs[13] + A[10]*rhs[14] + A[14]*rhs[15];
+    t1[8] = m_[2]*rhs[0] + m_[6]*rhs[1] + m_[10]*rhs[2] + m_[14]*rhs[3];
+    t1[9] = m_[2]*rhs[4] + m_[6]*rhs[5] + m_[10]*rhs[6] + m_[14]*rhs[7];
+    t1[10] = m_[2]*rhs[8] + m_[6]*rhs[9] + m_[10]*rhs[10] + m_[14]*rhs[11];
+    t1[11] = m_[2]*rhs[12] + m_[6]*rhs[13] + m_[10]*rhs[14] + m_[14]*rhs[15];
 
-    t1[12] = A[3]*rhs[0] + A[7]*rhs[1] + A[11]*rhs[2] + A[15]*rhs[3];
-    t1[13] = A[3]*rhs[4] + A[7]*rhs[5] + A[11]*rhs[6] + A[15]*rhs[7];
-    t1[14] = A[3]*rhs[8] + A[7]*rhs[9] + A[11]*rhs[10] + A[15]*rhs[11];
-    t1[15] = A[3]*rhs[12] + A[7]*rhs[13] + A[11]*rhs[14] + A[15]*rhs[15];
-    memcpy(ret.getp(), t1, sizeof(m_));
+    t1[12] = m_[3]*rhs[0] + m_[7]*rhs[1] + m_[11]*rhs[2] + m_[15]*rhs[3];
+    t1[13] = m_[3]*rhs[4] + m_[7]*rhs[5] + m_[11]*rhs[6] + m_[15]*rhs[7];
+    t1[14] = m_[3]*rhs[8] + m_[7]*rhs[9] + m_[11]*rhs[10] + m_[15]*rhs[11];
+    t1[15] = m_[3]*rhs[12] + m_[7]*rhs[13] + m_[11]*rhs[14] + m_[15]*rhs[15];
+    memcpy(ret.getp(), t1, sizeof(t1));
     return ret;
 }
 

@@ -18,25 +18,41 @@
 
 #include <QtWidgets/QWidget>
 #include <QtGui/QPixmap>
+#include <QtGui/QImage>
 #include <QtGui/QPainter>
 #include <QtGui/qevent.h>
+
+static const int VIEWPORT_WIDTH = 640;
+static const int VIEWPORT_HEIGHT = 480;
 
 class ViewportWidget : public QWidget {
     Q_OBJECT
 
  public:
-    explicit ViewportWidget(QWidget *parent = nullptr);
+    explicit ViewportWidget(QWidget *parent);
 
  public slots:
-    void slotDraw(const QByteArray &data);
+    void slotDraw(const uchar *data);
+
+ signals:
+    void signalRequestToUpdated();
 
  protected:
-    void resizeEvent(QResizeEvent *ev);
     void paintEvent(QPaintEvent *ev);
+    void mousePressEvent(QMouseEvent *ev);
+    void mouseMoveEvent(QMouseEvent *ev);
+    void mouseReleaseEvent(QMouseEvent *ev);
+    void keyPressEvent(QKeyEvent *event);
 
  private:
+    static const int VIEWPORT_SIZE = VIEWPORT_WIDTH * VIEWPORT_HEIGHT;
+    union FrameBufferType {
+        uchar u8[VIEWPORT_SIZE * sizeof(uint)];
+        uint u32[VIEWPORT_SIZE];
+    } framebuf_;
 
     QPixmap pixmap_;
+    QImage image_;
 };
 
 

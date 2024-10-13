@@ -27,7 +27,11 @@ class InputWidget : public QTableWidget {
  public:
     explicit InputWidget(QWidget *parent = nullptr);
 
-    void getVertex(float **m, int *size);
+ public slots:
+    void slotRequestToUpdate();
+
+ signals:
+    void signalVertexData(float *m, int size);
 
  private:
     CoordF coord_[10];

@@ -18,8 +18,12 @@
 #include <QMainWindow>
 #include <QLabel>
 #include <QStatusBar>
+#include <matrix.h>
 #include "input.h"
+#include "VertexShaderPipeline.h"
+#include "PixelShaderPipeline.h"
 #include "viewport.h"
+#include "zbuffer.h"
 
 class MainWindow : public QMainWindow
 {
@@ -36,7 +40,12 @@ class MainWindow : public QMainWindow
     void slotTextToStatusBar(qint32 idx, const QString &message);
 
  private:
+    ViewMatrix viewMatrix_;
+    ProjectionMatrix projectionMatrix_;
     InputWidget *input_;
+    VertexShaderPipeline *vertexPipeline_;
+    PixelShaderPipeline *pixelPipeline_;
     ViewportWidget *viewport_;
+    ZbufferWidget *zbuffer_;
     QLabel *labelStatus_[2];
 };

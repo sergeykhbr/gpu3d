@@ -17,7 +17,7 @@
 #include "mainwindow.h"
 #include <QLabel>
 #include <QMessageBox>
-#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QGridLayout>
 #include <QMenuBar>
 #include <QToolBar>
@@ -26,16 +26,18 @@
 #include <qevent.h>
 
 MainWindow::MainWindow() :
-    QMainWindow(nullptr)
+    QMainWindow(nullptr),
+    viewMatrix_(0, 0, -5.0f, 0, 0, 0),
+    projectionMatrix_(1.0f, 100.0f, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 60.0f)
 {
-    QSize appsz = qApp->screens()[0]->size();
+    /*QSize appsz = qApp->screens()[0]->size();
     if (appsz.width() <= 1280 && appsz.height() <= 600) {
         showFullScreen();
     } else {
         appsz.setWidth(1280);
         appsz.setHeight(600);
         setFixedSize(appsz);
-    }
+    }*/
     setWindowIcon(QIcon(":/images/logogpu.png"));
     setWindowTitle(tr("gpufunc"));
 
@@ -47,22 +49,49 @@ MainWindow::MainWindow() :
     input_ = new InputWidget(mainWidget);
     gridlayout->addWidget(input_, 0, 0);
 
+
+    vertexPipeline_ = new VertexShaderPipeline(this);
+    vertexPipeline_->setViewMatrix(&viewMatrix_);
+    vertexPipeline_->setProjectionMatrix(&projectionMatrix_);
+
+    pixelPipeline_ = new PixelShaderPipeline(this,
+                                             VIEWPORT_WIDTH,
+                                             VIEWPORT_HEIGHT);
+
     viewport_ = new ViewportWidget(mainWidget);
     gridlayout->addWidget(viewport_, 0, 1);
     gridlayout->setColumnStretch(0, 3);
 
     setCentralWidget(mainWidget);
 
+    
+    QHBoxLayout *layout2 = new QHBoxLayout(mainWidget);
+    gridlayout->addLayout(layout2, 1, 1);
+
+    zbuffer_ = new ZbufferWidget(mainWidget, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+    layout2->addWidget(zbuffer_);
+    layout2->addWidget(new QWidget(mainWidget));
+
 
     QStatusBar *statusBar_ = new QStatusBar(this);
     labelStatus_[0] = new QLabel();
     labelStatus_[1] = new QLabel();
-    labelStatus_[0]->setFixedWidth(appsz.width() - 100);
+    //labelStatus_[0]->setFixedWidth(appsz.width() - 100);
     labelStatus_[1]->setFixedWidth(50);
     setStatusBar(statusBar_);
     statusBar_->addWidget(labelStatus_[0]);
     statusBar_->addWidget(labelStatus_[1]);
 
+    connect(viewport_, &ViewportWidget::signalRequestToUpdated,
+            input_, &InputWidget::slotRequestToUpdate);
+    connect(input_, &InputWidget::signalVertexData,
+            vertexPipeline_, &VertexShaderPipeline::slotVertexData);
+    connect(vertexPipeline_, &VertexShaderPipeline::signalVertexData,
+            pixelPipeline_, &PixelShaderPipeline::slotVertexData);
+    connect(pixelPipeline_, &PixelShaderPipeline::signalFrameData,
+            viewport_, &ViewportWidget::slotDraw);
+    connect(pixelPipeline_, &PixelShaderPipeline::signalZbufferData,
+            zbuffer_, &ZbufferWidget::slotDraw);
 
     // Output to status bar
 }

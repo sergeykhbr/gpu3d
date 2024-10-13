@@ -24,6 +24,38 @@
 
 static const float DEG_TO_RAD = float(3.14159265358979323846/180.0);
 
+class fvector3 {
+ public:
+    fvector3(float x, float y, float z);
+    fvector3();
+    
+    float *getp() { return v_; }
+
+    // subscript operator v[0], v[1]
+    float operator[](int index) const;
+    // subscript operator v[0], v[1]
+    float &operator[](int index);
+
+ protected:
+    float v_[3];
+};
+
+class fvector4 {
+ public:
+    fvector4(float x, float y, float z, float w = 1.0f);
+    fvector4();
+    
+    float *getp() { return v_; }
+
+    // subscript operator v[0], v[1]
+    float operator[](int index) const;
+    // subscript operator v[0], v[1]
+    float &operator[](int index);
+
+ protected:
+    float v_[4];
+};
+
 class fmatrix4x4 {
  public:
     fmatrix4x4();
@@ -37,6 +69,10 @@ class fmatrix4x4 {
     float operator[](int index) const;
     // subscript operator v[0], v[1]
     float &operator[](int index);
+    // multiplication: v2 = M * v1
+    fvector3 operator*(const fvector3 &rhs) const;
+    // multiplication: v2 = M * v1
+    fvector4 operator*(const fvector4 &rhs) const;
     // multiplication: M3 = M1 * M2
     fmatrix4x4 operator*(const fmatrix4x4 &rhs) const;
     // multiplication: M1' = M1 * M2

@@ -15,32 +15,87 @@
  */
 
 #include "viewport.h"
+#include <qimage.h>
 
 ViewportWidget::ViewportWidget(QWidget *parent)
-    : QWidget(parent) {
-    setFixedSize(640, 480);
-}
+    : QWidget(parent),
+    image_(VIEWPORT_WIDTH, VIEWPORT_HEIGHT, QImage::Format_ARGB32) {
+    setFixedSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+    memset(framebuf_.u8, 0xFF, sizeof(framebuf_));
 
-void ViewportWidget::slotDraw(const QByteArray &data) {
-}
-
-void ViewportWidget::resizeEvent(QResizeEvent *ev) {
-    int w = ev->size().width();
-    int h = ev->size().height();
-    if (w == 0 || h == 0) {
-        return;
+    for (int y = 0; y < image_.height(); y++) {
+        memcpy(image_.scanLine(y), &framebuf_.u32[y * VIEWPORT_WIDTH], image_.bytesPerLine());
     }
-    QSize pixmapSingleSize = QSize(w, h);
-    pixmap_ = QPixmap(pixmapSingleSize);
-    pixmap_.fill(QColor(Qt::black));
+}
+
+void ViewportWidget::slotDraw(const uchar *data) {
+    memcpy(framebuf_.u8, data, sizeof(framebuf_.u8));
+    for (int y = 0; y < image_.height(); y++) {
+        memcpy(image_.scanLine(y), &framebuf_.u32[y * VIEWPORT_WIDTH], image_.bytesPerLine());
+    }
+   
+    update();
 }
 
 void ViewportWidget::paintEvent(QPaintEvent *event) {
-    //renderAll();
-
+    
     QPainter p(this);
     QPoint pos(0,0);
-    p.drawPixmap(pos, pixmap_);
+    p.drawImage(pos, image_);
     p.end();
 }
+
+void ViewportWidget::mousePressEvent(QMouseEvent *ev) {
+    setFocus();
+    /** There're 2 methods: buttons() and button():
+        buttons() is a multiple flag of button()
+    */
+    /*pressed = event->button();
+    if (pressed != Qt::LeftButton && pressed != Qt::MiddleButton) {
+        pressed = Qt::NoButton;
+        return;
+    }
+
+    selectedEpoch = pix2epoch(event->pos());
+    pressStart = event->pos();*/
+}
+
+void ViewportWidget::mouseMoveEvent(QMouseEvent *ev) {
+    if (!ev->buttons()) {
+        return;
+    }
+
+    /*if (pressed != Qt::NoButton) {
+        selectedEpoch = pix2epoch(event->pos());
+        pressEnd = event->pos();
+        update();
+    }*/
+}
+
+void ViewportWidget::mouseReleaseEvent(QMouseEvent *ev) {
+#if 1
+    emit signalRequestToUpdated();
+#else
+    if (pressed == Qt::MiddleButton) {
+        /** Warning: changing of epochStart before epochEnd computed 
+         *  will raise an errors 
+         */
+        int tmpStart = pix2epoch(pressStart);
+        int tmpEnd = pix2epoch(pressEnd);
+        if (tmpStart < tmpEnd) {
+            epochStart = tmpStart;
+            epochTotal = tmpEnd - epochStart + 1;
+        } else if (tmpStart > tmpEnd) {
+            epochStart = tmpEnd;
+            epochTotal = tmpStart - epochStart + 1;
+        }
+    }
+    pressed = Qt::NoButton;
+#endif
+}
+
+void ViewportWidget::keyPressEvent(QKeyEvent *ev) {
+}
+
+
 
