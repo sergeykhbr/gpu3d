@@ -23,9 +23,9 @@ InputWidget::InputWidget(QWidget *parent)
     setColumnCount(4);
     setHorizontalHeaderLabels(QStringList({tr("x"), tr("y"), tr("z"), tr("face")}));
 
-    coord_[0] = CoordF(1, 1, 0);
-    coord_[1] = CoordF(2, 1, 0);
-    coord_[2] = CoordF(2, 2, 0);
+    coord_[0] = CoordF(0, 0, 0);
+    coord_[1] = CoordF(2.5f, 1, 0);
+    coord_[2] = CoordF(3, 3, 3);
 
     QTableWidgetItem *newItem;
     for (int i = 0; i < columnCount(); i++) {

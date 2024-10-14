@@ -42,13 +42,16 @@ class PixelShaderPipeline : public QWidget {
     struct Point2D {
         int x, y;
     };
+    struct FPointBaricentric {
+        float w0, w1, w2;
+    };
     /**
       Not-optimized basic rasterizer:
         https://fgiesen.wordpress.com/2013/02/08/triangle-rasterization-in-practice/
      */
-    void drawTri(const Point2D &v0, const Point2D &v1, const Point2D &v2);
-    float orient2d(const Point2D& a, const Point2D& b, const Point2D& c);
-    void renderPixel(const Point2D &p, int w0, int w1, int w2);
+    void drawTri(const FPoint2D &v0, const FPoint2D &v1, const FPoint2D &v2);
+    float orient2d(const FPoint2D &a, const FPoint2D &b, const FPoint2D &c);
+    void renderPixel(const FPoint2D &p, FPointBaricentric &w);
     int min3(float v1, float v2, float v3);
     int max3(float v1, float v2, float v3);
     int min(int v1, int v2);

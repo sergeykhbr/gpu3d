@@ -31,9 +31,9 @@ PixelShaderPipeline::~PixelShaderPipeline() {
 }
 
 void PixelShaderPipeline::slotVertexData(float *m, int size) {
-    Point2D v1 = {static_cast<int>(width_ * m[0*3]), static_cast<int>(height_ * m[0*3 + 1])};
-    Point2D v2 = {static_cast<int>(width_ * m[1*3]), static_cast<int>(height_ * m[1*3 + 1])};
-    Point2D v3 = {static_cast<int>(width_ * m[2*3]), static_cast<int>(height_ * m[2*3 + 1])};
+    FPoint2D v1 = {width_ * m[0*3], height_ * m[0*3 + 1]};
+    FPoint2D v2 = {width_ * m[1*3], height_ * m[1*3 + 1]};
+    FPoint2D v3 = {width_ * m[2*3], height_ * m[2*3 + 1]};
     
     memset(frame_, 0xFF, width_ * height_ * sizeof(uint));
     memset(zbuffer_, 0, width_ * height_);
@@ -46,7 +46,9 @@ void PixelShaderPipeline::slotVertexData(float *m, int size) {
     emit signalZbufferData(zbuffer_);
 }
 
-void PixelShaderPipeline::drawTri(const Point2D &v0, const Point2D &v1, const Point2D &v2) {
+void PixelShaderPipeline::drawTri(const FPoint2D &v0, const FPoint2D &v1, const FPoint2D &v2) {
+    float area;
+    FPointBaricentric w;
     // Compute triangle bounding box
     int minX = min3(v0.x, v1.x, v2.x);
     int minY = min3(v0.y, v1.y, v2.y);
@@ -60,34 +62,52 @@ void PixelShaderPipeline::drawTri(const Point2D &v0, const Point2D &v1, const Po
     maxY = min(maxY, height_ - 1);
 
     // Rasterize
-    Point2D p;
-    for (p.y = minY; p.y <= maxY; p.y++) {
-        for (p.x = minX; p.x <= maxX; p.x++) {
-#if 1
-if (p.x == 200 && p.y == 165) {
-    bool st = true;
-}
-#endif
+    FPoint2D p;
+    for (p.y = minY; p.y <= maxY; p.y += 1.0f) {
+        for (p.x = minX; p.x <= maxX; p.x += 1.0f) {
             // Determine barycentric coordinates
-            int w0 = orient2d(v1, v2, p);
-            int w1 = orient2d(v2, v0, p);
-            int w2 = orient2d(v0, v1, p);
+            // There's convention in OpenGL and Direct3D to use triangles declared
+            // in counter clockwise order:
+            if (v2.y > v0.y || (v2.y == v0.y && v2.y < v1.y)) {
+                // Counter-clockwise order by default: v1 -> v2 -> v0
+                area = orient2d(v1, v2, v0);
+                w.w0 = orient2d(v1, v2, p);
+                w.w1 = orient2d(v2, v0, p);
+                w.w2 = orient2d(v0, v1, p);
+            } else {
+                // Automatic fix to counter-clockwise order: v1 -> v0 -> v2
+                area = orient2d(v1, v0, v2);
+                w.w0 = orient2d(v1, v0, p);
+                w.w1 = orient2d(v0, v2, p);
+                w.w2 = orient2d(v2, v1, p);
+            }
 
             // If p is on or inside all edges, render pixel.
-            if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-                renderPixel(p, w0, w1, w2);
-                zbuffer_[p.y * width_ + p.x] = 127;
+            if (w.w0 >= 0 && w.w1 >= 0 && w.w2 >= 0) {
+                w.w0 /= area;
+                w.w1 /= area;
+                w.w2 /= area;
+                renderPixel(p, w);
+                zbuffer_[static_cast<int>(p.y * width_ + p.x)] = 127;
             }
         }
     }   
 }
 
-void PixelShaderPipeline::renderPixel(const Point2D &p, int w0, int w1, int w2) {
-    //frame_[(height_ - p.y - 1) * width_ + p.x] = 0xFF112233;
-    frame_[p.y * width_ + p.x] = 0xFF112233;
+void PixelShaderPipeline::renderPixel(const FPoint2D &p, FPointBaricentric &w) {
+    int pos = static_cast<int>((height_ - 1 - p.y) * width_ + p.x);
+    // TODO rule: if one of w coordinates = 0 it means pixel lays on the triangle edge.
+    //            we should draw only top-left edges.
+
+    if (pos < (height_ * width_)) {
+        frame_[pos] = 0xFF000000
+                    + (static_cast<uint>(w.w0 * 255) << 16)
+                    + (static_cast<uint>(w.w1 * 255) << 8)
+                    + (static_cast<uint>(w.w2 * 255) << 0);
+    }
 }
 
-float PixelShaderPipeline::orient2d(const Point2D& a, const Point2D& b, const Point2D& c) {
+float PixelShaderPipeline::orient2d(const FPoint2D& a, const FPoint2D& b, const FPoint2D& c) {
     return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
 }
 
