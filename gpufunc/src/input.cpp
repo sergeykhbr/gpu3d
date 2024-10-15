@@ -25,7 +25,7 @@ InputWidget::InputWidget(QWidget *parent)
 
     coord_[0] = CoordF(0, 0, 0);
     coord_[1] = CoordF(2.5f, 1, 0);
-    coord_[2] = CoordF(3, 3, 3);
+    coord_[2] = CoordF(3, 80, 80);
 
     QTableWidgetItem *newItem;
     for (int i = 0; i < columnCount(); i++) {

@@ -25,10 +25,17 @@
 #include <QScreen>
 #include <qevent.h>
 
+static const float FRUSTRUM_NEAR = 1.0f;
+static const float FRUSTRUM_FAR = 100.0f;
+
 MainWindow::MainWindow() :
     QMainWindow(nullptr),
     viewMatrix_(0, 0, -5.0f, 0, 0, 0),
-    projectionMatrix_(1.0f, 100.0f, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 60.0f)
+    projectionMatrix_(FRUSTRUM_NEAR,
+                      FRUSTRUM_FAR,
+                      VIEWPORT_WIDTH,
+                      VIEWPORT_HEIGHT,
+                      60.0f)
 {
     /*QSize appsz = qApp->screens()[0]->size();
     if (appsz.width() <= 1280 && appsz.height() <= 600) {
@@ -56,7 +63,8 @@ MainWindow::MainWindow() :
 
     pixelPipeline_ = new PixelShaderPipeline(this,
                                              VIEWPORT_WIDTH,
-                                             VIEWPORT_HEIGHT);
+                                             VIEWPORT_HEIGHT,
+                                             FRUSTRUM_FAR - FRUSTRUM_NEAR);
 
     viewport_ = new ViewportWidget(mainWidget);
     gridlayout->addWidget(viewport_, 0, 1);

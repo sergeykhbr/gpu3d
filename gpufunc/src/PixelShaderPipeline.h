@@ -25,7 +25,8 @@ class PixelShaderPipeline : public QWidget {
  public:
     PixelShaderPipeline(QWidget *parent,
                         int width,
-                        int height);
+                        int height,
+                        float distance_);
     virtual ~PixelShaderPipeline();
 
  public slots:
@@ -36,22 +37,43 @@ class PixelShaderPipeline : public QWidget {
     void signalZbufferData(uchar *zbuffer);
 
  protected:
-    struct FPoint2D {
-        float x, y;
-    };
     struct Point2D {
         int x, y;
     };
-    struct FPointBaricentric {
-        float w0, w1, w2;
+    struct FPoint3D {
+        float x, y, z;
+        explicit FPoint3D(const Point2D &p) {
+            x = static_cast<int>(p.x);
+            y = static_cast<int>(p.y);
+            z = 0;
+        }
+        FPoint3D(float p1, float p2, float p3) : x(p1), y(p2), z(p3) {}
     };
+    struct FPointBaricentric {
+        float l0, l1, l2;
+    };
+
+    bool isCounterClockWiseTriangle(const FPoint3D &v0,
+                                    const FPoint3D &v1,
+                                    const FPoint3D &v2);
     /**
       Not-optimized basic rasterizer:
         https://fgiesen.wordpress.com/2013/02/08/triangle-rasterization-in-practice/
      */
-    void drawTri(const FPoint2D &v0, const FPoint2D &v1, const FPoint2D &v2);
-    float orient2d(const FPoint2D &a, const FPoint2D &b, const FPoint2D &c);
-    void renderPixel(const FPoint2D &p, FPointBaricentric &w);
+    void rasterizeTriangleNoOptimization(const FPoint3D &v0,
+                                         const FPoint3D &v1,
+                                         const FPoint3D &v2);
+    // return >= 0 if inside of trianlge or on the edge
+    int baricentricPoint(float area,
+                         const FPoint3D &v0,
+                         const FPoint3D &v1,
+                         const FPoint3D &v2,
+                         Point2D c,
+                         FPointBaricentric *w);
+    void drawTri(const FPoint3D &v0, const FPoint3D &v1, const FPoint3D &v2);
+    float orient2d(const FPoint3D a, const FPoint3D b, const FPoint3D c);
+    uint renderPixel(const Point2D &c, FPointBaricentric &w);
+    uchar getZBuffer(float z0, float z1, float z2, FPointBaricentric &w);
     int min3(float v1, float v2, float v3);
     int max3(float v1, float v2, float v3);
     int min(int v1, int v2);
@@ -60,6 +82,7 @@ class PixelShaderPipeline : public QWidget {
  protected:
     int width_;
     int height_;
+    float distance_;
     uint *frame_;
     uchar *zbuffer_;
 };
