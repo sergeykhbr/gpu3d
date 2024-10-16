@@ -91,24 +91,25 @@ class fmatrix4x4 {
  */
 class ProjectionMatrix : public fmatrix4x4 {
  public:
-    ProjectionMatrix(float nearPlane,
-                     float farPlane,
-                     int width,
-                     int height,
-                     float fov_y = 60.0f) : fmatrix4x4() {
+    ProjectionMatrix(float n,       // nearPlane
+                     float f,       // farPlane
+                     float fov_y = 60.0f,
+                     float ratio = 640.0f/480.0f) : fmatrix4x4() {
 
         // set perspective viewing frustum
         float tangent = tanf(fov_y/2 * DEG_TO_RAD);         // tangent of half fovY
-        float h = nearPlane * tangent;                      // half height of near plane
-        float w = h * static_cast<float>(width)/height;     // half width of near plane
+        float t = n * tangent;                      // top
+        float b = -t;                                       // bottom
+        float r = t * ratio;                                // right
+        float l = -r;                                       // left
 
-        m_[0]  =  2 * nearPlane / (w - (-w));
-        m_[8]  =  (w + (-w)) / (w - (-w));                              // 2 row majority
-        m_[5]  =  2 * nearPlane / (h - (-h));
-        m_[9]  =  (h + (-h)) / (h - (-h));                              // 6 row majority
-        m_[10] = -(farPlane + nearPlane) / (farPlane - nearPlane);
-        m_[14] = -(2 * farPlane * nearPlane) / (farPlane - nearPlane);  // 11 row majority
-        m_[11] = -1;                                                    // 14 row majority
+        m_[0]  =  2 * n / (r - l);
+        m_[2]  =  (r + l) / (r - l);
+        m_[5]  =  2 * n / (t - b);
+        m_[6]  =  (t + b) / (t - b);
+        m_[10] = -(f + n) / (f - n);
+        m_[11] = -(2 * f * n) / (f - n);
+        m_[14] = -1;
         m_[15] =  0;
     }
 
@@ -120,8 +121,6 @@ class ProjectionMatrix : public fmatrix4x4 {
  4  5  6  7    cos_b*sin_y    sin_a*sin_b*sin_y+cos_a*cos_y   cos_a*sin_b*sin_y-sin_a*cos_y   0
  8  9  10 11      -sin_b                sin_a*cos_b                    cos_a*cos_b            0
  12 13 14 15        0                       0                             0                   1
-
- RotationMatrix in column majority:
  */
 class RotationMatrix : public fmatrix4x4 {
  public:
@@ -129,10 +128,7 @@ class RotationMatrix : public fmatrix4x4 {
         float cx = 1.0f, sx = 0.0f;
         float cy = 1.0f, sy = 0.0f;
         float cz = 1.0f, sz = 0.0f;
-        m_[0] = 1.0f;
-        m_[5] = 1.0f;
-        m_[10] = 1.0f;
-        m_[15] = 1.0f;
+        Identity();
 
         if (deg_x) {
             cx = static_cast<float>(cos(deg_x * DEG_TO_RAD));
@@ -148,15 +144,15 @@ class RotationMatrix : public fmatrix4x4 {
         }
 
         m_[0] = cy * cz;   // 0
-        m_[4] = cy * -sz;  // 1
-        m_[8] = sy;        // 2
+        m_[1] = cy * -sz;  // 1
+        m_[2] = sy;        // 2
 
-        m_[1] = -sx * -sy * cz + cx * sz;  // 4
+        m_[4] = -sx * -sy * cz + cx * sz;  // 4
         m_[5] = -sx * -sy * -sz + cx * cz; // 5
-        m_[9] = -sx * cy;                  // 6
+        m_[6] = -sx * cy;                  // 6
 
-        m_[2] = cx * -sy * cz + sx * sz;   // 8
-        m_[6] = cx * -sy * -sz + sx * cz;  // 9
+        m_[8] = cx * -sy * cz + sx * sz;   // 8
+        m_[9] = cx * -sy * -sz + sx * cz;  // 9
         m_[10] = cx * cy;                  // 10
 
         m_[15] = 1.0f;

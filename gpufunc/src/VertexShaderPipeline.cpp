@@ -21,12 +21,13 @@ VertexShaderPipeline::VertexShaderPipeline(QWidget *parent)
     memset(output_, 0, sizeof(output_));
 }
 
-void VertexShaderPipeline::slotVertexData(float *m, int size) {
+void VertexShaderPipeline::slotVertexData(const float *m, int size) {
     fmatrix4x4 PV = P_ * V_;
     fvector4 v1;
     for (int i = 0; i < size; i++) {
         v1 = fvector4(m[3*i], m[3*i + 1], m[3*i + 2]);
-        v1 = PV * v1;
+        v1 = V_ * v1;
+        v1 = P_ * v1;
 
         /** 4D vector back to 3D vector:
         *      | Xndc |   | Xclip/Wclip |

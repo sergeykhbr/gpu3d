@@ -31,7 +31,7 @@ class InputWidget : public QTableWidget {
     void slotRequestToUpdate();
 
  signals:
-    void signalVertexData(float *m, int size);
+    void signalVertexData(const float *m, int size);
 
  private:
     CoordF coord_[10];

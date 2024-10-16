@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+ #include "gputypes.h"
 #include "PixelShaderPipeline.h"
 
 PixelShaderPipeline::PixelShaderPipeline(QWidget *parent,
@@ -36,10 +37,28 @@ PixelShaderPipeline::~PixelShaderPipeline() {
 void PixelShaderPipeline::slotVertexData(float *m, int size) {
     memset(frame_, 0xFF, width_ * height_ * sizeof(uint));
     memset(zbuffer_, 0, width_ * height_);
+#if 1
+    CoordF *p;
+    for (int i = 0; i < size; i++) {
+        p = &reinterpret_cast<CoordF *>(m)[i];
+        if (p->x < -(640.0f/480.0f) || p->x > (640.0f/480.0f)
+            || p->y < -1 || p->y > 1) {
+            continue;
+        }
+        // Convert to raster space and mark the vertex position on the image with a simple dot
+        uint32_t x = min(width_ - 1, (uint32_t)((p->x + 1) * 0.5 * width_)); 
+        uint32_t y = min(height_ - 1, (uint32_t)((1 - (p->y + 1) * 0.5) * height_)); 
+        frame_[y * width_ + x] = 0xFF0000ff; 
+    }
+#else
 
-    FPoint3D v0(width_*m[0*3], height_*m[0*3 + 1], m[0*3 + 2]*90);
-    FPoint3D v1(width_*m[1*3], height_*m[1*3 + 1], m[1*3 + 2]*90);
-    FPoint3D v2(width_*m[2*3], height_*m[2*3 + 1], m[2*3 + 2]*90);
+    FPoint3D v0(width_*m[0*3], height_*m[0*3 + 1], m[0*3 + 2]);
+    FPoint3D v1(width_*m[1*3], height_*m[1*3 + 1], m[1*3 + 2]);
+    FPoint3D v2(width_*m[2*3], height_*m[2*3 + 1], m[2*3 + 2]);
+
+    qDebug("v0:(%.3f, %.3f, %.3f)\n", v0.x, v0.y, v0.z);
+    qDebug("v1:(%.3f, %.3f, %.3f)\n", v1.x, v1.y, v1.z);
+    qDebug("v2:(%.3f, %.3f, %.3f)\n", v2.x, v2.y, v2.z);
 
     if (!isCounterClockWiseTriangle(v0, v1, v2)) {
         FPoint3D t0 = v0;
@@ -47,6 +66,7 @@ void PixelShaderPipeline::slotVertexData(float *m, int size) {
         v2 = t0;
     }
     rasterizeTriangleNoOptimization(v0, v1, v2);
+#endif
 
     emit signalFrameData(reinterpret_cast<uchar *>(frame_));
     emit signalZbufferData(zbuffer_);

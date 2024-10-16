@@ -25,17 +25,16 @@
 #include <QScreen>
 #include <qevent.h>
 
-static const float FRUSTRUM_NEAR = 1.0f;
+static const float FRUSTRUM_NEAR = 0.1f;
 static const float FRUSTRUM_FAR = 100.0f;
 
 MainWindow::MainWindow() :
     QMainWindow(nullptr),
-    viewMatrix_(0, 0, -5.0f, 0, 0, 0),
+    viewMatrix_(0.0, -10.0, -20.0f, 0, 0, 0),
     projectionMatrix_(FRUSTRUM_NEAR,
                       FRUSTRUM_FAR,
-                      VIEWPORT_WIDTH,
-                      VIEWPORT_HEIGHT,
-                      60.0f)
+                      90.0f,
+                      640.0f/480.0f)
 {
     /*QSize appsz = qApp->screens()[0]->size();
     if (appsz.width() <= 1280 && appsz.height() <= 600) {
