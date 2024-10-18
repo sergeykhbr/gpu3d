@@ -29,7 +29,7 @@ class ZbufferWidget : public QWidget {
     explicit ZbufferWidget(QWidget *parent, int width, int height);
 
  public slots:
-    void slotDraw(const uchar *data);
+    void slotDraw(const float *data);
 
  protected:
     void paintEvent(QPaintEvent *ev);

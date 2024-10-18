@@ -19,54 +19,58 @@
 
 PixelShaderPipeline::PixelShaderPipeline(QWidget *parent,
                                         int width, int height,
-                                        float distance)
+                                        float near, float far)
     : QWidget(parent),
     width_(width),
     height_(height),
-    distance_(distance) {
+    near_(near),
+    far_(far) {
     frame_ = new uint[width * height];
-    zbuffer_ = new uchar[width * height];
+    zbuffer_ = new float[width * height];
     memset(frame_, 0xFF, width * height * sizeof(uint));
-    memset(zbuffer_, 0, width * height);
+    memset(zbuffer_, 0, width * height * sizeof(float));
 }
 
 PixelShaderPipeline::~PixelShaderPipeline() {
     delete [] frame_;
 }
 
-void PixelShaderPipeline::slotVertexData(float *m, int size) {
+void PixelShaderPipeline::slotVertexData(const float *vert, int vsz,
+                                         unsigned *tri, int tsz) {
+    float screenrate =  static_cast<float>(width_) / static_cast<float>(height_);
     memset(frame_, 0xFF, width_ * height_ * sizeof(uint));
-    memset(zbuffer_, 0, width_ * height_);
-#if 1
-    CoordF *p;
-    for (int i = 0; i < size; i++) {
-        p = &reinterpret_cast<CoordF *>(m)[i];
-        if (p->x < -(640.0f/480.0f) || p->x > (640.0f/480.0f)
-            || p->y < -1 || p->y > 1) {
+
+    for (int i = 0; i < width_ * height_; i++) {
+        zbuffer_[i] = 1.0;
+    }
+
+    const CoordF *p;
+    for (int i = 0; i < vsz; i++) {
+        p = &reinterpret_cast<const CoordF *>(vert)[i];
+        if (p->x < -screenrate || p->x > screenrate
+            || p->y < -1.0f || p->y > 1.0f) {
             continue;
         }
         // Convert to raster space and mark the vertex position on the image with a simple dot
-        uint32_t x = min(width_ - 1, (uint32_t)((p->x + 1) * 0.5 * width_)); 
-        uint32_t y = min(height_ - 1, (uint32_t)((1 - (p->y + 1) * 0.5) * height_)); 
-        frame_[y * width_ + x] = 0xFF0000ff; 
+        raster_[i].x = static_cast<int>((p->x + 1) * 0.5 * width_);
+        if (raster_[i].x >= width_) {
+            raster_[i].x = width_ - 1;
+        }
+        raster_[i].y = static_cast<int>((1 - (p->y + 1) * 0.5) * height_);
+        if (raster_[i].y >= height_) {
+            raster_[i].y = height_ - 1;
+        }
+        frame_[raster_[i].y * width_ + raster_[i].x] = 0xFF0000ff;  // red dot in vertex position
     }
-#else
 
-    FPoint3D v0(width_*m[0*3], height_*m[0*3 + 1], m[0*3 + 2]);
-    FPoint3D v1(width_*m[1*3], height_*m[1*3 + 1], m[1*3 + 2]);
-    FPoint3D v2(width_*m[2*3], height_*m[2*3 + 1], m[2*3 + 2]);
-
-    qDebug("v0:(%.3f, %.3f, %.3f)\n", v0.x, v0.y, v0.z);
-    qDebug("v1:(%.3f, %.3f, %.3f)\n", v1.x, v1.y, v1.z);
-    qDebug("v2:(%.3f, %.3f, %.3f)\n", v2.x, v2.y, v2.z);
-
-    if (!isCounterClockWiseTriangle(v0, v1, v2)) {
-        FPoint3D t0 = v0;
-        v0 = v2;
-        v2 = t0;
+    for (int i = 0; i < tsz; i++) {
+        rasterizeTriangleNoOptimization(raster_[tri[3*i]],
+                                        raster_[tri[3*i + 1]],
+                                        raster_[tri[3*i + 2]],
+                                        vert[3*tri[3*i] + 2],
+                                        vert[3*tri[3*i + 1] + 2],
+                                        vert[3*tri[3*i + 2] + 2]);
     }
-    rasterizeTriangleNoOptimization(v0, v1, v2);
-#endif
 
     emit signalFrameData(reinterpret_cast<uchar *>(frame_));
     emit signalZbufferData(zbuffer_);
@@ -85,9 +89,12 @@ bool PixelShaderPipeline::isCounterClockWiseTriangle(const FPoint3D &v0,
     return false;
 }
 
-void PixelShaderPipeline::rasterizeTriangleNoOptimization(const FPoint3D &v0,
-                                                          const FPoint3D &v1,
-                                                          const FPoint3D &v2) {
+void PixelShaderPipeline::rasterizeTriangleNoOptimization(const Point2D &v0,
+                                                          const Point2D &v1,
+                                                          const Point2D &v2,
+                                                          float z0,
+                                                          float z1,
+                                                          float z2) {
 
     // Compute triangle bounding box
     float area;
@@ -103,7 +110,7 @@ void PixelShaderPipeline::rasterizeTriangleNoOptimization(const FPoint3D &v0,
     maxY = min(maxY, height_ - 1);
 
 
-    area = orient2d(v1, v2, v0);
+    area = orient2d(v0, v1, v2);
 
     // Rasterize
     Point2D c;
@@ -117,12 +124,15 @@ void PixelShaderPipeline::rasterizeTriangleNoOptimization(const FPoint3D &v0,
                              &w) < 0) {
                 continue;
             }
-            pos = (height_ - 1 - c.y) * width_ + c.x;
+            pos = c.y * width_ + c.x;
             if (pos >= height_ * width_) {
                 continue;
             }
             frame_[pos] = renderPixel(c, w);
-            zbuffer_[pos] = getZBuffer(v0.z, v1.z, v2.z, w);
+            float tz = getZBuffer(z0, z1, z2, w) / far_;
+            if (tz < zbuffer_[pos]) {
+                zbuffer_[pos] = tz;
+            }
         }
     }
 }
@@ -130,15 +140,15 @@ void PixelShaderPipeline::rasterizeTriangleNoOptimization(const FPoint3D &v0,
 
 // Determine barycentric coordinates
 int PixelShaderPipeline::baricentricPoint(float area,
-                                          const FPoint3D &v0,
-                                          const FPoint3D &v1,
-                                          const FPoint3D &v2,
-                                          Point2D c,
+                                          const Point2D &v0,
+                                          const Point2D &v1,
+                                          const Point2D &v2,
+                                          const Point2D &c,
                                           FPointBaricentric *w) {
     // Counter-clockwise order by default: v1 -> v2 -> v0
-    w->l0 = orient2d(v1, v2, FPoint3D(c)) / area;
-    w->l1 = orient2d(v2, v0, FPoint3D(c)) / area;
-    w->l2 = orient2d(v0, v1, FPoint3D(c)) / area;
+    w->l0 = static_cast<float>(orient2d(v1, v2, c)) / area;
+    w->l1 = static_cast<float>(orient2d(v2, v0, c)) / area;
+    w->l2 = static_cast<float>(orient2d(v0, v1, c)) / area;
 
     // If p is on or inside all edges, render pixel.
     if (w->l0 >= 0 && w->l1 >= 0 && w->l2 >= 0) {
@@ -146,6 +156,13 @@ int PixelShaderPipeline::baricentricPoint(float area,
         return 1;
     }
     return -1;
+}
+
+// TODO: check for overflow
+int PixelShaderPipeline::orient2d(const Point2D &a,
+                                  const Point2D &b,
+                                  const Point2D &c) {
+    return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
 uint PixelShaderPipeline::renderPixel(const Point2D &c,
@@ -159,30 +176,14 @@ uint PixelShaderPipeline::renderPixel(const Point2D &c,
                 + (static_cast<uint>(w.l2 * 255) << 0);
 }
 
-uchar PixelShaderPipeline::getZBuffer(float z0, float z1, float z2,
+float PixelShaderPipeline::getZBuffer(float z0, float z1, float z2,
                                       FPointBaricentric &w) {
-    float ret = 0;
-    if (z1) {
-        ret += w.l0 / z1;
-    }
-    if (z0) {
-        ret += w.l1 / z0;
-    }
-    if (z2) {
-        ret += w.l2 / z2;
-    }
-    // z = -1 near plane
-    // z = +1 far plane
+    float ret;
+    ret = w.l0 * z1 + w.l1 * z1 + w.l2 * z2;
     if (ret) {
-        ret = 127.0f/(ret + 1.0f);
+        ret = 1.0f/ret;
     }
-    return static_cast<uchar>(ret);
-}
-
-float PixelShaderPipeline::orient2d(const FPoint3D a,
-                                    const FPoint3D b,
-                                    const FPoint3D c) {
-    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    return ret;
 }
 
 int PixelShaderPipeline::min3(float v1, float v2, float v3) {

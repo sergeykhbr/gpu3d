@@ -30,10 +30,12 @@ class VertexShaderPipeline : public QWidget {
     void setProjectionMatrix(fmatrix4x4 *p) { P_ = *p; }
 
  public slots:
-    void slotVertexData(const float *m, int size);
+    void slotVertexData(const float *vert, int vsz,
+                        unsigned *tri, int tsz);
 
  signals:
-    void signalVertexData(float *m, int sz);
+    void signalVertexData(const float *vert, int vsz,
+                          unsigned *tri, int tsz);
 
  protected:
     fmatrix4x4 V_;

@@ -30,7 +30,7 @@ static const float FRUSTRUM_FAR = 100.0f;
 
 MainWindow::MainWindow() :
     QMainWindow(nullptr),
-    viewMatrix_(0.0, -10.0, -20.0f, 0, 0, 0),
+    viewMatrix_(15.0, -10.0, -20.0f, 30.0f, 30.0f, 0.0),
     projectionMatrix_(FRUSTRUM_NEAR,
                       FRUSTRUM_FAR,
                       90.0f,
@@ -63,7 +63,8 @@ MainWindow::MainWindow() :
     pixelPipeline_ = new PixelShaderPipeline(this,
                                              VIEWPORT_WIDTH,
                                              VIEWPORT_HEIGHT,
-                                             FRUSTRUM_FAR - FRUSTRUM_NEAR);
+                                             FRUSTRUM_NEAR,
+                                             FRUSTRUM_FAR);
 
     viewport_ = new ViewportWidget(mainWidget);
     gridlayout->addWidget(viewport_, 0, 1);

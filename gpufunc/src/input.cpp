@@ -15,32 +15,32 @@
  */
 
 #include "input.h"
-#include "vertices.h"
+#include "examples/cow/cow_vertices.h"
+#include "examples/cow/cow_triangles.h"
 
 InputWidget::InputWidget(QWidget *parent)
     : QTableWidget(parent) {
     setMinimumSize(100, 100);
-    setRowCount(numVertices);
+    setRowCount(cowNumVertices);
     setColumnCount(4);
     setHorizontalHeaderLabels(QStringList({tr("x"), tr("y"), tr("z"), tr("face")}));
 
-    /*coord_[0] = CoordF(5.0f, 0.0f, 0.0f);
-    coord_[1] = CoordF(0.0f, 5.0f, 0.0f);
-    coord_[2] = CoordF(0.0f, 0.0f, 50.0f);*/
+    CoordF *p = cow_vertices;
 
     QTableWidgetItem *newItem;
-    for (int i = 0; i < numVertices; i++) {
-        newItem = new QTableWidgetItem(QString::asprintf("%.2f", vertices[i].x));
+    for (int i = 0; i < rowCount(); i++) {
+        newItem = new QTableWidgetItem(QString::asprintf("%.2f", p[i].x));
         setItem(i, 0, newItem);
-        newItem = new QTableWidgetItem(QString::asprintf("%.2f", vertices[i].y));
+        newItem = new QTableWidgetItem(QString::asprintf("%.2f", p[i].y));
         setItem(i, 1, newItem);
-        newItem = new QTableWidgetItem(QString::asprintf("%.2f", vertices[i].z));
+        newItem = new QTableWidgetItem(QString::asprintf("%.2f", p[i].z));
         setItem(i, 2, newItem);
     }
 }
 
 void InputWidget::slotRequestToUpdate() {
-    emit signalVertexData(&vertices->x, numVertices);
+    emit signalVertexData(&cow_vertices->x, cowNumVertices,
+                          cow_triangles, cowTrianglesNum);
 }
 
 

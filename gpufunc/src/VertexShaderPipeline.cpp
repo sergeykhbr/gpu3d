@@ -21,13 +21,13 @@ VertexShaderPipeline::VertexShaderPipeline(QWidget *parent)
     memset(output_, 0, sizeof(output_));
 }
 
-void VertexShaderPipeline::slotVertexData(const float *m, int size) {
+void VertexShaderPipeline::slotVertexData(const float *vert, int vsz,
+                                          unsigned *tri, int tsz) {
     fmatrix4x4 PV = P_ * V_;
     fvector4 v1;
-    for (int i = 0; i < size; i++) {
-        v1 = fvector4(m[3*i], m[3*i + 1], m[3*i + 2]);
-        v1 = V_ * v1;
-        v1 = P_ * v1;
+    for (int i = 0; i < vsz; i++) {
+        v1 = fvector4(vert[3*i], vert[3*i + 1], vert[3*i + 2]);
+        v1 = PV * v1;
 
         /** 4D vector back to 3D vector:
         *      | Xndc |   | Xclip/Wclip |
@@ -43,9 +43,17 @@ void VertexShaderPipeline::slotVertexData(const float *m, int size) {
         */
         output_[3*i] = v1.getp()[0] / v1.getp()[3];
         output_[3*i + 1] = v1.getp()[1] / v1.getp()[3];
-        output_[3*i + 2] = v1.getp()[2] / v1.getp()[3];
+        // Z after projection is equal to -Z in camera space, get inversed value
+        // to use it in hyperbolic interpolation:
+        output_[3*i + 2] = 0;
+        if (v1.getp()[2]) {
+            output_[3*i + 2] = 1.0f/v1.getp()[2];
+        }
+
     }
-    emit signalVertexData(output_, size);
+
+    emit signalVertexData(output_, vsz,
+                          tri, tsz);
 }
 
 

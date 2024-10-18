@@ -23,12 +23,25 @@ ZbufferWidget::ZbufferWidget(QWidget *parent, int width, int height)
     setFixedSize(width/4, height/4);
 }
 
-void ZbufferWidget::slotDraw(const uchar *data) {
+void ZbufferWidget::slotDraw(const float *data) {
+    uchar *line = new uchar[image_.width()];
+    float tz;
     for (int y = 0; y < image_.height(); y++) {
-        memcpy(image_.scanLine(y), &data[y * image_.width()], image_.bytesPerLine());
+        for (int x = 0; x < image_.width(); x++) {
+            tz = data[y*image_.width() + x];
+            if (tz < 0) {
+                tz = 0;
+            }
+            if (tz > 1.0f) {
+                tz = 1.0f;
+            }
+            line[x] = static_cast<uchar>(255.0f*tz);
+        }
+        memcpy(image_.scanLine(y), line, image_.bytesPerLine());
     }
    
     update();
+    delete [] line;
 }
 
 void ZbufferWidget::paintEvent(QPaintEvent *event) {
