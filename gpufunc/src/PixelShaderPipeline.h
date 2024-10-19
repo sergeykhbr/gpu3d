@@ -18,6 +18,7 @@
 
 #include <QtWidgets/QWidget>
 #include <QtGui/qevent.h>
+#include <matrix.h>
 
 class PixelShaderPipeline : public QWidget {
     Q_OBJECT
@@ -30,17 +31,36 @@ class PixelShaderPipeline : public QWidget {
                         float far);
     virtual ~PixelShaderPipeline();
 
+    void setProjectionMatrix(fmatrix4x4 *p) { P_ = *p; }
+
  public slots:
-    void slotVertexData(const float *vert, int vsz,
-                        unsigned *tri, int tsz);
+    void slotVertexData(const float *camera, int vsz,
+                        const float *uv, int uvsz,
+                        unsigned *tri,
+                        unsigned *uvtri,
+                        float *normal,
+                        int tsz);
 
  signals:
     void signalFrameData(uchar *frame);
     void signalZbufferData(float *zbuffer);
 
  protected:
+    struct ProjectionVertexData {
+        fvector2 xy;        // float pixel coordinate (todo: name it better)
+        fvector2 uv;        // uv_vector * (1/z)
+        float fz;
+        bool visible;
+        int w, h;
+    };
     struct Point2D {
         int x, y;
+    };
+    struct FPoint2D {
+        float x, y;
+        FPoint2D() : x(0), y(0) {}
+        FPoint2D(float v1, float v2) : x(v1), y(v2) {}
+        FPoint2D(const float *adr) : x(adr[0]), y(adr[1]) {}
     };
     struct FPoint3D {
         float x, y, z;
@@ -55,28 +75,26 @@ class PixelShaderPipeline : public QWidget {
         float l0, l1, l2;
     };
 
-    bool isCounterClockWiseTriangle(const FPoint3D &v0,
-                                    const FPoint3D &v1,
-                                    const FPoint3D &v2);
-    /**
+   /**
       Not-optimized basic rasterizer:
         https://fgiesen.wordpress.com/2013/02/08/triangle-rasterization-in-practice/
      */
-    void rasterizeTriangleNoOptimization(const Point2D &v0,
-                                         const Point2D &v1,
-                                         const Point2D &v2,
-                                         float z0,
-                                         float z1,
-                                         float z2);
+    void rasterizeTriangleNoOptimization(const fvector3 &cam0,
+                                        const fvector3 &cam1,
+                                        const fvector3 &cam2,
+                                        const ProjectionVertexData &prj0,
+                                        const ProjectionVertexData &prj1,
+                                        const ProjectionVertexData &prj2,
+                                        const fvector3 &norm);
     // return >= 0 if inside of trianlge or on the edge
     int baricentricPoint(float area,
-                         const Point2D &v0,
-                         const Point2D &v1,
-                         const Point2D &v2,
-                         const Point2D &c,
+                         const fvector2 &v0,
+                         const fvector2 &v1,
+                         const fvector2 &v2,
+                         const fvector2 &c,
                          FPointBaricentric *w);
     void drawTri(const FPoint3D &v0, const FPoint3D &v1, const FPoint3D &v2);
-    int orient2d(const Point2D &a, const Point2D &b, const Point2D &c);
+    float orient2d(const fvector2 &a, const fvector2 &b, const fvector2 &c);
     uint renderPixel(const Point2D &c, FPointBaricentric &w);
     float getZBuffer(float z0, float z1, float z2, FPointBaricentric &w);
     int min3(float v1, float v2, float v3);
@@ -89,7 +107,8 @@ class PixelShaderPipeline : public QWidget {
     int height_;
     float near_;
     float far_;
-    Point2D raster_[8*1024];
+    fmatrix4x4 P_;
+    ProjectionVertexData projection_[8*1024];
     uint *frame_;
     float *zbuffer_;
 };

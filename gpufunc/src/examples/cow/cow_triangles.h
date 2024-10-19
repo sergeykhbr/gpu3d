@@ -5,7 +5,7 @@
 
 #pragma once
 
-static const int cowTrianglesNum = 9468 / 3;
+static const int cowTrianglesNum = 3156;
 
 unsigned cow_triangles[3 * cowTrianglesNum] = {
 2, 0, 3, 1, 3, 0, 4, 2, 
@@ -1193,7 +1193,7 @@ unsigned cow_triangles[3 * cowTrianglesNum] = {
 1731, 1723, 1722, 1731, 1724, 1723, 1731, 1725, 
 1724, 1731, 1721, 1725};
 
-uint32_t stindices[9468] = {
+unsigned cow_uv_index[3 * cowTrianglesNum] = {
 0, 1, 2, 4, 2, 1, 11, 0, 
 5, 2, 5, 0, 27, 11, 17, 5, 
 17, 11, 35, 48, 27, 27, 17, 35, 

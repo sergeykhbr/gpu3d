@@ -27,21 +27,22 @@ class VertexShaderPipeline : public QWidget {
     VertexShaderPipeline(QWidget *parent);
 
     void setViewMatrix(fmatrix4x4 *v) { V_  = *v; }
-    void setProjectionMatrix(fmatrix4x4 *p) { P_ = *p; }
 
  public slots:
     void slotVertexData(const float *vert, int vsz,
-                        unsigned *tri, int tsz);
+                        const float *uv, int uvsz,
+                        unsigned *tri, unsigned *uvtri, int tsz);
 
  signals:
-    void signalVertexData(const float *vert, int vsz,
-                          unsigned *tri, int tsz);
+    void signalVertexData(const float *camera, int vsz,
+                          const float *uv, int uvsz,
+                          unsigned *tri, unsigned *uvtri, float *normal, int tsz);
 
  protected:
     fmatrix4x4 V_;
-    fmatrix4x4 P_;
 
-    float output_[4096*4];
+    float output_[8*1024*3];
+    float normal_[8*1024*3];  // triangles normals
 };
 
 

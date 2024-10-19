@@ -32,7 +32,8 @@ class InputWidget : public QTableWidget {
 
  signals:
     void signalVertexData(const float *vert, int vsz,
-                          unsigned *tri, int tsz);
+                          const float *uv, int uvsz,
+                          unsigned *tri, unsigned *uvtri, int tsz);
 
  private:
     CoordF coord_[10];

@@ -24,9 +24,31 @@
 
 static const float DEG_TO_RAD = float(3.14159265358979323846/180.0);
 
+class fvector2 {
+ public:
+    fvector2(float x, float y);
+    fvector2(const float *arr);
+    fvector2();
+    
+    // subscript operator v[0], v[1]
+    float operator[](int index) const;
+    // subscript operator v[0], v[1]
+    float &operator[](int index);
+    // v1 *= f
+    fvector2 &operator*=(const float &rhs);
+    // v2 = v1 * f
+    fvector2 operator*(const float &rhs) const;
+    // v3 = v1 + v2
+    fvector2 operator+(const fvector2 &rhs) const;
+
+ protected:
+    float v_[2];
+};
+
 class fvector3 {
  public:
     fvector3(float x, float y, float z);
+    fvector3(const float *arr);
     fvector3();
     
     float *getp() { return v_; }
@@ -35,6 +57,19 @@ class fvector3 {
     float operator[](int index) const;
     // subscript operator v[0], v[1]
     float &operator[](int index);
+    // -v
+    fvector3 operator-() const;
+    // v1 - v2
+    fvector3 operator-(const fvector3 &rhs) const;
+    // cross-product: V1 x V2 = -V2 x V1. return is vector
+    fvector3 crossProduct(const fvector3 &rhs) const;
+    // return value is scalar
+    float dotProduct(const fvector3 &rhs) const;
+    // norm
+    float norm();
+    float length() { return sqrt(norm()); }
+    // V / length
+    fvector3 &normalize();
 
  protected:
     float v_[3];
@@ -43,6 +78,7 @@ class fvector3 {
 class fvector4 {
  public:
     fvector4(float x, float y, float z, float w = 1.0f);
+    fvector4(const float *arr, float w);
     fvector4();
     
     float *getp() { return v_; }
@@ -59,6 +95,7 @@ class fvector4 {
 class fmatrix4x4 {
  public:
     fmatrix4x4();
+    fmatrix4x4(float *arr);
 
     float *getp() { return m_; }
 
@@ -173,6 +210,31 @@ class TranslationMatrix : public fmatrix4x4 {
 // Transform verticies relative viewer point
 class ViewMatrix : public RotationMatrix {
  public:
+    //  0  1  2  3
+    //  4  5  6  7
+    //  8  9 10 11
+    // 12 13 14 15
+    ViewMatrix(const float *arr) : RotationMatrix(0, 0, 0) {
+        m_[0] = arr[0];
+        m_[4] = arr[1];
+        m_[8] = arr[2];
+        m_[12] = arr[3];
+
+        m_[1] = arr[4];
+        m_[5] = arr[5];
+        m_[9] = arr[6];
+        m_[13] = arr[7];
+
+        m_[2] = arr[8];
+        m_[6] = arr[9];
+        m_[10] = arr[10];
+        m_[14] = arr[11];
+
+        m_[3] = arr[12];
+        m_[7] = arr[13];
+        m_[11] = arr[14];
+        m_[15] = arr[15];
+    }
     ViewMatrix(float x,
                float y,
                float z,

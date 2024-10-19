@@ -14,8 +14,11 @@
  *  limitations under the License.
  */
 
- #include "gputypes.h"
+#include "gputypes.h"
+#include "matrix.h"
 #include "PixelShaderPipeline.h"
+
+#define DRAW_VERTEX_DOTS
 
 PixelShaderPipeline::PixelShaderPipeline(QWidget *parent,
                                         int width, int height,
@@ -35,8 +38,9 @@ PixelShaderPipeline::~PixelShaderPipeline() {
     delete [] frame_;
 }
 
-void PixelShaderPipeline::slotVertexData(const float *vert, int vsz,
-                                         unsigned *tri, int tsz) {
+void PixelShaderPipeline::slotVertexData(const float *camera, int vsz,
+                                         const float *uv, int uvsz,
+                                         unsigned *tri, unsigned *uvtri, float *normal, int tsz) {
     float screenrate =  static_cast<float>(width_) / static_cast<float>(height_);
     memset(frame_, 0xFF, width_ * height_ * sizeof(uint));
 
@@ -44,95 +48,152 @@ void PixelShaderPipeline::slotVertexData(const float *vert, int vsz,
         zbuffer_[i] = 1.0;
     }
 
-    const CoordF *p;
+    fvector4 cam;
+    fvector4 p;
+    ProjectionVertexData *proj;
     for (int i = 0; i < vsz; i++) {
-        p = &reinterpret_cast<const CoordF *>(vert)[i];
-        if (p->x < -screenrate || p->x > screenrate
-            || p->y < -1.0f || p->y > 1.0f) {
-            continue;
+        proj = &projection_[i];
+        cam = fvector4(camera[3*i], camera[3*i + 1], camera[3*i + 2], 1.0f);
+        p = P_ * cam;
+
+        // Z after projection is equal to -Z in camera space, get inversed value
+        // to use it in hyperbolic interpolation from projection to camera space:
+        proj->xy[0] = p[0] / p[3];
+        proj->xy[1] = p[1] / p[3];
+        proj->fz = 1.0f / p[2];
+
+        // remap [-1.0; 1.0] to [0:width-1] and the same for height:
+        proj->xy[0] = 0.5f * (proj->xy[0] + 1.0f) * width_;
+        proj->xy[1] = 0.5f * (1.0f - proj->xy[1]) * height_;
+
+        if (proj->xy[0] < 0 || proj->xy[0] >= width_ 
+            || proj->xy[1] < 0 || proj->xy[1] >= height_) {
+            proj->visible = false;
+            proj->w = 0;
+            proj->h = 0;
+        } else {
+            // Convert to raster space and mark the vertex position on the image with a simple dot
+            proj->w = static_cast<int>(proj->xy[0]);
+            proj->h = static_cast<int>(proj->xy[1]);
         }
-        // Convert to raster space and mark the vertex position on the image with a simple dot
-        raster_[i].x = static_cast<int>((p->x + 1) * 0.5 * width_);
-        if (raster_[i].x >= width_) {
-            raster_[i].x = width_ - 1;
-        }
-        raster_[i].y = static_cast<int>((1 - (p->y + 1) * 0.5) * height_);
-        if (raster_[i].y >= height_) {
-            raster_[i].y = height_ - 1;
-        }
-        frame_[raster_[i].y * width_ + raster_[i].x] = 0xFF0000ff;  // red dot in vertex position
+
+#ifdef DRAW_VERTEX_DOTS
+        frame_[proj->h * width_ + proj->w] = 0xFF0000ff;  // red dot in vertex position
+#endif
     }
 
+    // Go throug list of triangles
+    fvector3 cam0, cam1, cam2;
+    ProjectionVertexData *prj0, *prj1, *prj2;
+    fvector3 n;
     for (int i = 0; i < tsz; i++) {
-        rasterizeTriangleNoOptimization(raster_[tri[3*i]],
-                                        raster_[tri[3*i + 1]],
-                                        raster_[tri[3*i + 2]],
-                                        vert[3*tri[3*i] + 2],
-                                        vert[3*tri[3*i + 1] + 2],
-                                        vert[3*tri[3*i + 2] + 2]);
+        cam0 = fvector3(&camera[3*tri[3*i]]);
+        cam1 = fvector3(&camera[3*tri[3*i + 1]]);
+        cam2 = fvector3(&camera[3*tri[3*i + 2]]);
+        prj0 = &projection_[tri[3*i]];
+        prj1 = &projection_[tri[3*i + 1]];
+        prj2 = &projection_[tri[3*i + 2]];
+
+        prj0->uv = fvector2(&uv[2*uvtri[3*i]]) * prj0->fz;
+        prj1->uv = fvector2(&uv[2*uvtri[3*i + 1]]) * prj1->fz;
+        prj2->uv = fvector2(&uv[2*uvtri[3*i + 2]]) * prj2->fz;
+        
+        n = fvector3(&normal[3*i]);
+
+        rasterizeTriangleNoOptimization(cam0, cam1, cam2,
+                                        *prj0, *prj1, *prj2,
+                                        n);
     }
 
     emit signalFrameData(reinterpret_cast<uchar *>(frame_));
     emit signalZbufferData(zbuffer_);
 }
 
-// There's convention in OpenGL and Direct3D to use triangles declared
-// in counter clockwise order.
-// If the order clockwise then we look at back side of plane and can
-// ignore it
-bool PixelShaderPipeline::isCounterClockWiseTriangle(const FPoint3D &v0,
-                                                     const FPoint3D &v1,
-                                                     const FPoint3D &v2) {
-    if (v2.y > v0.y || (v2.y == v0.y && v2.y < v1.y)) {
-        return true;
-    }
-    return false;
-}
-
-void PixelShaderPipeline::rasterizeTriangleNoOptimization(const Point2D &v0,
-                                                          const Point2D &v1,
-                                                          const Point2D &v2,
-                                                          float z0,
-                                                          float z1,
-                                                          float z2) {
+void PixelShaderPipeline::rasterizeTriangleNoOptimization(const fvector3 &cam0,
+                                                          const fvector3 &cam1,
+                                                          const fvector3 &cam2,
+                                                          const ProjectionVertexData &prj0,
+                                                          const ProjectionVertexData &prj1,
+                                                          const ProjectionVertexData &prj2,
+                                                          const fvector3 &norm) {
 
     // Compute triangle bounding box
     float area;
-    int minX = min3(v0.x, v1.x, v2.x);
-    int minY = min3(v0.y, v1.y, v2.y);
-    int maxX = max3(v0.x, v1.x, v2.x);
-    int maxY = max3(v0.y, v1.y, v2.y);
+    int minX = min3(prj0.xy[0], prj1.xy[0], prj2.xy[0]);
+    int minY = min3(prj0.xy[1], prj1.xy[1], prj2.xy[1]);
+    int maxX = max3(prj0.xy[0], prj1.xy[0], prj2.xy[0]);
+    int maxY = max3(prj0.xy[1], prj1.xy[1], prj2.xy[1]);
 
     // Clip against screen bounds
     minX = max(minX, 0);
     minY = max(minY, 0);
     maxX = min(maxX, width_ - 1);
     maxY = min(maxY, height_ - 1);
+    if (minX >= width_ || maxX < 0
+        || minY >= height_ || maxY < 0) {
+        // all vertext out-of-screen
+        return;
+    }
 
-
-    area = orient2d(v0, v1, v2);
+    area = orient2d(prj0.xy, prj1.xy, prj2.xy);
 
     // Rasterize
-    Point2D c;
+    FPoint2D p;
     FPointBaricentric w;
     int pos;
-    for (c.y = minY; c.y <= maxY; c.y++) {
-        for (c.x = minX; c.x <= maxX; c.x++) {
+    for (int y = minY; y <= maxY; y++) {
+        for (int x = minX; x <= maxX; x++) {
             if (baricentricPoint(area,
-                             v0, v1, v2,
-                             c,
+                             prj0.xy, prj1.xy, prj2.xy,
+                             fvector2(x + 0.5f, y + 0.5f),
                              &w) < 0) {
                 continue;
             }
-            pos = c.y * width_ + c.x;
+            pos = y * width_ + x;
             if (pos >= height_ * width_) {
                 continue;
             }
-            frame_[pos] = renderPixel(c, w);
-            float tz = getZBuffer(z0, z1, z2, w) / far_;
-            if (tz < zbuffer_[pos]) {
-                zbuffer_[pos] = tz;
+            float tz = getZBuffer(prj0.fz, prj1.fz, prj2.fz, w);
+            if (tz >= far_ * zbuffer_[pos]) {
+                continue;
             }
+            zbuffer_[pos] = tz / far_;
+
+#if 1
+            // pixel coordinate in a camera space (pt) extrapolated from
+            // baricentric coordinate:
+            p.x = (cam0[0] / -cam0[2]) * w.l0 + (cam1[0] / -cam1[2]) * w.l1 + (cam2[0] / -cam2[2]) * w.l2;
+            p.y = (cam0[1] / -cam0[2]) * w.l0 + (cam1[1] / -cam1[2]) * w.l1 + (cam2[1] / -cam2[2]) * w.l2;
+            
+            fvector3 pt(p.x * tz,
+                        p.y * tz,
+                        -tz);
+
+            // extrapolated texture coordinate:
+            fvector2 st = prj0.uv * w.l0 + prj1.uv * w.l1 + prj2.uv * w.l2;
+            st *= tz;
+
+            fvector3 viewDirection = -pt;
+            viewDirection.normalize();
+
+            // shading effect. dotProduct is a measure of similatiry of two vectors:
+            float nDotView = std::max(0.0f, norm.dotProduct(viewDirection));
+            // checkmate coloring
+            const int M = 10;
+            float checker = (fmod(st[0] * M, 1.0) > 0.5) ^ (fmod(st[1] * M, 1.0) < 0.5);
+            float c = 0.3 * (1 - checker) + 0.7 * checker;
+            nDotView *= c;
+
+            // gray is the sum of rgb, so change rgb simutaneously
+            frame_[pos] = 0xFF000000
+                + (static_cast<uint>(nDotView * 255) << 16)
+                + (static_cast<uint>(nDotView * 255) << 8)
+                + (static_cast<uint>(nDotView * 255) << 0);
+
+
+#else
+            frame_[pos] = renderPixel(c, w);
+#endif
         }
     }
 }
@@ -140,10 +201,10 @@ void PixelShaderPipeline::rasterizeTriangleNoOptimization(const Point2D &v0,
 
 // Determine barycentric coordinates
 int PixelShaderPipeline::baricentricPoint(float area,
-                                          const Point2D &v0,
-                                          const Point2D &v1,
-                                          const Point2D &v2,
-                                          const Point2D &c,
+                                          const fvector2 &v0,
+                                          const fvector2 &v1,
+                                          const fvector2 &v2,
+                                          const fvector2 &c,
                                           FPointBaricentric *w) {
     // Counter-clockwise order by default: v1 -> v2 -> v0
     w->l0 = static_cast<float>(orient2d(v1, v2, c)) / area;
@@ -159,10 +220,10 @@ int PixelShaderPipeline::baricentricPoint(float area,
 }
 
 // TODO: check for overflow
-int PixelShaderPipeline::orient2d(const Point2D &a,
-                                  const Point2D &b,
-                                  const Point2D &c) {
-    return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+float PixelShaderPipeline::orient2d(const fvector2 &a,
+                                    const fvector2 &b,
+                                    const fvector2 &c) {
+    return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0]);
 }
 
 uint PixelShaderPipeline::renderPixel(const Point2D &c,

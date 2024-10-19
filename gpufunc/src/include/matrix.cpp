@@ -15,10 +15,54 @@
  */
 #include "matrix.h"
 
+fvector2::fvector2(float x, float y) {
+    v_[0] = x;
+    v_[1] = y;
+}
+
+fvector2::fvector2(const float *arr) {
+    v_[0] = arr[0];
+    v_[1] = arr[1];
+}
+
+fvector2::fvector2() : fvector2(0, 0) {
+}
+
+// subscript operator v[0], v[1]
+float fvector2::operator[](int index) const {
+    return v_[index];
+}
+
+// subscript operator v[0], v[1]
+float &fvector2::operator[](int index) {
+    return v_[index];
+}
+
+fvector2 &fvector2::operator*=(const float &rhs) {
+    v_[0] *= rhs;
+    v_[1] *= rhs;
+    return *this;
+}
+
+fvector2 fvector2::operator*(const float &rhs) const {
+    fvector2 ret(rhs * v_[0], rhs * v_[1]);
+    return ret;
+}
+
+fvector2 fvector2::operator+(const fvector2 &rhs) const {
+    fvector2 ret(rhs[0] + v_[0], rhs[1] + v_[1]);
+    return ret;
+}
+
+
+
 fvector3::fvector3(float x, float y, float z) {
     v_[0] = x;
     v_[1] = y;
     v_[2] = z;
+}
+
+fvector3::fvector3(const float *arr) : fvector3(arr[0], arr[1], arr[2]) {
 }
 
 fvector3::fvector3() : fvector3(0, 0, 0) {
@@ -34,11 +78,54 @@ float &fvector3::operator[](int index) {
     return v_[index];
 }
 
+// -v1
+fvector3 fvector3::operator-() const {
+    return fvector3(-v_[0], -v_[1], -v_[2]);
+}
+
+// v1 - v2
+fvector3 fvector3::operator-(const fvector3 &rhs) const {
+    return fvector3(v_[0] - rhs[0], v_[1] - rhs[1], v_[2] - rhs[2]);
+}
+
+// cross-product: v1 x v2 
+fvector3 fvector3::crossProduct(const fvector3 &rhs) const {
+    return fvector3(v_[1] * rhs[2] - v_[2] * rhs[1],
+                    v_[2] * rhs[0] - v_[0] * rhs[2],
+                    v_[0] * rhs[1] - v_[1] * rhs[0]);
+}
+
+float fvector3::dotProduct(const fvector3 &rhs) const {
+    return v_[0] * rhs[0] + v_[1] * rhs[1] + v_[2] *rhs[2];
+}
+
+float fvector3::norm() {
+    return v_[0] * v_[0] + v_[1] * v_[1] + v_[2] * v_[2];
+}
+
+fvector3 &fvector3::normalize() {
+    float n = norm();
+    if (n > 0) {
+        float rate = 1.0f / sqrt(n);
+        v_[0] *= rate;
+        v_[1] *= rate;
+        v_[2] *= rate;
+    }
+    return *this;
+}
+
 
 fvector4::fvector4(float x, float y, float z, float w) {
     v_[0] = x;
     v_[1] = y;
     v_[2] = z;
+    v_[3] = w;
+}
+
+fvector4::fvector4(const float *arr, float w) {
+    v_[0] = arr[0];
+    v_[1] = arr[1];
+    v_[2] = arr[2];
     v_[3] = w;
 }
 
@@ -60,6 +147,9 @@ float &fvector4::operator[](int index) {
 
 fmatrix4x4::fmatrix4x4() {
     memset(m_, 0, sizeof(m_));
+}
+
+fmatrix4x4::fmatrix4x4(float *arr) {
 }
 
 void fmatrix4x4::Identity() {
@@ -86,7 +176,7 @@ fvector3 fmatrix4x4::operator*(const fvector3 &rhs) const {
     float t1[3];
 #if 1
     t1[0] = m_[0]*rhs[0] + m_[1]*rhs[1] + m_[2]*rhs[2] + m_[3];
-    t1[1] = m_[4]*rhs[0] + m_[5]*rhs[1] + m_[5]*rhs[2] + m_[7];
+    t1[1] = m_[4]*rhs[0] + m_[5]*rhs[1] + m_[6]*rhs[2] + m_[7];
     t1[2] = m_[8]*rhs[0] + m_[9]*rhs[1] + m_[10]*rhs[2] + m_[11];
 #else
     t1[0] = m_[0]*rhs[0] + m_[4]*rhs[1] + m_[8]*rhs[2] + m_[12];

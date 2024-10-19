@@ -17,6 +17,7 @@
 #include "input.h"
 #include "examples/cow/cow_vertices.h"
 #include "examples/cow/cow_triangles.h"
+#include "examples/cow/cow_uv.h"
 
 InputWidget::InputWidget(QWidget *parent)
     : QTableWidget(parent) {
@@ -40,7 +41,8 @@ InputWidget::InputWidget(QWidget *parent)
 
 void InputWidget::slotRequestToUpdate() {
     emit signalVertexData(&cow_vertices->x, cowNumVertices,
-                          cow_triangles, cowTrianglesNum);
+                          &cow_uv[0][0], cowNumUV,
+                          cow_triangles, cow_uv_index, cowTrianglesNum);
 }
 
 

@@ -25,12 +25,18 @@
 #include <QScreen>
 #include <qevent.h>
 
-static const float FRUSTRUM_NEAR = 0.1f;
-static const float FRUSTRUM_FAR = 100.0f;
+static const float FRUSTRUM_NEAR = 1.0f;
+static const float FRUSTRUM_FAR = 1000.0f;
+
+const float view_coef[16] = {0.707107, -0.331295, 0.624695, 0,
+                             0, 0.883452, 0.468521, 0,
+                             -0.707107, -0.331295, 0.624695, 0,
+                             -1.63871, -5.747777, -40.400412, 1};
 
 MainWindow::MainWindow() :
     QMainWindow(nullptr),
-    viewMatrix_(15.0, -10.0, -20.0f, 30.0f, 30.0f, 0.0),
+    //viewMatrix_(15.0, -10.0, -20.0f, 30.0f, 30.0f, 0.0),
+    viewMatrix_(view_coef),
     projectionMatrix_(FRUSTRUM_NEAR,
                       FRUSTRUM_FAR,
                       90.0f,
@@ -58,13 +64,13 @@ MainWindow::MainWindow() :
 
     vertexPipeline_ = new VertexShaderPipeline(this);
     vertexPipeline_->setViewMatrix(&viewMatrix_);
-    vertexPipeline_->setProjectionMatrix(&projectionMatrix_);
 
     pixelPipeline_ = new PixelShaderPipeline(this,
                                              VIEWPORT_WIDTH,
                                              VIEWPORT_HEIGHT,
                                              FRUSTRUM_NEAR,
                                              FRUSTRUM_FAR);
+    pixelPipeline_->setProjectionMatrix(&projectionMatrix_);
 
     viewport_ = new ViewportWidget(mainWidget);
     gridlayout->addWidget(viewport_, 0, 1);
