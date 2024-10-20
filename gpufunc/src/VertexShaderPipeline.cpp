@@ -15,7 +15,6 @@
  */
 
 #include "VertexShaderPipeline.h"
-#include "gputypes.h"
 
 VertexShaderPipeline::VertexShaderPipeline(QWidget *parent)
     : QWidget(parent) {

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <gputypes.h>
+#include <matrix.h>
 
 const unsigned numVertices = 2630;
-const CoordF vertices[numVertices] = {
+const fvector3 vertices[numVertices] = {
     {  7.00000, 12.00000,  0.00000},
     {  6.88900, 12.00000,  1.27250}, 
     {  6.81470, 12.19440,  1.25880}, 
