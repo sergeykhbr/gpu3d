@@ -21,6 +21,7 @@
 #include <QtGui/QImage>
 #include <QtGui/QPainter>
 #include <QtGui/qevent.h>
+#include <QWheelEvent>
 
 static const int VIEWPORT_WIDTH = 640;
 static const int VIEWPORT_HEIGHT = 480;
@@ -36,9 +37,11 @@ class ViewportWidget : public QWidget {
 
  signals:
     void signalRequestToUpdated();
+    void signalZoom(float zoom);
 
  protected:
     void paintEvent(QPaintEvent *ev);
+    void wheelEvent(QWheelEvent* ev) override;
     void mousePressEvent(QMouseEvent *ev);
     void mouseMoveEvent(QMouseEvent *ev);
     void mouseReleaseEvent(QMouseEvent *ev);

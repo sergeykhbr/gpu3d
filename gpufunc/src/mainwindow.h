@@ -40,7 +40,6 @@ class MainWindow : public QMainWindow
     void slotTextToStatusBar(qint32 idx, const QString &message);
 
  private:
-    ViewMatrix viewMatrix_;
     ProjectionMatrix projectionMatrix_;
     InputWidget *input_;
     VertexShaderPipeline *vertexPipeline_;

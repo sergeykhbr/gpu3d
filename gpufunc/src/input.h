@@ -19,24 +19,26 @@
 #include <QWidget>
 #include <QTableWidget>
 #include <QtGui/qevent.h>
-#include <gputypes.h>
+#include <matrix.h>
 
 class InputWidget : public QTableWidget {
     Q_OBJECT
 
  public:
-    explicit InputWidget(QWidget *parent = nullptr);
+    explicit InputWidget(QWidget *parent);
 
  public slots:
     void slotRequestToUpdate();
+    void slotZoom(float zoom);
 
  signals:
-    void signalVertexData(const float *vert, int vsz,
+    void signalVertexData(const float *view,
+                          const float *vert, int vsz,
                           const float *uv, int uvsz,
                           unsigned *tri, unsigned *uvtri, int tsz);
 
  private:
-    CoordF coord_[10];
+    fmatrix4x4 V_;
 };
 
 

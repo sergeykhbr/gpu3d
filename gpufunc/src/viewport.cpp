@@ -45,6 +45,27 @@ void ViewportWidget::paintEvent(QPaintEvent *event) {
     p.end();
 }
 
+void ViewportWidget::wheelEvent(QWheelEvent* ev) {
+    // typical mouse angle rotation::
+    QPoint numDegrees = ev->angleDelta() / 8;
+    if (!numDegrees.isNull()) {
+        int numSteps = numDegrees.y() / 15;
+        float zoom = static_cast<float>(numSteps);
+#if 1
+        zoom *= 0.1f;
+#else
+        if (numSteps > 0) {
+            zoom *= 1.1f;
+        } else if (numSteps < 0) {
+            zoom /= -1.1f;
+        }
+#endif
+        emit signalZoom(zoom);
+    }
+
+    ev->accept();
+}
+
 void ViewportWidget::mousePressEvent(QMouseEvent *ev) {
     setFocus();
     /** There're 2 methods: buttons() and button():

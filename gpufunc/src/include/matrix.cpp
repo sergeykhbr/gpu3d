@@ -149,7 +149,8 @@ fmatrix4x4::fmatrix4x4() {
     memset(m_, 0, sizeof(m_));
 }
 
-fmatrix4x4::fmatrix4x4(float *arr) {
+fmatrix4x4::fmatrix4x4(const float *arr) {
+    memcpy(m_, arr, sizeof(m_));
 }
 
 void fmatrix4x4::Identity() {

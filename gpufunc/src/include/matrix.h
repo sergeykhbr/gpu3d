@@ -95,7 +95,7 @@ class fvector4 {
 class fmatrix4x4 {
  public:
     fmatrix4x4();
-    fmatrix4x4(float *arr);
+    fmatrix4x4(const float *arr);
 
     float *getp() { return m_; }
 
