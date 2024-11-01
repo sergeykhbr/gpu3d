@@ -26,10 +26,9 @@ class VertexShaderPipeline : public QWidget {
  public:
     VertexShaderPipeline(QWidget *parent);
 
-    void setViewMatrix(fmatrix4x4 *v) { V_  = *v; }
-
  public slots:
-    void slotVertexData(const float *vert, int vsz,
+    void slotVertexData(const float *view,
+                        const float *vert, int vsz,
                         const float *uv, int uvsz,
                         unsigned *tri, unsigned *uvtri, int tsz);
 
@@ -39,8 +38,6 @@ class VertexShaderPipeline : public QWidget {
                           unsigned *tri, unsigned *uvtri, float *normal, int tsz);
 
  protected:
-    fmatrix4x4 V_;
-
     float output_[8*1024*3];
     float normal_[8*1024*3];  // triangles normals
 };

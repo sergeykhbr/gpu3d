@@ -15,24 +15,25 @@
  */
 
 #include "VertexShaderPipeline.h"
-#include "gputypes.h"
 
 VertexShaderPipeline::VertexShaderPipeline(QWidget *parent)
     : QWidget(parent) {
     memset(output_, 0, sizeof(output_));
 }
 
-void VertexShaderPipeline::slotVertexData(const float *vert, int vsz,
+void VertexShaderPipeline::slotVertexData(const float *view,
+                                          const float *vert, int vsz,
                                           const float *uv, int uvsz,
                                           unsigned *tri, unsigned *uvtri, int tsz) {
     // Affine tranformation do not change perspective coordinate w
-    fvector3 v1;
+    fvector4 v1;
+    ViewMatrix V(view);
     for (int i = 0; i < vsz; i++) {
-        v1 = fvector3(&vert[3*i]);
-        v1 = V_ * v1;           // World to camera
-        output_[3*i] = v1[0];
-        output_[3*i + 1] = v1[1];
-        output_[3*i + 2] = v1[2];
+        v1 = fvector4(&vert[3*i], 1.0f);
+        v1 = V * v1;           // World to camera
+        output_[3*i] = v1[0] / v1[3];
+        output_[3*i + 1] = v1[1] / v1[3];
+        output_[3*i + 2] = v1[2] / v1[3];
     }
 
     // Go through a array of triangles to compute normal as a crossproduct of 

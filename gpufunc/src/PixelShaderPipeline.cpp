@@ -14,7 +14,6 @@
  *  limitations under the License.
  */
 
-#include "gputypes.h"
 #include "matrix.h"
 #include "PixelShaderPipeline.h"
 
