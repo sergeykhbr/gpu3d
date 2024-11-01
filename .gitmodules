@@ -1,0 +1,3 @@
+[submodule "prj/common/unisims/sip"]
+	path = prj/common/unisims/sip
+	url = https://github.com/sergeykhbr/sip
