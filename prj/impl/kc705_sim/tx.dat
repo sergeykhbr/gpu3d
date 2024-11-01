@@ -1,0 +1,135 @@
+[            78513000] : Config Read Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x00
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x070 
+
+[            86561000] : Config Read Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x00
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x000 
+
+[            94609000] : Config Read Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x00
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x064 
+
+[           102657000] : Config Write Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x00
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x010 
+
+	 0xff
+	 0xff
+	 0xff
+	 0xff
+
+
+[           104305000] : Config Read Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x01
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x010 
+
+[           112353000] : Config Write Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x02
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x014 
+
+	 0xff
+	 0xff
+	 0xff
+	 0xff
+
+
+[           114001000] : Config Read Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x03
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x014 
+
+[           122049000] : Config Write Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x04
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x018 
+
+	 0xff
+	 0xff
+	 0xff
+	 0xff
+
+
+[           123697000] : Config Read Type 0 Frame 
+
+	 Traffic Class: 0x0
+	 TD: 0
+	 EP: 0
+	 Attributes: 0x0
+	 Length: 0x001
+	 Requester Id: 0x01af
+	 Tag: 0x05
+	 Last and First Byte Enables: 0x0f
+	 Completer Id: 0x01a0
+	 Register Address: 0x018 
+

@@ -9,8 +9,8 @@ BENCH=board
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
-INC+=+incdir+${VIPS_HOME}/pcie
-INC=+incdir+${PRJ_ROOT}/tb/pcie
+INC+=+incdir+${VIPS_HOME}/pcie_rootport
+INC+=+incdir+${PRJ_ROOT}/tb/pcie
 VLOG_PARAMS_TB=-64 -sv -work work
 ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE} -access +rwc
 SIM_OPTS = -64 -input ./ncsim_settings work.${BENCH} +cycles=${CYCLES} \

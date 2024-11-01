@@ -80,6 +80,9 @@ wire               rp_sys_clk;
 
 localparam EXT_PIPE_SIM = "FALSE";
 
+  // Global signals for Xilinx unisim modules:
+  glbl glbl();
+
 
 //
 // PCI-Express Serial Interconnect
