@@ -1,3 +1,6 @@
 [submodule "prj/common/unisims/sip"]
 	path = prj/common/unisims/sip
 	url = https://github.com/sergeykhbr/sip
+[submodule "software/xilinx-hdmi-modules"]
+	path = software/xilinx-hdmi-modules
+	url = https://github.com/Xilinx/hdmi-modules

@@ -45,7 +45,11 @@ and test application. 5.0GT/s passed.
 [           112353380] : TSK_PARSE_FRAME on Transmit
 ```
 
-3. HDMI tests (in progress)
+3. HDMI tests. Xilinx doesn't provide testbench for HDMI sub-system:
+
+  [IP-Facts](https://docs.xilinx.com/r/en-US/pg235-v-hdmi-tx-ss/IP-Facts)
+
+we'll cobble together something
 
 ## Software
 
