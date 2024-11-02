@@ -54,7 +54,16 @@ sampling point, passing through every 11th sample.
 
 `timescale 1ns / 1ps
 
-module dru_inferred (
+module dru_inferred #(
+      parameter int S_MAX = 10,                               // max number of extracted bits, decimal
+      parameter logic [15:0] MASK_CG = 16'b1111111111110000,  // place same number of LSb zeros
+      parameter logic [15:0] MASK_PD = 16'b1111111111110000,  // place same number of LSb zeros
+      parameter logic [36:0] MASK_VCO = 37'b1111111111111111111111111111111110000,  // plase same number of LSb zeros
+      parameter logic EN_INTEG = 1,                             // by default 1
+      parameter bit EN_ADV_COMPR = 0,                         // by default 0. when set to 1 activates the advanced compressor
+      parameter logic PH_EST_DIS = 0                            // by defauls 0
+)
+(
     input  [19:0]   DT_IN,
     input  [36:0]   CENTER_F,
     input           EN,
@@ -66,8 +75,8 @@ module dru_inferred (
     input  [31:0]   PHASE_IN,
     input           RST,
     input           RST_FREQ,
-    input           EN_INTEG,
-    input           PH_EST_DIS,
+    //input           EN_INTEG,
+    //input           PH_EST_DIS,
     output [20:0]   PH_OUT,
     output [31:0]   INTEG,
     output [31:0]   DIRECT,

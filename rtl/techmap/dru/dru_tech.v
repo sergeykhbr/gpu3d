@@ -5,9 +5,9 @@ module dru_tech #(
       parameter logic [15:0] MASK_CG = 16'b1111111111110000,  // place same number of LSb zeros
       parameter logic [15:0] MASK_PD = 16'b1111111111110000,  // place same number of LSb zeros
       parameter logic [36:0] MASK_VCO = 37'b1111111111111111111111111111111110000,  // plase same number of LSb zeros
-      parameter bit EN_INTEG = 1,                             // by default 1
+      parameter logic EN_INTEG = 1,                             // by default 1
       parameter bit EN_ADV_COMPR = 0,                         // by default 0. when set to 1 activates the advanced compressor
-      parameter bit PH_EST_DIS = 0                            // by defauls 0
+      parameter logic PH_EST_DIS = 0                            // by defauls 0
 )
 (
     input  [19:0]   DT_IN,
@@ -21,8 +21,8 @@ module dru_tech #(
     input  [31:0]   PHASE_IN,
     input           RST,
     input           RST_FREQ,
-    input           EN_INTEG,
-    input           PH_EST_DIS,
+    //input           EN_INTEG,
+    //input           PH_EST_DIS,
     output [20:0]   PH_OUT,
     output [31:0]   INTEG,
     output [31:0]   DIRECT,
@@ -40,9 +40,7 @@ module dru_tech #(
        .MASK_CG(MASK_CG),
        .MASK_PD(MASK_PD),
        .MASK_VCO(MASK_VCO),
-       .EN_INTEG(EN_INTEG),
-       .EN_ADV_COMPR(EN_ADV_COMPR),
-       .PH_EST_DIS(PH_EST_DIS)
+       .EN_ADV_COMPR(EN_ADV_COMPR)
     ) dru0 (
        .DT_IN(DT_IN),
        .CENTER_F(CENTER_F),
@@ -55,8 +53,8 @@ module dru_tech #(
        .PHASE_IN(PHASE_IN),
        .RST(RST),
        .RST_FREQ(RST_FREQ),
-       .EN_INTEG(EN_INTEG),
-       .PH_EST_DIS(PH_EST_DIS),
+       //.EN_INTEG(EN_INTEG),
+       //.PH_EST_DIS(PH_EST_DIS),
        .PH_OUT(PH_OUT),
        .INTEG(INTEG),
        .DIRECT(DIRECT),
@@ -78,9 +76,7 @@ module dru_tech #(
        .MASK_CG(MASK_CG),
        .MASK_PD(MASK_PD),
        .MASK_VCO(MASK_VCO),
-       .EN_INTEG(EN_INTEG),
-       .EN_ADV_COMPR(EN_ADV_COMPR),
-       .PH_EST_DIS(PH_EST_DIS)
+       .EN_ADV_COMPR(EN_ADV_COMPR)
     ) dru0 (
        .DT_IN(DT_IN),
        .CENTER_F(CENTER_F),
@@ -93,8 +89,8 @@ module dru_tech #(
        .PHASE_IN(PHASE_IN),
        .RST(RST),
        .RST_FREQ(RST_FREQ),
-       .EN_INTEG(EN_INTEG),
-       .PH_EST_DIS(PH_EST_DIS),
+       //.EN_INTEG(EN_INTEG),
+       //.PH_EST_DIS(PH_EST_DIS),
        .PH_OUT(PH_OUT),
        .INTEG(INTEG),
        .DIRECT(DIRECT),

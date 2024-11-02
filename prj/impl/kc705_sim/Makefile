@@ -9,8 +9,11 @@ BENCH=board
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
+INC+=+incdir+${RTL_HOME}/techmap/hdmi_phy/kc705/
 INC+=+incdir+${VIPS_HOME}/pcie_rootport
 INC+=+incdir+${PRJ_ROOT}/tb/pcie
+# Remove vhdl after updating HDMI PHY
+VHDL_PARAMS=-64 -v93 -smartorder
 VLOG_PARAMS_TB=-64 -sv -work work
 ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE} -access +rwc
 SIM_OPTS = -64 -input ./ncsim_settings work.${BENCH} +cycles=${CYCLES} \
@@ -48,6 +51,7 @@ comp: prep clr_logs
 
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_pcie_kc705.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work work              -f ${LISTS_HOME}/techmap_hdmi_phy_vhdl.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_hdmi_phy.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f kc705_top_sim.f
 

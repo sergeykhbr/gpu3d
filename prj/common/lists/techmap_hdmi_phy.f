@@ -8,8 +8,6 @@ ${RTL_HOME}/techmap/hdmi_phy/kc705/exdes_vid_phy_controller_0_clkdet.sv
 ${RTL_HOME}/techmap/hdmi_phy/kc705/exdes_vid_phy_controller_0_CLOCK_MODULE.v
 ${RTL_HOME}/techmap/hdmi_phy/kc705/exdes_vid_phy_controller_0_CLOCK_MODULE_8series.v
 ${RTL_HOME}/techmap/hdmi_phy/kc705/exdes_vid_phy_controller_0_gtxe2_hdmi_txaln.v
-${RTL_HOME}/techmap/hdmi_phy/kc705/bs_flex_v_2.vhd
-${RTL_HOME}/techmap/hdmi_phy/kc705/nidru_20_wrapper.vhd
 ${RTL_HOME}/techmap/hdmi_phy/kc705/vid_phy_controller_v2_2_interrupts.v
 ${RTL_HOME}/techmap/hdmi_phy/kc705/vid_phy_controller_v2_2_axi4lite.v
 ${RTL_HOME}/techmap/hdmi_phy/kc705/vid_phy_controller_v2_2_dru.sv
