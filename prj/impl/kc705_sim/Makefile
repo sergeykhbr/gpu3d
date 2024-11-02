@@ -46,7 +46,9 @@ comp: prep clr_logs
 	@echo " START COMPILATION: "
 	@echo "==========================================================================================="
 
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_pcie_kc705.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_hdmi_phy.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f kc705_top_sim.f
 
 
@@ -69,7 +71,9 @@ mce_flow: prep clr_logs
 	-timescale 1ns/10ps \
 	-access -rwc \
     +UART_LOG_PATH=uart -input run.tcl  ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} \
+	-f ${LISTS_HOME}/techmap.f \
 	-f ${LISTS_HOME}/techmap_pcie_kc705.f \
+	-f ${LISTS_HOME}/techmap_hdmi_phy.f \
 	-f kc705_top_sim.f \
 	-top board \
 	-mce_top board.tt

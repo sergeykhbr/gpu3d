@@ -8,5 +8,6 @@ xmsim.key
 *.tmp
 *.err
 *.svcf
+*.dat
 restore.tcl*
 compare.tcl*
