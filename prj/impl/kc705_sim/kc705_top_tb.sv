@@ -14,6 +14,8 @@
 //! limitations under the License.
 //!
 
+`timescale 1 ps / 1 ps
+
 `ifndef SCLK_PERIOD
   // FPGA 200 MHz
   `define SCLK_PERIOD 5ns

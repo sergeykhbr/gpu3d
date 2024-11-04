@@ -5,12 +5,13 @@
 include src.mk
 
 TIMESCALE=1ns/10ps
-BENCH=board
+BENCH=kc705_top_tb
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
 INC+=+incdir+${RTL_HOME}/techmap/hdmi_phy/kc705
 INC+=+incdir+${RTL_HOME}/techmap/cdc_axi_sync/kc705
+INC+=+incdir+${VIPS_HOME}/ddr3
 INC+=+incdir+${VIPS_HOME}/pcie_rootport
 INC+=+incdir+${PRJ_ROOT}/tb/pcie
 # Remove vhdl after updating HDMI PHY
@@ -93,8 +94,8 @@ mce_flow: prep clr_logs
 	-f ${LISTS_HOME}/riscv_soc.f \
 	-f ../kc705/kc705_top.f \
 	-f kc705_top_sim.f \
-	-top board \
-	-mce_top board.tt
+	-top kc705_top_tb \
+	-mce_top kc705_top_tb.tt
 
 clean:
 	@echo "==========================================================================================="
