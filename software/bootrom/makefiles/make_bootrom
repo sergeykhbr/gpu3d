@@ -1,0 +1,101 @@
+include util.mak
+
+CC=riscv64-unknown-elf-gcc
+CPP=riscv64-unknown-elf-gcc
+OBJDUMP=riscv64-unknown-elf-objdump
+
+FPU_ENABLED=0
+
+CFLAGS= -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000
+ifeq ($(FPU_ENABLED), 1)
+  CFLAGS += -march=rv64imafd -DFPU_ENABLED
+else
+  CFLAGS += -march=rv64imac -mabi=lp64
+endif
+
+LDFLAGS = -T test.ld -nostdlib -nostartfiles
+ifeq ($(FPU_ENABLED), 1)
+else
+  LDFLAGS += -march=rv64imac -mabi=lp64
+endif
+
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH=\
+	$(TOP_DIR)../common/system \
+	$(TOP_DIR)../common \
+	$(TOP_DIR)src
+
+# source files directories list:
+SRC_PATH =\
+	$(TOP_DIR)../common/system \
+	$(TOP_DIR)src
+
+LIB_NAMES =\
+	gcc \
+	c \
+	m
+
+VPATH = $(SRC_PATH)
+
+SOURCES = startup \
+	hwinit \
+	exceptions \
+	interrupts \
+	memanager \
+	uart \
+	fw_api \
+	test_pnp \
+	test_plic \
+	test_mtimer \
+	test_swirq \
+	test_ddr \
+	main
+
+OBJ_FILES = $(addsuffix .o,$(SOURCES))
+COMMONNAME = bootrom
+EXECUTABLE = $(COMMONNAME).elf
+DUMPFILE = $(COMMONNAME).dump
+HEXFILE_LO = $(COMMONNAME)_lo.hex
+HEXFILE_HI = $(COMMONNAME)_hi.hex
+LSTFILE = $(COMMONNAME).lst
+
+all: bootrom
+
+.PHONY: $(EXECUTABLE) $(DUMPFILE)
+
+
+bootrom: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE_HI)
+$(HEXFILE_HI): $(EXECUTABLE)
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 32768 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 32768 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
+
+$(DUMPFILE): $(EXECUTABLE)
+	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) -S $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$(LSTFILE))
+
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(ECHO) "\n  Shared Library has been built successfully.\n"
+
+#.cpp.o:
+%.o: %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+#.c.o:
+%.o: %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+%.o: %.S
+	echo $(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+

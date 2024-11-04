@@ -9,7 +9,8 @@ BENCH=board
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
-INC+=+incdir+${RTL_HOME}/techmap/hdmi_phy/kc705/
+INC+=+incdir+${RTL_HOME}/techmap/hdmi_phy/kc705
+INC+=+incdir+${RTL_HOME}/techmap/cdc_axi_sync/kc705
 INC+=+incdir+${VIPS_HOME}/pcie_rootport
 INC+=+incdir+${PRJ_ROOT}/tb/pcie
 # Remove vhdl after updating HDMI PHY
@@ -48,13 +49,18 @@ comp: prep clr_logs
 	@echo "==========================================================================================="
 	@echo " START COMPILATION: "
 	@echo "==========================================================================================="
-
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} ../kc705/target_cfg_pkg.sv
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/ambalib.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_ddr_kc705.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_pcie_kc705.f
 	${SRUN} xmvhdl ${VHDL_PARAMS} -work work              -f ${LISTS_HOME}/techmap_hdmi_phy_vhdl.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_hdmi_phy.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riscv_soc.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_top.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f kc705_top_sim.f
-
 
 build: comp
 	@echo "==========================================================================================="
@@ -75,13 +81,20 @@ mce_flow: prep clr_logs
 	-timescale 1ns/10ps \
 	-access -rwc \
     +UART_LOG_PATH=uart -input run.tcl  ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} \
+	../kc705/target_cfg_pkg.sv \
+	-f ${LISTS_HOME}/ambalib.f \
+	-f ${LISTS_HOME}/riverlib.f \
 	-f ${LISTS_HOME}/techmap.f \
+	-f ${LISTS_HOME}/techmap_ddr_kc705.f \
 	-f ${LISTS_HOME}/techmap_pcie_kc705.f \
 	-f ${LISTS_HOME}/techmap_hdmi_phy.f \
+	-f ${LISTS_HOME}/misclib.f \
+	-f ${LISTS_HOME}/sdctrl.f \
+	-f ${LISTS_HOME}/riscv_soc.f \
+	-f ../kc705/kc705_top.f \
 	-f kc705_top_sim.f \
 	-top board \
 	-mce_top board.tt
-
 
 clean:
 	@echo "==========================================================================================="
