@@ -45,12 +45,12 @@ typedef mapinfo_type bus1_mapinfo_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 
 // Bus 1 device tree
 const bus1_mapinfo_vector CFG_BUS1_MAP = '{
-    '{64'h0000000000010000, 64'h0000000000011000},          // 0, uart1 4KB
-    '{64'h0000000000012000, 64'h0000000000013000},          // 1, PRCI 4KB
-    '{64'h000000000001E000, 64'h000000000001F000},          // 2, dmi 4KB. TODO: change base address
-    '{64'h0000000000060000, 64'h0000000000061000},          // 3, GPIO 4KB
-    '{64'h00000000000C0000, 64'h00000000000C1000},          // 4, DDR MGMT 4KB
-    '{64'h00000000000FF000, 64'h0000000000100000}           // 5, Plug'n'Play 4KB
+    '{64'h0000000000010000, 64'h0000000000011000},          // uart1 4KB
+    '{64'h0000000000012000, 64'h0000000000013000},          // PRCI 4KB
+    '{64'h000000000001E000, 64'h000000000001F000},          // dmi 4KB. TODO: change base address
+    '{64'h0000000000060000, 64'h0000000000061000},          // GPIO 4KB
+    '{64'h00000000000C0000, 64'h00000000000C1000},          // DDR MGMT 4KB
+    '{64'h00000000000FF000, 64'h0000000000100000}           // Plug'n'Play 4KB
 };
 
 endpackage: types_bus1_pkg
