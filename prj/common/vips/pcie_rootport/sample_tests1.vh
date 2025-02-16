@@ -36,9 +36,9 @@ begin
     // BusMstr in the command register
     //--------------------------------------------------------------------------
 
-    board.RP.cfg_usrapp.TSK_READ_CFG_DW(32'h00000001);
-    board.RP.cfg_usrapp.TSK_WRITE_CFG_DW(32'h00000001, 32'h00000007, 4'b1110);
-    board.RP.cfg_usrapp.TSK_READ_CFG_DW(32'h00000001);
+    `ROOTPORT_TB.cfg_usrapp.TSK_READ_CFG_DW(32'h00000001);
+    `ROOTPORT_TB.cfg_usrapp.TSK_WRITE_CFG_DW(32'h00000001, 32'h00000007, 4'b1110);
+    `ROOTPORT_TB.cfg_usrapp.TSK_READ_CFG_DW(32'h00000001);
 
   $finish;
 end
@@ -78,7 +78,7 @@ fork
     expect_cpld_payload[1] = DEV_VEN_ID[15:8]; 
     expect_cpld_payload[2] = DEV_VEN_ID[23:16]; 
     expect_cpld_payload[3] = DEV_VEN_ID[31:24]; 
-    board.RP.com_usrapp.TSK_EXPECT_CPLD(
+    `ROOTPORT_TB.com_usrapp.TSK_EXPECT_CPLD(
       3'h0, //traffic_class;
       1'b0, //td;
       1'b0, //ep;
@@ -113,9 +113,9 @@ join
     // BusMstr in the command register
     //--------------------------------------------------------------------------
 
-    board.RP.cfg_usrapp.TSK_READ_CFG_DW(32'h00000001);
-    board.RP.cfg_usrapp.TSK_WRITE_CFG_DW(32'h00000001, 32'h00000007, 4'b1110);
-    board.RP.cfg_usrapp.TSK_READ_CFG_DW(32'h00000001);
+    `ROOTPORT_TB.cfg_usrapp.TSK_READ_CFG_DW(32'h00000001);
+    `ROOTPORT_TB.cfg_usrapp.TSK_WRITE_CFG_DW(32'h00000001, 32'h00000007, 4'b1110);
+    `ROOTPORT_TB.cfg_usrapp.TSK_READ_CFG_DW(32'h00000001);
 
   end
 
@@ -127,24 +127,24 @@ begin
 
     // This test performs a 32 bit write to a 32 bit Memory space and performs a read back
 
-    board.RP.tx_usrapp.TSK_SIMULATION_TIMEOUT(10050);
+    `ROOTPORT_TB.tx_usrapp.TSK_SIMULATION_TIMEOUT(10050);
 
-    board.RP.tx_usrapp.TSK_SYSTEM_INITIALIZATION;
+    `ROOTPORT_TB.tx_usrapp.TSK_SYSTEM_INITIALIZATION;
 
-    board.RP.tx_usrapp.TSK_BAR_INIT;
+    `ROOTPORT_TB.tx_usrapp.TSK_BAR_INIT;
 
 //--------------------------------------------------------------------------
 // Event : Testing BARs
 //--------------------------------------------------------------------------
 
-        for (board.RP.tx_usrapp.ii = 0; board.RP.tx_usrapp.ii <= 6; board.RP.tx_usrapp.ii =
-            board.RP.tx_usrapp.ii + 1) begin
-            if (board.RP.tx_usrapp.BAR_INIT_P_BAR_ENABLED[board.RP.tx_usrapp.ii] > 2'b00) // bar is enabled
-               case(board.RP.tx_usrapp.BAR_INIT_P_BAR_ENABLED[board.RP.tx_usrapp.ii])
+        for (`ROOTPORT_TB.tx_usrapp.ii = 0; `ROOTPORT_TB.tx_usrapp.ii <= 6; `ROOTPORT_TB.tx_usrapp.ii =
+            `ROOTPORT_TB.tx_usrapp.ii + 1) begin
+            if (`ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR_ENABLED[`ROOTPORT_TB.tx_usrapp.ii] > 2'b00) // bar is enabled
+               case(`ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR_ENABLED[`ROOTPORT_TB.tx_usrapp.ii])
                    2'b01 : // IO SPACE
                         begin
 
-                          $display("[%t] : Transmitting TLPs to IO Space BAR %x", $realtime, board.RP.tx_usrapp.ii);
+                          $display("[%t] : Transmitting TLPs to IO Space BAR %x", $realtime, `ROOTPORT_TB.tx_usrapp.ii);
 
                           //--------------------------------------------------------------------------
                           // Event : IO Write bit TLP
@@ -152,16 +152,16 @@ begin
 
 
 
-                          board.RP.tx_usrapp.TSK_TX_IO_WRITE(board.RP.tx_usrapp.DEFAULT_TAG,
-                             board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii][31:0], 4'hF, 32'hdead_beef);
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_IO_WRITE(`ROOTPORT_TB.tx_usrapp.DEFAULT_TAG,
+                             `ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii][31:0], 4'hF, 32'hdead_beef);
 
-                          board.RP.com_usrapp.TSK_EXPECT_CPL(3'h0, 1'b0, 1'b0, 2'b0,
-                             board.RP.tx_usrapp.COMPLETER_ID_CFG, 3'h0, 1'b0, 12'h4,
-                             board.RP.tx_usrapp.COMPLETER_ID_CFG, board.RP.tx_usrapp.DEFAULT_TAG,
-                             board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii][31:0], test_vars[0]);
+                          `ROOTPORT_TB.com_usrapp.TSK_EXPECT_CPL(3'h0, 1'b0, 1'b0, 2'b0,
+                             `ROOTPORT_TB.tx_usrapp.COMPLETER_ID_CFG, 3'h0, 1'b0, 12'h4,
+                             `ROOTPORT_TB.tx_usrapp.COMPLETER_ID_CFG, `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG,
+                             `ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii][31:0], test_vars[0]);
 
-                          board.RP.tx_usrapp.TSK_TX_CLK_EAT(10);
-                          board.RP.tx_usrapp.DEFAULT_TAG = board.RP.tx_usrapp.DEFAULT_TAG + 1;
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_CLK_EAT(10);
+                          `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG = `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG + 1;
 
                           //--------------------------------------------------------------------------
                           // Event : IO Read bit TLP
@@ -169,27 +169,27 @@ begin
 
 
                           // make sure P_READ_DATA has known initial value
-                          board.RP.tx_usrapp.P_READ_DATA = 32'hffff_ffff;
+                          `ROOTPORT_TB.tx_usrapp.P_READ_DATA = 32'hffff_ffff;
                           fork
-                             board.RP.tx_usrapp.TSK_TX_IO_READ(board.RP.tx_usrapp.DEFAULT_TAG,
-                                board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii][31:0], 4'hF);
-                             board.RP.tx_usrapp.TSK_WAIT_FOR_READ_DATA;
+                             `ROOTPORT_TB.tx_usrapp.TSK_TX_IO_READ(`ROOTPORT_TB.tx_usrapp.DEFAULT_TAG,
+                                `ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii][31:0], 4'hF);
+                             `ROOTPORT_TB.tx_usrapp.TSK_WAIT_FOR_READ_DATA;
                           join
-                          if  (board.RP.tx_usrapp.P_READ_DATA != 32'hdead_beef)
+                          if  (`ROOTPORT_TB.tx_usrapp.P_READ_DATA != 32'hdead_beef)
                              begin
                                $display("[%t] : Test FAILED --- Data Error Mismatch, Write Data %x != Read Data %x",
-                                   $realtime, 32'hdead_beef, board.RP.tx_usrapp.P_READ_DATA);
+                                   $realtime, 32'hdead_beef, `ROOTPORT_TB.tx_usrapp.P_READ_DATA);
                                test_failed_flag = 1;
                              end
                           else
                              begin
                                $display("[%t] : Test PASSED --- Write Data: %x successfully received",
-                                   $realtime, board.RP.tx_usrapp.P_READ_DATA);
+                                   $realtime, `ROOTPORT_TB.tx_usrapp.P_READ_DATA);
                              end
 
 
-                          board.RP.tx_usrapp.TSK_TX_CLK_EAT(10);
-                          board.RP.tx_usrapp.DEFAULT_TAG = board.RP.tx_usrapp.DEFAULT_TAG + 1;
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_CLK_EAT(10);
+                          `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG = `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG + 1;
 
 
                         end
@@ -199,22 +199,22 @@ begin
 
 
                           $display("[%t] : Transmitting TLPs to Memory 32 Space BAR %x", $realtime,
-                              board.RP.tx_usrapp.ii);
+                              `ROOTPORT_TB.tx_usrapp.ii);
 
                           //--------------------------------------------------------------------------
                           // Event : Memory Write 32 bit TLP
                           //--------------------------------------------------------------------------
 
-                          board.RP.tx_usrapp.DATA_STORE[0] = 8'h04;
-                          board.RP.tx_usrapp.DATA_STORE[1] = 8'h03;
-                          board.RP.tx_usrapp.DATA_STORE[2] = 8'h02;
-                          board.RP.tx_usrapp.DATA_STORE[3] = 8'h01;
+                          `ROOTPORT_TB.tx_usrapp.DATA_STORE[0] = 8'h04;
+                          `ROOTPORT_TB.tx_usrapp.DATA_STORE[1] = 8'h03;
+                          `ROOTPORT_TB.tx_usrapp.DATA_STORE[2] = 8'h02;
+                          `ROOTPORT_TB.tx_usrapp.DATA_STORE[3] = 8'h01;
 
-                          board.RP.tx_usrapp.TSK_TX_MEMORY_WRITE_32(board.RP.tx_usrapp.DEFAULT_TAG,
-                              board.RP.tx_usrapp.DEFAULT_TC, 10'd1,
-                              board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii][31:0]+8'h10, 4'h0, 4'hF, 1'b0);
-                          board.RP.tx_usrapp.TSK_TX_CLK_EAT(10);
-                          board.RP.tx_usrapp.DEFAULT_TAG = board.RP.tx_usrapp.DEFAULT_TAG + 1;
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_MEMORY_WRITE_32(`ROOTPORT_TB.tx_usrapp.DEFAULT_TAG,
+                              `ROOTPORT_TB.tx_usrapp.DEFAULT_TC, 10'd1,
+                              `ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii][31:0]+8'h10, 4'h0, 4'hF, 1'b0);
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_CLK_EAT(10);
+                          `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG = `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG + 1;
 
                           //--------------------------------------------------------------------------
                           // Event : Memory Read 32 bit TLP
@@ -222,33 +222,33 @@ begin
 
 
                          // make sure P_READ_DATA has known initial value
-                         board.RP.tx_usrapp.P_READ_DATA = 32'hffff_ffff;
+                         `ROOTPORT_TB.tx_usrapp.P_READ_DATA = 32'hffff_ffff;
                           fork
-                             board.RP.tx_usrapp.TSK_TX_MEMORY_READ_32(board.RP.tx_usrapp.DEFAULT_TAG,
-                                 board.RP.tx_usrapp.DEFAULT_TC, 10'd1,
-                                 board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii][31:0]+8'h10, 4'h0, 4'hF);
-                             board.RP.tx_usrapp.TSK_WAIT_FOR_READ_DATA;
+                             `ROOTPORT_TB.tx_usrapp.TSK_TX_MEMORY_READ_32(`ROOTPORT_TB.tx_usrapp.DEFAULT_TAG,
+                                 `ROOTPORT_TB.tx_usrapp.DEFAULT_TC, 10'd1,
+                                 `ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii][31:0]+8'h10, 4'h0, 4'hF);
+                             `ROOTPORT_TB.tx_usrapp.TSK_WAIT_FOR_READ_DATA;
                           join
-                          if  (board.RP.tx_usrapp.P_READ_DATA != {board.RP.tx_usrapp.DATA_STORE[3],
-                             board.RP.tx_usrapp.DATA_STORE[2], board.RP.tx_usrapp.DATA_STORE[1],
-                             board.RP.tx_usrapp.DATA_STORE[0] })
+                          if  (`ROOTPORT_TB.tx_usrapp.P_READ_DATA != {`ROOTPORT_TB.tx_usrapp.DATA_STORE[3],
+                             `ROOTPORT_TB.tx_usrapp.DATA_STORE[2], `ROOTPORT_TB.tx_usrapp.DATA_STORE[1],
+                             `ROOTPORT_TB.tx_usrapp.DATA_STORE[0] })
                              begin
                                $display("[%t] : Test FAILED --- Data Error Mismatch, Write Data %x != Read Data %x",
-                                    $realtime, {board.RP.tx_usrapp.DATA_STORE[3],board.RP.tx_usrapp.DATA_STORE[2],
-                                     board.RP.tx_usrapp.DATA_STORE[1],board.RP.tx_usrapp.DATA_STORE[0]},
-                                     board.RP.tx_usrapp.P_READ_DATA);
+                                    $realtime, {`ROOTPORT_TB.tx_usrapp.DATA_STORE[3],`ROOTPORT_TB.tx_usrapp.DATA_STORE[2],
+                                     `ROOTPORT_TB.tx_usrapp.DATA_STORE[1],`ROOTPORT_TB.tx_usrapp.DATA_STORE[0]},
+                                     `ROOTPORT_TB.tx_usrapp.P_READ_DATA);
                                test_failed_flag = 1;
 
                              end
                           else
                              begin
                                $display("[%t] : Test PASSED --- Write Data: %x successfully received",
-                                   $realtime, board.RP.tx_usrapp.P_READ_DATA);
+                                   $realtime, `ROOTPORT_TB.tx_usrapp.P_READ_DATA);
                              end
 
 
-                          board.RP.tx_usrapp.TSK_TX_CLK_EAT(10);
-                          board.RP.tx_usrapp.DEFAULT_TAG = board.RP.tx_usrapp.DEFAULT_TAG + 1;
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_CLK_EAT(10);
+                          `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG = `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG + 1;
 
                      end
                 2'b11 : // MEM 64 SPACE
@@ -256,24 +256,24 @@ begin
 
 
                           $display("[%t] : Transmitting TLPs to Memory 64 Space BAR %x", $realtime,
-                              board.RP.tx_usrapp.ii);
+                              `ROOTPORT_TB.tx_usrapp.ii);
 
 
                           //--------------------------------------------------------------------------
                           // Event : Memory Write 64 bit TLP
                           //--------------------------------------------------------------------------
 
-                          board.RP.tx_usrapp.DATA_STORE[0] = 8'h64;
-                          board.RP.tx_usrapp.DATA_STORE[1] = 8'h63;
-                          board.RP.tx_usrapp.DATA_STORE[2] = 8'h62;
-                          board.RP.tx_usrapp.DATA_STORE[3] = 8'h61;
+                          `ROOTPORT_TB.tx_usrapp.DATA_STORE[0] = 8'h64;
+                          `ROOTPORT_TB.tx_usrapp.DATA_STORE[1] = 8'h63;
+                          `ROOTPORT_TB.tx_usrapp.DATA_STORE[2] = 8'h62;
+                          `ROOTPORT_TB.tx_usrapp.DATA_STORE[3] = 8'h61;
 
-                          board.RP.tx_usrapp.TSK_TX_MEMORY_WRITE_64(board.RP.tx_usrapp.DEFAULT_TAG,
-                              board.RP.tx_usrapp.DEFAULT_TC, 10'd1,
-                              {board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii+1][31:0],
-                              board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii][31:0]+8'h20}, 4'h0, 4'hF, 1'b0);
-                          board.RP.tx_usrapp.TSK_TX_CLK_EAT(10);
-                          board.RP.tx_usrapp.DEFAULT_TAG = board.RP.tx_usrapp.DEFAULT_TAG + 1;
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_MEMORY_WRITE_64(`ROOTPORT_TB.tx_usrapp.DEFAULT_TAG,
+                              `ROOTPORT_TB.tx_usrapp.DEFAULT_TC, 10'd1,
+                              {`ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii+1][31:0],
+                              `ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii][31:0]+8'h20}, 4'h0, 4'hF, 1'b0);
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_CLK_EAT(10);
+                          `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG = `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG + 1;
 
                           //--------------------------------------------------------------------------
                           // Event : Memory Read 64 bit TLP
@@ -281,34 +281,34 @@ begin
 
 
                           // make sure P_READ_DATA has known initial value
-                          board.RP.tx_usrapp.P_READ_DATA = 32'hffff_ffff;
+                          `ROOTPORT_TB.tx_usrapp.P_READ_DATA = 32'hffff_ffff;
                           fork
-                             board.RP.tx_usrapp.TSK_TX_MEMORY_READ_64(board.RP.tx_usrapp.DEFAULT_TAG,
-                                 board.RP.tx_usrapp.DEFAULT_TC, 10'd1,
-                                 {board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii+1][31:0],
-                                 board.RP.tx_usrapp.BAR_INIT_P_BAR[board.RP.tx_usrapp.ii][31:0]+8'h20}, 4'h0, 4'hF);
-                             board.RP.tx_usrapp.TSK_WAIT_FOR_READ_DATA;
+                             `ROOTPORT_TB.tx_usrapp.TSK_TX_MEMORY_READ_64(`ROOTPORT_TB.tx_usrapp.DEFAULT_TAG,
+                                 `ROOTPORT_TB.tx_usrapp.DEFAULT_TC, 10'd1,
+                                 {`ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii+1][31:0],
+                                 `ROOTPORT_TB.tx_usrapp.BAR_INIT_P_BAR[`ROOTPORT_TB.tx_usrapp.ii][31:0]+8'h20}, 4'h0, 4'hF);
+                             `ROOTPORT_TB.tx_usrapp.TSK_WAIT_FOR_READ_DATA;
                           join
-                          if  (board.RP.tx_usrapp.P_READ_DATA != {board.RP.tx_usrapp.DATA_STORE[3],
-                             board.RP.tx_usrapp.DATA_STORE[2], board.RP.tx_usrapp.DATA_STORE[1],
-                             board.RP.tx_usrapp.DATA_STORE[0] })
+                          if  (`ROOTPORT_TB.tx_usrapp.P_READ_DATA != {`ROOTPORT_TB.tx_usrapp.DATA_STORE[3],
+                             `ROOTPORT_TB.tx_usrapp.DATA_STORE[2], `ROOTPORT_TB.tx_usrapp.DATA_STORE[1],
+                             `ROOTPORT_TB.tx_usrapp.DATA_STORE[0] })
 
                              begin
                                $display("[%t] : Test FAILED --- Data Error Mismatch, Write Data %x != Read Data %x",
-                                   $realtime, {board.RP.tx_usrapp.DATA_STORE[3],
-                                   board.RP.tx_usrapp.DATA_STORE[2], board.RP.tx_usrapp.DATA_STORE[1],
-                                   board.RP.tx_usrapp.DATA_STORE[0]}, board.RP.tx_usrapp.P_READ_DATA);
+                                   $realtime, {`ROOTPORT_TB.tx_usrapp.DATA_STORE[3],
+                                   `ROOTPORT_TB.tx_usrapp.DATA_STORE[2], `ROOTPORT_TB.tx_usrapp.DATA_STORE[1],
+                                   `ROOTPORT_TB.tx_usrapp.DATA_STORE[0]}, `ROOTPORT_TB.tx_usrapp.P_READ_DATA);
                                test_failed_flag = 1;
                              end
                           else
                              begin
                                $display("[%t] : Test PASSED --- Write Data: %x successfully received",
-                                   $realtime, board.RP.tx_usrapp.P_READ_DATA);
+                                   $realtime, `ROOTPORT_TB.tx_usrapp.P_READ_DATA);
                              end
 
 
-                          board.RP.tx_usrapp.TSK_TX_CLK_EAT(10);
-                          board.RP.tx_usrapp.DEFAULT_TAG = board.RP.tx_usrapp.DEFAULT_TAG + 1;
+                          `ROOTPORT_TB.tx_usrapp.TSK_TX_CLK_EAT(10);
+                          `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG = `ROOTPORT_TB.tx_usrapp.DEFAULT_TAG + 1;
 
 
                      end

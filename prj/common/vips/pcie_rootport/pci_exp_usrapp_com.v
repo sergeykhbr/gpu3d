@@ -582,13 +582,13 @@ end
 
         if (txrx) begin
 
-          board.RP.com_usrapp.frame_store_tx[board.RP.com_usrapp.frame_store_tx_idx] = _byte;
-          board.RP.com_usrapp.frame_store_tx_idx = board.RP.com_usrapp.frame_store_tx_idx + 1;
+          `ROOTPORT_TB.com_usrapp.frame_store_tx[`ROOTPORT_TB.com_usrapp.frame_store_tx_idx] = _byte;
+          `ROOTPORT_TB.com_usrapp.frame_store_tx_idx = `ROOTPORT_TB.com_usrapp.frame_store_tx_idx + 1;
 
         end else begin
 
-          board.RP.com_usrapp.frame_store_rx[board.RP.com_usrapp.frame_store_rx_idx] = _byte;
-          board.RP.com_usrapp.frame_store_rx_idx = board.RP.com_usrapp.frame_store_rx_idx + 1;
+          `ROOTPORT_TB.com_usrapp.frame_store_rx[`ROOTPORT_TB.com_usrapp.frame_store_rx_idx] = _byte;
+          `ROOTPORT_TB.com_usrapp.frame_store_rx_idx = `ROOTPORT_TB.com_usrapp.frame_store_rx_idx + 1;
         end
 
       end 
@@ -625,13 +625,13 @@ end
 
         if (txrx) begin
 
-          board.RP.com_usrapp.frame_store_tx[board.RP.com_usrapp.frame_store_tx_idx] = _byte;
-          board.RP.com_usrapp.frame_store_tx_idx = board.RP.com_usrapp.frame_store_tx_idx + 1;
+          `ROOTPORT_TB.com_usrapp.frame_store_tx[`ROOTPORT_TB.com_usrapp.frame_store_tx_idx] = _byte;
+          `ROOTPORT_TB.com_usrapp.frame_store_tx_idx = `ROOTPORT_TB.com_usrapp.frame_store_tx_idx + 1;
 
         end else begin
 
-          board.RP.com_usrapp.frame_store_rx[board.RP.com_usrapp.frame_store_rx_idx] = _byte;
-          board.RP.com_usrapp.frame_store_rx_idx = board.RP.com_usrapp.frame_store_rx_idx + 1;
+          `ROOTPORT_TB.com_usrapp.frame_store_rx[`ROOTPORT_TB.com_usrapp.frame_store_rx_idx] = _byte;
+          `ROOTPORT_TB.com_usrapp.frame_store_rx_idx = `ROOTPORT_TB.com_usrapp.frame_store_rx_idx + 1;
         end
 
       end 

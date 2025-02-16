@@ -55,7 +55,7 @@
 
 `include "board_common.vh"
 
-`define EXPECT_FINISH_CHECK board.RP.tx_usrapp.expect_finish_check
+`define EXPECT_FINISH_CHECK kc705_top_tb.RP.tx_usrapp.expect_finish_check
 module pci_exp_usrapp_rx #(
 parameter                                  C_DATA_WIDTH = 64,
 parameter                                  REM_WIDTH = (C_DATA_WIDTH == 128) ? 2 : 1
@@ -174,7 +174,7 @@ always @(posedge trn_clk or negedge trn_reset_n) begin
               (trn_rsrc_rdy_n == 1'b0) &&
                (trn_rdst_rdy_n == 1'b0)  ) begin
 
-          board.RP.com_usrapp.TSK_READ_DATA(0, `RX_LOG, trn_rd, trn_rrem_n);
+          `ROOTPORT_TB.com_usrapp.TSK_READ_DATA(0, `RX_LOG, trn_rd, trn_rrem_n);
 
           trn_rx_state <= #(Tcq) `TRN_RX_ACTIVE;
 
@@ -201,15 +201,15 @@ always @(posedge trn_clk or negedge trn_reset_n) begin
                 (trn_reof_n == 1'b0) &&
                  (trn_rdst_rdy_n == 1'b0)  ) begin
 
-        board.RP.com_usrapp.TSK_READ_DATA(1, `RX_LOG, trn_rd, trn_rrem_n);
-        board.RP.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
+        `ROOTPORT_TB.com_usrapp.TSK_READ_DATA(1, `RX_LOG, trn_rd, trn_rrem_n);
+        `ROOTPORT_TB.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
 
         trn_rx_state <= #(Tcq) `TRN_RX_IDLE;
 
       end else if (  (trn_rsrc_rdy_n == 1'b0) &&
                      (trn_rdst_rdy_n == 1'b0)  ) begin
 
-        board.RP.com_usrapp.TSK_READ_DATA(0, `RX_LOG, trn_rd, trn_rrem_n);
+        `ROOTPORT_TB.com_usrapp.TSK_READ_DATA(0, `RX_LOG, trn_rd, trn_rrem_n);
 
         trn_rx_state <= #(Tcq) `TRN_RX_ACTIVE;
 
@@ -217,8 +217,8 @@ always @(posedge trn_clk or negedge trn_reset_n) begin
           (trn_reof_n == 1'b0) &&
           (trn_rsrc_dsc_n == 1'b0)  ) begin
 
-        board.RP.com_usrapp.TSK_READ_DATA(1, `RX_LOG, trn_rd, trn_rrem_n);
-        board.RP.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
+        `ROOTPORT_TB.com_usrapp.TSK_READ_DATA(1, `RX_LOG, trn_rd, trn_rrem_n);
+        `ROOTPORT_TB.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
 
         trn_rx_state <= #(Tcq) `TRN_RX_SRC_DSC;
 
@@ -305,10 +305,10 @@ always @(posedge trn_clk or negedge trn_reset_n) begin
               (trn_rsrc_rdy_n == 1'b0) &&
                (trn_rdst_rdy_n == 1'b0)  ) begin
 
-          board.RP.com_usrapp.TSK_READ_DATA_128(~trn_rsof_n, ~trn_reof_n, `RX_LOG, trn_rd, trn_rrem_n);
+          `ROOTPORT_TB.com_usrapp.TSK_READ_DATA_128(~trn_rsof_n, ~trn_reof_n, `RX_LOG, trn_rd, trn_rrem_n);
           if ( (trn_rsof_n == 1'b0) && (trn_reof_n == 1'b0)) begin
 
-            board.RP.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
+            `ROOTPORT_TB.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
             trn_rx_state <= #(Tcq) `TRN_RX_IDLE;
 
           end else begin
@@ -341,19 +341,19 @@ always @(posedge trn_clk or negedge trn_reset_n) begin
         case ({trn_rsof_n, trn_reof_n})
                   // Data Stream - both sof & eof de-asserted
           2'b11 : begin
-                    board.RP.com_usrapp.TSK_READ_DATA_128(0, 0, `RX_LOG, trn_rd, trn_rrem_n);
+                    `ROOTPORT_TB.com_usrapp.TSK_READ_DATA_128(0, 0, `RX_LOG, trn_rd, trn_rrem_n);
                     trn_rx_state <= #(Tcq) `TRN_RX_ACTIVE;
                   end
                   // EOF scenario. Not a straddle case
           2'b10 : begin
-                    board.RP.com_usrapp.TSK_READ_DATA_128(0, 1, `RX_LOG, trn_rd, trn_rrem_n);
-                    board.RP.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
+                    `ROOTPORT_TB.com_usrapp.TSK_READ_DATA_128(0, 1, `RX_LOG, trn_rd, trn_rrem_n);
+                    `ROOTPORT_TB.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
                     trn_rx_state <= #(Tcq) `TRN_RX_IDLE;
                   end
           2'b00 : begin
-                    board.RP.com_usrapp.TSK_READ_DATA_128(0, 1, `RX_LOG, trn_rd, trn_rrem_n);
-                    board.RP.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
-                    board.RP.com_usrapp.TSK_READ_DATA_128(1, 0, `RX_LOG, trn_rd, trn_rrem_n);
+                    `ROOTPORT_TB.com_usrapp.TSK_READ_DATA_128(0, 1, `RX_LOG, trn_rd, trn_rrem_n);
+                    `ROOTPORT_TB.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
+                    `ROOTPORT_TB.com_usrapp.TSK_READ_DATA_128(1, 0, `RX_LOG, trn_rd, trn_rrem_n);
                     trn_rx_state <= #(Tcq) `TRN_RX_ACTIVE;
                   end
             //2'b01 is not a valid option as the TRN_RX_ACTIVE case is only entered when we have seen an SOF but not an EOF, in the TRN_RX_IDLE state
@@ -363,8 +363,8 @@ always @(posedge trn_clk or negedge trn_reset_n) begin
           (trn_reof_n == 1'b0) &&
           (trn_rsrc_dsc_n == 1'b0)  ) begin
 
-             board.RP.com_usrapp.TSK_READ_DATA_128(0, 1, `RX_LOG, trn_rd, trn_rrem_n);
-             board.RP.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
+             `ROOTPORT_TB.com_usrapp.TSK_READ_DATA_128(0, 1, `RX_LOG, trn_rd, trn_rrem_n);
+             `ROOTPORT_TB.com_usrapp.TSK_PARSE_FRAME(`RX_LOG);
 
              trn_rx_state <= #(Tcq) `TRN_RX_SRC_DSC;
 

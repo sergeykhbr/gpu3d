@@ -52,9 +52,13 @@
 // Version    : 3.3
 //--------------------------------------------------------------------------------
 
-`define EXPECT_CPLD_PAYLOAD board.RP.tx_usrapp.expect_cpld_payload
-`define EXPECT_MEMWR_PAYLOAD board.RP.tx_usrapp.expect_memwr_payload
-`define EXPECT_MEMWR64_PAYLOAD board.RP.tx_usrapp.expect_memwr64_payload
+//`define EXPECT_CPLD_PAYLOAD board.RP.tx_usrapp.expect_cpld_payload
+//`define EXPECT_MEMWR_PAYLOAD board.RP.tx_usrapp.expect_memwr_payload
+//`define EXPECT_MEMWR64_PAYLOAD board.RP.tx_usrapp.expect_memwr64_payload
+
+`define EXPECT_CPLD_PAYLOAD kc705_top_tb.RP.tx_usrapp.expect_cpld_payload
+`define EXPECT_MEMWR_PAYLOAD kc705_top_tb.RP.tx_usrapp.expect_memwr_payload
+`define EXPECT_MEMWR64_PAYLOAD kc705_top_tb.RP.tx_usrapp.expect_memwr64_payload
 
 reg [31:0] error_file_ptr;
 

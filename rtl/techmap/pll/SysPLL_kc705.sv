@@ -17,6 +17,7 @@ module SysPLL_kc705
   input         i_clk_tcxo,
   output        o_clk_sys,
   output        o_clk_ddr,
+  output        o_clk_pcie,
   input         i_reset,
   output        o_locked
  );
@@ -39,7 +40,7 @@ wire clk_in2_clk_wiz_0;
 
   wire        o_clk_sys_clk_wiz_0;
   wire        o_clk_ddr_clk_wiz_0;
-  wire        clk_out3_clk_wiz_0;
+  wire        o_clk_pcie_clk_wiz_0;
   wire        clk_out4_clk_wiz_0;
   wire        clk_out5_clk_wiz_0;
   wire        clk_out6_clk_wiz_0;
@@ -82,6 +83,10 @@ wire clk_in2_clk_wiz_0;
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
+    .CLKOUT2_DIVIDE       (10),
+    .CLKOUT2_PHASE        (0.000),
+    .CLKOUT2_DUTY_CYCLE   (0.500),
+    .CLKOUT2_USE_FINE_PS  ("FALSE"),
     .CLKIN1_PERIOD        (5.000))
   mmcm_adv_inst
     // Output clocks
@@ -92,7 +97,7 @@ wire clk_in2_clk_wiz_0;
     .CLKOUT0B            (clkout0b_unused),
     .CLKOUT1             (o_clk_ddr_clk_wiz_0),
     .CLKOUT1B            (clkout1b_unused),
-    .CLKOUT2             (clkout2_unused),
+    .CLKOUT2             (o_clk_pcie_clk_wiz_0),
     .CLKOUT2B            (clkout2b_unused),
     .CLKOUT3             (clkout3_unused),
     .CLKOUT3B            (clkout3b_unused),
@@ -139,8 +144,6 @@ wire clk_in2_clk_wiz_0;
 
 
 
-
-
   BUFG clkout1_buf
    (.O   (o_clk_sys),
     .I   (o_clk_sys_clk_wiz_0));
@@ -151,5 +154,8 @@ wire clk_in2_clk_wiz_0;
     .I   (o_clk_ddr_clk_wiz_0));
 
 
+  BUFG clkout3_buf
+   (.O   (o_clk_pcie),
+    .I   (o_clk_pcie_clk_wiz_0));
 
 endmodule

@@ -76,6 +76,13 @@ module kc705_top_tb;
     wire [DDR3_DQ_WIDTH-1:0]  wb_ddr3_dq_sdram;
     wire [DDR3_DQS_WIDTH-1:0] wb_ddr3_dqs_p_sdram;
     wire [DDR3_DQS_WIDTH-1:0] wb_ddr3_dqs_n_sdram;
+    // PCIE
+    wire rp_sys_clk;
+    // PCI-Express Interface
+    wire [0:0] i_rp_pci_exp_txn;    // rootport output -> soc endpoint input
+    wire [0:0] i_rp_pci_exp_txp;    // rootport output -> soc endpoint input
+    wire [0:0] o_ep_pci_exp_txn;    // endpoint output -> rootport input
+    wire [0:0] o_ep_pci_exp_txp;    // endpoint output -> rootport input
 
 
     logic clk;
@@ -106,11 +113,18 @@ module kc705_top_tb;
   // end
 
   always_ff@(posedge clk) begin
+    if (clk_cnt == 0) begin
+        $display("[%t] : System Reset Asserted...", $realtime);
+    end
+
     if (clk_cnt <= 10) begin
         i_rst <= 1'b1;
     end else begin
-        i_rst <= 1'b0;
-    end
+        if (i_rst) begin
+            i_rst <= 1'b0;
+            $display("[%t] : System Reset De-asserted...", $realtime);
+        end
+   end
     clk_cnt <= clk_cnt + 1;
   end
   assign sys_rst_n = ~i_rst;
@@ -150,7 +164,12 @@ module kc705_top_tb;
     .io_ddr3_dqs_p(io_ddr3_dqs_p),
     .io_ddr3_dqs_n(io_ddr3_dqs_n),
     .o_ddr3_odt(o_ddr3_odt),
-    .o_ddr3_init_calib_complete(o_ddr3_init_calib_complete)
+    .o_ddr3_init_calib_complete(o_ddr3_init_calib_complete),
+    // PCI-Express Interface
+    .i_pcie_rxn(i_rp_pci_exp_txn),
+    .i_pcie_rxp(i_rp_pci_exp_txp),
+    .o_pcie_txn(o_ep_pci_exp_txn),
+    .o_pcie_txp(o_ep_pci_exp_txp)
   );
 
   // Global signals for Xilinx unisim modules:
@@ -167,6 +186,47 @@ module kc705_top_tb;
     .o_tx(i_uart1_rd)
   );
 
+
+  //
+  // PCI-Express Model Root Port Instance
+  //
+  sys_clk_gen  # (
+    .halfcycle(5000), // 5000 - 100 MHz, 4000 - 125 MHz,  2000 - 250 MHz
+    .offset(0)
+  ) CLK_GEN_RP (
+    .sys_clk(rp_sys_clk)
+  );
+
+
+  xilinx_pcie_2_1_rport_7x # (
+    .REF_CLK_FREQ(0),
+    .PL_FAST_TRAIN("TRUE"),
+    .ALLOW_X8_GEN2("FALSE"),
+    .C_DATA_WIDTH(64),
+    .LINK_CAP_MAX_LINK_WIDTH(6'h1),
+    .DEVICE_ID(16'h7100),
+    .LINK_CAP_MAX_LINK_SPEED(4'h2),
+    .LINK_CTRL2_TARGET_LINK_SPEED(4'h2),
+    .DEV_CAP_MAX_PAYLOAD_SUPPORTED(2),
+    .TRN_DW("FALSE"),
+    .VC0_TX_LASTPACKET(29),
+    .VC0_RX_RAM_LIMIT(13'h7FF),
+    .VC0_CPL_INFINITE("TRUE"),
+    .VC0_TOTAL_CREDITS_PD(437),
+    .VC0_TOTAL_CREDITS_CD(461),
+    .USER_CLK_FREQ(1),
+    .USER_CLK2_DIV2("FALSE")
+  )
+  RP (
+    // SYS Inteface
+    .sys_clk(rp_sys_clk),
+    .sys_rst_n(sys_rst_n),
+    // PCI-Express Interface
+    .pci_exp_txn(i_rp_pci_exp_txn),
+    .pci_exp_txp(i_rp_pci_exp_txp),
+    .pci_exp_rxn(o_ep_pci_exp_txn),
+    .pci_exp_rxp(o_ep_pci_exp_txp)
+  );
 
   //===========================================================================
   // DDR3 env. simulation:
