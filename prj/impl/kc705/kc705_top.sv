@@ -283,64 +283,15 @@ ddr_tech #(
   wire                                        m_axis_rx_tvalid;
   wire                                        m_axis_rx_tready;
   wire  [21:0]                                m_axis_rx_tuser;
-  wire                                        tx_cfg_gnt;
-  wire                                        rx_np_ok;
-  wire                                        rx_np_req;
   wire                                        cfg_turnoff_ok;
-  wire                                        cfg_trn_pending;
-  wire                                        cfg_pm_halt_aspm_l0s;
-  wire                                        cfg_pm_halt_aspm_l1;
-  wire                                        cfg_pm_force_state_en;
-  wire   [1:0]                                cfg_pm_force_state;
-  wire                                        cfg_pm_wake;
   wire  [63:0]                                cfg_dsn;
-  // Flow Control
-  wire [2:0]                                  fc_sel;
   //-------------------------------------------------------
   // Configuration (CFG) Interface
   //-------------------------------------------------------
-  wire                                        cfg_err_ecrc;
-  wire                                        cfg_err_cor;
-  wire                                        cfg_err_atomic_egress_blocked;
-  wire                                        cfg_err_internal_cor;
-  wire                                        cfg_err_malformed;
-  wire                                        cfg_err_mc_blocked;
-  wire                                        cfg_err_poisoned;
-  wire                                        cfg_err_norecovery;
-  wire                                        cfg_err_acs;
-  wire                                        cfg_err_internal_uncor;
-  wire                                        cfg_err_ur;
-  wire                                        cfg_err_cpl_timeout;
-  wire                                        cfg_err_cpl_abort;
-  wire                                        cfg_err_cpl_unexpect;
-  wire                                        cfg_err_posted;
-  wire                                        cfg_err_locked;
-  wire  [47:0]                                cfg_err_tlp_cpl_header;
-  wire [127:0]                                cfg_err_aer_headerlog;
-  wire   [4:0]                                cfg_aer_interrupt_msgnum;
-  wire                                        cfg_interrupt;
-  wire                                        cfg_interrupt_assert;
-  wire   [7:0]                                cfg_interrupt_di;
-  wire                                        cfg_interrupt_stat;
-  wire   [4:0]                                cfg_pciecap_interrupt_msgnum;
   wire                                        cfg_to_turnoff;
   wire   [7:0]                                cfg_bus_number;
   wire   [4:0]                                cfg_device_number;
   wire   [2:0]                                cfg_function_number;
-  wire  [31:0]                                cfg_mgmt_di;
-  wire   [3:0]                                cfg_mgmt_byte_en;
-  wire   [9:0]                                cfg_mgmt_dwaddr;
-  wire                                        cfg_mgmt_wr_en;
-  wire                                        cfg_mgmt_rd_en;
-  wire                                        cfg_mgmt_wr_readonly;
-  //-------------------------------------------------------
-  // Physical Layer Control and Status (PL) Interface
-  //-------------------------------------------------------
-  wire                                        pl_directed_link_auton;
-  wire [1:0]                                  pl_directed_link_change;
-  wire                                        pl_directed_link_speed;
-  wire [1:0]                                  pl_directed_link_width;
-  wire                                        pl_upstream_prefer_deemph;
   // Register Declaration
   reg                                         r_user_reset;
   reg                                         r_user_lnk_up;
@@ -351,7 +302,7 @@ ddr_tech #(
   end
 
   assign pipe_mmcm_rst_n                        = 1'b1;
-
+  assign cfg_dsn = {32'h00000001, 8'h1, 24'h000A35};  // Assign the input DSN
 
   pcie_7x_1line_5gts_64bits_support #
    (	 
@@ -417,14 +368,14 @@ ddr_tech #(
   .fc_nph                                    ( ),
   .fc_pd                                     ( ),
   .fc_ph                                     ( ),
-  .fc_sel                                    ( fc_sel ),
+  .fc_sel                                    ( 3'b000 ),  // Flow Control
   // Management Interface
-  .cfg_mgmt_di                               ( cfg_mgmt_di ),
-  .cfg_mgmt_byte_en                          ( cfg_mgmt_byte_en ),
-  .cfg_mgmt_dwaddr                           ( cfg_mgmt_dwaddr ),
-  .cfg_mgmt_wr_en                            ( cfg_mgmt_wr_en ),
-  .cfg_mgmt_rd_en                            ( cfg_mgmt_rd_en ),
-  .cfg_mgmt_wr_readonly                      ( cfg_mgmt_wr_readonly ),
+  .cfg_mgmt_di                               ( 32'h0 ),   // Zero out CFG MGMT input data bus
+  .cfg_mgmt_byte_en                          ( 4'h0 ),  // Zero out CFG MGMT byte enables
+  .cfg_mgmt_dwaddr                           ( 10'h0 ),  // Zero out CFG MGMT 10-bit address port
+  .cfg_mgmt_wr_en                            ( 1'b0 ),  // Do not write CFG space
+  .cfg_mgmt_rd_en                            ( 1'b0 ),  // Do not read CFG space
+  .cfg_mgmt_wr_readonly                      ( 1'b0 ), // Never treat RO bit as RW
   //------------------------------------------------//
   // EP and RP                                      //
   //------------------------------------------------//
@@ -432,43 +383,43 @@ ddr_tech #(
   .cfg_mgmt_rd_wr_done                       ( ),
   .cfg_mgmt_wr_rw1c_as_rw                    ( 1'b0 ),
   // Error Reporting Interface
-  .cfg_err_ecrc                              ( cfg_err_ecrc ),
-  .cfg_err_ur                                ( cfg_err_ur ),
-  .cfg_err_cpl_timeout                       ( cfg_err_cpl_timeout ),
-  .cfg_err_cpl_unexpect                      ( cfg_err_cpl_unexpect ),
-  .cfg_err_cpl_abort                         ( cfg_err_cpl_abort ),
-  .cfg_err_posted                            ( cfg_err_posted ),
-  .cfg_err_cor                               ( cfg_err_cor ),
-  .cfg_err_atomic_egress_blocked             ( cfg_err_atomic_egress_blocked ),
-  .cfg_err_internal_cor                      ( cfg_err_internal_cor ),
-  .cfg_err_malformed                         ( cfg_err_malformed ),
-  .cfg_err_mc_blocked                        ( cfg_err_mc_blocked ),
-  .cfg_err_poisoned                          ( cfg_err_poisoned ),
-  .cfg_err_norecovery                        ( cfg_err_norecovery ),
-  .cfg_err_tlp_cpl_header                    ( cfg_err_tlp_cpl_header ),
+  .cfg_err_ecrc                              ( 1'b0 ),  // Never report ECRC Error
+  .cfg_err_ur                                ( 1'b0 ),  // Never report UR
+  .cfg_err_cpl_timeout                       ( 1'b0 ),  // Never report Completion Timeout
+  .cfg_err_cpl_unexpect                      ( 1'b0 ),  // Never report unexpected completion
+  .cfg_err_cpl_abort                         ( 1'b0 ),  // Never report Completion Abort
+  .cfg_err_posted                            ( 1'b0 ),  // Never qualify cfg_err_* inputs
+  .cfg_err_cor                               ( 1'b0 ),  // Never report Correctable Error
+  .cfg_err_atomic_egress_blocked             ( 1'b0 ),  // Never report Atomic TLP blocked
+  .cfg_err_internal_cor                      ( 1'b0 ),  // Never report internal error occurred
+  .cfg_err_malformed                         ( 1'b0 ),  // Never report malformed error
+  .cfg_err_mc_blocked                        ( 1'b0 ),  // Never report multi-cast TLP blocked
+  .cfg_err_poisoned                          ( 1'b0 ),  // Never report poisoned TLP received
+  .cfg_err_norecovery                        ( 1'b0 ),  // Never qualify cfg_err_poisoned or cfg_err_cpl_timeout
+  .cfg_err_tlp_cpl_header                    ( 48'h0 ),
   .cfg_err_cpl_rdy                           ( ),
-  .cfg_err_locked                            ( cfg_err_locked ),
-  .cfg_err_acs                               ( cfg_err_acs ),
-  .cfg_err_internal_uncor                    ( cfg_err_internal_uncor ),
+  .cfg_err_locked                            ( 1'b0 ),  // Never qualify cfg_err_ur or cfg_err_cpl_abort
+  .cfg_err_acs                               ( 1'b0 ),  // Never report an ACS violation
+  .cfg_err_internal_uncor                    ( 1'b0 ),  // Never report internal uncorrectable error
   //----------------------------------------------------------------------------------------------------------------//
   // AER Interface                                                                                                  //
   //----------------------------------------------------------------------------------------------------------------//
-  .cfg_err_aer_headerlog                     ( cfg_err_aer_headerlog ),
+  .cfg_err_aer_headerlog                     ( 128'h0 ),  // Zero out the AER Header Log
   .cfg_err_aer_headerlog_set                 ( ),
   .cfg_aer_ecrc_check_en                     ( ),
   .cfg_aer_ecrc_gen_en                       ( ),
-  .cfg_aer_interrupt_msgnum                  ( cfg_aer_interrupt_msgnum ),
-  .tx_cfg_gnt                                ( tx_cfg_gnt ),
-  .rx_np_ok                                  ( rx_np_ok ),
-  .rx_np_req                                 ( rx_np_req ),
-  .cfg_trn_pending                           ( cfg_trn_pending ),
-  .cfg_pm_halt_aspm_l0s                      ( cfg_pm_halt_aspm_l0s ),
-  .cfg_pm_halt_aspm_l1                       ( cfg_pm_halt_aspm_l1 ),
-  .cfg_pm_force_state_en                     ( cfg_pm_force_state_en ),
-  .cfg_pm_force_state                        ( cfg_pm_force_state ),
-  .cfg_dsn                                   ( cfg_dsn ),
+  .cfg_aer_interrupt_msgnum                  ( 5'b00000 ),  // Zero out the AER Root Error Status Register
+  .tx_cfg_gnt                                ( 1'b1 ),  // Always allow transmission of Config traffic within block
+  .rx_np_ok                                  ( 1'b1 ),  // Allow Reception of Non-posted Traffic
+  .rx_np_req                                 ( 1'b1 ),  // Always request Non-posted Traffic if available
+  .cfg_trn_pending                           ( 1'b0 ),  // Never set the transaction pending bit in the Device Status Register
+  .cfg_pm_halt_aspm_l0s                      ( 1'b0 ),  // Allow entry into L0s
+  .cfg_pm_halt_aspm_l1                       ( 1'b0 ),  // Allow entry into L1
+  .cfg_pm_force_state_en                     ( 1'b0 ),  // Do not qualify cfg_pm_force_state
+  .cfg_pm_force_state                        ( 2'b00 ), // Do not move force core into specific PM state
+  .cfg_dsn                                   ( cfg_dsn ), // Assign the input DSN
   .cfg_turnoff_ok                            ( cfg_turnoff_ok ),
-  .cfg_pm_wake                               ( cfg_pm_wake ),
+  .cfg_pm_wake                               ( 1'b0 ),  // Never direct the core to send a PM_PME Message
   //------------------------------------------------//
   // RP Only                                        //
   //------------------------------------------------//
@@ -479,17 +430,17 @@ ddr_tech #(
   //------------------------------------------------//
   // EP Only                                        //
   //------------------------------------------------//
-  .cfg_interrupt                             ( cfg_interrupt ),
+  .cfg_interrupt                             ( 1'b0 ),  // Never drive interrupt by qualifying cfg_interrupt_assert
   .cfg_interrupt_rdy                         ( ),
-  .cfg_interrupt_assert                      ( cfg_interrupt_assert ),
-  .cfg_interrupt_di                          ( cfg_interrupt_di ),
+  .cfg_interrupt_assert                      ( 1'b0 ),  // Always drive interrupt de-assert
+  .cfg_interrupt_di                          ( 8'd0 ),  // Do not set interrupt fields
   .cfg_interrupt_do                          ( ),
   .cfg_interrupt_mmenable                    ( ),
   .cfg_interrupt_msienable                   ( ),
   .cfg_interrupt_msixenable                  ( ),
   .cfg_interrupt_msixfm                      ( ),
-  .cfg_interrupt_stat                        ( cfg_interrupt_stat ),
-  .cfg_pciecap_interrupt_msgnum              ( cfg_pciecap_interrupt_msgnum ),
+  .cfg_interrupt_stat                        ( 1'b0 ),  // Never set the Interrupt Status bit
+  .cfg_pciecap_interrupt_msgnum              ( 5'b00000 ),  // Zero out Interrupt Message Number
   //----------------------------------------------------------------------------------------------------------------//
   // Configuration (CFG) Interface                                                                                  //
   //----------------------------------------------------------------------------------------------------------------//
@@ -548,11 +499,11 @@ ddr_tech #(
   //----------------------------------------------------------------------------------------------------------------//
   // Physical Layer Control and Status (PL) Interface                                                               //
   //----------------------------------------------------------------------------------------------------------------//
-  .pl_directed_link_change                   ( pl_directed_link_change ),
-  .pl_directed_link_width                    ( pl_directed_link_width ),
-  .pl_directed_link_speed                    ( pl_directed_link_speed ),
-  .pl_directed_link_auton                    ( pl_directed_link_auton ),
-  .pl_upstream_prefer_deemph                 ( pl_upstream_prefer_deemph ),
+  .pl_directed_link_change                   ( 2'b00 ),  // Never initiate link change
+  .pl_directed_link_width                    ( 2'b00 ),  // Zero out directed link width
+  .pl_directed_link_speed                    ( 1'b0 ),  // Zero out directed link speed
+  .pl_directed_link_auton                    ( 1'b0 ),  // Zero out link autonomous input
+  .pl_upstream_prefer_deemph                 ( 1'b1 ),  // Zero out preferred de-emphasis of upstream port
   .pl_sel_lnk_rate                           ( ),
   .pl_sel_lnk_width                          ( ),
   .pl_ltssm_state                            ( ),
@@ -602,7 +553,7 @@ pcie_app_7x  #(
   // Common
   .user_clk                       ( w_pcie_user_clk ),
   .user_reset                     ( r_user_reset ),
-  .user_lnk_up                    ( r_user_lnk_up ),
+  .i_user_lnk_up                    ( r_user_lnk_up ),
   // Tx
   .s_axis_tx_tready               ( s_axis_tx_tready ),
   .s_axis_tx_tdata                ( s_axis_tx_tdata ),
@@ -617,72 +568,14 @@ pcie_app_7x  #(
   .m_axis_rx_tvalid               ( m_axis_rx_tvalid ),
   .m_axis_rx_tready               ( m_axis_rx_tready ),
   .m_axis_rx_tuser                ( m_axis_rx_tuser ),
-  .tx_cfg_gnt                     ( tx_cfg_gnt ),
-  .rx_np_ok                       ( rx_np_ok ),
-  .rx_np_req                      ( rx_np_req ),
-  .cfg_turnoff_ok                 ( cfg_turnoff_ok ),
-  .cfg_trn_pending                ( cfg_trn_pending ),
-  .cfg_pm_halt_aspm_l0s           ( cfg_pm_halt_aspm_l0s ),
-  .cfg_pm_halt_aspm_l1            ( cfg_pm_halt_aspm_l1 ),
-  .cfg_pm_force_state_en          ( cfg_pm_force_state_en ),
-  .cfg_pm_force_state             ( cfg_pm_force_state ),
-  .cfg_pm_wake                    ( cfg_pm_wake ),
-  .cfg_dsn                        ( cfg_dsn ),
-  // Flow Control
-  .fc_sel                         ( fc_sel ),
-  //----------------------------------------------------------------------------------------------------------------//
-  // Configuration (CFG) Interface                                                                                  //
-  //----------------------------------------------------------------------------------------------------------------//
-  .cfg_err_cor                    ( cfg_err_cor ),
-  .cfg_err_atomic_egress_blocked  ( cfg_err_atomic_egress_blocked ),
-  .cfg_err_internal_cor           ( cfg_err_internal_cor ),
-  .cfg_err_malformed              ( cfg_err_malformed ),
-  .cfg_err_mc_blocked             ( cfg_err_mc_blocked ),
-  .cfg_err_poisoned               ( cfg_err_poisoned ),
-  .cfg_err_norecovery             ( cfg_err_norecovery ),
-  .cfg_err_ur                     ( cfg_err_ur ),
-  .cfg_err_ecrc                   ( cfg_err_ecrc ),
-  .cfg_err_cpl_timeout            ( cfg_err_cpl_timeout ),
-  .cfg_err_cpl_abort              ( cfg_err_cpl_abort ),
-  .cfg_err_cpl_unexpect           ( cfg_err_cpl_unexpect ),
-  .cfg_err_posted                 ( cfg_err_posted ),
-  .cfg_err_locked                 ( cfg_err_locked ),
-  .cfg_err_acs                    ( cfg_err_acs ), //1'b0 ),
-  .cfg_err_internal_uncor         ( cfg_err_internal_uncor ), //1'b0 ),
-  .cfg_err_tlp_cpl_header         ( cfg_err_tlp_cpl_header ),
+  .o_cfg_turnoff_ok                 ( cfg_turnoff_ok ),
   //----------------------------------------------------------------------------------------------------------------//
   // Advanced Error Reporting (AER) Interface                                                                       //
   //----------------------------------------------------------------------------------------------------------------//
-  .cfg_err_aer_headerlog          ( cfg_err_aer_headerlog ),
-  .cfg_aer_interrupt_msgnum       ( cfg_aer_interrupt_msgnum ),
-  .cfg_to_turnoff                 ( cfg_to_turnoff ),
-  .cfg_bus_number                 ( cfg_bus_number ),
-  .cfg_device_number              ( cfg_device_number ),
-  .cfg_function_number            ( cfg_function_number ),
-
-  //----------------------------------------------------------------------------------------------------------------//
-  // Management (MGMT) Interface                                                                                    //
-  //----------------------------------------------------------------------------------------------------------------//
-  .cfg_mgmt_di                    ( cfg_mgmt_di ),
-  .cfg_mgmt_byte_en               ( cfg_mgmt_byte_en ),
-  .cfg_mgmt_dwaddr                ( cfg_mgmt_dwaddr ),
-  .cfg_mgmt_wr_en                 ( cfg_mgmt_wr_en ),
-  .cfg_mgmt_rd_en                 ( cfg_mgmt_rd_en ),
-  .cfg_mgmt_wr_readonly           ( cfg_mgmt_wr_readonly ),
-  //----------------------------------------------------------------------------------------------------------------//
-  // Physical Layer Control and Status (PL) Interface                                                               //
-  //----------------------------------------------------------------------------------------------------------------//
-  .pl_directed_link_auton         ( pl_directed_link_auton ),
-  .pl_directed_link_change        ( pl_directed_link_change ),
-  .pl_directed_link_speed         ( pl_directed_link_speed ),
-  .pl_directed_link_width         ( pl_directed_link_width ),
-  .pl_upstream_prefer_deemph      ( pl_upstream_prefer_deemph ),
-  .cfg_interrupt                  ( cfg_interrupt ),
-  .cfg_interrupt_assert           ( cfg_interrupt_assert ),
-  .cfg_interrupt_di               ( cfg_interrupt_di ),
-  .cfg_interrupt_stat             ( cfg_interrupt_stat ),
-  .cfg_pciecap_interrupt_msgnum   ( cfg_pciecap_interrupt_msgnum )
-
+  .i_cfg_to_turnoff                 ( cfg_to_turnoff ),
+  .i_cfg_bus_number                 ( cfg_bus_number ),
+  .i_cfg_device_number              ( cfg_device_number ),
+  .i_cfg_function_number            ( cfg_function_number )
 );
 
 
