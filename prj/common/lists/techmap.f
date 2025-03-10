@@ -14,6 +14,7 @@ ${RTL_HOME}/techmap/mem/rom_inferred_32.sv
 ${RTL_HOME}/techmap/mem/rom_inferred_2x32.sv
 ${RTL_HOME}/techmap/mem/rom_tech.sv
 ${RTL_HOME}/techmap/pll/SysPLL_tech.sv
+${RTL_HOME}/techmap/cdc/cdc_afifo.sv
 ${RTL_HOME}/techmap/cdc_axi_sync/kc705/axi_clock_converter_v2_1_vl_rfs.v
 ${RTL_HOME}/techmap/cdc_axi_sync/kc705/axi_infrastructure_v1_1_vl_rfs.v
 ${RTL_HOME}/techmap/cdc_axi_sync/kc705/cdc_ddr.v

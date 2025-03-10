@@ -65,6 +65,7 @@ module kc705_top #(
 
   import types_amba_pkg::*;
   import types_pnp_pkg::*;
+  import types_dma_pkg::*;
   import kc705_top_pkg::*;
 
   logic             ib_rst;
@@ -111,6 +112,46 @@ module kc705_top #(
   dev_config_type prci_dev_cfg;
   apb_in_type prci_apbi;
   apb_out_type prci_apbo;
+
+  // PCIE interface
+  mapinfo_type pcie_pmapinfo;
+  dev_config_type pcie_dev_cfg;
+  apb_in_type pcie_apbi;
+  apb_out_type pcie_apbo;
+  dma64_out_type pcie_dmao;
+  dma64_in_type pcie_dmai;
+  wire w_pcie_user_clk;
+  wire w_pcie_user_reset;
+  wire w_pcie_user_lnk_up;
+
+  localparam PL_FAST_TRAIN       = "FALSE"; // Simulation Speedup
+  localparam EXT_PIPE_SIM        = "FALSE";  // This Parameter has effect on selecting Enable External PIPE Interface in GUI.	
+  localparam PCIE_EXT_CLK        = "TRUE";    // Use External Clocking Module
+  localparam PCIE_EXT_GT_COMMON  = "FALSE";
+  localparam REF_CLK_FREQ        = 0;     // 0 - 100 MHz, 1 - 125 MHz, 2 - 250 MHz
+  localparam C_DATA_WIDTH        = 64; // RX/TX interface data width
+  localparam KEEP_WIDTH          = C_DATA_WIDTH / 8; // TSTRB width
+
+  localparam TCQ               = 1;
+  localparam USER_CLK_FREQ     = 1;
+  localparam USER_CLK2_DIV2    = "FALSE";
+  localparam USERCLK2_FREQ     = (USER_CLK2_DIV2 == "TRUE") ? (USER_CLK_FREQ == 4) ? 3 
+                                                                                   : (USER_CLK_FREQ == 3) ? 2 : USER_CLK_FREQ
+                                                            : USER_CLK_FREQ;
+  // PCIE Tx
+  wire                                        s_axis_tx_tready;
+  wire [3:0]                                  s_axis_tx_tuser;
+  wire [C_DATA_WIDTH-1:0]                     s_axis_tx_tdata;
+  wire [KEEP_WIDTH-1:0]                       s_axis_tx_tkeep;
+  wire                                        s_axis_tx_tlast;
+  wire                                        s_axis_tx_tvalid;
+  // PCIE Rx
+  wire [C_DATA_WIDTH-1:0]                     m_axis_rx_tdata;
+  wire [KEEP_WIDTH-1:0]                       m_axis_rx_tkeep;
+  wire                                        m_axis_rx_tlast;
+  wire                                        m_axis_rx_tvalid;
+  wire                                        m_axis_rx_tready;
+  wire  [21:0]                                m_axis_rx_tuser;
 
 
   ibuf_tech irst0(.o(ib_rst),.i(i_rst));
@@ -166,6 +207,22 @@ module kc705_top #(
     .o_apbo(prci_apbo)
   );
 
+  apb_pcie #(
+    .async_reset(async_reset)
+  ) ppcie0 (
+    .i_clk(ib_clk_tcxo),
+    .i_nrst(w_sys_nrst),
+    .i_lnk_up(w_pcie_user_lnk_up),
+    .i_mapinfo(pcie_pmapinfo),
+    .o_cfg(pcie_dev_cfg),
+    .i_apbi(pcie_apbi),
+    .o_apbo(pcie_apbo),
+    .i_dma_busy(pcie_dmao.busy)
+  );
+
+  assign pcie_dmai.tx_valid = s_axis_tx_tvalid;
+  assign pcie_dmai.tx_last = s_axis_tx_tlast;
+  assign pcie_dmai.tx_data = s_axis_tx_tdata;
  
   riscv_soc #(
     .async_reset(async_reset),
@@ -204,7 +261,16 @@ module kc705_top #(
     .o_ddr_xmapinfo(ddr_xmapinfo),
     .i_ddr_xdevcfg(ddr_xdev_cfg),
     .o_ddr_xslvi(ddr_xslvi),
-    .i_ddr_xslvo(ddr_xslvo)
+    .i_ddr_xslvo(ddr_xslvo),
+    // PCIE:
+    .i_pcie_usr_clk(w_pcie_user_clk),
+    .i_pcie_usr_rst(w_pcie_user_reset),
+    .o_pcie_pmapinfo(pcie_pmapinfo),
+    .i_pcie_pdevcfg(pcie_dev_cfg),
+    .o_pcie_apbi(pcie_apbi),
+    .i_pcie_apbo(pcie_apbo),
+    .o_pcie_dmao(pcie_dmao),
+    .i_pcie_dmai(pcie_dmai)
   );
 
 ddr_tech #(
@@ -250,39 +316,8 @@ ddr_tech #(
 );
 
 
-  localparam PL_FAST_TRAIN       = "FALSE"; // Simulation Speedup
-  localparam EXT_PIPE_SIM        = "FALSE";  // This Parameter has effect on selecting Enable External PIPE Interface in GUI.	
-  localparam PCIE_EXT_CLK        = "TRUE";    // Use External Clocking Module
-  localparam PCIE_EXT_GT_COMMON  = "FALSE";
-  localparam REF_CLK_FREQ        = 0;     // 0 - 100 MHz, 1 - 125 MHz, 2 - 250 MHz
-  localparam C_DATA_WIDTH        = 64; // RX/TX interface data width
-  localparam KEEP_WIDTH          = C_DATA_WIDTH / 8; // TSTRB width
-
-  localparam TCQ               = 1;
-  localparam USER_CLK_FREQ     = 1;
-  localparam USER_CLK2_DIV2    = "FALSE";
-  localparam USERCLK2_FREQ     = (USER_CLK2_DIV2 == "TRUE") ? (USER_CLK_FREQ == 4) ? 3 
-                                                                                   : (USER_CLK_FREQ == 3) ? 2 : USER_CLK_FREQ
-                                                            : USER_CLK_FREQ;
 
   wire                                        pipe_mmcm_rst_n;
-  wire                                        w_pcie_user_clk;
-  wire                                        w_user_reset;
-  wire                                        w_user_lnk_up;
-  // Tx
-  wire                                        s_axis_tx_tready;
-  wire [3:0]                                  s_axis_tx_tuser;
-  wire [C_DATA_WIDTH-1:0]                     s_axis_tx_tdata;
-  wire [KEEP_WIDTH-1:0]                       s_axis_tx_tkeep;
-  wire                                        s_axis_tx_tlast;
-  wire                                        s_axis_tx_tvalid;
-  // Rx
-  wire [C_DATA_WIDTH-1:0]                     m_axis_rx_tdata;
-  wire [KEEP_WIDTH-1:0]                       m_axis_rx_tkeep;
-  wire                                        m_axis_rx_tlast;
-  wire                                        m_axis_rx_tvalid;
-  wire                                        m_axis_rx_tready;
-  wire  [21:0]                                m_axis_rx_tuser;
   wire                                        cfg_turnoff_ok;
   wire  [63:0]                                cfg_dsn;
   //-------------------------------------------------------
@@ -297,8 +332,8 @@ ddr_tech #(
   reg                                         r_user_lnk_up;
 
   always @(posedge w_pcie_user_clk) begin
-    r_user_reset  <= w_user_reset;
-    r_user_lnk_up <= w_user_lnk_up;
+    r_user_reset  <= w_pcie_user_reset;
+    r_user_lnk_up <= w_pcie_user_lnk_up;
   end
 
   assign pipe_mmcm_rst_n                        = 1'b1;
@@ -344,8 +379,8 @@ ddr_tech #(
   //----------------------------------------------------------------------------------------------------------------//
   // Common
   .user_clk_out                              ( w_pcie_user_clk ),
-  .user_reset_out                            ( w_user_reset ),
-  .user_lnk_up                               ( w_user_lnk_up ),
+  .user_reset_out                            ( w_pcie_user_reset ),
+  .user_lnk_up                               ( w_pcie_user_lnk_up ),
   .user_app_rdy                              ( ),
   // TX
   .s_axis_tx_tready                          ( s_axis_tx_tready ),

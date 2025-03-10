@@ -31,6 +31,8 @@ localparam bit [15:0] RISCV_RIVER_WORKGROUP = 16'h0506;
 localparam bit [15:0] GNSSSENSOR_UART_TAP = 16'h050A;
 // JTAG Test Access Point (TAP) with SBA interface (DMA without progbuf)
 localparam bit [15:0] OPTIMITECH_JTAG_SBA = 16'h050B;
+// PCIE DMA engine
+localparam bit [15:0] OPTIMITECH_PCIE_DMA = 16'h050C;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -65,6 +67,8 @@ localparam bit [15:0] OPTIMITECH_SDCTRL_REG = 16'h0089;
 localparam bit [15:0] OPTIMITECH_SDCTRL_MEM = 16'h008B;
 // RIVER debug registers:
 localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008A;
+// PCIE end-point APB controller:
+localparam bit [15:0] OPTIMITECH_PCIE_CTRL = 16'h008C;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -92,8 +96,8 @@ localparam int SOC_PNP_PNP = 10;
 localparam int SOC_PNP_PBRIDGE0 = 11;
 localparam int SOC_PNP_DMI = 12;
 localparam int SOC_PNP_UART1 = 13;
-localparam int SOC_PNP_SDCTRL_REG = 14;
-localparam int SOC_PNP_SDCTRL_MEM = 15;
+localparam int SOC_PNP_PCIE_DMA = 14;
+localparam int SOC_PNP_PCIE_APB = 15;
 localparam int SOC_PNP_TOTAL = 16;
 
 // @brief   Plug-n-play descriptor structure for connected device.
