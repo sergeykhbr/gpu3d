@@ -128,7 +128,7 @@ module  pcie_app_7x#(
     .s_axis_tx_tkeep  ( s_axis_tx_tkeep ),          // O
     .s_axis_tx_tlast  ( s_axis_tx_tlast ),          // O
     .s_axis_tx_tvalid ( s_axis_tx_tvalid ),         // O
-    .tx_src_dsc       ( s_axis_tx_tuser[3] ),       // O
+    .tx_src_dsc       ( s_axis_tx_tuser[3] ),       // O  unused assigned to 1'b0
 
     .m_axis_rx_tdata ( m_axis_rx_tdata ),           // I
     .m_axis_rx_tkeep ( m_axis_rx_tkeep ),           // I

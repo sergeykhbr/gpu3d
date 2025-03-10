@@ -32,10 +32,12 @@ localparam int CFG_BUS1_PSLV_DMI = 2;
 localparam int CFG_BUS1_PSLV_GPIO = 3;
 // @brief DDR control register.
 localparam int CFG_BUS1_PSLV_DDR = 4;
+// @brief PCIE endpoint controller
+localparam int CFG_BUS1_PSLV_PCIE = 5;
 // Configuration index of the Plug-n-Play module.
-localparam int CFG_BUS1_PSLV_PNP = 5;
+localparam int CFG_BUS1_PSLV_PNP = 6;
 // Total number of the APB slaves devices on Bus[1].
-localparam int CFG_BUS1_PSLV_TOTAL = 6;
+localparam int CFG_BUS1_PSLV_TOTAL = 7;
 // Necessary bus width to store index + 1.
 localparam int CFG_BUS1_PSLV_LOG2_TOTAL = 3;                // $clog2(CFG_BUS1_PSLV_TOTAL + 1)
 
@@ -50,6 +52,7 @@ const bus1_mapinfo_vector CFG_BUS1_MAP = '{
     '{64'h000000000001E000, 64'h000000000001F000},          // dmi 4KB. TODO: change base address
     '{64'h0000000000060000, 64'h0000000000061000},          // GPIO 4KB
     '{64'h00000000000C0000, 64'h00000000000C1000},          // DDR MGMT 4KB
+    '{64'h00000000000C1000, 64'h00000000000C2000},          // PCIE Controller 4KB
     '{64'h00000000000FF000, 64'h0000000000100000}           // Plug'n'Play 4KB
 };
 

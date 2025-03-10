@@ -59,6 +59,7 @@ comp: prep clr_logs
 	${SRUN} xmvhdl ${VHDL_PARAMS} -work work              -f ${LISTS_HOME}/techmap_hdmi_phy_vhdl.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_hdmi_phy.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/pcie.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riscv_soc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_top.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f kc705_top_sim.f
@@ -90,6 +91,7 @@ mce_flow: prep clr_logs
 	-f ${LISTS_HOME}/techmap_pcie_kc705.f \
 	-f ${LISTS_HOME}/techmap_hdmi_phy.f \
 	-f ${LISTS_HOME}/misclib.f \
+	-f ${LISTS_HOME}/pcie.f \
 	-f ${LISTS_HOME}/sdctrl.f \
 	-f ${LISTS_HOME}/riscv_soc.f \
 	-f ../kc705/kc705_top.f \
