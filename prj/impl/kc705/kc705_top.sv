@@ -118,11 +118,12 @@ module kc705_top #(
   dev_config_type pcie_dev_cfg;
   apb_in_type pcie_apbi;
   apb_out_type pcie_apbo;
-  dma64_out_type pcie_dmao;
-  dma64_in_type pcie_dmai;
+  pcie_dma64_out_type pcie_dmao;
+  pcie_dma64_in_type pcie_dmai;
   wire w_pcie_user_clk;
   wire w_pcie_user_reset;
   wire w_pcie_user_lnk_up;
+  logic [15:0] wb_pcie_completer_id;
 
   localparam PL_FAST_TRAIN       = "FALSE"; // Simulation Speedup
   localparam EXT_PIPE_SIM        = "FALSE";  // This Parameter has effect on selecting Enable External PIPE Interface in GUI.	
@@ -138,6 +139,9 @@ module kc705_top #(
   localparam USERCLK2_FREQ     = (USER_CLK2_DIV2 == "TRUE") ? (USER_CLK_FREQ == 4) ? 3 
                                                                                    : (USER_CLK_FREQ == 3) ? 2 : USER_CLK_FREQ
                                                             : USER_CLK_FREQ;
+  wire   [7:0]                                cfg_bus_number;
+  wire   [4:0]                                cfg_device_number;
+  wire   [2:0]                                cfg_function_number;
   // PCIE Tx
   wire                                        s_axis_tx_tready;
   wire [3:0]                                  s_axis_tx_tuser;
@@ -220,9 +224,15 @@ module kc705_top #(
     .i_dma_busy(pcie_dmao.busy)
   );
 
-  assign pcie_dmai.tx_valid = s_axis_tx_tvalid;
-  assign pcie_dmai.tx_last = s_axis_tx_tlast;
-  assign pcie_dmai.tx_data = s_axis_tx_tdata;
+  assign wb_pcie_completer_id = {cfg_bus_number, cfg_device_number, cfg_function_number};
+  assign pcie_dmai.valid = m_axis_rx_tvalid;
+  assign pcie_dmai.last = m_axis_rx_tlast;
+  assign pcie_dmai.strob = m_axis_rx_tkeep;
+  assign pcie_dmai.data = m_axis_rx_tdata;
+  assign pcie_dmai.bar_hit = m_axis_rx_tuser[8:2];
+  assign pcie_dmai.ecrc_err = m_axis_rx_tuser[1];
+  assign pcie_dmai.err_fwd = m_axis_rx_tuser[0];
+
  
   riscv_soc #(
     .async_reset(async_reset),
@@ -265,6 +275,7 @@ module kc705_top #(
     // PCIE:
     .i_pcie_usr_clk(w_pcie_user_clk),
     .i_pcie_usr_rst(w_pcie_user_reset),
+    .i_pcie_completer_id(wb_pcie_completer_id),
     .o_pcie_pmapinfo(pcie_pmapinfo),
     .i_pcie_pdevcfg(pcie_dev_cfg),
     .o_pcie_apbi(pcie_apbi),
@@ -320,13 +331,7 @@ ddr_tech #(
   wire                                        pipe_mmcm_rst_n;
   wire                                        cfg_turnoff_ok;
   wire  [63:0]                                cfg_dsn;
-  //-------------------------------------------------------
-  // Configuration (CFG) Interface
-  //-------------------------------------------------------
   wire                                        cfg_to_turnoff;
-  wire   [7:0]                                cfg_bus_number;
-  wire   [4:0]                                cfg_device_number;
-  wire   [2:0]                                cfg_function_number;
   // Register Declaration
   reg                                         r_user_reset;
   reg                                         r_user_lnk_up;
