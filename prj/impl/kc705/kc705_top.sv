@@ -225,7 +225,8 @@ module kc705_top #(
   );
 
   assign wb_pcie_completer_id = {cfg_bus_number, cfg_device_number, cfg_function_number};
-  assign pcie_dmai.valid = m_axis_rx_tvalid;
+  assign pcie_dmai.ready = 1'b1;
+  assign pcie_dmai.valid = m_axis_rx_tvalid & m_axis_rx_tready;
   assign pcie_dmai.last = m_axis_rx_tlast;
   assign pcie_dmai.strob = m_axis_rx_tkeep;
   assign pcie_dmai.data = m_axis_rx_tdata;

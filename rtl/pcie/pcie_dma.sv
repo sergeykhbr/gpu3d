@@ -133,9 +133,9 @@ begin: comb_proc
             i_pcie_dmai.strob,
             i_pcie_dmai.data};
 
-    v_req_last = wb_reqfifo_payload_i[72];
-    vb_req_strob = wb_reqfifo_payload_i[71: 64];
-    vb_req_data = wb_reqfifo_payload_i[63: 0];
+    v_req_last = wb_reqfifo_payload_o[72];
+    vb_req_strob = wb_reqfifo_payload_o[71: 64];
+    vb_req_data = wb_reqfifo_payload_o[63: 0];
 
     // Response FIFO inputs/outputs:
     wb_respfifo_payload_i = {v_resp_last,
@@ -146,7 +146,7 @@ begin: comb_proc
     case (r.state)
     STATE_RST: begin
         v_req_ready = 1'b1;
-        if (w_reqfifo_empty == 1'b1) begin
+        if (w_reqfifo_empty == 1'b0) begin
             v.dw0 = vb_req_data[31: 0];
             v.dw1 = vb_req_data[63: 32];
             v.state = STATE_DW3DW4;
@@ -163,7 +163,7 @@ begin: comb_proc
         v.dw2 = vb_req_data[31: 0];
         v.dw3 = 32'd0;
         v.busy = 1'b0;
-        if (w_reqfifo_empty == 1'b1) begin
+        if (w_reqfifo_empty == 1'b0) begin
             v.busy = 1'b1;
             // fmt[0] = 1 when 4DW header is used
             if (r.dw0[29] == 1'b1) begin
@@ -195,7 +195,7 @@ begin: comb_proc
                     v.xsize = 3'd2;
                     v.byte_cnt = {r.dw0[7: 0], 2'd0};
                     vb_req_addr[31: 0] = vb_req_data[31: 0];
-                    v.xwdata = vb_req_data[63: 32];
+                    v.xwdata = {vb_req_data[63: 32], vb_req_data[63: 32]};
                     v.xwena = v_req_last;                   // AXI Light: burst transactions are no supported
                 end else begin
                     // fmt[0]=1: 4DW header (64-bits address):
@@ -210,6 +210,8 @@ begin: comb_proc
     STATE_AR: begin
         vb_xmsto.ar_valid = 1'b1;
         vb_xmsto.ar_bits.addr = r.xaddr[(CFG_SYSBUS_ADDR_BITS - 1): 0];
+        // sram base address: 64'h0000000008000000
+        vb_xmsto.ar_bits.addr = (vb_xmsto.ar_bits.addr + 48'h000008001000);
         vb_xmsto.ar_bits.len = r.xlen;
         vb_xmsto.ar_bits.size = r.xsize;
         v.resp_data_ena = 1'b1;
@@ -221,15 +223,19 @@ begin: comb_proc
         vb_xmsto.r_ready = 1'b1;
         if (i_xmsti.r_valid == 1'b1) begin
             v.xrdata = i_xmsti.r_data;
+            v.xerr = i_xmsti.r_resp;
             v.state = STATE_RESP_PAYLOAD;
         end
     end
     STATE_AW: begin
         vb_xmsto.aw_valid = 1'b1;
-        vb_xmsto.ar_bits.addr = r.xaddr[(CFG_SYSBUS_ADDR_BITS - 1): 0];
-        vb_xmsto.ar_bits.len = r.xlen;
-        vb_xmsto.ar_bits.size = r.xsize;
+        vb_xmsto.aw_bits.addr = r.xaddr[(CFG_SYSBUS_ADDR_BITS - 1): 0];
+        // sram base address: 64'h0000000008000000
+        vb_xmsto.aw_bits.addr = (vb_xmsto.aw_bits.addr + 48'h000008001000);
+        vb_xmsto.aw_bits.len = r.xlen;
+        vb_xmsto.aw_bits.size = r.xsize;
         vb_xmsto.w_valid = r.xwena;
+        vb_xmsto.w_last = r.xwena;
         vb_xmsto.w_strb = r.xwstrb;
         vb_xmsto.w_data = {r.xwdata[31: 0], r.xwdata[31: 0]};
         if (i_xmsti.aw_ready == 1'b1) begin
@@ -243,19 +249,32 @@ begin: comb_proc
         end
     end
     STATE_W: begin
-        v_req_ready = 1'b1;
-        vb_xmsto.w_valid = (w_reqfifo_empty == 1'b1);
-        vb_xmsto.w_strb = vb_req_strob;
-        vb_xmsto.w_data = vb_req_data;
-        if ((w_reqfifo_empty == 1'b1) && (i_xmsti.w_ready == 1'b1)) begin
-            if (v_req_last == 1'b1) begin
+        if (r.xwena == 1'b1) begin
+            v.xwena = 1'b0;
+            vb_xmsto.w_valid = 1'b1;
+            vb_xmsto.w_strb = r.xwstrb;
+            vb_xmsto.w_data = r.xwdata;
+            vb_xmsto.w_last = 1'b1;
+            if (i_xmsti.w_ready == 1'b1) begin
                 v.state = STATE_B;
+            end
+        end else begin
+            v_req_ready = i_xmsti.w_ready;
+            vb_xmsto.w_valid = (~w_reqfifo_empty);
+            vb_xmsto.w_strb = vb_req_strob;
+            vb_xmsto.w_data = vb_req_data;
+            vb_xmsto.w_last = (~(|r.xlen));
+            if ((w_reqfifo_empty == 1'b0) && (i_xmsti.w_ready == 1'b1)) begin
+                if (v_req_last == 1'b1) begin
+                    v.state = STATE_B;
+                end
             end
         end
     end
     STATE_B: begin
-        vb_xmsto.b_ready = (w_respfifo_full == 1'b0);
-        if ((w_respfifo_full == 1'b0) && (i_xmsti.b_valid == 1'b1)) begin
+        vb_xmsto.b_ready = 1'b1;
+        if (i_xmsti.b_valid == 1'b1) begin
+            v.xerr = i_xmsti.b_resp;
             v.state = STATE_RESP_DW0DW1;
         end
     end
@@ -320,7 +339,7 @@ begin: comb_proc
     w_respfifo_wr = v_resp_valid;
     w_reqfifo_rd = v_req_ready;
     o_xmst_cfg = vb_xmst_cfg;
-    o_xmsto = axi4_master_out_none;
+    o_xmsto = vb_xmsto;
 
     rin = v;
 end: comb_proc

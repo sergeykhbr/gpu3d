@@ -69,6 +69,7 @@ typedef struct {
     logic [CFG_SYSBUS_DATA_BITS-1:0] xwdata;
     logic xwena;                                            // AXI light: RW and W at the same time without burst
     logic [CFG_SYSBUS_DATA_BITS-1:0] xrdata;
+    logic [1:0] xerr;
     logic resp_data_ena;                                    // TLP with payload
     logic [63:0] resp_data;
     logic resp_last;
@@ -89,6 +90,7 @@ const pcie_dma_registers pcie_dma_r_reset = '{
     64'd0,                              // xwdata
     1'b0,                               // xwena
     64'd0,                              // xrdata
+    AXI_RESP_OKAY,                      // xerr
     1'b0,                               // resp_data_ena
     64'd0,                              // resp_data
     1'b0,                               // resp_last
