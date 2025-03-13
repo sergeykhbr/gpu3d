@@ -25,6 +25,7 @@ module apb_prci #(
     input logic i_dmireset,                                 // Debug reset: system reset except DMI interface
     input logic i_sys_locked,
     input logic i_ddr_locked,
+    input logic i_pcie_phy_lnk_up,                          // PCIE PHY link status up
     output logic o_sys_rst,                                 // System reset except DMI. Active HIGH
     output logic o_sys_nrst,                                // System reset except DMI. Active LOW
     output logic o_dbg_nrst,                                // Reset DMI. Active LOW
@@ -82,6 +83,7 @@ begin: comb_proc
     10'd0: begin                                            // 0x00: pll statuses
         vb_rdata[0] = i_sys_locked;
         vb_rdata[1] = i_ddr_locked;
+        vb_rdata[2] = i_pcie_phy_lnk_up;
     end
     10'd1: begin                                            // 0x04: reset status
         vb_rdata[0] = rh.sys_nrst;

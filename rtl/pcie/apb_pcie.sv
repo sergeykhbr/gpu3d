@@ -22,12 +22,12 @@ module apb_pcie #(
 (
     input logic i_clk,                                      // APB clock
     input logic i_nrst,                                     // Reset: active LOW
-    input logic i_lnk_up,                                   // Link-up signal
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
     output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB input interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB output interface
-    input logic i_dma_busy                                  // DMA engine brief state
+    input logic [15:0] i_pcie_completer_id,                 // Bus, Device, Function
+    input logic [3:0] i_dma_state                           // DMA engine brief state
 );
 
 import types_amba_pkg::*;
@@ -69,19 +69,15 @@ begin: comb_proc
 
     v = r;
 
-    v.lnk_up = i_lnk_up;
 
     v.resp_err = 1'b0;
     // Registers access:
     case (wb_req_addr[11: 2])
     10'd0: begin                                            // 0x00: link status
-        vb_rdata[0] = r.lnk_up;
-        vb_rdata[1] = i_dma_busy;
+        vb_rdata[3: 0] = i_dma_state;
     end
     10'd1: begin                                            // 0x04: bus, device, function
-        vb_rdata[15: 8] = r.cfg_bus_number;
-        vb_rdata[7: 3] = r.cfg_device_number;
-        vb_rdata[2: 0] = r.cfg_function_number;
+        vb_rdata[15: 0] = i_pcie_completer_id;
     end
     default: begin
     end

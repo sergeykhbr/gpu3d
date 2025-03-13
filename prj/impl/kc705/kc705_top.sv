@@ -114,16 +114,12 @@ module kc705_top #(
   apb_out_type prci_apbo;
 
   // PCIE interface
-  mapinfo_type pcie_pmapinfo;
-  dev_config_type pcie_dev_cfg;
-  apb_in_type pcie_apbi;
-  apb_out_type pcie_apbo;
-  pcie_dma64_out_type pcie_dmao;
-  pcie_dma64_in_type pcie_dmai;
   wire w_pcie_user_clk;
   wire w_pcie_user_reset;
-  wire w_pcie_user_lnk_up;
+  logic w_pcie_phy_lnk_up;
   logic [15:0] wb_pcie_completer_id;
+  pcie_dma64_out_type pcie_dmao;
+  pcie_dma64_in_type pcie_dmai;
 
   localparam PL_FAST_TRAIN       = "FALSE"; // Simulation Speedup
   localparam EXT_PIPE_SIM        = "FALSE";  // This Parameter has effect on selecting Enable External PIPE Interface in GUI.	
@@ -202,6 +198,7 @@ module kc705_top #(
     .i_dmireset(w_dmreset),
     .i_sys_locked(w_pll_lock),
     .i_ddr_locked(w_ddr3_init_calib_complete),
+    .i_pcie_phy_lnk_up(w_pcie_phy_lnk_up),
     .o_sys_rst(w_sys_rst),
     .o_sys_nrst(w_sys_nrst),
     .o_dbg_nrst(w_dbg_nrst),
@@ -209,19 +206,6 @@ module kc705_top #(
     .o_cfg(prci_dev_cfg),
     .i_apbi(prci_apbi),
     .o_apbo(prci_apbo)
-  );
-
-  apb_pcie #(
-    .async_reset(async_reset)
-  ) ppcie0 (
-    .i_clk(ib_clk_tcxo),
-    .i_nrst(w_sys_nrst),
-    .i_lnk_up(w_pcie_user_lnk_up),
-    .i_mapinfo(pcie_pmapinfo),
-    .o_cfg(pcie_dev_cfg),
-    .i_apbi(pcie_apbi),
-    .o_apbo(pcie_apbo),
-    .i_dma_busy(pcie_dmao.busy)
   );
 
   assign wb_pcie_completer_id = {cfg_bus_number, cfg_device_number, cfg_function_number};
@@ -277,10 +261,6 @@ module kc705_top #(
     .i_pcie_usr_clk(w_pcie_user_clk),
     .i_pcie_usr_rst(w_pcie_user_reset),
     .i_pcie_completer_id(wb_pcie_completer_id),
-    .o_pcie_pmapinfo(pcie_pmapinfo),
-    .i_pcie_pdevcfg(pcie_dev_cfg),
-    .o_pcie_apbi(pcie_apbi),
-    .i_pcie_apbo(pcie_apbo),
     .o_pcie_dmao(pcie_dmao),
     .i_pcie_dmai(pcie_dmai)
   );
@@ -339,7 +319,7 @@ ddr_tech #(
 
   always @(posedge w_pcie_user_clk) begin
     r_user_reset  <= w_pcie_user_reset;
-    r_user_lnk_up <= w_pcie_user_lnk_up;
+    r_user_lnk_up <= w_pcie_phy_lnk_up;
   end
 
   assign pipe_mmcm_rst_n                        = 1'b1;
@@ -386,7 +366,7 @@ ddr_tech #(
   // Common
   .user_clk_out                              ( w_pcie_user_clk ),
   .user_reset_out                            ( w_pcie_user_reset ),
-  .user_lnk_up                               ( w_pcie_user_lnk_up ),
+  .user_lnk_up                               ( w_pcie_phy_lnk_up ),
   .user_app_rdy                              ( ),
   // TX
   .s_axis_tx_tready                          ( s_axis_tx_tready ),
