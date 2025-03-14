@@ -81,14 +81,4 @@ ${VIPS_HOME}/pcie_rootport/pcie_axi_trn_bridge.v
 ${VIPS_HOME}/pcie_rootport/xilinx_pcie_2_1_rport_7x.v
 ${IMPL_ROOT}/kc705_sim/tb/pcie/pcie_7x_1line_5gts_64bits_pipe_clock.v
 ${IMPL_ROOT}/kc705_sim/tb/pcie/pcie_7x_1line_5gts_64bits_support.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/EP_MEM.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/PIO_EP_MEM_ACCESS.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/PIO_RX_ENGINE.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/PIO_TX_ENGINE.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/PIO_EP.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/PIO_TO_CTRL.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/PIO.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/pcie_app_7x.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/xilinx_pcie_2_1_ep_7x.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/board.v
 ${IMPL_ROOT}/kc705_sim/kc705_top_tb.sv

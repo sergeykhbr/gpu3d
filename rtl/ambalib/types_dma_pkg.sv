@@ -24,11 +24,10 @@ typedef struct {
     logic [7:0] strob;
     logic last;
     logic valid;
-    logic busy;                                             // DMA endine status
 } pcie_dma64_out_type;
 
 // @brief   DMA output empty values.
-const pcie_dma64_out_type pcie_dma64_out_none = '{1'b0, 64'd0, 8'd0, 1'b0, 1'b0, 1'b0};
+const pcie_dma64_out_type pcie_dma64_out_none = '{1'b0, 64'd0, 8'd0, 1'b0, 1'b0};
 
 // @brief DMA device input signals.
 typedef struct {
