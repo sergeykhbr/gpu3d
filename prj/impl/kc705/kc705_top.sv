@@ -90,6 +90,8 @@ module kc705_top #(
   logic             w_sys_clk;
   logic             w_ddr_clk;
   logic             w_pcie_clk;
+  logic             w_pcie_usr1_clk;
+  logic             w_pcie_usr2_clk;
   logic             w_pll_lock;
 
   // DDR interface
@@ -135,16 +137,11 @@ module kc705_top #(
   localparam EXT_PIPE_SIM        = "FALSE";  // This Parameter has effect on selecting Enable External PIPE Interface in GUI.	
   localparam PCIE_EXT_CLK        = "TRUE";    // Use External Clocking Module
   localparam PCIE_EXT_GT_COMMON  = "FALSE";
-  localparam REF_CLK_FREQ        = 0;     // 0 - 100 MHz, 1 - 125 MHz, 2 - 250 MHz
+  localparam REF_CLK_FREQ        = 2;  // 0 - 100 MHz, 1 - 125 MHz, 2 - 250 MHz
+  localparam USER_CLK_FREQ       = (1+1);  // 1=62.5 MHz (before increment); 2=125; 3=250  (depends of REF_CLK_FREQ)
+  localparam USERCLK2_FREQ       = (1+1);  // 1=62.5, if USER_CLK>62.5  USER2_CLK=USER_CLK-1 (twice mure)
   localparam C_DATA_WIDTH        = 64; // RX/TX interface data width
   localparam KEEP_WIDTH          = C_DATA_WIDTH / 8; // TSTRB width
-
-  localparam TCQ               = 1;
-  localparam USER_CLK_FREQ     = 1;
-  localparam USER_CLK2_DIV2    = "FALSE";
-  localparam USERCLK2_FREQ     = (USER_CLK2_DIV2 == "TRUE") ? (USER_CLK_FREQ == 4) ? 3 
-                                                                                   : (USER_CLK_FREQ == 3) ? 2 : USER_CLK_FREQ
-                                                            : USER_CLK_FREQ;
 
   ibuf_tech irst0(.o(ib_rst),.i(i_rst));
   
@@ -176,7 +173,9 @@ module kc705_top #(
     .i_clk_tcxo(ib_clk_tcxo),
     .o_clk_sys(w_sys_clk),
     .o_clk_ddr(w_ddr_clk),
-    .o_clk_pcie(w_pcie_clk),   // 100 MHz (default), 125, 250
+    .o_clk_pcie(w_pcie_clk),   // 250 MHz: (100 (default), 125, 250)
+    .o_clk_pcie_usr1(w_pcie_usr1_clk),   // 62.5 MHz
+    .o_clk_pcie_usr2(w_pcie_usr2_clk),   // 62.5 MHz (if usr1 =125 or 250 MHz, then usr2=usr1/2)
     .o_locked(w_pll_lock)
   );  
 
@@ -314,9 +313,9 @@ ddr_tech #(
     .LINK_CAP_MAX_LINK_WIDTH        ( 1 ),      // PCIe Lane Width
     .C_DATA_WIDTH                   ( C_DATA_WIDTH ),     // RX/TX interface data width
     .KEEP_WIDTH                     ( KEEP_WIDTH ),   // TSTRB width
-    .PCIE_REFCLK_FREQ               ( 0 ),      // 0 - 100 MHz, 1 - 125 MHz, 2 - 250 MHz
-    .PCIE_USERCLK1_FREQ             ( 1 +1 ),                   // PCIe user clock 1 frequency
-    .PCIE_USERCLK2_FREQ             ( 1 +1 ),                   // PCIe user clock 2 frequency             
+    .PCIE_REFCLK_FREQ               ( REF_CLK_FREQ ),      // 0 - 100 MHz, 1 - 125 MHz, 2 - 250 MHz
+    .PCIE_USERCLK1_FREQ             ( USER_CLK_FREQ ),                   // PCIe user clock 1 frequency
+    .PCIE_USERCLK2_FREQ             ( USERCLK2_FREQ ),                   // PCIe user clock 2 frequency             
     .PCIE_USE_MODE                  ("3.0"),           // PCIe use mode
     .PCIE_GT_DEVICE                 ("GTX")              // PCIe GT device
    ) 

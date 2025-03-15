@@ -17,6 +17,8 @@ module SysPLL_inferred(
   output    CLK_OUT1,
   output    CLK_OUT2,
   output    CLK_OUT3,
+  output    CLK_OUT4,
+  output    CLK_OUT5,
   // Status and control signals
   input     RESET,
   output    LOCKED
@@ -25,6 +27,8 @@ module SysPLL_inferred(
   assign CLK_OUT1 = CLK_IN;
   assign CLK_OUT2 = CLK_IN;
   assign CLK_OUT3 = CLK_IN;
+  assign CLK_OUT4 = CLK_IN;
+  assign CLK_OUT5 = CLK_IN;
   assign LOCKED = ~RESET;
 
 endmodule
