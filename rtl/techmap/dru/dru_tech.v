@@ -41,7 +41,7 @@ module dru_tech #(
        .MASK_PD(MASK_PD),
        .MASK_VCO(MASK_VCO),
        .EN_ADV_COMPR(EN_ADV_COMPR)
-    ) dru0 (
+    ) inf0 (
        .DT_IN(DT_IN),
        .CENTER_F(CENTER_F),
        .EN(EN),
@@ -69,15 +69,13 @@ module dru_tech #(
     // Encoded model in file "nidru_20_v_7_encoded.vhd"
     // Do not forget to check constraint pathes
     //
-    // DO NOT FORGET TO UNCOMMENT
-//    dru #(
-    dru_inferred #(
+    dru #(
        .S_MAX(S_MAX),
        .MASK_CG(MASK_CG),
        .MASK_PD(MASK_PD),
        .MASK_VCO(MASK_VCO),
        .EN_ADV_COMPR(EN_ADV_COMPR)
-    ) dru0 (
+    ) kc0 (
        .DT_IN(DT_IN),
        .CENTER_F(CENTER_F),
        .EN(EN),
@@ -89,8 +87,8 @@ module dru_tech #(
        .PHASE_IN(PHASE_IN),
        .RST(RST),
        .RST_FREQ(RST_FREQ),
-       //.EN_INTEG(EN_INTEG),
-       //.PH_EST_DIS(PH_EST_DIS),
+       .EN_INTEG(EN_INTEG),
+       .PH_EST_DIS(PH_EST_DIS),
        .PH_OUT(PH_OUT),
        .INTEG(INTEG),
        .DIRECT(DIRECT),

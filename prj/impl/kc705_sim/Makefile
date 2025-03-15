@@ -55,8 +55,9 @@ comp: prep clr_logs
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_ddr_kc705.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work work                 -f ${LISTS_HOME}/techmap_pcie_vhdl_kc705.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_pcie_kc705.f
-	${SRUN} xmvhdl ${VHDL_PARAMS} -work work              -f ${LISTS_HOME}/techmap_hdmi_phy_vhdl.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work work                 -f ${LISTS_HOME}/techmap_hdmi_phy_vhdl.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_hdmi_phy.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/pcie.f
@@ -88,7 +89,9 @@ mce_flow: prep clr_logs
 	-f ${LISTS_HOME}/riverlib.f \
 	-f ${LISTS_HOME}/techmap.f \
 	-f ${LISTS_HOME}/techmap_ddr_kc705.f \
+	-f ${LISTS_HOME}/techmap_pcie_vhdl_kc705.f \
 	-f ${LISTS_HOME}/techmap_pcie_kc705.f \
+	-f ${LISTS_HOME}/techmap_hdmi_vhdl_phy.f \
 	-f ${LISTS_HOME}/techmap_hdmi_phy.f \
 	-f ${LISTS_HOME}/misclib.f \
 	-f ${LISTS_HOME}/pcie.f \
