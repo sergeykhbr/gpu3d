@@ -79,6 +79,8 @@ module kc705_top_tb;
     // PCIE
     wire rp_sys_clk;
     // PCI-Express Interface
+    wire i_pcie_clk_p;
+    wire i_pcie_clk_n;
     wire [0:0] i_rp_pci_exp_txn;    // rootport output -> soc endpoint input
     wire [0:0] i_rp_pci_exp_txp;    // rootport output -> soc endpoint input
     wire [0:0] o_ep_pci_exp_txn;    // endpoint output -> rootport input
@@ -86,15 +88,19 @@ module kc705_top_tb;
 
 
     logic clk;
+    logic pcie_clk_100mhz;
     int clk_cnt;
 
 
   initial begin
     clk = 0;
+    pcie_clk_100mhz = 0;
+
     io_gpio_dir = 12'h0;
   end
 
   always #HALF_PERIOD clk=~clk;
+  always #5ns pcie_clk_100mhz = ~pcie_clk_100mhz;
 
 //  assign io_gpio = '0;
   assign (weak0, weak1) io_gpio[11:4]  = 8'h00;
@@ -102,7 +108,8 @@ module kc705_top_tb;
 
   assign i_sclk_p = clk;
   assign i_sclk_n = ~clk;
-
+  assign i_pcie_clk_p = pcie_clk_100mhz;
+  assign i_pcie_clk_n = ~pcie_clk_100mhz;
 
   // always_latch begin
 
@@ -166,6 +173,8 @@ module kc705_top_tb;
     .o_ddr3_odt(o_ddr3_odt),
     .o_ddr3_init_calib_complete(o_ddr3_init_calib_complete),
     // PCI-Express Interface
+    .i_pcie_clk_p(i_pcie_clk_p),
+    .i_pcie_clk_n(i_pcie_clk_n),
     .i_pcie_rxn(i_rp_pci_exp_txn),
     .i_pcie_rxp(i_rp_pci_exp_txp),
     .o_pcie_txn(o_ep_pci_exp_txn),

@@ -36,3 +36,5 @@ ${RTL_HOME}/techmap/pcie/kc705/pcie_7x_1line_5gts_64bits_gt_top.v
 ${RTL_HOME}/techmap/pcie/kc705/pcie_7x_1line_5gts_64bits_core_top.v
 ${RTL_HOME}/techmap/pcie/kc705/pcie_7x_1line_5gts_64bits_pcie2_top.v
 ${RTL_HOME}/techmap/pcie/kc705/pcie_7x_1line_5gts_64bits.v
+${RTL_HOME}/techmap/pcie/kc705/pcie_7x_1line_5gts_64bits_pipe_clock.v
+${RTL_HOME}/techmap/pcie/kc705/pcie_7x_1line_5gts_64bits_support.v

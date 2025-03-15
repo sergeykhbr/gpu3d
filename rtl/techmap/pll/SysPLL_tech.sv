@@ -14,9 +14,6 @@ module SysPLL_tech (
   //! System Bus clock 100MHz/40MHz (Virtex6/Spartan6)
   output        o_clk_sys, // 40 MHz
   output        o_clk_ddr, // 200 MHz
-  output        o_clk_pcie, // 250 MHz
-  output        o_clk_pcie_usr1, // 62.5 MHz
-  output        o_clk_pcie_usr2, // 62.5 MHz
   //! PLL locked status.
   output        o_locked
 );
@@ -28,9 +25,6 @@ module SysPLL_tech (
         .CLK_IN(i_clk_tcxo),
         .CLK_OUT1(o_clk_sys),
         .CLK_OUT2(o_clk_ddr),
-        .CLK_OUT3(o_clk_pcie),
-        .CLK_OUT4(o_clk_pcie_usr1),
-        .CLK_OUT5(o_clk_pcie_usr2),
         .RESET(i_reset),
         .LOCKED(o_locked)
     );
@@ -43,9 +37,6 @@ module SysPLL_tech (
       .i_clk_tcxo  (i_clk_tcxo),
       .o_clk_sys   (o_clk_sys),
       .o_clk_ddr   (o_clk_ddr),
-      .o_clk_pcie   (o_clk_pcie),
-      .o_clk_pcie_usr1 (o_clk_pcie_usr1),
-      .o_clk_pcie_usr2 (o_clk_pcie_usr2),
       .o_locked    (o_locked)
     );
        

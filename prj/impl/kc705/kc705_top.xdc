@@ -13,6 +13,8 @@ set_property PACKAGE_PIN AD11 [get_ports i_sclk_n]
 set_property PACKAGE_PIN G12 [get_ports i_rst]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets i_rst]
 set_property IOSTANDARD LVCMOS25 [get_ports i_rst]
+set_false_path -from [get_ports i_rst]
+
 
 # DIP switch: SW1.1
 set_property PACKAGE_PIN Y29 [get_ports {io_gpio[0]}]
@@ -74,41 +76,29 @@ set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_rd]
 set_property PACKAGE_PIN K24 [get_ports o_uart1_td]
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
-#SD-card:
-set_property PACKAGE_PIN AB23 [get_ports o_sd_sclk]
-set_property IOSTANDARD LVCMOS25 [get_ports o_sd_sclk]
-
-# SDIO connector CMD:
-set_property PACKAGE_PIN AB22 [get_ports io_sd_cmd]
-set_property IOSTANDARD LVCMOS25 [get_ports io_sd_cmd]
-#set_property PULLTYPE PULLUP [get_ports io_sd_cmd]
-
-# SDIO connector DAT0
-set_property PACKAGE_PIN AC20 [get_ports io_sd_dat0]
-set_property IOSTANDARD LVCMOS25 [get_ports io_sd_dat0]
-#set_property PULLTYPE PULLUP [get_ports io_sd_dat0]
-
-# SDIO connector DAT1
-set_property PACKAGE_PIN AA23 [get_ports io_sd_dat1]
-set_property IOSTANDARD LVCMOS25 [get_ports io_sd_dat1]
-#set_property PULLTYPE PULLUP [get_ports io_sd_dat1]
-
-# SDIO connector DAT2
-set_property PACKAGE_PIN AA22 [get_ports io_sd_dat2]
-set_property IOSTANDARD LVCMOS25 [get_ports io_sd_dat2]
-#set_property PULLTYPE PULLUP [get_ports io_sd_dat2]
-
-# SDIO connector CD_DAT3
-set_property PACKAGE_PIN AC21 [get_ports io_sd_cd_dat3]
-set_property IOSTANDARD LVCMOS25 [get_ports io_sd_cd_dat3]
-#set_property PULLTYPE PULLUP [get_ports io_sd_cd_dat3]
-
-set_property PACKAGE_PIN AA21 [get_ports i_sd_detected]
-set_property IOSTANDARD LVCMOS25 [get_ports i_sd_detected]
-
-# write protect
-set_property PACKAGE_PIN Y21 [get_ports i_sd_protect]
-set_property IOSTANDARD LVCMOS25 [get_ports i_sd_protect]
+# PCIE
+# Dedicated PCI Express oscillator 100 MHz. FPGA Pins: U8=PCIE_CLK_QO_P, U7=PCIE_CLK_QO_N
+create_clock -name pcie_clk -period 10 [get_ports i_pcie_clk_p]
+set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf]
+#
+# 
+set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S0}]
+set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S1}]
+#
+#
+create_generated_clock -name clk_125mhz_x0y0 [get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT0]
+create_generated_clock -name clk_250mhz_x0y0 [get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT1]
+create_generated_clock -name clk_125mhz_mux_x0y0 \ 
+                        -source [get_pins pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/I0] \
+                        -divide_by 1 \
+                        [get_pins pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/O]
+#
+create_generated_clock -name clk_250mhz_mux_x0y0 \ 
+                        -source [get_pins pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/I1] \
+                        -divide_by 1 -add -master_clock [get_clocks -of [get_pins pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/I1]] \
+                        [get_pins pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/O]
+#
+set_clock_groups -name pcieclkmux -physically_exclusive -group clk_125mhz_mux_x0y0 -group clk_250mhz_mux_x0y0
 
 
 ##################################################################################################

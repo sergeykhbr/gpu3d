@@ -190,7 +190,7 @@ module pcie_7x_1line_5gts_64bits_pipe_wrapper #
     parameter PCIE_CHAN_BOND_EN             = "TRUE",       // PCIe channel bonding enable for Gen1/Gen2 only
     parameter PCIE_LANE                     = 1,            // PCIe number of lanes
     parameter PCIE_LINK_SPEED               = 2,            // PCIe link speed 
-    parameter PCIE_REFCLK_FREQ              = 2,            // PCIe reference clock frequency
+    parameter PCIE_REFCLK_FREQ              = 0,            // PCIe reference clock frequency
     parameter PCIE_USERCLK1_FREQ            = 2,            // PCIe user clock 1 frequency
     parameter PCIE_USERCLK2_FREQ            = 2,            // PCIe user clock 2 frequency
     parameter PCIE_TX_EIDLE_ASSERT_DELAY    = 3'd2,         // PCIe TX electrical idle assert delay

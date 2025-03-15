@@ -79,6 +79,4 @@ ${VIPS_HOME}/pcie_rootport/pci_exp_usrapp_rx.v
 ${VIPS_HOME}/pcie_rootport/pci_exp_usrapp_tx.v
 ${VIPS_HOME}/pcie_rootport/pcie_axi_trn_bridge.v
 ${VIPS_HOME}/pcie_rootport/xilinx_pcie_2_1_rport_7x.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/pcie_7x_1line_5gts_64bits_pipe_clock.v
-${IMPL_ROOT}/kc705_sim/tb/pcie/pcie_7x_1line_5gts_64bits_support.v
 ${IMPL_ROOT}/kc705_sim/kc705_top_tb.sv

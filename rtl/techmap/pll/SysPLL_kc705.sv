@@ -17,9 +17,6 @@ module SysPLL_kc705
   input         i_clk_tcxo,
   output        o_clk_sys,       // 40 MHz
   output        o_clk_ddr,       // 200
-  output        o_clk_pcie,      // 250 MHz
-  output        o_clk_pcie_usr1, // 62.5
-  output        o_clk_pcie_usr2, // 62.5 (if usr1 = 125 or 250, then usr2 = usr1/2)
   input         i_reset,
   output        o_locked
  );
@@ -42,9 +39,9 @@ wire clk_in2_clk_wiz_0;
 
   wire        w_clk_sys_unbuf;
   wire        w_clk_ddr_unbuf;
-  wire        w_clk_pcie_unbuf;
-  wire        w_clk_pcie_usr1_unbuf;
-  wire        w_clk_pcie_usr2_unbuf;
+  wire        clkout2_unused;
+  wire        clkout3_unused;
+  wire        clkout4_unused;
   wire        clk_out6_clk_wiz_0;
   wire        clk_out7_clk_wiz_0;
 
@@ -82,18 +79,6 @@ wire clk_in2_clk_wiz_0;
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
-    .CLKOUT2_DIVIDE       (4),         // pcie = 250
-    .CLKOUT2_PHASE        (0.000),
-    .CLKOUT2_DUTY_CYCLE   (0.500),
-    .CLKOUT2_USE_FINE_PS  ("FALSE"),
-    .CLKOUT3_DIVIDE       (16),        // pcie_usr1 = 62.5
-    .CLKOUT3_PHASE        (0.000),
-    .CLKOUT3_DUTY_CYCLE   (0.500),
-    .CLKOUT3_USE_FINE_PS  ("FALSE"),
-    .CLKOUT4_DIVIDE       (16),        // pcie_usr2 = 62.5
-    .CLKOUT4_PHASE        (0.000),
-    .CLKOUT4_DUTY_CYCLE   (0.500),
-    .CLKOUT4_USE_FINE_PS  ("FALSE"),
     .CLKIN1_PERIOD        (5.000))
   mmcm_adv_inst
     // Output clocks
@@ -104,11 +89,11 @@ wire clk_in2_clk_wiz_0;
     .CLKOUT0B            (clkout0b_unused),
     .CLKOUT1             (w_clk_ddr_unbuf),
     .CLKOUT1B            (clkout1b_unused),
-    .CLKOUT2             (w_clk_pcie_unbuf),
+    .CLKOUT2             (clkout2_unused),
     .CLKOUT2B            (clkout2b_unused),
-    .CLKOUT3             (w_clk_pcie_usr1_unbuf),
+    .CLKOUT3             (clkout3_unused),
     .CLKOUT3B            (clkout3b_unused),
-    .CLKOUT4             (w_clk_pcie_usr2_unbuf),
+    .CLKOUT4             (clkout4_unused),
     .CLKOUT5             (clkout5_unused),
     .CLKOUT6             (clkout6_unused),
      // Input clock control
@@ -161,16 +146,5 @@ wire clk_in2_clk_wiz_0;
     .I   (w_clk_ddr_unbuf));
 
 
-  BUFG clkout3_buf
-   (.O   (o_clk_pcie),
-    .I   (w_clk_pcie_unbuf));
-
-  BUFG clkout4_buf
-   (.O   (o_clk_pcie_usr1),
-    .I   (w_clk_pcie_usr1_unbuf));
-
-  BUFG clkout5_buf
-   (.O   (o_clk_pcie_usr2),
-    .I   (w_clk_pcie_usr2_unbuf));
 
 endmodule
