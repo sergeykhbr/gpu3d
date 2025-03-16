@@ -17,8 +17,9 @@
 #pragma once
 #include <inttypes.h>
 
-#define PRCI_PLL_STATUS_SYS_LOCKED (0x1 << 0)
+#define PRCI_PLL_STATUS_SYS_LOCKED     (0x1 << 0)
 #define PRCI_PLL_STATUS_DDR_CALIB_DONE (0x1 << 1)
+#define PRCI_PLL_STATUS_PCIE_LNK_UP    (0x1 << 2)
 
 typedef struct prci_map {
     uint32_t pll_status;              /// 0x000: RO: PLL Status

@@ -29,6 +29,20 @@ void test_mtimer(void);
 int test_ddr();
 void print_pnp(void);
 
+void wait_pcie() {
+    prci_map *prci = (prci_map *)ADDR_BUS1_APB_PRCI;
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+    uint64_t t_start = clint->mtime;
+    while ((prci->pll_status & PRCI_PLL_STATUS_PCIE_LNK_UP) == 0) {
+        // 3 seconds timeout:
+        if ((clint->mtime - t_start) > 3 * SYS_HZ) {
+            printf_uart("%s", "PCIE no link\r\n");
+            return;
+        }
+    }
+    printf_uart("%s", "PCIE link up\r\n");
+}
+
 int __main() {
     uint32_t cfg;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
@@ -49,7 +63,6 @@ int __main() {
  
     led_set(0x01);
 
-#if 1
     cpu_max = pnp->cfg >> 28;
 
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
@@ -70,7 +83,8 @@ int __main() {
     led_set(0x1F);
 
     test_ddr();
-#endif
+
+    wait_pcie();
 
     while (1) {}
 
