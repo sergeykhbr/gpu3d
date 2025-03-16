@@ -77,11 +77,12 @@ set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_rd]
 set_property PACKAGE_PIN K24 [get_ports o_uart1_td]
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
+#########################################################
 # PCIE
 # Dedicated PCI Express oscillator 100 MHz. FPGA Pins: U8=PCIE_CLK_QO_P, U7=PCIE_CLK_QO_N
 # buffer loc defines pin assignment (no need in U8, U7)
 set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf]
-create_clock -name pcie_clk -period 10 [get_ports pcie_refclk_ibuf/O]
+create_clock -name pcie_clk -period 10 [get_ports i_pcie_clk]
 #
 # 
 set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S0}]
@@ -116,32 +117,36 @@ set_clock_groups -name pcieclkmux -physically_exclusive -group clk_125mhz_mux_x0
 #
 # Instead of pin assignment loc the cells (inst = pcie_7x_1line_5gts_64bits_pcie2_top)
 # PCIe Lane 0
-set_property LOC GTXE2_CHANNEL_X0Y7 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i}]
+set_property LOC GTXE2_CHANNEL_X0Y7 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i}]
+#set_property PACKAGE_PIN M5 [get_ports i_pcie_rxn[0]]
+#set_property PACKAGE_PIN M6 [get_ports i_pcie_rxp[0]]
+#set_property PACKAGE_PIN L3 [get_ports o_pcie_txn[0]]
+#set_property PACKAGE_PIN L4 [get_ports o_pcie_txp[0]]
 
 #
 # PCI Express Block placement. This constraint selects the PCI Express
 # Block to be used.
 #
 
-set_property LOC PCIE_X0Y0 [get_cells pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_block_i]
+set_property LOC PCIE_X0Y0 [get_cells pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_block_i]
 
 #
 # BlockRAM placement
 #
-set_property LOC RAMB36_X5Y35 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[3].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
-set_property LOC RAMB36_X4Y36 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[2].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
-set_property LOC RAMB36_X4Y35 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[1].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
-set_property LOC RAMB36_X4Y34 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[0].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
-set_property LOC RAMB36_X4Y33 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[0].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
-set_property LOC RAMB36_X4Y32 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[1].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
-set_property LOC RAMB36_X4Y31 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[2].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
-set_property LOC RAMB36_X4Y30 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[3].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X5Y35 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[3].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y36 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[2].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y35 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[1].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y34 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[0].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y33 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[0].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y32 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[1].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y31 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[2].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y30 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[3].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
 
 ###############################################################################
 # Timing Constraints
 ###############################################################################
 #
-create_clock -name txoutclk_x0y0 -period 10 [get_pins {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i/TXOUTCLK}]
+create_clock -name txoutclk_x0y0 -period 10 [get_pins {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i/TXOUTCLK}]
 #
 #
 set_false_path -through [get_pins -filter {REF_PIN_NAME=~PLPHYLNKUPN} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ * }]]
