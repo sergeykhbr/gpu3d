@@ -82,7 +82,7 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 # Dedicated PCI Express oscillator 100 MHz. FPGA Pins: U8=PCIE_CLK_QO_P, U7=PCIE_CLK_QO_N
 # buffer loc defines pin assignment (no need in U8, U7)
 set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf]
-create_clock -name pcie_clk -period 10 [get_ports i_pcie_clk]
+create_clock -name pcie_clk -period 10 [get_pins pcie_refclk_ibuf/O]
 #
 # 
 set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S0}]
@@ -92,10 +92,10 @@ set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S1}
 # See pg054-7series-pcie.pdf, page 248 "Core Timeing constring" (not from ref example):
 create_generated_clock -name clk_125mhz -source [get_pins pcie_refclk_ibuf/O] \
 			-edges {1 2 3} -edge_shift {0 -1 -2} \
-			[get_pins pcie_ep0.pipe_clock_i/mmcm_i/CLKOUT0]
+			[get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT0]
 create_generated_clock -name clk_userclk -source [get_pins pcie_refclk_ibuf/O] \
 			-edges {1 2 3} -edge_shift {0 3 6} \
-			[get_pins pcie_ep0.pipe_clock_i/mmcm_i/CLKOUT2]
+			[get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT2]
 #----------------
 #
 create_generated_clock -name clk_125mhz_x0y0 [get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT0]
