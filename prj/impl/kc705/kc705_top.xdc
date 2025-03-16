@@ -56,6 +56,7 @@ create_clock -period 1000.000 -name i_swjtag_clktck -waveform {0.000 500.000} [g
 
 set_property PACKAGE_PIN J23 [get_ports i_jtag_trst]
 set_property IOSTANDARD LVCMOS25 [get_ports i_jtag_trst]
+set_false_path -from [get_ports i_jtag_trst]
 
 set_property PACKAGE_PIN AA27 [get_ports i_jtag_tms]
 set_property IOSTANDARD LVCMOS25 [get_ports i_jtag_tms]
@@ -78,13 +79,23 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
 # PCIE
 # Dedicated PCI Express oscillator 100 MHz. FPGA Pins: U8=PCIE_CLK_QO_P, U7=PCIE_CLK_QO_N
-create_clock -name pcie_clk -period 10 [get_ports i_pcie_clk_p]
+# buffer loc defines pin assignment (no need in U8, U7)
 set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf]
+create_clock -name pcie_clk -period 10 [get_ports pcie_refclk_ibuf/O]
 #
 # 
 set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S0}]
 set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S1}]
 #
+#----------------
+# See pg054-7series-pcie.pdf, page 248 "Core Timeing constring" (not from ref example):
+create_generated_clock -name clk_125mhz -source [get_pins pcie_refclk_ibuf/O] \
+			-edges {1 2 3} -edge_shift {0 -1 -2} \
+			[get_pins pcie_ep0.pipe_clock_i/mmcm_i/CLKOUT0]
+create_generated_clock -name clk_userclk -source [get_pins pcie_refclk_ibuf/O] \
+			-edges {1 2 3} -edge_shift {0 3 6} \
+			[get_pins pcie_ep0.pipe_clock_i/mmcm_i/CLKOUT2]
+#----------------
 #
 create_generated_clock -name clk_125mhz_x0y0 [get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT0]
 create_generated_clock -name clk_250mhz_x0y0 [get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT1]
@@ -100,6 +111,56 @@ create_generated_clock -name clk_250mhz_mux_x0y0 \
 #
 set_clock_groups -name pcieclkmux -physically_exclusive -group clk_125mhz_mux_x0y0 -group clk_250mhz_mux_x0y0
 
+#
+# PCIE Core displacement see: pg054-7series-pcie.pdf, "Relocating the Integrated Clock Core"
+#
+# Instead of pin assignment loc the cells (inst = pcie_7x_1line_5gts_64bits_pcie2_top)
+# PCIe Lane 0
+set_property LOC GTXE2_CHANNEL_X0Y7 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i}]
+
+#
+# PCI Express Block placement. This constraint selects the PCI Express
+# Block to be used.
+#
+
+set_property LOC PCIE_X0Y0 [get_cells pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_block_i]
+
+#
+# BlockRAM placement
+#
+set_property LOC RAMB36_X5Y35 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[3].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y36 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[2].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y35 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[1].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y34 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_rx/brams[0].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y33 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[0].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y32 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[1].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y31 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[2].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+set_property LOC RAMB36_X4Y30 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/pcie_top_i/pcie_7x_i/pcie_bram_top/pcie_brams_tx/brams[3].ram/use_tdp.ramb36/genblk*.bram36_tdp_bl.bram36_tdp_bl}]
+
+###############################################################################
+# Timing Constraints
+###############################################################################
+#
+create_clock -name txoutclk_x0y0 -period 10 [get_pins {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i/TXOUTCLK}]
+#
+#
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~PLPHYLNKUPN} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ * }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~PLRECEIVEDHOTRST} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ * }]]
+
+#------------------------------------------------------------------------------
+# Asynchronous Paths
+#------------------------------------------------------------------------------
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~RXELECIDLE} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~TXPHINITDONE} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~TXPHALIGNDONE} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~TXDLYSRESETDONE} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~RXDLYSRESETDONE} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~RXPHALIGNDONE} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~RXCDRLOCK} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~CFGMSGRECEIVEDPMETO} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ * }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~CPLLLOCK} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+set_false_path -through [get_pins -filter {REF_PIN_NAME=~QPLLLOCK} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
+
 
 ##################################################################################################
 ## Controller 0
@@ -109,7 +170,7 @@ set_clock_groups -name pcieclkmux -physically_exclusive -group clk_125mhz_mux_x0
 ## Data Mask: 1
 ##################################################################################################
 
-create_clock -period 5 [get_ports sys_clk_i]
+#create_clock -period 5 [get_ports sys_clk_i]
           # Note: CLK_REF FALSE Constraint.
 # CLK_REF is a 200  MHz clock source used to drive IODELAY CTRL logic (via an
 # additional MMCM). This clock need not utilized CLOCK_DEDICADE_ROUTE (as they

@@ -95,6 +95,7 @@ lappend VERILOG_DEF WF_CPU_CLOCK=40.0
 #
 set REPO_ROOT ../../..
 set LIST_ROOT ${REPO_ROOT}/prj/common/lists
+set COMMON_HOME ${REPO_ROOT}/prj/common
 source -notrace scripts/set_paths.tcl
 
 # Load project files if LOAD_FILES = true:
@@ -113,6 +114,8 @@ if {[string is true $load_files]} {
 
 	# Apply Verilog Defines:
 	set_property verilog_define $VERILOG_DEF [current_fileset]
+	# To avoid error: ERROR: [Synth 8-439] module 'xpm_cdc_single' not found
+	set_property XPM_LIBRARIES {XPM_CDC XPM_MEMORY XPM_FIFO} [current_project]
 }
 
 if {[string is true $load_constr]} {
