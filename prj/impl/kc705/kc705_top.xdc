@@ -1,3 +1,6 @@
+# see "xtp197-kc705-pcie-c-2014-3.pdf" presentation:
+set_property CFGBVS VCCO [current_design]
+set_property CONFIG_VOLTAGE 2.5 [current_design]
 
 create_clock -name i_sclk_p -period 5.000 [get_ports i_sclk_p]
 
@@ -82,21 +85,24 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 # Dedicated PCI Express oscillator 100 MHz. FPGA Pins: U8=PCIE_CLK_QO_P, U7=PCIE_CLK_QO_N
 # buffer loc defines pin assignment (no need in U8, U7)
 set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf]
-create_clock -name pcie_clk -period 10 [get_pins pcie_refclk_ibuf/O]
+# 100  MHz
+create_clock -name pcie_clk -period 10 [get_ports i_pcie_clk_p]
+create_clock -name txoutclk_x0y0 -period 10 [get_pins {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i/TXOUTCLK}]
+# 250 MHz:  pipe_pclk_in
+create_clock -name pcie_pclk -period 4 [get_pins pcie_ep0/pipe_clock_i/CLK_PCLK]
+# 250 MHz 
+create_clock -name pcie_rxusrclk -period 4 [get_pins pcie_ep0/pipe_clock_i/CLK_RXUSRCLK]
+# 125 MHz
+create_clock -name pcie_64bits_dclk -period 8 [get_pins pcie_ep0/pipe_clock_i/CLK_DCLK]
+# 62.5 MHz
+create_clock -name pcie_usrclk1 -period 16 [get_pins pcie_ep0/pipe_clock_i/CLK_USERCLK1]
+create_clock -name pcie_usrclk2 -period 16 [get_pins pcie_ep0/pipe_clock_i/CLK_USERCLK2]
+# 250 MHz
+create_clock -name pcie_oobclk -period 4 [get_pins pcie_ep0/pipe_clock_i/CLK_OOBCLK]
 #
 # 
 set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S0}]
 set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S1}]
-#
-#----------------
-# See pg054-7series-pcie.pdf, page 248 "Core Timeing constring" (not from ref example):
-create_generated_clock -name clk_125mhz -source [get_pins pcie_refclk_ibuf/O] \
-			-edges {1 2 3} -edge_shift {0 -1 -2} \
-			[get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT0]
-create_generated_clock -name clk_userclk -source [get_pins pcie_refclk_ibuf/O] \
-			-edges {1 2 3} -edge_shift {0 3 6} \
-			[get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT2]
-#----------------
 #
 create_generated_clock -name clk_125mhz_x0y0 [get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT0]
 create_generated_clock -name clk_250mhz_x0y0 [get_pins pcie_ep0/pipe_clock_i/mmcm_i/CLKOUT1]
