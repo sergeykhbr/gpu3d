@@ -138,10 +138,10 @@ begin: comb_proc
     end
     v2.rempty = v_rempty_next;
 
-    if i_nrst == 1'b0) begin
+    if (i_nrst == 1'b0) begin
         v = cdc_afifo_r_reset;
     end
-    if i_nrst == 1'b0) begin
+    if (i_nrst == 1'b0) begin
         v2 = cdc_afifo_r2_reset;
     end
 

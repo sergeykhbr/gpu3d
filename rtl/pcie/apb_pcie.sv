@@ -43,7 +43,7 @@ apb_pcie_registers r, rin;
 apb_slv #(
     .async_reset(async_reset),
     .vid(VENDOR_OPTIMITECH),
-    .did(OPTIMITECH_RIVER_DMI)
+    .did(OPTIMITECH_PCIE_CTRL)
 ) pslv0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
