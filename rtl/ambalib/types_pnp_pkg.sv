@@ -68,7 +68,7 @@ localparam bit [15:0] OPTIMITECH_SDCTRL_MEM = 16'h008B;
 // RIVER debug registers:
 localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008A;
 // PCIE end-point APB controller:
-localparam bit [15:0] OPTIMITECH_PCIE_CTRL = 16'h008C;
+localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008C;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).

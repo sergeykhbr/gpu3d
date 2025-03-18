@@ -21,13 +21,12 @@ module cdc_afifo #(
     parameter int dbits = 32                                // payload width
 )
 (
+    input logic i_nrst,                                     // reset active LOW
     input logic i_wclk,                                     // clock write
-    input logic i_wrstn,                                    // write reset active LOW
     input logic i_wr,                                       // write enable strob
     input logic [dbits-1:0] i_wdata,                        // write data
     output logic o_wfull,                                   // fifo is full in wclk domain
     input logic i_rclk,                                     // read clock
-    input logic i_rrstn,                                    // read reset active LOW
     input logic i_rd,                                       // read enable strob
     output logic [dbits-1:0] o_rdata,                       // fifo payload read
     output logic o_rempty                                   // fifo is empty it rclk domain
@@ -139,6 +138,13 @@ begin: comb_proc
     end
     v2.rempty = v_rempty_next;
 
+    if i_nrst == 1'b0) begin
+        v = cdc_afifo_r_reset;
+    end
+    if i_nrst == 1'b0) begin
+        v2 = cdc_afifo_r2_reset;
+    end
+
     o_wfull = r.wfull;
     o_rempty = r2.rempty;
     o_rdata = rx2.mem[int'(vb_raddr)];
@@ -150,16 +156,16 @@ begin: comb_proc
     end
 end: comb_proc
 
-always_ff @(posedge i_wclk, negedge i_wrstn) begin: rg_proc
-    if (i_wrstn == 1'b0) begin
+always_ff @(posedge i_wclk, negedge i_nrst) begin: rg_proc
+    if (i_nrst == 1'b0) begin
         r <= cdc_afifo_r_reset;
     end else begin
         r <= rin;
     end
 end: rg_proc
 
-always_ff @(posedge i_rclk, negedge i_rrstn) begin: r2g_proc
-    if (i_rrstn == 1'b0) begin
+always_ff @(posedge i_rclk, negedge i_nrst) begin: r2g_proc
+    if (i_nrst == 1'b0) begin
         r2 <= cdc_afifo_r2_reset;
     end else begin
         r2 <= r2in;

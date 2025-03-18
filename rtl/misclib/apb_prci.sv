@@ -25,10 +25,13 @@ module apb_prci #(
     input logic i_dmireset,                                 // Debug reset: system reset except DMI interface
     input logic i_sys_locked,
     input logic i_ddr_locked,
+    input logic i_pcie_phy_rst,                             // PCIE user reset: active HIGH
+    input logic i_pcie_phy_clk,                             // PCIE user clock: 62.5 MHz (default)
     input logic i_pcie_phy_lnk_up,                          // PCIE PHY link status up
     output logic o_sys_rst,                                 // System reset except DMI. Active HIGH
     output logic o_sys_nrst,                                // System reset except DMI. Active LOW
     output logic o_dbg_nrst,                                // Reset DMI. Active LOW
+    output logic o_pcie_nrst,                               // Reset PCIE DMA. Active LOW. Reset until link is up.
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
     output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB  Slave to Bridge interface
@@ -74,16 +77,20 @@ begin: comb_proc
 
     vh = rh;
 
+    vh.sys_locked = i_sys_locked;
+    vh.ddr_locked = i_ddr_locked;
+    vh.pcie_lnk_up = i_pcie_phy_lnk_up;
     vh.sys_rst = (i_pwrreset || (~i_sys_locked) || i_dmireset);
     vh.sys_nrst = (~(i_pwrreset || (~i_sys_locked) || i_dmireset));
     vh.dbg_nrst = (~(i_pwrreset || (~i_sys_locked)));
+    vh.pcie_nrst = (~(i_pwrreset || (~i_sys_locked) || (~rh.pcie_lnk_up) || i_pcie_phy_rst));
 
     // Registers access:
     case (wb_req_addr[11: 2])
     10'd0: begin                                            // 0x00: pll statuses
-        vb_rdata[0] = i_sys_locked;
-        vb_rdata[1] = i_ddr_locked;
-        vb_rdata[2] = i_pcie_phy_lnk_up;
+        vb_rdata[0] = rh.sys_locked;
+        vb_rdata[1] = rh.ddr_locked;
+        vb_rdata[2] = rh.pcie_lnk_up;
     end
     10'd1: begin                                            // 0x04: reset status
         vb_rdata[0] = rh.sys_nrst;
@@ -109,6 +116,7 @@ begin: comb_proc
     o_sys_rst = rh.sys_rst;
     o_sys_nrst = rh.sys_nrst;
     o_dbg_nrst = rh.dbg_nrst;
+    o_pcie_nrst = rh.pcie_nrst;
 
     rhin = vh;
 end: comb_proc
