@@ -1,9 +1,10 @@
+
 //-----------------------------------------------------------------------------
 //
-// (c) Copyright 2010-2011 Xilinx, Inc. All rights reserved.
+// (c) Copyright 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // This file contains confidential and proprietary information
-// of Xilinx, Inc. and is protected under U.S. and
+// of AMD and is protected under U.S. and
 // international copyright and other intellectual property
 // laws.
 //
@@ -11,13 +12,13 @@
 // This disclaimer is not a license and does not grant any
 // rights to the materials distributed herewith. Except as
 // otherwise provided in a valid license issued to you by
-// Xilinx, and to the maximum extent permitted by applicable
+// AMD, and to the maximum extent permitted by applicable
 // law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
-// WITH ALL FAULTS, AND XILINX HEREBY DISCLAIMS ALL WARRANTIES
+// WITH ALL FAULTS, AND AMD HEREBY DISCLAIMS ALL WARRANTIES
 // AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
 // BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
 // INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
-// (2) Xilinx shall not be liable (whether in contract or tort,
+// (2) AMD shall not be liable (whether in contract or tort,
 // including negligence, or under any other theory of
 // liability) for any loss or damage of any kind or nature
 // related to, arising under or in connection with these
@@ -26,11 +27,11 @@
 // (including loss of data, profits, goodwill, or any type of
 // loss or damage suffered as a result of any action brought
 // by a third party) even if such damage or loss was
-// reasonably foreseeable or Xilinx had been advised of the
+// reasonably foreseeable or AMD had been advised of the
 // possibility of the same.
 //
 // CRITICAL APPLICATIONS
-// Xilinx products are not designed or intended to be fail-
+// AMD products are not designed or intended to be fail-
 // safe, or for use in any application requiring fail-safe
 // performance, such as life-support or safety devices or
 // systems, Class III medical devices, nuclear facilities,
@@ -39,7 +40,7 @@
 // injury, or severe property or environmental damage
 // (individually and collectively, "Critical
 // Applications"). Customer assumes the sole risk and
-// liability of any use of Xilinx products in Critical
+// liability of any use of AMD products in Critical
 // Applications, subject only to applicable laws and
 // regulations governing limitations on product liability.
 //
@@ -584,6 +585,10 @@ module pcie_7x_1line_5gts_64bits_pipe_wrapper #
     wire        [(PCIE_LANE*3)-1:0] gt_rxstatus;
     wire        [(PCIE_LANE*3)-1:0] gt_rxbufstatus;
     wire        [PCIE_LANE-1:0]     gt_rxelecidle;
+//#SE, add
+//-
+    wire        [PCIE_LANE-1:0]     gt_rxelecidle_i;
+    reg         [PCIE_LANE-1:0]     gt_rxrcvrdet_c;
     wire        [PCIE_LANE-1:0]     gt_txratedone;
     wire        [PCIE_LANE-1:0]     gt_rxratedone;
     wire        [(PCIE_LANE*16)-1:0]gt_do;
@@ -1085,7 +1090,9 @@ pcie_7x_1line_5gts_64bits_pipe_sync #
         .SYNC_GEN3                      (rate_gen3[i]),
         .SYNC_RATE_IDLE                 (rate_idle[i]),
         .SYNC_MMCM_LOCK                 (clk_mmcm_lock),
-        .SYNC_RXELECIDLE                (gt_rxelecidle[i]),
+//#SE, mod
+//        .SYNC_RXELECIDLE                (gt_rxelecidle[i]),
+        .SYNC_RXELECIDLE                (gt_rxelecidle_i[i]),
         .SYNC_RXCDRLOCK                 (user_rxcdrlock[i]),
         .SYNC_ACTIVE_LANE               (user_active_lane[i]),
         
@@ -1524,7 +1531,9 @@ pcie_7x_1line_5gts_64bits_gt_wrapper #
         //---------- GT Status Ports -----------------------
         .GT_RXVALID                     (gt_rxvalid[i]),
         .GT_PHYSTATUS                   (gt_phystatus[i]),
-        .GT_RXELECIDLE                  (gt_rxelecidle[i]),
+//#SE, mod
+//        .GT_RXELECIDLE                  (gt_rxelecidle[i]),
+        .GT_RXELECIDLE                  (gt_rxelecidle_i[i]),
         .GT_RXSTATUS                    (gt_rxstatus[(3*i)+2:(3*i)]),
         .GT_RXBUFSTATUS                 (gt_rxbufstatus[(3*i)+2:(3*i)]),
         .GT_TXRATEDONE                  (gt_txratedone[i]),
@@ -1609,9 +1618,25 @@ pcie_7x_1line_5gts_64bits_gt_wrapper #
         //---------- GT Debug Port -------------------------
         .GT_DMONITOROUT                 (PIPE_DMONITOROUT[(15*i)+14:(15*i)])
     );
-    
 
-    
+//#SE, mod
+//-
+    always @(posedge clk_rxusrclk)
+    begin
+      if (PIPE_TXDETECTRX && gt_phystatus[i] && (gt_rxstatus[(3*i)+2:(3*i)] == 3'h3))
+        gt_rxrcvrdet_c[i] <= 1'b1;
+      else
+        if (PIPE_TXDETECTRX && gt_phystatus[i] && (gt_rxstatus[(3*i)+2:(3*i)] != 3'h3))
+          gt_rxrcvrdet_c[i] <= 1'b0;
+    end
+
+    initial
+      gt_rxrcvrdet_c[i] = 1'b0;
+
+    //assign gt_rxelecidle[i] = (gt_rxrcvrdet_c) ? gt_rxelecidle_i[i] : 1'b1;
+    assign gt_rxelecidle[i] = gt_rxelecidle_i[i];
+//-    
+
     //---------- GT Wrapper Assignments ----------------------------------------     
     assign oobclk[i]         = (PCIE_OOBCLK_MODE == 1) ? user_oobclk[i] : clk_oobclk;
     

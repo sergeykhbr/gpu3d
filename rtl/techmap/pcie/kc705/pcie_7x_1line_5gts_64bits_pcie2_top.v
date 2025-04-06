@@ -1,9 +1,10 @@
+
 //-----------------------------------------------------------------------------
 //
-// (c) Copyright 2010-2011 Xilinx, Inc. All rights reserved.
+// (c) Copyright 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // This file contains confidential and proprietary information
-// of Xilinx, Inc. and is protected under U.S. and
+// of AMD and is protected under U.S. and
 // international copyright and other intellectual property
 // laws.
 //
@@ -11,13 +12,13 @@
 // This disclaimer is not a license and does not grant any
 // rights to the materials distributed herewith. Except as
 // otherwise provided in a valid license issued to you by
-// Xilinx, and to the maximum extent permitted by applicable
+// AMD, and to the maximum extent permitted by applicable
 // law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
-// WITH ALL FAULTS, AND XILINX HEREBY DISCLAIMS ALL WARRANTIES
+// WITH ALL FAULTS, AND AMD HEREBY DISCLAIMS ALL WARRANTIES
 // AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
 // BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
 // INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
-// (2) Xilinx shall not be liable (whether in contract or tort,
+// (2) AMD shall not be liable (whether in contract or tort,
 // including negligence, or under any other theory of
 // liability) for any loss or damage of any kind or nature
 // related to, arising under or in connection with these
@@ -26,11 +27,11 @@
 // (including loss of data, profits, goodwill, or any type of
 // loss or damage suffered as a result of any action brought
 // by a third party) even if such damage or loss was
-// reasonably foreseeable or Xilinx had been advised of the
+// reasonably foreseeable or AMD had been advised of the
 // possibility of the same.
 //
 // CRITICAL APPLICATIONS
-// Xilinx products are not designed or intended to be fail-
+// AMD products are not designed or intended to be fail-
 // safe, or for use in any application requiring fail-safe
 // performance, such as life-support or safety devices or
 // systems, Class III medical devices, nuclear facilities,
@@ -39,7 +40,7 @@
 // injury, or severe property or environmental damage
 // (individually and collectively, "Critical
 // Applications"). Customer assumes the sole risk and
-// liability of any use of Xilinx products in Critical
+// liability of any use of AMD products in Critical
 // Applications, subject only to applicable laws and
 // regulations governing limitations on product liability.
 //
@@ -57,7 +58,7 @@
 `timescale 1ns/1ps
 (* DowngradeIPIdentifiedWarnings = "yes" *)
 module pcie_7x_1line_5gts_64bits_pcie2_top # (
-parameter     c_component_name ="pcie_7x_v3_3_10",
+parameter     c_component_name ="pcie_7x_v3_3_22",
 parameter     dev_port_type ="0000",
 parameter     c_dev_port_type ="0",
 parameter     c_header_type ="00",
@@ -269,11 +270,13 @@ parameter     ERR_REPORTING_IF = "TRUE",
 parameter     c_aer_cap_ecrc_gen_capable = "FALSE",
 parameter     EXT_PIPE_INTERFACE = "FALSE",
 parameter     EXT_STARTUP_PRIMITIVE = "FALSE",
-parameter  integer   LINK_CAP_MAX_LINK_WIDTH = 6'h8,
-parameter  integer   C_DATA_WIDTH = 64, 
-parameter  integer   KEEP_WIDTH = C_DATA_WIDTH / 8,
-parameter  PCIE_ASYNC_EN = "FALSE",
-parameter  ENABLE_JTAG_DBG = "FALSE"
+parameter integer   LINK_CAP_MAX_LINK_WIDTH = 6'h8,
+parameter integer   C_DATA_WIDTH = 64, 
+parameter integer   KEEP_WIDTH = C_DATA_WIDTH / 8,
+parameter     PCIE_ID_IF ="TRUE", 
+parameter     PCIE_ASYNC_EN = "FALSE",
+parameter     ENABLE_JTAG_DBG = "FALSE",
+parameter     REDUCE_OOB_FREQ = "FALSE"
 )
 (
 
@@ -688,6 +691,16 @@ parameter  ENABLE_JTAG_DBG = "FALSE"
   output wire  [24:0]  pipe_tx_5_sigs,
   output wire  [24:0]  pipe_tx_6_sigs,
   output wire  [24:0]  pipe_tx_7_sigs,
+
+  //----------------------------------------------------------------------------------------------------------------//
+  // PCIe ID Interface                                                                                              //
+  //----------------------------------------------------------------------------------------------------------------//
+  input wire   [15:0]  cfg_dev_id_pf0,
+  input wire   [15:0]  cfg_ven_id,
+  input wire   [7:0]   cfg_rev_id_pf0,
+  input wire   [15:0]  cfg_subsys_id_pf0,
+  input wire   [15:0]  cfg_subsys_ven_id,
+
   //----------------------------------------------------------------------------------------------------------------//
   input wire           pipe_mmcm_rst_n,        // Async      | Async
   input wire           sys_clk,
@@ -1005,6 +1018,12 @@ pcie_7x_1line_5gts_64bits_core_top  # (
     .pipe_tx_5_sigs                             ( pipe_tx_5_sigs      ), 
     .pipe_tx_6_sigs                             ( pipe_tx_6_sigs      ), 
     .pipe_tx_7_sigs                             ( pipe_tx_7_sigs      ), 
+
+    .cfg_dev_id_pf0                             ( cfg_dev_id_pf0      ),
+    .cfg_ven_id                                 ( cfg_ven_id          ),
+    .cfg_rev_id_pf0                             ( cfg_rev_id_pf0      ),
+    .cfg_subsys_id_pf0                          ( cfg_subsys_id_pf0   ),
+    .cfg_subsys_ven_id                          ( cfg_subsys_ven_id   ),
 
     .pipe_mmcm_rst_n                            (pipe_mmcm_rst_n),        // Async      | Async
     .sys_clk                                    (sys_clk),

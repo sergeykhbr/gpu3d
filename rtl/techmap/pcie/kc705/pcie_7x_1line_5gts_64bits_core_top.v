@@ -1,9 +1,10 @@
+
 //-----------------------------------------------------------------------------
 //
-// (c) Copyright 2010-2011 Xilinx, Inc. All rights reserved.
+// (c) Copyright 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // This file contains confidential and proprietary information
-// of Xilinx, Inc. and is protected under U.S. and
+// of AMD and is protected under U.S. and
 // international copyright and other intellectual property
 // laws.
 //
@@ -11,13 +12,13 @@
 // This disclaimer is not a license and does not grant any
 // rights to the materials distributed herewith. Except as
 // otherwise provided in a valid license issued to you by
-// Xilinx, and to the maximum extent permitted by applicable
+// AMD, and to the maximum extent permitted by applicable
 // law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
-// WITH ALL FAULTS, AND XILINX HEREBY DISCLAIMS ALL WARRANTIES
+// WITH ALL FAULTS, AND AMD HEREBY DISCLAIMS ALL WARRANTIES
 // AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
 // BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
 // INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
-// (2) Xilinx shall not be liable (whether in contract or tort,
+// (2) AMD shall not be liable (whether in contract or tort,
 // including negligence, or under any other theory of
 // liability) for any loss or damage of any kind or nature
 // related to, arising under or in connection with these
@@ -26,11 +27,11 @@
 // (including loss of data, profits, goodwill, or any type of
 // loss or damage suffered as a result of any action brought
 // by a third party) even if such damage or loss was
-// reasonably foreseeable or Xilinx had been advised of the
+// reasonably foreseeable or AMD had been advised of the
 // possibility of the same.
 //
 // CRITICAL APPLICATIONS
-// Xilinx products are not designed or intended to be fail-
+// AMD products are not designed or intended to be fail-
 // safe, or for use in any application requiring fail-safe
 // performance, such as life-support or safety devices or
 // systems, Class III medical devices, nuclear facilities,
@@ -39,7 +40,7 @@
 // injury, or severe property or environmental damage
 // (individually and collectively, "Critical
 // Applications"). Customer assumes the sole risk and
-// liability of any use of Xilinx products in Critical
+// liability of any use of AMD products in Critical
 // Applications, subject only to applicable laws and
 // regulations governing limitations on product liability.
 //
@@ -59,7 +60,7 @@
 
 `timescale 1ps/1ps
 
-(* CORE_GENERATION_INFO = "pcie_7x_1line_5gts_64bits,pcie_7x_v3_3_10,{LINK_CAP_MAX_LINK_SPEED=2,LINK_CAP_MAX_LINK_WIDTH=1,PCIE_CAP_DEVICE_PORT_TYPE=0000,DEV_CAP_MAX_PAYLOAD_SUPPORTED=2,USER_CLK_FREQ=1,REF_CLK_FREQ=0,MSI_CAP_ON=TRUE,MSI_CAP_MULTIMSGCAP=0,MSI_CAP_MULTIMSG_EXTENSION=0,MSIX_CAP_ON=FALSE,TL_TX_RAM_RADDR_LATENCY=0,TL_TX_RAM_RDATA_LATENCY=2,TL_RX_RAM_RADDR_LATENCY=0,TL_RX_RAM_RDATA_LATENCY=2,TL_RX_RAM_WRITE_LATENCY=0,\
+(* CORE_GENERATION_INFO = "pcie_7x_1line_5gts_64bits,pcie_7x_v3_3_22,{LINK_CAP_MAX_LINK_SPEED=2,LINK_CAP_MAX_LINK_WIDTH=1,PCIE_CAP_DEVICE_PORT_TYPE=0000,DEV_CAP_MAX_PAYLOAD_SUPPORTED=2,USER_CLK_FREQ=1,REF_CLK_FREQ=0,MSI_CAP_ON=TRUE,MSI_CAP_MULTIMSGCAP=0,MSI_CAP_MULTIMSG_EXTENSION=0,MSIX_CAP_ON=FALSE,TL_TX_RAM_RADDR_LATENCY=0,TL_TX_RAM_RDATA_LATENCY=2,TL_RX_RAM_RADDR_LATENCY=0,TL_RX_RAM_RDATA_LATENCY=2,TL_RX_RAM_WRITE_LATENCY=0,\
 VC0_TX_LASTPACKET=29,VC0_RX_RAM_LIMIT=7FF,VC0_TOTAL_CREDITS_PH=32,VC0_TOTAL_CREDITS_PD=437,VC0_TOTAL_CREDITS_NPH=12,VC0_TOTAL_CREDITS_NPD=24,VC0_TOTAL_CREDITS_CH=36,VC0_TOTAL_CREDITS_CD=461,VC0_CPL_INFINITE=TRUE,DEV_CAP_PHANTOM_FUNCTIONS_SUPPORT=0,DEV_CAP_EXT_TAG_SUPPORTED=FALSE,LINK_STATUS_SLOT_CLOCK_CONFIG=TRUE,DISABLE_LANE_REVERSAL=TRUE,DISABLE_SCRAMBLING=FALSE,DSN_CAP_ON=TRUE,REVISION_ID=00,VC_CAP_ON=FALSE}" *)
 (* DowngradeIPIdentifiedWarnings = "yes" *)
 module pcie_7x_1line_5gts_64bits_core_top # (
@@ -68,6 +69,7 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   parameter         CFG_REV_ID         =  8'h00,
   parameter         CFG_SUBSYS_VEND_ID = 16'h10EE,
   parameter         CFG_SUBSYS_ID      = 16'h0007,
+  parameter         PCIE_ID_IF         ="TRUE", 
 
   parameter         EXT_PIPE_SIM = "FALSE",
 
@@ -82,9 +84,9 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   parameter         AER_CAP_ON = "FALSE",
   parameter         AER_CAP_PERMIT_ROOTERR_UPDATE = "FALSE",
 
-  parameter [31:0]  BAR0 = 32'hF8000000,
-  parameter [31:0]  BAR1 = 32'hC0000004,
-  parameter [31:0]  BAR2 = 32'hFFFFFFFF,
+  parameter [31:0]  BAR0 = 32'hFFE00004,
+  parameter [31:0]  BAR1 = 32'hFFFFFFFF,
+  parameter [31:0]  BAR2 = 32'h00000000,
   parameter [31:0]  BAR3 = 32'h00000000,
   parameter [31:0]  BAR4 = 32'h00000000,
   parameter [31:0]  BAR5 = 32'h00000000,
@@ -92,7 +94,7 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   parameter         C_DATA_WIDTH = 64,
   parameter [31:0]  CARDBUS_CIS_POINTER = 32'h00000000,
   parameter [23:0]  CLASS_CODE = 24'h058000,
-  parameter         CMD_INTX_IMPLEMENTED = "FALSE",
+  parameter         CMD_INTX_IMPLEMENTED = "TRUE",
   parameter         CPL_TIMEOUT_DISABLE_SUPPORTED = "FALSE",
   parameter [3:0]   CPL_TIMEOUT_RANGES_SUPPORTED = 4'h2,
 
@@ -123,7 +125,7 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   parameter [5:0]   EXT_CFG_CAP_PTR = 6'h3F,
   parameter [9:0]   EXT_CFG_XP_CAP_PTR = 10'h3FF,
   parameter [7:0]   HEADER_TYPE = 8'h00,
-  parameter [7:0]   INTERRUPT_PIN = 8'h0,
+  parameter [7:0]   INTERRUPT_PIN = 8'h1,
 
   parameter [9:0]   LAST_CONFIG_DWORD = 10'h3FF,
   parameter         LINK_CAP_ASPM_OPTIONALITY = "FALSE",
@@ -433,7 +435,8 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   parameter         TX_MARGIN_LOW_2   = 7'b1000011,
   parameter         TX_MARGIN_LOW_3   = 7'b1000010,
   parameter         TX_MARGIN_LOW_4   = 7'b1000000,
-  parameter         ENABLE_JTAG_DBG = "FALSE"
+  parameter         ENABLE_JTAG_DBG = "FALSE",
+  parameter         REDUCE_OOB_FREQ = "FALSE"
 )
 (
 
@@ -856,8 +859,18 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   output wire  [24:0]  pipe_tx_5_sigs,
   output wire  [24:0]  pipe_tx_6_sigs,
   output wire  [24:0]  pipe_tx_7_sigs,
+
   //----------------------------------------------------------------------------------------------------------------//
-  // 9. System(SYS) Interface                                                                                       //
+  // 9. PCIe ID Interface                                                                                           //
+  //----------------------------------------------------------------------------------------------------------------//
+  input wire   [15:0]  cfg_dev_id_pf0,
+  input wire   [15:0]  cfg_ven_id,
+  input wire    [7:0]  cfg_rev_id_pf0,
+  input wire   [15:0]  cfg_subsys_id_pf0,
+  input wire   [15:0]  cfg_subsys_ven_id,
+
+  //----------------------------------------------------------------------------------------------------------------//
+  // 10. System(SYS) Interface                                                                                      //
   //----------------------------------------------------------------------------------------------------------------//
 
   input wire           pipe_mmcm_rst_n,        // Async      | Async
@@ -868,11 +881,18 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   wire                 user_clk;
   wire                 user_clk2;
   wire                 pipe_clk;
-  wire [15:0]          cfg_vend_id        = CFG_VEND_ID;
-  wire [15:0]          cfg_dev_id         = CFG_DEV_ID;
-  wire [7:0]           cfg_rev_id         = CFG_REV_ID;
-  wire [15:0]          cfg_subsys_vend_id = CFG_SUBSYS_VEND_ID;
-  wire [15:0]          cfg_subsys_id      = CFG_SUBSYS_ID;
+
+  wire [15:0]          cfg_vend_id_int;       
+  wire [15:0]          cfg_dev_id_int;      
+  wire [7:0]           cfg_rev_id_int;       
+  wire [15:0]          cfg_subsys_vend_id_int;
+  wire [15:0]          cfg_subsys_id_int;     
+
+  assign    cfg_vend_id_int        = CFG_VEND_ID;
+  assign    cfg_dev_id_int         = CFG_DEV_ID;
+  assign    cfg_rev_id_int         = CFG_REV_ID;
+  assign    cfg_subsys_vend_id_int = CFG_SUBSYS_VEND_ID;
+  assign    cfg_subsys_id_int      = CFG_SUBSYS_ID;
 
   // PIPE Interface Wires
   wire                 phy_rdy_n;
@@ -1455,11 +1475,11 @@ pcie_7x_1line_5gts_64bits_pcie_top # (
     .cm_rst_n                                   ( 1'b1 ),
     .func_lvl_rst_n                             ( 1'b1 ),
     .lnk_clk_en                                 ( ),
-    .cfg_dev_id                                 ( cfg_dev_id ),
-    .cfg_vend_id                                ( cfg_vend_id ),
-    .cfg_rev_id                                 ( cfg_rev_id ),
-    .cfg_subsys_id                              ( cfg_subsys_id ),
-    .cfg_subsys_vend_id                         ( cfg_subsys_vend_id ),
+    .cfg_dev_id                                 ( cfg_dev_id_int  ),
+    .cfg_vend_id                                ( cfg_vend_id_int ),
+    .cfg_rev_id                                 ( cfg_rev_id_int  ),
+    .cfg_subsys_id                              ( cfg_subsys_id_int ),
+    .cfg_subsys_vend_id                         ( cfg_subsys_vend_id_int ),
     .cfg_pciecap_interrupt_msgnum               ( cfg_pciecap_interrupt_msgnum ),
 
     .cfg_bridge_serr_en                         ( cfg_bridge_serr_en ),
@@ -2108,15 +2128,15 @@ pcie_7x_1line_5gts_64bits_gt_top #(
     .PIPE_DEBUG                    ( pipe_debug )
   );
 
-  assign  common_commands_out = 12'b0;  
-  assign  pipe_tx_0_sigs      = 25'b0;   
-  assign  pipe_tx_1_sigs      = 25'b0; 
-  assign  pipe_tx_2_sigs      = 25'b0; 
-  assign  pipe_tx_3_sigs      = 25'b0; 
-  assign  pipe_tx_4_sigs      = 25'b0; 
-  assign  pipe_tx_5_sigs      = 25'b0; 
-  assign  pipe_tx_6_sigs      = 25'b0; 
-  assign  pipe_tx_7_sigs      = 25'b0; 
+//  assign  common_commands_out = 12'b0;  
+//  assign  pipe_tx_0_sigs      = 25'b0;   
+//  assign  pipe_tx_1_sigs      = 25'b0; 
+//  assign  pipe_tx_2_sigs      = 25'b0; 
+//  assign  pipe_tx_3_sigs      = 25'b0; 
+//  assign  pipe_tx_4_sigs      = 25'b0; 
+//  assign  pipe_tx_5_sigs      = 25'b0; 
+//  assign  pipe_tx_6_sigs      = 25'b0; 
+//  assign  pipe_tx_7_sigs      = 25'b0; 
   //------------------------------------------------------------------------------------------------------------------//
 
   // Tie-Off Unused Tandem Outputs

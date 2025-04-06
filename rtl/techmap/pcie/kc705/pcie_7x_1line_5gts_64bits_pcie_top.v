@@ -1,9 +1,10 @@
+
 //-----------------------------------------------------------------------------
 //
-// (c) Copyright 2010-2011 Xilinx, Inc. All rights reserved.
+// (c) Copyright 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // This file contains confidential and proprietary information
-// of Xilinx, Inc. and is protected under U.S. and
+// of AMD and is protected under U.S. and
 // international copyright and other intellectual property
 // laws.
 //
@@ -11,13 +12,13 @@
 // This disclaimer is not a license and does not grant any
 // rights to the materials distributed herewith. Except as
 // otherwise provided in a valid license issued to you by
-// Xilinx, and to the maximum extent permitted by applicable
+// AMD, and to the maximum extent permitted by applicable
 // law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
-// WITH ALL FAULTS, AND XILINX HEREBY DISCLAIMS ALL WARRANTIES
+// WITH ALL FAULTS, AND AMD HEREBY DISCLAIMS ALL WARRANTIES
 // AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
 // BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
 // INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
-// (2) Xilinx shall not be liable (whether in contract or tort,
+// (2) AMD shall not be liable (whether in contract or tort,
 // including negligence, or under any other theory of
 // liability) for any loss or damage of any kind or nature
 // related to, arising under or in connection with these
@@ -26,11 +27,11 @@
 // (including loss of data, profits, goodwill, or any type of
 // loss or damage suffered as a result of any action brought
 // by a third party) even if such damage or loss was
-// reasonably foreseeable or Xilinx had been advised of the
+// reasonably foreseeable or AMD had been advised of the
 // possibility of the same.
 //
 // CRITICAL APPLICATIONS
-// Xilinx products are not designed or intended to be fail-
+// AMD products are not designed or intended to be fail-
 // safe, or for use in any application requiring fail-safe
 // performance, such as life-support or safety devices or
 // systems, Class III medical devices, nuclear facilities,
@@ -39,7 +40,7 @@
 // injury, or severe property or environmental damage
 // (individually and collectively, "Critical
 // Applications"). Customer assumes the sole risk and
-// liability of any use of Xilinx products in Critical
+// liability of any use of AMD products in Critical
 // Applications, subject only to applicable laws and
 // regulations governing limitations on product liability.
 //
@@ -349,7 +350,8 @@ module pcie_7x_1line_5gts_64bits_pcie_top # (
   parameter [11:0] VSEC_CAP_NEXTPTR = 12'h140,
   parameter        VSEC_CAP_ON = "FALSE",
   parameter [3:0]  VSEC_CAP_VERSION = 4'h1,
-  parameter        ENABLE_JTAG_DBG = "FALSE"
+  parameter        ENABLE_JTAG_DBG = "FALSE",
+  parameter        REDUCE_OOB_FREQ = "FALSE"
 )
 (
 
@@ -612,12 +614,6 @@ module pcie_7x_1line_5gts_64bits_pcie_top # (
   output wire  [63:0]  trn_rdllp_data,
   output wire   [1:0]  trn_rdllp_src_rdy,
   output wire  [11:0]  pl_dbg_vec,
-
-
-  input wire                sys_clk,
-  input wire       [4:0]    pipe_rst_fsm,
-  input wire [((LINK_CAP_MAX_LINK_WIDTH*3)-1):0] pipe_rxstatus,
-
 
   input                       phy_rdy_n,
   input                       pipe_clk,
@@ -1692,11 +1688,6 @@ pcie_7x_1line_5gts_64bits_pcie_7x # (
 
     .trn_rdllp_data                            (trn_rdllp_data ),
     .trn_rdllp_src_rdy                         (trn_rdllp_src_rdy ),
-
-
-    .sys_clk                                    ( sys_clk ),
-    .pipe_rst_fsm                               ( pipe_rst_fsm ),
-    .pipe_rxstatus                              ( pipe_rxstatus ),
 
     .pipe_clk                                  ( pipe_clk ),
     .user_clk2                                 ( user_clk2 ),
