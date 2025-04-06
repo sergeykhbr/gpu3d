@@ -1,4 +1,9 @@
 # see "xtp197-kc705-pcie-c-2014-3.pdf" presentation:
+set_property BITSTREAM.CONFIG.BPI_SYNC_MODE Type2 [current_design]
+set_property BITSTREAM.CONFIG.EXTMASTERCCLK_EN div-2 [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+set_property BITSTREAM.CONFIG.UNUSEDPIN Pullup [current_design]
+set_property CONFIG_MODE BPI16 [current_design]
 set_property CFGBVS VCCO [current_design]
 set_property CONFIG_VOLTAGE 2.5 [current_design]
 
@@ -122,12 +127,7 @@ set_clock_groups -name pcieclkmux -physically_exclusive -group clk_125mhz_mux_x0
 # PCIE Core displacement see: pg054-7series-pcie.pdf, "Relocating the Integrated Clock Core"
 #
 # Instead of pin assignment loc the cells (inst = pcie_7x_1line_5gts_64bits_pcie2_top)
-# PCIe Lane 0
 set_property LOC GTXE2_CHANNEL_X0Y7 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i}]
-#set_property PACKAGE_PIN M5 [get_ports i_pcie_rxn[0]]
-#set_property PACKAGE_PIN M6 [get_ports i_pcie_rxp[0]]
-#set_property PACKAGE_PIN L3 [get_ports o_pcie_txn[0]]
-#set_property PACKAGE_PIN L4 [get_ports o_pcie_txp[0]]
 
 #
 # PCI Express Block placement. This constraint selects the PCI Express
@@ -151,8 +151,6 @@ set_property LOC RAMB36_X4Y30 [get_cells {pcie_ep0/pcie_7x_1line_5gts_64bits_i/i
 ###############################################################################
 # Timing Constraints
 ###############################################################################
-#
-create_clock -name txoutclk_x0y0 -period 10 [get_pins {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i/TXOUTCLK}]
 #
 #
 set_false_path -through [get_pins -filter {REF_PIN_NAME=~PLPHYLNKUPN} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ * }]]
