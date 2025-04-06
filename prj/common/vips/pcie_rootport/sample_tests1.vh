@@ -88,7 +88,7 @@ fork
       3'h0, //completion_status;
       1'b0, //bcm;
       12'h4, //byte_count;
-      16'h01a0, //requester_id;
+      `ROOTPORT_TB.tx_usrapp.REQUESTER_ID, //16 bit requester_id;
       8'h0, //tag;
       7'b0, //address_low;
       expect_status //expect_status;
