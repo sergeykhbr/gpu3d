@@ -56,6 +56,7 @@ module kc705_top #(
     output [0:0] o_ddr3_odt,
     output o_ddr3_init_calib_complete,
     // PCI-Express Interface
+    input i_pcie_nrst,
     input i_pcie_clk_p,   // sys_clk_p in reference example (dedicated PCI Express oscillator 100 MHz)
     input i_pcie_clk_n,   // sys_clk_n in reference example (dedicated PCI Express oscillator 100 MHz)
     input [0:0] i_pcie_rxn,
@@ -73,6 +74,7 @@ module kc705_top #(
   logic             ib_rst;
   logic             ib_clk_tcxo;
   logic             ib_clk_pcie;  // buffered PCIE clock (100 MHz)
+  logic             ib_pcie_nrst;
   logic             ib_sclk_n;  
 
   logic [11:0]      ob_gpio_direction;
@@ -148,6 +150,7 @@ module kc705_top #(
   idsbuf_tech iclk0(.clk_p(i_sclk_p), .clk_n(i_sclk_n), .o_clk(ib_clk_tcxo));
   // see refernce example (refclk_ibuf locked to X0Y1 cell in xdc-file):
   IBUFDS_GTE2 pcie_refclk_ibuf (.O(ib_clk_pcie), .ODIV2(), .I(i_pcie_clk_p), .CEB(1'b0), .IB(i_pcie_clk_n));
+  ibuf_tech sys_reset_n_ibuf (.o(ib_pcie_nrst), .i(i_pcie_nrst));
   
   ibuf_tech ird1(.o(ib_uart1_rd),.i(i_uart1_rd));
   obuf_tech otd1(.o(o_uart1_td),.i(ob_uart1_td));
@@ -546,7 +549,7 @@ ddr_tech #(
   // System  (SYS) Interface                                                                                        //
   //----------------------------------------------------------------------------------------------------------------//
   .sys_clk(ib_clk_pcie),
-  .sys_rst_n(w_sys_nrst)
+  .sys_rst_n(ib_pcie_nrst)
 );
 
   

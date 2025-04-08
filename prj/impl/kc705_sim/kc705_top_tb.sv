@@ -173,6 +173,7 @@ module kc705_top_tb;
     .o_ddr3_odt(o_ddr3_odt),
     .o_ddr3_init_calib_complete(o_ddr3_init_calib_complete),
     // PCI-Express Interface
+    .i_pcie_nrst(sys_rst_n),
     .i_pcie_clk_p(i_pcie_clk_p),
     .i_pcie_clk_n(i_pcie_clk_n),
     .i_pcie_rxn(i_rp_pci_exp_txn),

@@ -89,6 +89,11 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 # PCIE
 # Dedicated PCI Express oscillator 100 MHz. FPGA Pins: U8=PCIE_CLK_QO_P, U7=PCIE_CLK_QO_N
 # buffer loc defines pin assignment (no need in U8, U7)
+set_property IOSTANDARD LVCMOS25 [get_ports i_pcie_nrst]
+set_property PULLUP true [get_ports i_pcie_nrst]
+set_property LOC G25 [get_ports i_pcie_nrst]
+set_false_path -from [get_ports i_pcie_nrst]
+
 set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf]
 # 100  MHz
 create_clock -name pcie_clk -period 10 [get_ports i_pcie_clk_p]
