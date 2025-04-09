@@ -51,6 +51,22 @@ and test application. 5.0GT/s passed.
 
 we'll cobble together something
 
+## First step: Build SoC
+
+Build KC705 FPGA image with the following functionality was successful:
+
+- RISC-V River 64-bits CPU
+- DDR memory
+- PCIE end-point with access to internal AXI system bus.
+
+![lspci output](docs/doxygen/pics/lspci_kc705.png)
+
+## Next steps:
+
+- Implement PCIE driver for linux
+- Add I2C controller to initialize ADV7511 HDMI transmitter
+
+
 ## Software
 
 Let's build fully functional PCIe device with the HDMI output
