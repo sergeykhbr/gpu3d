@@ -1,0 +1,6 @@
+driver/*.cmd
+driver/*.mod*
+driver/*.o
+driver/*.ko
+driver/*.symvers
+driver/*.order
