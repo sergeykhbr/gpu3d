@@ -63,8 +63,19 @@ Build KC705 FPGA image with the following functionality was successful:
 
 ## Next steps:
 
-- Implement PCIE driver for linux
-- Add I2C controller to initialize ADV7511 HDMI transmitter
+- Implement PCIE driver for Linux. See 'software/driver' folder:
+
+      $ make
+      $ make install
+      $ sudo modprobe khbr_accel
+
+![dmesg output](docs/doxygen/pics/dmesg_khbr_accel.png)
+
+![device driver module](docs/doxygen/pics/dev_khbr_accel.png)
+
+- Implement user application with basic DMA tests. See 'software/userapp' folder:
+
+- Add I2C controller to initialize ADV7511 HDMI transmitter from the bootloader.
 
 
 ## Software
