@@ -49,39 +49,143 @@ struct private_driver_data {
 // Single device assumption for now
 static struct private_driver_data *g_accel;
 
+static ssize_t khbr_read(struct file *f,
+                         char *buf,
+                         size_t len,
+                         loff_t *off)
+{
+    if (!g_accel || !g_accel->bar0) {
+        return -ENODEV;
+    }
+
+    if (*off  > FRAMEBUFFER_SIZE) {
+        // No more data to read
+        return 0;
+    }
+
+    if (*off + len > FRAMEBUFFER_SIZE) {
+        len = FRAMEBUFFER_SIZE - *off;
+    }
+
+    if (copy_to_user(buf, g_accel->bar0 + *off, len)) {
+        return -EFAULT;
+    }
+    *off += len;
+    return len;
+}
+
 static ssize_t khbr_write(struct file *f,
                           const char __user *buf,
-                          size_t len, loff_t *off)
+                          size_t len,
+                          loff_t *off)
 {
-    if (!g_accel || !g_accel->bar0)
+    if (!g_accel || !g_accel->bar0) {
         return -ENODEV;
+    }
 
-    if (len > FRAMEBUFFER_SIZE)
-        return -EINVAL;
+    if (*off > FRAMEBUFFER_SIZE) {
+        // nothing to write
+        return 0;
+    }
+
+    if (*off + len > FRAMEBUFFER_SIZE) {
+        len = FRAMEBUFFER_SIZE - *off;
+    }
 
     // Copy user framebuffer to device memory (BAR0)
-    if (copy_from_user(g_accel->bar0, buf, len))
+    if (copy_from_user(g_accel->bar0 + *off, buf, len)) {
         return -EFAULT;
+    }
 
+    *off += len;
     // Optionally: trigger render start by writing to control register
 
     return len;
 }
 
+/**
+    to support user application:
+        lseek(fd, 1024, SEEK_SET);
+        write(fd, data, 256);
+ */
+loff_t khbr_llseek(struct file *f,
+                   loff_t off,
+                   int whence)
+{
+    switch (whence) {
+    case SEEK_SET:
+        f->f_pos = off;
+        break;
+    case SEEK_CUR:
+        f->f_pos += off;
+        break;
+    case SEEK_END:
+        f->f_pos = FRAMEBUFFER_SIZE - off;
+        break;
+    default:
+        return -EINVAL;
+    }
+
+    if (f->f_pos < 0 || f->f_pos > FRAMEBUFFER_SIZE) {
+        return -EINVAL;
+    }
+
+    return f->f_pos;
+}
+
+/**
+   To support mmap() DMA access in User Application:
+       uint8_t *fb = mmap(NULL,
+                          buf_size,
+                          PROT_WRITE,
+                          MAP_SHARED,
+                          fd,
+                          0);
+ */
+static int khbr_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+    unsigned long phys_addr;
+    size_t size = vma->vm_end - vma->vm_start;
+
+    if (!g_accel || !g_accel->bar0) {
+        return -ENODEV;
+    }
+
+    if (size > FRAMEBUFFER_SIZE) {
+        return -EINVAL;
+    }
+
+    // BAR0 physical address
+    phys_addr = pci_resource_start(g_accel->pdev, BAR_INDEX);
+
+    // Remap BAR0 into userspace
+    return remap_pfn_range(vma,
+                           vma->vm_start,
+                           phys_addr >> PAGE_SHIFT,
+                           size,
+                           vma->vm_page_prot);
+}
+
+
 static const struct file_operations khbr_fops = {
     .owner = THIS_MODULE,
+    .read = khbr_read,
     .write = khbr_write,
+    .llseek = khbr_llseek,
+    .mmap = khbr_mmap,
 };
 
 
 
-static int khbr_accel_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+static int khbr_accel_probe(struct pci_dev *pdev,
+                            const struct pci_device_id *id)
 {
     struct private_driver_data *accel;
     int err;
 
     pr_info(DRV_NAME ": Probing PCI device %04x:%04x (subsystem %04x:%04x)\n",
-        pdev->vendor, pdev->device, pdev->subsystem_vendor, pdev->subsystem_device);
+        pdev->vendor, pdev->device,
+        pdev->subsystem_vendor, pdev->subsystem_device);
 
     accel = devm_kzalloc(&pdev->dev, sizeof(*accel), GFP_KERNEL);
     if (!accel) {
@@ -150,6 +254,7 @@ static struct pci_driver khbr_accel_driver = {
     .remove = khbr_accel_remove,
 };
 
+// module_init/module_exit
 module_pci_driver(khbr_accel_driver);
 
 MODULE_LICENSE("GPL");
