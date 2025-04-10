@@ -19,12 +19,19 @@
 #include <sys/mman.h>   // mmap()
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>     // strerror()
+#include <errno.h>
+#include <unistd.h>
 #include "apptypes.h"
 
 int main(int argc, char *argv[])
 {
     FrameBufferType *fb;
+    char wbuf[16];
+    char rbuf[16];
     int fd = open("/dev/khbr_accel", O_RDWR);
+    int sz;
 
     if (!fd) {
         printf("Cannot open device /dev/khbr_accel\n");
@@ -32,14 +39,32 @@ int main(int argc, char *argv[])
     }
 
 
+    ((uint32_t *)wbuf)[0] = 0xcafef00d;
+    ((uint32_t *)wbuf)[1] = 0xdeadbeef;
+    ((uint64_t *)wbuf)[1] = 0xaaaabbbbccccddddull;
+    write(fd, &wbuf[0], 4);
+    write(fd, &wbuf[4], 4);
+    write(fd, &wbuf[8], 8);
+
+    sz = read(fd, &rbuf[0], 4);
+    if (sz != 4) {
+        fprintf(stderr, "read failed %s(%d)\n", strerror(errno), errno);
+    }
+    sz = read(fd, &rbuf[4], 4);
+    sz = read(fd, &rbuf[8], 8);
+    printf("read() rbuf[0]=%08x\n", ((uint32_t *)rbuf)[0]);
+    printf("read() rbuf[1]=%08x\n", ((uint32_t *)rbuf)[1]);
+    printf("read() rbuf[3]=%08x\n", ((uint32_t *)rbuf)[2]);
+    printf("read() rbuf[4]=%08x\n", ((uint32_t *)rbuf)[3]);
+
     fb = (FrameBufferType *)mmap(NULL,                     // addr
-                                 sizeof(FrameBufferType),  // length
+                                 1024,  // length
                                  PROT_READ | PROT_WRITE,   // prot
                                  MAP_SHARED,               // flags
                                  fd,                       // fd
                                  0);                       // offset
     if (fb == MAP_FAILED) {
-        printf("Failed mmap()\n");
+        printf("Failed mmap(): %d\n", fb);
         close(fd);
         return -1;
     }
@@ -48,26 +73,19 @@ int main(int argc, char *argv[])
       Basic read/write tests.
      */
 
-    fb.ui64[0] = 0xddccbbaa44332211ull;
-    fb.ui64[1] = 0x123456789abcdef0ull;
-    if (fb.ui32[0] != 0x44332211) {
-        printf("Wrong fb.ui32[0]=%08x\n", fb.ui32[0]);
+    fb->ui64[0] = 0xddccbbaa44332211ull;
+    fb->ui64[1] = 0x123456789abcdef0ull;
+    if (fb->ui32[0] != 0x44332211) {
+        printf("Wrong fb->ui32[0]=%08x\n", fb->ui32[0]);
     }
-    if (fb.ui32[1] != 0xddccbbaa) {
-        printf("Wrong fb.ui32[1]=%08x\n", fb.ui32[1]);
+    if (fb->ui32[1] != 0xddccbbaa) {
+        printf("Wrong fb->ui32[1]=%08x\n", fb->ui32[1]);
     }
-    if (fb.ui64[1] != 0x123456789abcdef0ull) {
-        printf("Wrong fb.ui64[1]=%016llx\n", fb.ui64[1]);
+    if (fb->ui64[1] != 0x123456789abcdef0ull) {
+        printf("Wrong fb->ui64[1]=%016llx\n", fb->ui64[1]);
     }
     printf("mmap() tests finished\n");
     munmap(fb, sizeof(FrameBufferType));
-
-    char rbuf[16];
-    read(fd, rbuf, 16);
-    printf("read() rbuf[0]=%08x\n", ((uint32_t *)rbuf)[0]);
-    printf("read() rbuf[1]=%08x\n", ((uint32_t *)rbuf)[1]);
-    printf("read() rbuf[3]=%08x\n", ((uint32_t *)rbuf)[2]);
-    printf("read() rbuf[4]=%08x\n", ((uint32_t *)rbuf)[3]);
 
     close(fd);
     return 0;

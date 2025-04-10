@@ -4,3 +4,4 @@ driver/*.o
 driver/*.ko
 driver/*.symvers
 driver/*.order
+userapp/build
