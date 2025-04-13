@@ -52,11 +52,10 @@ logic w_respfifo_empty;
 logic w_respfifo_wr;
 pcie_dma_registers r, rin;
 
+assign w_rst = ~i_nrst;
+
 // PCIE EP (200 MHz) -> DMA (40 MHz)
-cdc_afifo #(
-    .abits(CFG_PCIE_DMAFIFO_DEPTH),
-    .dbits(REQ_FIFO_WIDTH)
-) reqfifo (
+pcie_req_cdc_afifo_tech reqfifo (
     .i_nrst(i_nrst),
     .i_wclk(i_pcie_phy_clk),
     .i_wr(i_pcie_dmai.valid),
@@ -67,11 +66,9 @@ cdc_afifo #(
     .o_rdata(wb_reqfifo_payload_o),
     .o_rempty(w_reqfifo_empty)
 );
+
 // DMA (40 MHz) -> PCIE EP (200 MHz)
-cdc_afifo #(
-    .abits(CFG_PCIE_DMAFIFO_DEPTH),
-    .dbits(RESP_FIFO_WIDTH)
-) respfifo (
+pcie_resp_cdc_afifo_tech respfifo (
     .i_nrst(i_nrst),
     .i_wclk(i_clk),
     .i_wr(w_respfifo_wr),

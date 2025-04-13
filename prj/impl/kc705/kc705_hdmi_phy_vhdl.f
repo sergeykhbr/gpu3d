@@ -1,2 +1,2 @@
-${RTL_HOME}/external/hdmi_phy/kc705/bs_flex_v_2.vhd
-${RTL_HOME}/external/hdmi_phy/kc705/nidru_20_wrapper.vhd
+${RTL_HOME}/external/kc705/hdmi_phy/bs_flex_v_2.vhd
+${RTL_HOME}/external/kc705/hdmi_phy/nidru_20_wrapper.vhd
