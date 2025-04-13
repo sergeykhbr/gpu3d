@@ -79,4 +79,5 @@ ${VIPS_HOME}/pcie_rootport/pci_exp_usrapp_rx.v
 ${VIPS_HOME}/pcie_rootport/pci_exp_usrapp_tx.v
 ${VIPS_HOME}/pcie_rootport/pcie_axi_trn_bridge.v
 ${VIPS_HOME}/pcie_rootport/xilinx_pcie_2_1_rport_7x.v
+${RTL_HOME}/external/xilinx/pcie_cdc_afifo/simulation/fifo_generator_vlog_beh.v
 ${IMPL_ROOT}/kc705_sim/kc705_top_tb.sv

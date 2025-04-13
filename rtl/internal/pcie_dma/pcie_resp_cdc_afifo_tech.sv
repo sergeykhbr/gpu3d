@@ -1,5 +1,5 @@
 
-module pcie_req_cdc_afifo_tech (
+module pcie_resp_cdc_afifo_tech (
   input i_nrst,
   input i_wclk,
   input i_wr,
@@ -11,13 +11,13 @@ module pcie_req_cdc_afifo_tech (
   output o_rempty
 );
 
-// PCIE EP (200 MHz) -> DMA (40 MHz)
+// DMA (40 MHz) -> PCIE EP (200 MHz)
 cdc_afifo #(
     .abits(2),
     .dbits(73)
-) i0 (
+) i1 (
     .i_nrst(i_nrst),
-    .i_wclk(i_clk),
+    .i_wclk(i_wclk),
     .i_wr(i_wr),
     .i_wdata(i_wdata),
     .o_wfull(o_wfull),
