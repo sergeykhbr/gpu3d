@@ -102,14 +102,14 @@ source -notrace scripts/set_paths.tcl
 if {[string is true $load_files]} {
 	read_verilog -sv target_cfg_pkg.sv
 	set filelist_name ${LIST_ROOT}/ambalib.f;       source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/techmap.f;	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/techmap_ddr_kc705.f; source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/techmap_pcie_vhdl_kc705.f; source -notrace scripts/get_file_list.tcl; read_vhdl -library work [subst $filelist]
-	set filelist_name ${LIST_ROOT}/techmap_pcie_kc705.f; source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/pcie.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/mem.f;		source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/cdc.f;		source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/pcie_dma.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/riverlib.f;     	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/misclib.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/riscv_soc.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${PRJ_ROOT}/kc705_sip_vhdl.f; source -notrace scripts/get_file_list.tcl; read_vhdl -library work [subst $filelist]
+	set filelist_name ${PRJ_ROOT}/kc705_ddr3_phy.f; source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${PRJ_ROOT}/kc705_pcie.f;     source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${PRJ_ROOT}/kc705_top.f;  	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 
 	# Apply Verilog Defines:

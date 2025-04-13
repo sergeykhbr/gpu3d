@@ -94,7 +94,7 @@ set_property PULLUP true [get_ports i_pcie_nrst]
 set_property LOC G25 [get_ports i_pcie_nrst]
 set_false_path -from [get_ports i_pcie_nrst]
 
-set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf]
+set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf/x1]
 # 100  MHz
 create_clock -name pcie_clk -period 10 [get_ports i_pcie_clk_p]
 create_clock -name txoutclk_x0y0 -period 10 [get_pins {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i/TXOUTCLK}]

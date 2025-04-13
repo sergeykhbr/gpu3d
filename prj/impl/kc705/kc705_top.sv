@@ -149,7 +149,7 @@ module kc705_top #(
   
   idsbuf_tech iclk0(.clk_p(i_sclk_p), .clk_n(i_sclk_n), .o_clk(ib_clk_tcxo));
   // see refernce example (refclk_ibuf locked to X0Y1 cell in xdc-file):
-  IBUFDS_GTE2 pcie_refclk_ibuf (.O(ib_clk_pcie), .ODIV2(), .I(i_pcie_clk_p), .CEB(1'b0), .IB(i_pcie_clk_n));
+  igdsbuf_tech pcie_refclk_ibuf(.clk_p(i_pcie_clk_p), .clk_n(i_pcie_clk_n), .o_clk(ib_clk_pcie));
   ibuf_tech sys_reset_n_ibuf (.o(ib_pcie_nrst), .i(i_pcie_nrst));
   
   ibuf_tech ird1(.o(ib_uart1_rd),.i(i_uart1_rd));
