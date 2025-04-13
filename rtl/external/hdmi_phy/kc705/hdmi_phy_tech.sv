@@ -53,7 +53,7 @@
 `timescale 1ns/1ps
 
 (* DowngradeIPIdentifiedWarnings = "yes" *)
-module hdmi_phy_kc705 (
+module hdmi_phy_tech (
   tx_refclk_rdy,
   tx_tmds_clk,
   tx_video_clk,

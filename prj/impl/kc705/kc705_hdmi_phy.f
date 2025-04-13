@@ -13,4 +13,4 @@ ${RTL_HOME}/external/hdmi_phy/kc705/vid_phy_controller_v2_2_interrupts.v
 ${RTL_HOME}/external/hdmi_phy/kc705/vid_phy_controller_v2_2_axi4lite.v
 ${RTL_HOME}/external/hdmi_phy/kc705/vid_phy_controller_v2_2_dru.sv
 ${RTL_HOME}/external/hdmi_phy/kc705/exdes_vid_phy_controller_0_top.v
-${RTL_HOME}/external/hdmi_phy/hdmi_phy_k705.v
+${RTL_HOME}/external/hdmi_phy/kc705/hdmi_phy_tech.sv

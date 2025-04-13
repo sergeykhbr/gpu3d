@@ -4,11 +4,11 @@
 //--------------------------------------------------------------------------
 
 module igdsbuf_tech (
-    input gclk_p,
-    input gclk_n,
+    input i_clk_p,
+    input i_clk_n,
     output logic o_clk
 );
  
-    IBUFDS_GTE2 x1(.I(gclk_p), .IB(gclk_n), .CEB(1'b0), .O(o_clk), .ODIV2());
+    IBUFDS_GTE2 x1(.I(i_clk_p), .IB(i_clk_n), .CEB(1'b0), .O(o_clk), .ODIV2());
  
 endmodule
