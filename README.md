@@ -69,7 +69,11 @@ Build KC705 FPGA image with the following functionality was successful:
       $ make install
       $ sudo modprobe khbr_accel
 
+- dmesg output:
+
 ![dmesg output](docs/doxygen/pics/dmesg_khbr_accel.png)
+
+- 'khbr_accel' device in the device folder:
 
 ![device driver module](docs/doxygen/pics/dev_khbr_accel.png)
 

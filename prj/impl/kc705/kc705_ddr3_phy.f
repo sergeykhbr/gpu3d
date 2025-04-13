@@ -100,7 +100,3 @@ ${RTL_HOME}/external/ddr3_phy/kc705/ip_top/mig_7series_v4_2_memc_ui_top_axi.v
 ${RTL_HOME}/external/ddr3_phy/kc705/mig_ddr3.v
 ${RTL_HOME}/external/ddr3_phy/kc705/mig_ddr3_mig.v
 ${RTL_HOME}/external/ddr3_phy/kc705/ddr3_tech.sv
-${RTL_HOME}/external/ddr3_cdc_axi_sync/kc705/axi_clock_converter_v2_1_vl_rfs.v
-${RTL_HOME}/external/ddr3_cdc_axi_sync/kc705/axi_infrastructure_v1_1_vl_rfs.v
-${RTL_HOME}/external/ddr3_cdc_axi_sync/kc705/cdc_ddr.v
-${RTL_HOME}/external/ddr3_cdc_axi_sync/kc705/cdc_axi_sync_tech.sv

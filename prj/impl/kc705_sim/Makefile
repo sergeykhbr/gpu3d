@@ -57,6 +57,7 @@ comp: prep clr_logs
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/pcie_dma.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_cdc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_ddr3_phy.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_pcie_phy.f
 	${SRUN} xmvhdl ${VHDL_PARAMS} -work work                 -f ../kc705/kc705_hdmi_phy_vhdl.f
