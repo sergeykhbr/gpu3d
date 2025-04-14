@@ -71,8 +71,6 @@ module RiverTop #(
 );
 
 import river_cfg_pkg::*;
-import river_top_pkg::*;
-
 // Control path:
 logic w_req_ctrl_ready;
 logic w_req_ctrl_valid;
