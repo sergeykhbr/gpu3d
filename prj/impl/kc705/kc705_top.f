@@ -1,5 +1,5 @@
-${RTL_HOME}/internal/accel/riscv_soc_pkg.sv
-${RTL_HOME}/internal/accel/riscv_soc.sv
+${RTL_HOME}/internal/accel/accel_soc_pkg.sv
+${RTL_HOME}/internal/accel/accel_soc.sv
 ${RTL_HOME}/external/xilinx/pll/SysPLL_tech.sv
 ${RTL_HOME}/external/xilinx/io/ibufg_tech.sv
 ${RTL_HOME}/external/xilinx/io/ibuf_tech.sv

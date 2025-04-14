@@ -16,7 +16,7 @@
 
 `timescale 1ns/10ps
 
-module riscv_soc #(
+module accel_soc #(
     parameter bit async_reset = 1'b0,
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
@@ -70,7 +70,7 @@ import types_bus0_pkg::*;
 import types_bus1_pkg::*;
 import river_cfg_pkg::*;
 import target_cfg_pkg::*;
-import riscv_soc_pkg::*;
+import accel_soc_pkg::*;
 
 axi4_master_out_type acpo;
 axi4_master_in_type acpi;
@@ -348,4 +348,4 @@ begin: comb_proc
     apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
 end: comb_proc
 
-endmodule: riscv_soc
+endmodule: accel_soc

@@ -217,7 +217,7 @@ module kc705_top #(
   assign pcie_dmai.ecrc_err = m_axis_rx_tuser[1];
   assign pcie_dmai.err_fwd = m_axis_rx_tuser[0];
 
-  riscv_soc #(
+  accel_soc #(
     .async_reset(async_reset),
     .sim_uart_speedup_rate(sim_uart_speedup_rate)
   ) soc0 (
