@@ -31,7 +31,9 @@ module pcie_dma #(
     // DMA engine interface - System on Chip interface
     output types_pnp_pkg::dev_config_type o_xmst_cfg,       // PCIE DMA master interface descriptor
     input types_amba_pkg::axi4_master_in_type i_xmsti,
-    output types_amba_pkg::axi4_master_out_type o_xmsto
+    output types_amba_pkg::axi4_master_out_type o_xmsto,
+    // Debug signals:
+    output types_dma_pkg::pcie_dma64_in_type o_dbg_pcie_dmai
 );
 
 import types_dma_pkg::*;
@@ -462,6 +464,15 @@ begin: comb_proc
     w_reqfifo_rd = v_req_ready;
     o_xmst_cfg = vb_xmst_cfg;
     o_xmsto = vb_xmsto;
+    // Debug signals
+    o_dbg_pcie_dmai.valid = (~w_reqfifo_empty);
+    o_dbg_pcie_dmai.data = vb_req_data;
+    o_dbg_pcie_dmai.strob = vb_req_strob;
+    o_dbg_pcie_dmai.last = v_req_last;
+    o_dbg_pcie_dmai.ready = 1'b0;
+    o_dbg_pcie_dmai.bar_hit = 7'd0;
+    o_dbg_pcie_dmai.ecrc_err = 1'b0;
+    o_dbg_pcie_dmai.err_fwd = 1'b0;
 
     rin = v;
 end: comb_proc

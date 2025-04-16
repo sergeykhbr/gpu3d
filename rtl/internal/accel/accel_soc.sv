@@ -94,6 +94,7 @@ logic [SOC_GPIO0_WIDTH-1:0] wb_irq_gpio;
 logic w_irq_pnp;
 logic [SOC_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 logic [3:0] wb_pcie_dma_state;
+pcie_dma64_in_type wb_dbg_pcie_dmai;
 
 axictrl_bus0 #(
     .async_reset(async_reset)
@@ -263,7 +264,8 @@ pcie_dma #(
     .o_pcie_dmao(o_pcie_dmao),
     .o_xmst_cfg(dev_pnp[SOC_PNP_PCIE_DMA]),
     .i_xmsti(aximi[CFG_BUS0_XMST_PCIE]),
-    .o_xmsto(aximo[CFG_BUS0_XMST_PCIE])
+    .o_xmsto(aximo[CFG_BUS0_XMST_PCIE]),
+    .o_dbg_pcie_dmai(wb_dbg_pcie_dmai)
 );
 
 apb_pcie #(
@@ -276,7 +278,8 @@ apb_pcie #(
     .i_apbi(apbi[CFG_BUS1_PSLV_PCIE]),
     .o_apbo(apbo[CFG_BUS1_PSLV_PCIE]),
     .i_pcie_completer_id(i_pcie_completer_id),
-    .i_dma_state(wb_pcie_dma_state)
+    .i_dma_state(wb_pcie_dma_state),
+    .i_dbg_pcie_dmai(wb_dbg_pcie_dmai)
 );
 
 apb_pnp #(
