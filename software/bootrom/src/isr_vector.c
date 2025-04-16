@@ -43,8 +43,8 @@ void __attribute__ ((section(".after_vectors"))) interrupt_m_software_c() {
 void __attribute__ ((section(".after_vectors"))) interrupt_s_timer_c() {
 }
 
-void __attribute__ ((section(".after_vectors"))) interrupt_m_timer_c() {
-}
+//void __attribute__ ((section(".after_vectors"))) interrupt_m_timer_c() {
+//}
 
 void __attribute__ ((section(".after_vectors"))) interrupt_s_external_c() {
 }

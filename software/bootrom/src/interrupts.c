@@ -82,7 +82,7 @@ void interrupt_m_software_c() {
 void interrupt_s_timer_c() {
 }
 
-void interrupt_m_timer_c() {
+void __attribute__ ((section(".after_vectors"))) interrupt_m_timer_c() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
     pnp->fwdbg1 = clint->mtime;

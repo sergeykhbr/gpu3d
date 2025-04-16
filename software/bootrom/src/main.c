@@ -45,9 +45,13 @@ void wait_pcie() {
 
 void setup_1sec_irq() {
     clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
 
     fw_disable_m_interrupts();
     fw_mie_enable(HART_IRQ_MTIP);
+
+    pnp->fwdbg1 = 0;
+    pnp->fwdbg2= 0;
 
     clint->mtimecmp[fw_get_cpuid()] = clint->mtime + SYS_HZ;
 
@@ -63,15 +67,17 @@ void debug_output() {
 }
 
 uint64_t ddr_torture(uint64_t addr) {
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uint64_t *ddr = (uint64_t *)ADDR_BUS0_XSLV_DDR;
-    int errcnt = 0;
     uint64_t val = 0xAABBCCDD11223344ull + addr;
     for (int i = 0; i < 16; i++) {
         ddr[addr + i] = val + i;
     }
     for (int i = 0; i < 16; i++) {
         if (ddr[addr + i] != (val + i)) {
-            printf_uart("ddr_err at: %016x\r\n", addr + i);
+            if (++pnp->fwdbg2 < 128) {
+                printf_uart("ddr_err at: %016x\r\n", addr + i);
+            }
         }
     }
     addr += 16 * sizeof(uint64_t);
