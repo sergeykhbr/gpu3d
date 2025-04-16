@@ -43,12 +43,51 @@ void wait_pcie() {
     printf_uart("%s", "PCIE link up\r\n");
 }
 
+void setup_1sec_irq() {
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+
+    fw_disable_m_interrupts();
+    fw_mie_enable(HART_IRQ_MTIP);
+
+    clint->mtimecmp[fw_get_cpuid()] = clint->mtime + SYS_HZ;
+
+    fw_enable_m_interrupts();
+}
+
+void debug_output() {
+    pcictrl_map *pcictrl = (pcictrl_map *)ADDR_BUS1_APB_PCICTRL;
+    printf_uart("req_cnt=%d\r\n", pcictrl->req_cnt);
+    for (int i = 0; i < 16; i++) {
+        printf_uart("%2d: %08x.%08x\r\n", i, pcictrl->req_data[2*i+1], pcictrl->req_data[2*i]);
+    }
+}
+
+uint64_t ddr_torture(uint64_t addr) {
+    uint64_t *ddr = (uint64_t *)ADDR_BUS0_XSLV_DDR;
+    int errcnt = 0;
+    uint64_t val = 0xAABBCCDD11223344ull + addr;
+    for (int i = 0; i < 16; i++) {
+        ddr[addr + i] = val + i;
+    }
+    for (int i = 0; i < 16; i++) {
+        if (ddr[addr + i] != (val + i)) {
+            printf_uart("ddr_err at: %016x\r\n", addr + i);
+        }
+    }
+    addr += 16 * sizeof(uint64_t);
+    if (addr >= 0x40000000) {
+        addr = 0;
+    }
+    return addr;
+}
+
 int __main() {
     uint32_t cfg;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
-    uint64_t bar;
+    pcictrl_map *pcictrl = (pcictrl_map *)ADDR_BUS1_APB_PCICTRL;
+    uint64_t ddr_addr = 0;
     uint32_t cpu_max;
 
     pnp->fwid = 0x20241103;
@@ -86,7 +125,12 @@ int __main() {
 
     wait_pcie();
 
-    while (1) {}
+    printf_uart("PCIe:. . . . . .0x%04x\r\n", pcictrl->bdf);
+
+    setup_1sec_irq();
+    while (1) {
+        ddr_addr = ddr_torture(ddr_addr);
+    }
 
     // NEVER REACH THIS POINT
     return 0;

@@ -26,6 +26,7 @@
 #include "maps/map_clint.h"
 #include "maps/map_mpu.h"
 #include "maps/map_prci.h"
+#include "maps/map_pcictrl.h"
 
 #define ADDR_BUS0_XSLV_CLINT        0x02000000 // Core-local interruptor (CLINT)
 #define ADDR_BUS0_XSLV_SRAM         0x08000000 // 0x0800_0000..0x081F_FFFF = L2 Cache Controller
@@ -38,6 +39,8 @@
 #define ADDR_BUS0_XSLV_GPIO         0x10060000 // FU740 compatible
 #define ADDR_BUS0_XSLV_OTP          0x10070000
 #define ADDR_BUS0_XSLV_ETHMAC       0x10090000 // 0x1009_0000 .. 0x1009_1FFF Ethernet on FU740
+#define ADDR_BUS1_APB_DDRCTRL       0x100C0000 // DDR controller.
+#define ADDR_BUS1_APB_PCICTRL       0x100C1000 // PCIE DMA controller.
 // GNSS Sub System
 #define ADDR_BUS0_XSLV_RF_CTRL      0x100f0000 // Reserved region of FU740
 #define ADDR_BUS0_XSLV_GNSS_SS      0x100f1000 // Reserved region of FU740

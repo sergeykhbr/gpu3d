@@ -19,6 +19,8 @@
 #include "encoding.h"
 #include "fw_api.h"
 
+extern void debug_output();
+
 static const char INTERRUPT_TABLE_NAME[8] = "irqtbl";
 
 typedef union csr_mcause_type {
@@ -85,8 +87,9 @@ void interrupt_m_timer_c() {
     clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
     pnp->fwdbg1 = clint->mtime;
 
-    // just to give time before next interrupt
-    clint->mtimecmp[fw_get_cpuid()] = clint->mtime + 10000;
+    debug_output();
+
+    clint->mtimecmp[fw_get_cpuid()] = clint->mtime + SYS_HZ;
 }
 
 void interrupt_s_external_c() {
