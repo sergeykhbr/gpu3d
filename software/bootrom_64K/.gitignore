@@ -1,0 +1,6 @@
+obj
+*.elf
+*.dump
+*.lst
+*.err
+

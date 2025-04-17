@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2025 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,19 +15,33 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include "axi_maps.h"
 #include "encoding.h"
 #include "fw_api.h"
 
-//#define PRINT_DDR_IMAGE
-
 void allocate_exception_table(void);
 void allocate_interrupt_table(void);
-void test_plic(void);
-void test_swirq(void);
-void test_mtimer(void);
-int test_ddr();
 void print_pnp(void);
+
+void wait_ddr() {
+    prci_map *prci = (prci_map *)ADDR_BUS1_APB_PRCI;
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+    uint64_t *ddr = (uint64_t *)ADDR_BUS0_XSLV_DDR;
+
+    printf("%s", "DDR Init . .");
+
+    uint64_t t_start = clint->mtime;
+
+    while ((prci->pll_status & PRCI_PLL_STATUS_DDR_CALIB_DONE) == 0) {
+        // 3 seconds timeout:
+        if ((clint->mtime - t_start) > 3 * SYS_HZ) {
+            printf("%s", "NO_CALIB\r\n");
+            return;
+        }
+    }
+    printf("%s", "DONE\r\n");
+}
 
 void wait_pcie() {
     prci_map *prci = (prci_map *)ADDR_BUS1_APB_PRCI;
@@ -36,11 +50,11 @@ void wait_pcie() {
     while ((prci->pll_status & PRCI_PLL_STATUS_PCIE_LNK_UP) == 0) {
         // 3 seconds timeout:
         if ((clint->mtime - t_start) > 3 * SYS_HZ) {
-            printf_uart("%s", "PCIE no link\r\n");
+            printf("%s", "PCIE no link\r\n");
             return;
         }
     }
-    printf_uart("%s", "PCIE link up\r\n");
+    printf("%s", "PCIE link up\r\n");
 }
 
 void setup_1sec_irq() {
@@ -60,9 +74,9 @@ void setup_1sec_irq() {
 
 void debug_output() {
     pcictrl_map *pcictrl = (pcictrl_map *)ADDR_BUS1_APB_PCICTRL;
-    printf_uart("req_cnt=%d\r\n", pcictrl->req_cnt);
+    printf("req_cnt=%d\r\n", pcictrl->req_cnt);
     for (int i = 0; i < 16; i++) {
-        printf_uart("%2d: %08x.%08x\r\n", i, pcictrl->req_data[2*i+1], pcictrl->req_data[2*i]);
+        printf("%2d: %08x.%08x\r\n", i, pcictrl->req_data[2*i+1], pcictrl->req_data[2*i]);
     }
 }
 
@@ -76,7 +90,7 @@ uint64_t ddr_torture(uint64_t addr) {
     for (int i = 0; i < 16; i++) {
         if (ddr[addr + i] != (val + i)) {
             if (++pnp->fwdbg2 < 128) {
-                printf_uart("ddr_err at: %016llx, 0x%0x\r\n", addr + i, i);
+                printf("ddr_err at: %016x\r\n", addr + i);
             }
         }
     }
@@ -87,7 +101,7 @@ uint64_t ddr_torture(uint64_t addr) {
     return addr;
 }
 
-int __main() {
+int main() {
     uint32_t cfg;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
@@ -104,34 +118,28 @@ int __main() {
     allocate_exception_table();
     allocate_interrupt_table();
 
-    uart_isr_init();   // enable printf_uart function and Tx irq=1
+    //uart_isr_init();   // enable printf_uart function and Tx irq=1
  
     led_set(0x01);
 
     cpu_max = pnp->cfg >> 28;
 
-    printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
-    printf_uart("HARTS. . . . . .%d\r\n", cpu_max);
-    printf_uart("PLIC_IRQS  . . .%d\r\n", (pnp->cfg & 0xFF));
-    printf_uart("HWID . . . . . .0x%08x\r\n", pnp->hwid);
-    printf_uart("FWID . . . . . .0x%08x\r\n", pnp->fwid);
+    printf("HARTID . . . . .%d\r\n", fw_get_cpuid());
+    printf("HARTS. . . . . .%d\r\n", cpu_max);
+    printf("PLIC_IRQS  . . .%d\r\n", (pnp->cfg & 0xFF));
+    printf("HWID . . . . . .0x%08x\r\n", pnp->hwid);
+    printf("FWID . . . . . .0x%08x\r\n", pnp->fwid);
 
     led_set(0x02);
-
-    test_plic();
-    test_mtimer();
-    test_swirq();
-
-    led_set(0x55);
     print_pnp();
 
-    led_set(0x1F);
+    led_set(0x03);
+    wait_ddr();
 
-    test_ddr();
-
+    led_set(0x04);
     wait_pcie();
 
-    printf_uart("PCIe:. . . . . .0x%04x\r\n", pcictrl->bdf);
+    printf("PCIe:. . . . . .0x%04x\r\n", pcictrl->bdf);
 
     setup_1sec_irq();
     while (1) {

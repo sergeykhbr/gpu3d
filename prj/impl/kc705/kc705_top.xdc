@@ -22,7 +22,10 @@ set_property PACKAGE_PIN G12 [get_ports i_rst]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets i_rst]
 set_property IOSTANDARD LVCMOS25 [get_ports i_rst]
 set_false_path -from [get_ports i_rst]
-
+set_false_path -from [get_pins prci0/o_sys_rst]
+set_false_path -from [get_pins prci0/o_sys_nrst]
+set_false_path -from [get_pins prci0/o_dbg_nrst]
+set_false_path -from [get_pins prci0/o_pcie_nrst]
 
 # DIP switch: SW1.1
 set_property PACKAGE_PIN Y29 [get_ports {io_gpio[0]}]
