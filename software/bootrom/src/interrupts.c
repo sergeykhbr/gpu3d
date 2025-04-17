@@ -85,7 +85,11 @@ void interrupt_s_timer_c() {
 void __attribute__ ((section(".after_vectors"))) interrupt_m_timer_c() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+
+    fw_disable_m_interrupts();
     pnp->fwdbg1 = clint->mtime;
+    clint->mtimecmp[fw_get_cpuid()] = ~0ull;
+    fw_enable_m_interrupts();
 
     debug_output();
 

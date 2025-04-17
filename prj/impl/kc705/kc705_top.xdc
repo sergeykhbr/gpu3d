@@ -22,10 +22,7 @@ set_property PACKAGE_PIN G12 [get_ports i_rst]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets i_rst]
 set_property IOSTANDARD LVCMOS25 [get_ports i_rst]
 set_false_path -from [get_ports i_rst]
-set_false_path -from [get_pins prci0/o_sys_rst]
-set_false_path -from [get_pins prci0/o_sys_nrst]
-set_false_path -from [get_pins prci0/o_dbg_nrst]
-set_false_path -from [get_pins prci0/o_pcie_nrst]
+set_false_path -from prci0/*rst*/C
 
 # DIP switch: SW1.1
 set_property PACKAGE_PIN Y29 [get_ports {io_gpio[0]}]
@@ -102,16 +99,16 @@ set_property LOC IBUFDS_GTE2_X0Y1 [get_cells pcie_refclk_ibuf/x1]
 create_clock -name pcie_clk -period 10 [get_ports i_pcie_clk_p]
 create_clock -name txoutclk_x0y0 -period 10 [get_pins {pcie_ep0/pcie_7x_1line_5gts_64bits_i/inst/inst/gt_top_i/pipe_wrapper_i/pipe_lane[0].gt_wrapper_i/gtx_channel.gtxe2_channel_i/TXOUTCLK}]
 # 250 MHz:  pipe_pclk_in
-create_clock -name pcie_pclk -period 4 [get_pins {pcie_ep0/pipe_clock_i/CLK_PCLK}]
+#create_clock -name pcie_pclk -period 4 [get_pins {pcie_ep0/pipe_clock_i/CLK_PCLK}]
 # 250 MHz 
-create_clock -name pcie_rxusrclk -period 4 [get_pins {pcie_ep0/pipe_clock_i/CLK_RXUSRCLK}]
+#create_clock -name pcie_rxusrclk -period 4 [get_pins {pcie_ep0/pipe_clock_i/CLK_RXUSRCLK}]
 # 125 MHz
-create_clock -name pcie_64bits_dclk -period 8 [get_pins {pcie_ep0/pipe_clock_i/CLK_DCLK}]
+#create_clock -name pcie_64bits_dclk -period 8 [get_pins {pcie_ep0/pipe_clock_i/CLK_DCLK}]
 # 62.5 MHz
-create_clock -name pcie_usrclk1 -period 16 [get_pins {pcie_ep0/pipe_clock_i/CLK_USERCLK1}]
-create_clock -name pcie_usrclk2 -period 16 [get_pins {pcie_ep0/pipe_clock_i/CLK_USERCLK2}]
+#create_clock -name pcie_usrclk1 -period 16 [get_pins {pcie_ep0/pipe_clock_i/CLK_USERCLK1}]
+#create_clock -name pcie_usrclk2 -period 16 [get_pins {pcie_ep0/pipe_clock_i/CLK_USERCLK2}]
 # 250 MHz
-create_clock -name pcie_oobclk -period 4 [get_pins {pcie_ep0/pipe_clock_i/CLK_OOBCLK}]
+#create_clock -name pcie_oobclk -period 4 [get_pins {pcie_ep0/pipe_clock_i/CLK_OOBCLK}]
 #
 # 
 set_false_path -to [get_pins {pcie_ep0/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/S0}]
@@ -179,13 +176,13 @@ set_false_path -through [get_pins -filter {REF_PIN_NAME=~CPLLLOCK} -of_objects [
 set_false_path -through [get_pins -filter {REF_PIN_NAME=~QPLLLOCK} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
 
 ## Async req. FIFO (read clock 40 MHz):
-set_max_delay -datapath_only 20.0 -from soc0/pcidma0/reqfifo/rx2_reg*/C -to [get_pins soc0/pcidma0/reqfifo/o_rdata]
+set_max_delay -datapath_only 20.0 -from soc0/pcidma0/reqfifo/rx2_reg*/C -to soc0/pcidma0/reqfifo/o_rdata*
 set_max_delay -datapath_only 20.0 -from soc0/pcidma0/reqfifo/r_reg*/C -to soc0/pcidma0/reqfifo/r2_reg*/D
 ## Async req. FIFO (write clock 62.5 MHz):
 set_max_delay -datapath_only 16.0 -from soc0/pcidma0/reqfifo/r2_reg*/C -to soc0/pcidma0/reqfifo/r_reg*/D
 
 ## Async resp. FIFO (read clock 62.5 MHz):
-set_max_delay -datapath_only 16.0 -from soc0/pcidma0/respfifo/rx2_reg*/C -to [get_pins soc0/pcidma0/respfifo/o_rdata]
+set_max_delay -datapath_only 16.0 -from soc0/pcidma0/respfifo/rx2_reg*/C -to soc0/pcidma0/respfifo/o_rdata*
 set_max_delay -datapath_only 16.0 -from soc0/pcidma0/respfifo/r_reg*/C -to soc0/pcidma0/respfifo/r2_reg*/D
 ## Async resp. FIFO (write clock 40.0 MHz):
 set_max_delay -datapath_only 20.0 -from soc0/pcidma0/respfifo/r2_reg*/C -to soc0/pcidma0/respfifo/r_reg*/D

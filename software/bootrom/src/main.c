@@ -59,8 +59,9 @@ void setup_1sec_irq() {
 }
 
 void debug_output() {
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     pcictrl_map *pcictrl = (pcictrl_map *)ADDR_BUS1_APB_PCICTRL;
-    printf_uart("req_cnt=%d\r\n", pcictrl->req_cnt);
+    printf_uart("%lld: req_cnt=%d\r\n", ++pnp->fwdbg3, pcictrl->req_cnt);
     for (int i = 0; i < 16; i++) {
         printf_uart("%2d: %08x.%08x\r\n", i, pcictrl->req_data[2*i+1], pcictrl->req_data[2*i]);
     }
@@ -68,21 +69,25 @@ void debug_output() {
 
 uint64_t ddr_torture(uint64_t addr) {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    uint64_t *ddr = (uint64_t *)ADDR_BUS0_XSLV_DDR;
+    uint64_t *ddr = (uint64_t *)addr;
     uint64_t val = 0xAABBCCDD11223344ull + addr;
     for (int i = 0; i < 16; i++) {
-        ddr[addr + i] = val + i;
+        ddr[i] = val + i;
     }
     for (int i = 0; i < 16; i++) {
-        if (ddr[addr + i] != (val + i)) {
+        if (ddr[i] != (val + i)) {
             if (++pnp->fwdbg2 < 128) {
-                printf_uart("ddr_err at: %016llx, 0x%0x\r\n", addr + i, i);
+                printf_uart("ddr_err at: %016llx\r\n", &ddr[i]);
             }
         }
     }
+    if ((addr & 0x0FFFFFFFull) == 0x08000000ull) {
+        // Keep  alive message each 128 MB
+        printf_uart("[%016llx] err=%d\r\n", addr, (int)pnp->fwdbg2);
+    }
     addr += 16 * sizeof(uint64_t);
-    if (addr >= 0x40000000) {
-        addr = 0;
+    if (addr >= (ADDR_BUS0_XSLV_DDR + 0x40000000ull)) {
+        addr = ADDR_BUS0_XSLV_DDR;
     }
     return addr;
 }
@@ -134,6 +139,7 @@ int __main() {
     printf_uart("PCIe:. . . . . .0x%04x\r\n", pcictrl->bdf);
 
     setup_1sec_irq();
+    ddr_addr = ADDR_BUS0_XSLV_DDR;
     while (1) {
         ddr_addr = ddr_torture(ddr_addr);
     }
