@@ -66,20 +66,16 @@ const cdc_afifo_r2egisters cdc_afifo_r2_reset = '{
     1'b1                                // rempty
 };
 
-typedef struct {
-    logic [dbits-1:0] mem[0: DEPTH - 1];
-} cdc_afifo_rx2egisters;
+reg [dbits-1:0] mem[0: DEPTH - 1];
 
 cdc_afifo_registers r, rin;
 cdc_afifo_r2egisters r2, r2in;
-cdc_afifo_rx2egisters rx2, rx2in;
 
 
 always_comb
 begin: comb_proc
     cdc_afifo_registers v;
     cdc_afifo_r2egisters v2;
-    cdc_afifo_rx2egisters vx2;
     logic [abits-1:0] vb_waddr;
     logic [abits-1:0] vb_raddr;
     logic v_wfull_next;
@@ -100,9 +96,6 @@ begin: comb_proc
 
     v = r;
     v2 = r2;
-    for (int i = 0; i < DEPTH; i++) begin
-        vx2.mem[i] = rx2.mem[i];
-    end
 
     // Cross the Gray pointer to write clock domain:
     v.wq1_rgray = r2.rgray;
@@ -119,10 +112,6 @@ begin: comb_proc
         v_wfull_next = 1'b1;
     end
     v.wfull = v_wfull_next;
-
-    if ((i_wr && (~r.wfull)) == 1'b1) begin
-        vx2.mem[int'(vb_waddr)] = i_wdata;
-    end
 
     // Write Gray pointer into read clock domain
     v2.rq1_wgray = r.wgray;
@@ -147,13 +136,10 @@ begin: comb_proc
 
     o_wfull = r.wfull;
     o_rempty = r2.rempty;
-    o_rdata = rx2.mem[int'(vb_raddr)];
+    o_rdata = mem[int'(vb_raddr)];
 
     rin = v;
     r2in = v2;
-    for (int i = 0; i < DEPTH; i++) begin
-        rx2in.mem[i] = vx2.mem[i];
-    end
 end: comb_proc
 
 always_ff @(posedge i_wclk, negedge i_nrst) begin: rg_proc
@@ -173,8 +159,8 @@ always_ff @(posedge i_rclk, negedge i_nrst) begin: r2g_proc
 end: r2g_proc
 
 always_ff @(posedge i_wclk) begin: rx2g_proc
-    for (int i = 0; i < DEPTH; i++) begin
-        rx2.mem[i] <= rx2in.mem[i];
+    if ((i_wr && (~r.wfull)) == 1'b1) begin
+        mem[int'(r.wbin[(abits - 1): 0])] <= i_wdata;
     end
 end: rx2g_proc
 
