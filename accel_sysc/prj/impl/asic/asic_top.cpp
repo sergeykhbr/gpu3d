@@ -33,23 +33,10 @@ asic_top::asic_top(sc_module_name name,
     o_jtag_tdo("o_jtag_tdo"),
     o_jtag_vref("o_jtag_vref"),
     i_uart1_rd("i_uart1_rd"),
-    o_uart1_td("o_uart1_td"),
-    o_sd_sclk("o_sd_sclk"),
-    io_sd_cmd("io_sd_cmd"),
-    io_sd_dat0("io_sd_dat0"),
-    io_sd_dat1("io_sd_dat1"),
-    io_sd_dat2("io_sd_dat2"),
-    io_sd_cd_dat3("io_sd_cd_dat3"),
-    i_sd_detected("i_sd_detected"),
-    i_sd_protect("i_sd_protect") {
+    o_uart1_td("o_uart1_td") {
 
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     iclk0 = 0;
-    iosdcmd0 = 0;
-    iosddat0 = 0;
-    iosddat1 = 0;
-    iosddat2 = 0;
-    iosddat3 = 0;
     pll0 = 0;
     prci0 = 0;
     soc0 = 0;
@@ -59,41 +46,12 @@ asic_top::asic_top(sc_module_name name,
     iclk0->i_clk_n(i_sclk_n);
     iclk0->o_clk(ib_clk_tcxo);
 
-    iosdcmd0 = new iobuf_tech("iosdcmd0");
-    iosdcmd0->io(io_sd_cmd);
-    iosdcmd0->o(ib_sd_cmd);
-    iosdcmd0->i(ob_sd_cmd);
-    iosdcmd0->t(ob_sd_cmd_direction);
-
-    iosddat0 = new iobuf_tech("iosddat0");
-    iosddat0->io(io_sd_dat0);
-    iosddat0->o(ib_sd_dat0);
-    iosddat0->i(ob_sd_dat0);
-    iosddat0->t(ob_sd_dat0_direction);
-
-    iosddat1 = new iobuf_tech("iosddat1");
-    iosddat1->io(io_sd_dat1);
-    iosddat1->o(ib_sd_dat1);
-    iosddat1->i(ob_sd_dat1);
-    iosddat1->t(ob_sd_dat1_direction);
-
-    iosddat2 = new iobuf_tech("iosddat2");
-    iosddat2->io(io_sd_dat2);
-    iosddat2->o(ib_sd_dat2);
-    iosddat2->i(ob_sd_dat2);
-    iosddat2->t(ob_sd_dat2_direction);
-
-    iosddat3 = new iobuf_tech("iosddat3");
-    iosddat3->io(io_sd_cd_dat3);
-    iosddat3->o(ib_sd_cd_dat3);
-    iosddat3->i(ob_sd_cd_dat3);
-    iosddat3->t(ob_sd_cd_dat3_direction);
-
     pll0 = new SysPLL_tech("pll0");
     pll0->i_reset(i_rst);
     pll0->i_clk_tcxo(ib_clk_tcxo);
     pll0->o_clk_sys(w_sys_clk);
     pll0->o_clk_ddr(w_ddr_clk);
+    pll0->o_clk_pcie(w_pcie_clk);
     pll0->o_locked(w_pll_lock);
 
     prci0 = new apb_prci("prci0", async_reset);
@@ -102,15 +60,19 @@ asic_top::asic_top(sc_module_name name,
     prci0->i_dmireset(w_dmreset);
     prci0->i_sys_locked(w_pll_lock);
     prci0->i_ddr_locked(w_ddr3_init_calib_complete);
+    prci0->i_pcie_phy_rst(w_pcie_user_rst);
+    prci0->i_pcie_phy_clk(w_pcie_user_clk);
+    prci0->i_pcie_phy_lnk_up(w_pcie_phy_lnk_up);
     prci0->o_sys_rst(w_sys_rst);
     prci0->o_sys_nrst(w_sys_nrst);
     prci0->o_dbg_nrst(w_dbg_nrst);
+    prci0->o_pcie_nrst(w_pcie_nrst);
     prci0->i_mapinfo(prci_pmapinfo);
     prci0->o_cfg(prci_dev_cfg);
     prci0->i_apbi(prci_apbi);
     prci0->o_apbo(prci_apbo);
 
-    soc0 = new riscv_soc("soc0", async_reset,
+    soc0 = new accel_soc("soc0", async_reset,
                           sim_uart_speedup_rate);
     soc0->i_sys_nrst(w_sys_nrst);
     soc0->i_sys_clk(w_sys_clk);
@@ -128,24 +90,6 @@ asic_top::asic_top(sc_module_name name,
     soc0->o_jtag_vref(o_jtag_vref);
     soc0->i_uart1_rd(i_uart1_rd);
     soc0->o_uart1_td(o_uart1_td);
-    soc0->o_sd_sclk(o_sd_sclk);
-    soc0->i_sd_cmd(ib_sd_cmd);
-    soc0->o_sd_cmd(ob_sd_cmd);
-    soc0->o_sd_cmd_dir(ob_sd_cmd_direction);
-    soc0->i_sd_dat0(ib_sd_dat0);
-    soc0->o_sd_dat0(ob_sd_dat0);
-    soc0->o_sd_dat0_dir(ob_sd_dat0_direction);
-    soc0->i_sd_dat1(ib_sd_dat1);
-    soc0->o_sd_dat1(ob_sd_dat1);
-    soc0->o_sd_dat1_dir(ob_sd_dat1_direction);
-    soc0->i_sd_dat2(ib_sd_dat2);
-    soc0->o_sd_dat2(ob_sd_dat2);
-    soc0->o_sd_dat2_dir(ob_sd_dat2_direction);
-    soc0->i_sd_cd_dat3(ib_sd_cd_dat3);
-    soc0->o_sd_cd_dat3(ob_sd_cd_dat3);
-    soc0->o_sd_cd_dat3_dir(ob_sd_cd_dat3_direction);
-    soc0->i_sd_detected(i_sd_detected);
-    soc0->i_sd_protect(i_sd_protect);
     soc0->o_dmreset(w_dmreset);
     soc0->o_prci_pmapinfo(prci_pmapinfo);
     soc0->i_prci_pdevcfg(prci_dev_cfg);
@@ -159,26 +103,16 @@ asic_top::asic_top(sc_module_name name,
     soc0->i_ddr_xdevcfg(ddr_xdev_cfg);
     soc0->o_ddr_xslvi(ddr_xslvi);
     soc0->i_ddr_xslvo(ddr_xslvo);
+    soc0->i_pcie_clk(w_pcie_user_clk);
+    soc0->i_pcie_nrst(w_pcie_nrst);
+    soc0->i_pcie_completer_id(wb_pcie_completer_id);
+    soc0->o_pcie_dmao(pcie_dmao);
+    soc0->i_pcie_dmai(pcie_dmai);
 }
 
 asic_top::~asic_top() {
     if (iclk0) {
         delete iclk0;
-    }
-    if (iosdcmd0) {
-        delete iosdcmd0;
-    }
-    if (iosddat0) {
-        delete iosddat0;
-    }
-    if (iosddat1) {
-        delete iosddat1;
-    }
-    if (iosddat2) {
-        delete iosddat2;
-    }
-    if (iosddat3) {
-        delete iosddat3;
     }
     if (pll0) {
         delete pll0;
@@ -205,39 +139,18 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_jtag_vref, o_jtag_vref.name());
         sc_trace(o_vcd, i_uart1_rd, i_uart1_rd.name());
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
-        sc_trace(o_vcd, o_sd_sclk, o_sd_sclk.name());
-        sc_trace(o_vcd, io_sd_cmd, io_sd_cmd.name());
-        sc_trace(o_vcd, io_sd_dat0, io_sd_dat0.name());
-        sc_trace(o_vcd, io_sd_dat1, io_sd_dat1.name());
-        sc_trace(o_vcd, io_sd_dat2, io_sd_dat2.name());
-        sc_trace(o_vcd, io_sd_cd_dat3, io_sd_cd_dat3.name());
-        sc_trace(o_vcd, i_sd_detected, i_sd_detected.name());
-        sc_trace(o_vcd, i_sd_protect, i_sd_protect.name());
         sc_trace(o_vcd, ddr_xslvo, ddr_xslvo.name());
         sc_trace(o_vcd, ddr_xslvi, ddr_xslvi.name());
         sc_trace(o_vcd, ddr_apbi, ddr_apbi.name());
         sc_trace(o_vcd, ddr_apbo, ddr_apbo.name());
         sc_trace(o_vcd, prci_apbi, prci_apbi.name());
         sc_trace(o_vcd, prci_apbo, prci_apbo.name());
+        sc_trace(o_vcd, pcie_dmao, pcie_dmao.name());
+        sc_trace(o_vcd, pcie_dmai, pcie_dmai.name());
     }
 
     if (iclk0) {
         iclk0->generateVCD(i_vcd, o_vcd);
-    }
-    if (iosdcmd0) {
-        iosdcmd0->generateVCD(i_vcd, o_vcd);
-    }
-    if (iosddat0) {
-        iosddat0->generateVCD(i_vcd, o_vcd);
-    }
-    if (iosddat1) {
-        iosddat1->generateVCD(i_vcd, o_vcd);
-    }
-    if (iosddat2) {
-        iosddat2->generateVCD(i_vcd, o_vcd);
-    }
-    if (iosddat3) {
-        iosddat3->generateVCD(i_vcd, o_vcd);
     }
     if (pll0) {
         pll0->generateVCD(i_vcd, o_vcd);

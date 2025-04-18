@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "../../../../rtl/techmap/bufg/iobuf_tech.h"
+#include "../../../../rtl/sim/io/iobuf_tech.h"
 #include "vip_sdcard_cmdio.h"
 #include "vip_sdcard_ctrl.h"
 

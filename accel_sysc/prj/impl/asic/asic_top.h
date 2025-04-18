@@ -16,13 +16,13 @@
 #pragma once
 
 #include <systemc.h>
-#include "../../../rtl/ambalib/types_amba.h"
-#include "../../../rtl/ambalib/types_pnp.h"
-#include "../../../rtl/techmap/bufg/ids_tech.h"
-#include "../../../rtl/techmap/bufg/iobuf_tech.h"
-#include "../../../rtl/techmap/pll/SysPLL_tech.h"
-#include "../../../rtl/misclib/apb_prci.h"
-#include "../../../rtl/riscv_soc.h"
+#include "../../../rtl/internal/ambalib/types_amba.h"
+#include "../../../rtl/internal/ambalib/types_pnp.h"
+#include "../../../rtl/internal/ambalib/types_dma.h"
+#include "../../../rtl/sim/io/ids_tech.h"
+#include "../../../rtl/sim/pll/SysPLL_tech.h"
+#include "../../../rtl/internal/misclib/apb_prci.h"
+#include "../../../rtl/internal/accel/accel_soc.h"
 #include "sv_func.h"
 
 namespace debugger {
@@ -45,15 +45,6 @@ SC_MODULE(asic_top) {
     // UART1 signals
     sc_in<bool> i_uart1_rd;
     sc_out<bool> o_uart1_td;
-    // SD-card signals:
-    sc_out<bool> o_sd_sclk;
-    sc_inout<bool> io_sd_cmd;                               // CMD IO Command/Resonse; Data output in SPI mode
-    sc_inout<bool> io_sd_dat0;                              // Data[0] IO; Data input in SPI mode
-    sc_inout<bool> io_sd_dat1;
-    sc_inout<bool> io_sd_dat2;
-    sc_inout<bool> io_sd_cd_dat3;                           // CD/DAT3 IO CardDetect/Data[3]; CS output in SPI mode
-    sc_in<bool> i_sd_detected;                              // SD-card detected
-    sc_in<bool> i_sd_protect;                               // SD-card write protect
 
 
     asic_top(sc_module_name name,
@@ -71,27 +62,13 @@ SC_MODULE(asic_top) {
     sc_signal<sc_uint<12>> ib_gpio_ipins;
     sc_signal<sc_uint<12>> ob_gpio_opins;
     sc_signal<sc_uint<12>> ob_gpio_direction;
-    sc_signal<bool> ib_sd_cmd;
-    sc_signal<bool> ob_sd_cmd;
-    sc_signal<bool> ob_sd_cmd_direction;
-    sc_signal<bool> ib_sd_dat0;
-    sc_signal<bool> ob_sd_dat0;
-    sc_signal<bool> ob_sd_dat0_direction;
-    sc_signal<bool> ib_sd_dat1;
-    sc_signal<bool> ob_sd_dat1;
-    sc_signal<bool> ob_sd_dat1_direction;
-    sc_signal<bool> ib_sd_dat2;
-    sc_signal<bool> ob_sd_dat2;
-    sc_signal<bool> ob_sd_dat2_direction;
-    sc_signal<bool> ib_sd_cd_dat3;
-    sc_signal<bool> ob_sd_cd_dat3;
-    sc_signal<bool> ob_sd_cd_dat3_direction;
     sc_signal<bool> w_sys_rst;
     sc_signal<bool> w_sys_nrst;
     sc_signal<bool> w_dbg_nrst;
     sc_signal<bool> w_dmreset;
     sc_signal<bool> w_sys_clk;
     sc_signal<bool> w_ddr_clk;
+    sc_signal<bool> w_pcie_clk;
     sc_signal<bool> w_pll_lock;
     sc_signal<mapinfo_type> ddr_xmapinfo;
     sc_signal<dev_config_type> ddr_xdev_cfg;
@@ -104,20 +81,22 @@ SC_MODULE(asic_top) {
     sc_signal<bool> w_ddr_ui_nrst;
     sc_signal<bool> w_ddr_ui_clk;
     sc_signal<bool> w_ddr3_init_calib_complete;
+    sc_signal<bool> w_pcie_phy_lnk_up;
     sc_signal<mapinfo_type> prci_pmapinfo;
     sc_signal<dev_config_type> prci_dev_cfg;
     sc_signal<apb_in_type> prci_apbi;
     sc_signal<apb_out_type> prci_apbo;
+    sc_signal<bool> w_pcie_user_clk;
+    sc_signal<bool> w_pcie_user_rst;
+    sc_signal<bool> w_pcie_nrst;
+    sc_signal<sc_uint<16>> wb_pcie_completer_id;
+    sc_signal<pcie_dma64_out_type> pcie_dmao;
+    sc_signal<pcie_dma64_in_type> pcie_dmai;
 
     ids_tech *iclk0;
-    iobuf_tech *iosdcmd0;
-    iobuf_tech *iosddat0;
-    iobuf_tech *iosddat1;
-    iobuf_tech *iosddat2;
-    iobuf_tech *iosddat3;
     SysPLL_tech *pll0;
     apb_prci *prci0;
-    riscv_soc *soc0;
+    accel_soc *soc0;
 
 };
 

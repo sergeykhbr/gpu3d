@@ -115,6 +115,7 @@ void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_tx, o_tx.name());
         sc_trace(o_vcd, i_loopback_ena, i_loopback_ena.name());
         sc_trace(o_vcd, r.initdone, pn + ".r_initdone");
+        sc_trace(o_vcd, .registers, pn + "._registers");
     }
 
     if (clk0) {
