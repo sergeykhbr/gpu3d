@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module axictrl_bus0 #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -49,7 +49,8 @@ logic w_def_req_ready;
 logic w_def_resp_valid;
 logic [CFG_SYSBUS_DATA_BITS-1:0] wb_def_resp_rdata;
 logic w_def_resp_err;
-axictrl_bus0_registers r, rin;
+axictrl_bus0_registers r;
+axictrl_bus0_registers rin;
 
 axi_slv #(
     .async_reset(async_reset),
@@ -102,6 +103,7 @@ begin: comb_proc
     logic v_b_fire;
     logic v_b_busy;
 
+    v = r;
     for (int i = 0; i < (CFG_BUS0_XMST_TOTAL + 1); i++) begin
         vmsti[i] = axi4_master_in_none;
     end
@@ -133,8 +135,6 @@ begin: comb_proc
     v_r_busy = 1'b0;
     v_b_fire = 1'b0;
     v_b_busy = 1'b0;
-
-    v = r;
 
     vb_def_mapinfo.addr_start = 0;
     vb_def_mapinfo.addr_end = 0;
@@ -270,7 +270,7 @@ begin: comb_proc
     vmsti[i_b_midx].b_user = vslvo[i_b_sidx].b_user;
     vslvi[i_b_sidx].b_ready = vmsto[i_b_midx].b_ready;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = axictrl_bus0_r_reset;
     end
 
@@ -287,26 +287,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= axictrl_bus0_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: axictrl_bus0

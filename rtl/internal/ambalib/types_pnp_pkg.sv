@@ -119,7 +119,14 @@ typedef struct {
 } dev_config_type;
 
 // @brief Default config value for empty slot.
-const dev_config_type dev_config_none = '{PNP_CFG_DEV_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, '0, '0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY};
+const dev_config_type dev_config_none = '{
+    PNP_CFG_DEV_DESCR_BYTES,            // descrsize
+    PNP_CFG_TYPE_SLAVE,                 // descrtype
+    '0,                                 // addr_start
+    '0,                                 // addr_end
+    VENDOR_GNSSSENSOR,                  // vid
+    SLV_DID_EMPTY                       // did
+};
 
 typedef dev_config_type soc_pnp_vector[0:SOC_PNP_TOTAL - 1];
 

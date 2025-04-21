@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module axi2apb_bus1 #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -44,7 +44,8 @@ logic [CFG_SYSBUS_DATA_BITS-1:0] wb_req_wdata;
 logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_req_wstrb;
 logic w_req_last;
 logic w_req_ready;
-axi2apb_bus1_registers r, rin;
+axi2apb_bus1_registers r;
+axi2apb_bus1_registers rin;
 
 axi_slv #(
     .async_reset(async_reset),
@@ -77,6 +78,7 @@ begin: comb_proc
     apb_in_type vapbi[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
     apb_out_type vapbo[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
 
+    v = r;
     iselidx = 0;
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) begin
         vapbi[i] = apb_in_none;
@@ -84,8 +86,6 @@ begin: comb_proc
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) begin
         vapbo[i] = apb_out_none;
     end
-
-    v = r;
 
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
         vapbo[i] = i_apbo[i];                               // Cannot read vector item from port in systemc
@@ -177,7 +177,7 @@ begin: comb_proc
     vapbi[iselidx].penable = r.penable;
     vapbi[iselidx].pprot = r.pprot;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = axi2apb_bus1_r_reset;
     end
 
@@ -189,26 +189,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= axi2apb_bus1_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: axi2apb_bus1

@@ -27,7 +27,13 @@ typedef struct {
 } pcie_dma64_out_type;
 
 // @brief   DMA output empty values.
-const pcie_dma64_out_type pcie_dma64_out_none = '{1'b0, 64'd0, 8'd0, 1'b0, 1'b0};
+const pcie_dma64_out_type pcie_dma64_out_none = '{
+    1'b0,                               // ready
+    64'd0,                              // data
+    8'd0,                               // strob
+    1'b0,                               // last
+    1'b0                                // valid
+};
 
 // @brief DMA device input signals.
 typedef struct {
@@ -41,6 +47,15 @@ typedef struct {
     logic valid;
 } pcie_dma64_in_type;
 
-const pcie_dma64_in_type pcie_dma64_in_none = '{1'b0, 64'd0, 8'd0, 1'b0, 7'd0, 1'b0, 1'b0, 1'b0};
+const pcie_dma64_in_type pcie_dma64_in_none = '{
+    1'b0,                               // ready
+    64'd0,                              // data
+    8'd0,                               // strob
+    1'b0,                               // last
+    7'd0,                               // bar_hit
+    1'b0,                               // err_fwd
+    1'b0,                               // ecrc_err
+    1'b0                                // valid
+};
 
 endpackage: types_dma_pkg
