@@ -66,16 +66,16 @@ const cdc_afifo_r2egisters cdc_afifo_r2_reset = '{
     1'b1                                // rempty
 };
 
-reg [dbits-1:0] mem[0: DEPTH - 1];
-
-cdc_afifo_registers r, rin;
-cdc_afifo_r2egisters r2, r2in;
-
+logic [dbits-1:0] mem[0: DEPTH - 1];
+cdc_afifo_registers r;
+cdc_afifo_registers rin;
+cdc_afifo_r2egisters r2;
+cdc_afifo_r2egisters r2in;
 
 always_comb
 begin: comb_proc
-    cdc_afifo_registers v;
     cdc_afifo_r2egisters v2;
+    cdc_afifo_registers v;
     logic [abits-1:0] vb_waddr;
     logic [abits-1:0] vb_raddr;
     logic v_wfull_next;
@@ -85,6 +85,8 @@ begin: comb_proc
     logic [(abits + 1)-1:0] vb_rgraynext;
     logic [(abits + 1)-1:0] vb_rbinnext;
 
+    v2 = r2;
+    v = r;
     vb_waddr = 3'd0;
     vb_raddr = 3'd0;
     v_wfull_next = 1'b0;
@@ -93,9 +95,6 @@ begin: comb_proc
     vb_wbinnext = 4'd0;
     vb_rgraynext = 4'd0;
     vb_rbinnext = 4'd0;
-
-    v = r;
-    v2 = r2;
 
     // Cross the Gray pointer to write clock domain:
     v.wq1_rgray = r2.rgray;
@@ -142,26 +141,26 @@ begin: comb_proc
     r2in = v2;
 end: comb_proc
 
-always_ff @(posedge i_wclk, negedge i_nrst) begin: rg_proc
+always_ff @(posedge i_wclk) begin: mreg_proc
+    if ((i_wr && (~r.wfull)) == 1'b1) begin
+        mem[int'(r.wbin[(abits - 1): 0])] <= i_wdata;
+    end
+end: mreg_proc
+
+always_ff @(posedge i_wclk, negedge i_nrst) begin
     if (i_nrst == 1'b0) begin
         r <= cdc_afifo_r_reset;
     end else begin
         r <= rin;
     end
-end: rg_proc
+end
 
-always_ff @(posedge i_rclk, negedge i_nrst) begin: r2g_proc
+always_ff @(posedge i_rclk, negedge i_nrst) begin
     if (i_nrst == 1'b0) begin
         r2 <= cdc_afifo_r2_reset;
     end else begin
         r2 <= r2in;
     end
-end: r2g_proc
-
-always_ff @(posedge i_wclk) begin: rx2g_proc
-    if ((i_wr && (~r.wfull)) == 1'b1) begin
-        mem[int'(r.wbin[(abits - 1): 0])] <= i_wdata;
-    end
-end: rx2g_proc
+end
 
 endmodule: cdc_afifo
