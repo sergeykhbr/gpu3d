@@ -96,5 +96,4 @@ const pcie_dma_registers pcie_dma_r_reset = '{
     7'd0,                               // resp_cpl
     12'd0                               // byte_cnt
 };
-
 endpackage: pcie_dma_pkg

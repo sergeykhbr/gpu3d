@@ -32,7 +32,6 @@ const apb_pcie_registers apb_pcie_r_reset = '{
     1'b0,                               // resp_err
     4'd0                                // req_cnt
 };
-
 typedef struct {
     logic [63:0] req_data_arr[0: 16 - 1];
 } apb_pcie_rxegisters;

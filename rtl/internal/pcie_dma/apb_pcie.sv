@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module apb_pcie #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // APB clock
@@ -40,8 +40,10 @@ logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
-apb_pcie_registers r, rin;
-apb_pcie_rxegisters rx, rxin;
+apb_pcie_registers r;
+apb_pcie_registers rin;
+apb_pcie_rxegisters rx;
+apb_pcie_rxegisters rxin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -65,16 +67,15 @@ apb_slv #(
 
 always_comb
 begin: comb_proc
-    apb_pcie_registers v;
     apb_pcie_rxegisters vx;
+    apb_pcie_registers v;
     logic [31:0] vb_rdata;
 
-    vb_rdata = '0;
-
-    v = r;
     for (int i = 0; i < 16; i++) begin
         vx.req_data_arr[i] = rx.req_data_arr[i];
     end
+    v = r;
+    vb_rdata = '0;
 
 
     if (i_dbg_pcie_dmai.valid == 1'b1) begin
@@ -105,7 +106,7 @@ begin: comb_proc
     v.resp_valid = w_req_valid;
     v.resp_rdata = vb_rdata;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = apb_pcie_r_reset;
     end
 
@@ -115,38 +116,31 @@ begin: comb_proc
     end
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= apb_pcie_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-        always_ff @(posedge i_clk) begin: rxg_proc
-            for (int i = 0; i < 16; i++) begin
-                rx.req_data_arr[i] <= rxin.req_data_arr[i];
-            end
-        end: rxg_proc
+    end: async_r_en
+    else begin: async_r_dis
 
-    end: async_rst_gen
-    else begin: no_rst_gen
-
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-        always_ff @(posedge i_clk) begin: rxg_proc
-            for (int i = 0; i < 16; i++) begin
-                rx.req_data_arr[i] <= rxin.req_data_arr[i];
-            end
-        end: rxg_proc
-
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
+
+always_ff @(posedge i_clk) begin
+    for (int i = 0; i < 16; i++) begin
+        rx.req_data_arr[i] <= rxin.req_data_arr[i];
+    end
+end
 
 endmodule: apb_pcie

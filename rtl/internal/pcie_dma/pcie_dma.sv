@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module pcie_dma #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_nrst,                                     // System Reset: active LOW
@@ -52,7 +52,8 @@ logic [RESP_FIFO_WIDTH-1:0] wb_respfifo_payload_o;
 logic w_respfifo_full;
 logic w_respfifo_empty;
 logic w_respfifo_wr;
-pcie_dma_registers r, rin;
+pcie_dma_registers r;
+pcie_dma_registers rin;
 
 // PCIE EP (200 MHz) -> DMA (40 MHz)
 cdc_afifo #(
@@ -103,6 +104,7 @@ begin: comb_proc
     logic [7:0] vb_resp_strob;
     logic v_resp_last;
 
+    v = r;
     vb_xmst_cfg = dev_config_none;
     vb_xmsto = axi4_master_out_none;
     vb_xbytes = 8'd0;
@@ -117,8 +119,6 @@ begin: comb_proc
     vb_resp_data = 64'd0;
     vb_resp_strob = 8'd0;
     v_resp_last = 1'b0;
-
-    v = r;
 
     v_req_ready = 1'b0;
     vb_req_addr = 64'd0;
@@ -447,7 +447,7 @@ begin: comb_proc
     end
     endcase
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = pcie_dma_r_reset;
     end
 
@@ -477,26 +477,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= pcie_dma_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: pcie_dma
