@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module apb_prci #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -46,7 +46,8 @@ logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
-apb_prci_rhegisters rh, rhin;
+apb_prci_rhegisters rh;
+apb_prci_rhegisters rhin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -73,9 +74,8 @@ begin: comb_proc
     apb_prci_rhegisters vh;
     logic [31:0] vb_rdata;
 
-    vb_rdata = '0;
-
     vh = rh;
+    vb_rdata = '0;
 
     vh.sys_locked = i_sys_locked;
     vh.ddr_locked = i_ddr_locked;
@@ -109,7 +109,7 @@ begin: comb_proc
     vh.resp_rdata = vb_rdata;
     vh.resp_err = 1'b0;
 
-    if (~async_reset && i_pwrreset == 1'b1) begin
+    if ((~async_reset) && (i_pwrreset == 1'b1)) begin
         vh = apb_prci_rh_reset;
     end
 
@@ -121,26 +121,25 @@ begin: comb_proc
     rhin = vh;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_rh_en
 
-        always_ff @(posedge i_clk, posedge i_pwrreset) begin: rhg_proc
+        always_ff @(posedge i_clk, posedge i_pwrreset) begin
             if (i_pwrreset == 1'b1) begin
                 rh <= apb_prci_rh_reset;
             end else begin
                 rh <= rhin;
             end
-        end: rhg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_rh_en
+    else begin: async_rh_dis
 
-        always_ff @(posedge i_clk) begin: rhg_proc
+        always_ff @(posedge i_clk) begin
             rh <= rhin;
-        end: rhg_proc
+        end
 
-    end: no_rst_gen
+    end: async_rh_dis
 endgenerate
 
 endmodule: apb_prci

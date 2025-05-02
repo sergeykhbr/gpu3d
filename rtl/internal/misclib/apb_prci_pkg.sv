@@ -43,5 +43,4 @@ const apb_prci_rhegisters apb_prci_rh_reset = '{
     '0,                                 // resp_rdata
     1'b0                                // resp_err
 };
-
 endpackage: apb_prci_pkg

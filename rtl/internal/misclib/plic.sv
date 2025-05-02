@@ -17,9 +17,9 @@
 `timescale 1ns/10ps
 
 module plic #(
-    parameter bit async_reset = 1'b0,
     parameter int ctxmax = 8,
-    parameter int irqmax = 128
+    parameter int irqmax = 128,
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -44,7 +44,6 @@ typedef struct {
     logic [9:0] irq_prio;                                   // currently selected prio level
 } plic_context_type;
 
-
 typedef struct {
     logic [(4 * 1024)-1:0] src_priority;
     logic [1023:0] pending;
@@ -64,7 +63,8 @@ logic w_req_ready;
 logic w_resp_valid;
 logic [CFG_SYSBUS_DATA_BITS-1:0] wb_resp_rdata;
 logic wb_resp_err;
-plic_registers r, rin;
+plic_registers r;
+plic_registers rin;
 
 axi_slv #(
     .async_reset(async_reset),
@@ -108,6 +108,19 @@ begin: comb_proc
     logic [ctxmax-1:0] vb_ip;
     int rctx_idx;
 
+    v.src_priority = r.src_priority;
+    v.pending = r.pending;
+    v.ip = r.ip;
+    for (int i = 0; i < ctxmax; i++) begin
+        v.ctx[i].priority_th = r.ctx[i].priority_th;
+        v.ctx[i].ie = r.ctx[i].ie;
+        v.ctx[i].ip_prio = r.ctx[i].ip_prio;
+        v.ctx[i].prio_mask = r.ctx[i].prio_mask;
+        v.ctx[i].sel_prio = r.ctx[i].sel_prio;
+        v.ctx[i].irq_idx = r.ctx[i].irq_idx;
+        v.ctx[i].irq_prio = r.ctx[i].irq_prio;
+    end
+    v.rdata = r.rdata;
     vrdata = '0;
     for (int i = 0; i < ctxmax; i++) begin
         vb_irq_idx[i] = '0;
@@ -140,20 +153,6 @@ begin: comb_proc
     vb_pending = '0;
     vb_ip = '0;
     rctx_idx = 0;
-
-    v.src_priority = r.src_priority;
-    v.pending = r.pending;
-    v.ip = r.ip;
-    for (int i = 0; i < ctxmax; i++) begin
-        v.ctx[i].priority_th = r.ctx[i].priority_th;
-        v.ctx[i].ie = r.ctx[i].ie;
-        v.ctx[i].ip_prio = r.ctx[i].ip_prio;
-        v.ctx[i].prio_mask = r.ctx[i].prio_mask;
-        v.ctx[i].sel_prio = r.ctx[i].sel_prio;
-        v.ctx[i].irq_idx = r.ctx[i].irq_idx;
-        v.ctx[i].irq_prio = r.ctx[i].irq_prio;
-    end
-    v.rdata = r.rdata;
 
     // Warning SystemC limitation workaround:
     //   Cannot directly write into bitfields of the signals v.* registers
@@ -292,7 +291,7 @@ begin: comb_proc
         v.ctx[n].irq_prio = vb_ctx_irq_prio[n];
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v.src_priority = '0;
         v.pending = '0;
         v.ip = '0;
@@ -329,11 +328,10 @@ begin: comb_proc
     rin.rdata = v.rdata;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r.src_priority <= '0;
                 r.pending <= '0;
@@ -363,12 +361,12 @@ generate
                 end
                 r.rdata <= rin.rdata;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r.src_priority <= rin.src_priority;
             r.pending <= rin.pending;
             r.ip <= rin.ip;
@@ -382,9 +380,9 @@ generate
                 r.ctx[i].irq_prio <= rin.ctx[i].irq_prio;
             end
             r.rdata <= rin.rdata;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: plic

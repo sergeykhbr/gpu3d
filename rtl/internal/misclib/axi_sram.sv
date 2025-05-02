@@ -17,8 +17,8 @@
 `timescale 1ns/10ps
 
 module axi_sram #(
-    parameter bit async_reset = 1'b0,
-    parameter int abits = 17
+    parameter int abits = 17,
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
