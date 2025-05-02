@@ -49,7 +49,6 @@ const cdc_afifo_registers cdc_afifo_r_reset = '{
     4'd0,                               // wq1_rgray
     1'b0                                // wfull
 };
-
 typedef struct {
     logic [(abits + 1)-1:0] rgray;
     logic [(abits + 1)-1:0] rbin;
@@ -65,12 +64,12 @@ const cdc_afifo_r2egisters cdc_afifo_r2_reset = '{
     4'd0,                               // rq1_wgray
     1'b1                                // rempty
 };
-
 logic [dbits-1:0] mem[0: DEPTH - 1];
 cdc_afifo_registers r;
 cdc_afifo_registers rin;
 cdc_afifo_r2egisters r2;
 cdc_afifo_r2egisters r2in;
+
 
 always_comb
 begin: comb_proc
@@ -140,6 +139,7 @@ begin: comb_proc
     rin = v;
     r2in = v2;
 end: comb_proc
+
 
 always_ff @(posedge i_wclk) begin: mreg_proc
     if ((i_wr && (~r.wfull)) == 1'b1) begin
