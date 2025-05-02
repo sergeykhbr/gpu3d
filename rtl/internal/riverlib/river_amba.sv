@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module RiverAmba #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter int unsigned hartid = 0,
     parameter bit fpu_ena = 1,
     parameter bit coherence_ena = 0,
@@ -78,7 +78,8 @@ logic w_dporto_req_ready;
 logic w_dporto_resp_valid;
 logic w_dporto_resp_error;
 logic [RISCV_ARCH-1:0] wb_dporto_rdata;
-RiverAmba_registers r, rin;
+RiverAmba_registers r;
+RiverAmba_registers rin;
 
 function logic [3:0] reqtype2arsnoop(input logic [REQ_MEM_TYPE_BITS-1:0] reqtype);
 logic [3:0] ret;
@@ -181,6 +182,7 @@ begin: comb_proc
     logic v_cd_valid;
     logic [L1CACHE_LINE_BITS-1:0] vb_cd_data;
 
+    v = r;
     v_resp_mem_valid = 1'b0;
     v_mem_er_load_fault = 1'b0;
     v_mem_er_store_fault = 1'b0;
@@ -195,8 +197,6 @@ begin: comb_proc
     vb_cr_resp = '0;
     v_cd_valid = 1'b0;
     vb_cd_data = '0;
-
-    v = r;
 
 
     w_dporti_haltreq = i_dport.haltreq;                     // systemc compatibility
@@ -423,7 +423,7 @@ begin: comb_proc
         v_cr_valid = 1'b1;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = RiverAmba_r_reset;
     end
 
@@ -454,26 +454,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= RiverAmba_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: RiverAmba

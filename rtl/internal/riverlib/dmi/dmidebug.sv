@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module dmidebug #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,
@@ -74,7 +74,8 @@ logic w_cdc_dmi_hardreset;
 logic [31:0] wb_jtag_dmi_resp_data;
 logic w_jtag_dmi_busy;
 logic w_jtag_dmi_error;
-dmidebug_registers r, rin;
+dmidebug_registers r;
+dmidebug_registers rin;
 
 jtagtap #(
     .abits(7),
@@ -131,6 +132,7 @@ begin: comb_proc
     logic [(32 * CFG_PROGBUF_REG_TOTAL)-1:0] t_progbuf;
     int t_idx;
 
+    v = r;
     vcfg = dev_config_none;
     vapbo = apb_out_none;
     vb_req_type = '0;
@@ -144,8 +146,6 @@ begin: comb_proc
     t_command = '0;
     t_progbuf = '0;
     t_idx = 0;
-
-    v = r;
 
     vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
@@ -536,7 +536,7 @@ begin: comb_proc
     vb_req_type[DPortReq_MemVirtual] = r.aamvirtual;
     vb_req_type[DPortReq_Progexec] = r.cmd_progexec;
 
-    if ((~async_reset && i_nrst == 1'b0) || (w_cdc_dmi_hardreset == 1'b1)) begin
+    if (((~async_reset) && (i_nrst == 1'b0)) || (w_cdc_dmi_hardreset == 1'b1)) begin
         v = dmidebug_r_reset;
     end
 
@@ -567,26 +567,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= dmidebug_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: dmidebug

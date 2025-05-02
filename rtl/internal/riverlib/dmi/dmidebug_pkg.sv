@@ -126,5 +126,4 @@ const dmidebug_registers dmidebug_r_reset = '{
     1'b0,                               // dport_resp_ready
     1'b0                                // pready
 };
-
 endpackage: dmidebug_pkg

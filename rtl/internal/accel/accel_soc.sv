@@ -302,7 +302,7 @@ apb_pnp #(
 
 always_comb
 begin: comb_proc
-    logic [0:0] v_gnd1;
+    logic v_gnd1;
     logic [SOC_PLIC_IRQ_TOTAL-1:0] vb_ext_irqs;
 
     v_gnd1 = 1'b0;

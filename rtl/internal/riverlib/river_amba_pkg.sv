@@ -71,5 +71,4 @@ const RiverAmba_registers RiverAmba_r_reset = '{
     '0,                                 // resp_snoop_data
     1'b0                                // cache_access
 };
-
 endpackage: river_amba_pkg
