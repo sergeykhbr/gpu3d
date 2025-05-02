@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module accel_soc #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
 (
@@ -154,8 +154,8 @@ Workgroup #(
 );
 
 axi_rom #(
-    .async_reset(async_reset),
     .abits(CFG_BOOTROM_LOG2_SIZE),
+    .async_reset(async_reset),
     .filename(CFG_BOOTROM_FILE_HEX)
 ) rom0 (
     .i_clk(i_sys_clk),
@@ -167,8 +167,8 @@ axi_rom #(
 );
 
 axi_sram #(
-    .async_reset(async_reset),
-    .abits(CFG_SRAM_LOG2_SIZE)
+    .abits(CFG_SRAM_LOG2_SIZE),
+    .async_reset(async_reset)
 ) sram0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -179,8 +179,8 @@ axi_sram #(
 );
 
 clint #(
-    .async_reset(async_reset),
-    .cpu_total(CFG_CPU_MAX)
+    .cpu_total(CFG_CPU_MAX),
+    .async_reset(async_reset)
 ) clint0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -194,9 +194,9 @@ clint #(
 );
 
 plic #(
-    .async_reset(async_reset),
     .ctxmax(SOC_PLIC_CONTEXT_TOTAL),
-    .irqmax(SOC_PLIC_IRQ_TOTAL)
+    .irqmax(SOC_PLIC_IRQ_TOTAL),
+    .async_reset(async_reset)
 ) plic0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -220,8 +220,8 @@ cdc_axi_sync_tech u_cdc_ddr0 (
 );
 
 apb_uart #(
-    .async_reset(async_reset),
     .log2_fifosz(SOC_UART1_LOG2_FIFOSZ),
+    .async_reset(async_reset),
     .sim_speedup_rate(sim_uart_speedup_rate)
 ) uart1 (
     .i_clk(i_sys_clk),
@@ -236,8 +236,8 @@ apb_uart #(
 );
 
 apb_gpio #(
-    .async_reset(async_reset),
-    .width(SOC_GPIO0_WIDTH)
+    .width(SOC_GPIO0_WIDTH),
+    .async_reset(async_reset)
 ) gpio0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -283,8 +283,8 @@ apb_pcie #(
 );
 
 apb_pnp #(
-    .async_reset(async_reset),
     .cfg_slots(SOC_PNP_TOTAL),
+    .async_reset(async_reset),
     .hwid(SOC_HW_ID),
     .cpu_max(CFG_CPU_NUM),
     .l2cache_ena(CFG_L2CACHE_ENA),
@@ -302,7 +302,7 @@ apb_pnp #(
 
 always_comb
 begin: comb_proc
-    logic v_gnd1;
+    logic [0:0] v_gnd1;
     logic [SOC_PLIC_IRQ_TOTAL-1:0] vb_ext_irqs;
 
     v_gnd1 = 1'b0;
