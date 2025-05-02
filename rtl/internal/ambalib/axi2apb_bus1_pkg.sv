@@ -55,5 +55,4 @@ const axi2apb_bus1_registers axi2apb_bus1_r_reset = '{
     1'b0,                               // pslverr
     '0                                  // size
 };
-
 endpackage: axi2apb_bus1_pkg

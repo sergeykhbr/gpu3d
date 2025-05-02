@@ -47,7 +47,6 @@ typedef mapinfo_type bus1_mapinfo_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 
 // Bus 1 device tree
 const bus1_mapinfo_vector CFG_BUS1_MAP = '{
-
         '{
             64'h0000000000010000,       // addr_start
             64'h0000000000011000        // addr_end

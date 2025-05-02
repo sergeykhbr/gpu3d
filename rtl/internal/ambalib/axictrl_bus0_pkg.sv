@@ -36,5 +36,4 @@ const axictrl_bus0_registers axictrl_bus0_r_reset = '{
     CFG_BUS0_XMST_TOTAL,                // b_midx
     CFG_BUS0_XSLV_TOTAL                 // b_sidx
 };
-
 endpackage: axictrl_bus0_pkg

@@ -67,5 +67,4 @@ const axi_slv_registers axi_slv_r_reset = '{
     '0,                                 // resp_rdata
     1'b0                                // resp_err
 };
-
 endpackage: axi_slv_pkg

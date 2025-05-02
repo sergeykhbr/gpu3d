@@ -44,6 +44,7 @@ import apb_slv_pkg::*;
 apb_slv_registers r;
 apb_slv_registers rin;
 
+
 always_comb
 begin: comb_proc
     apb_slv_registers v;

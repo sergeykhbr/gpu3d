@@ -48,6 +48,7 @@ import axi_slv_pkg::*;
 axi_slv_registers r;
 axi_slv_registers rin;
 
+
 always_comb
 begin: comb_proc
     axi_slv_registers v;
