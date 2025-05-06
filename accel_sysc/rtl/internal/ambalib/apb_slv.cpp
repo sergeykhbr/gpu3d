@@ -75,14 +75,14 @@ void apb_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_valid, i_resp_valid.name());
         sc_trace(o_vcd, i_resp_rdata, i_resp_rdata.name());
         sc_trace(o_vcd, i_resp_err, i_resp_err.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_valid, pn + ".r_req_valid");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
-        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
-        sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
-        sc_trace(o_vcd, r.resp_err, pn + ".r_resp_err");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.req_valid, pn + ".r.req_valid");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_write, pn + ".r.req_write");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
+        sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
+        sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
     }
 
 }
@@ -92,11 +92,10 @@ void apb_slv::comb() {
     dev_config_type vcfg;
     apb_out_type vapbo;
 
+    v = r;
     vb_rdata = 0;
     vcfg = dev_config_none;
     vapbo = apb_out_none;
-
-    v = r;
 
     vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
@@ -124,10 +123,10 @@ void apb_slv::comb() {
         v.state = State_WaitResp;
         break;
     case State_WaitResp:
-        v.resp_valid = i_resp_valid;
+        v.resp_valid = i_resp_valid.read();
         if (i_resp_valid.read() == 1) {
-            v.resp_rdata = i_resp_rdata;
-            v.resp_err = i_resp_err;
+            v.resp_rdata = i_resp_rdata.read();
+            v.resp_err = i_resp_err.read();
             v.state = State_Resp;
         }
         break;
@@ -141,24 +140,24 @@ void apb_slv::comb() {
         break;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         apb_slv_r_reset(v);
     }
 
-    o_req_valid = r.req_valid;
-    o_req_addr = r.req_addr;
-    o_req_write = r.req_write;
-    o_req_wdata = r.req_wdata;
+    o_req_valid = r.req_valid.read();
+    o_req_addr = r.req_addr.read();
+    o_req_write = r.req_write.read();
+    o_req_wdata = r.req_wdata.read();
 
-    vapbo.pready = r.resp_valid;
-    vapbo.prdata = r.resp_rdata;
-    vapbo.pslverr = r.resp_err;
+    vapbo.pready = r.resp_valid.read();
+    vapbo.prdata = r.resp_rdata.read();
+    vapbo.pslverr = r.resp_err.read();
     o_apbo = vapbo;
     o_cfg = vcfg;
 }
 
 void apb_slv::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         apb_slv_r_reset(r);
     } else {
         r = v;

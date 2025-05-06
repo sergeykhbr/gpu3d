@@ -83,7 +83,8 @@ accel_soc::accel_soc(sc_module_name name,
     group0 = 0;
     u_cdc_ddr0 = 0;
 
-    bus0 = new axictrl_bus0("bus0", async_reset);
+    bus0 = new axictrl_bus0("bus0",
+                             async_reset);
     bus0->i_clk(i_sys_clk);
     bus0->i_nrst(i_sys_nrst);
     bus0->o_cfg(dev_pnp[SOC_PNP_XCTRL0]);
@@ -93,7 +94,8 @@ accel_soc::accel_soc(sc_module_name name,
     bus0->o_xslvi(axisi);
     bus0->o_mapinfo(bus0_mapinfo);
 
-    bus1 = new axi2apb_bus1("bus1", async_reset);
+    bus1 = new axi2apb_bus1("bus1",
+                             async_reset);
     bus1->i_clk(i_sys_clk);
     bus1->i_nrst(i_sys_nrst);
     bus1->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PBRIDGE]);
@@ -104,7 +106,8 @@ accel_soc::accel_soc(sc_module_name name,
     bus1->o_apbi(apbi);
     bus1->o_mapinfo(bus1_mapinfo);
 
-    group0 = new Workgroup("group0", async_reset,
+    group0 = new Workgroup("group0",
+                            async_reset,
                             CFG_CPU_NUM,
                             CFG_L2CACHE_ENA);
     group0->i_cores_nrst(i_sys_nrst);
@@ -131,7 +134,8 @@ accel_soc::accel_soc(sc_module_name name,
     group0->o_dmi_apbo(apbo[CFG_BUS1_PSLV_DMI]);
     group0->o_dmreset(o_dmreset);
 
-    rom0 = new axi_rom<CFG_BOOTROM_LOG2_SIZE>("rom0", async_reset,
+    rom0 = new axi_rom<CFG_BOOTROM_LOG2_SIZE>("rom0",
+                                              async_reset,
                                               CFG_BOOTROM_FILE_HEX);
     rom0->i_clk(i_sys_clk);
     rom0->i_nrst(i_sys_nrst);
@@ -140,7 +144,8 @@ accel_soc::accel_soc(sc_module_name name,
     rom0->i_xslvi(axisi[CFG_BUS0_XSLV_BOOTROM]);
     rom0->o_xslvo(axiso[CFG_BUS0_XSLV_BOOTROM]);
 
-    sram0 = new axi_sram<CFG_SRAM_LOG2_SIZE>("sram0", async_reset);
+    sram0 = new axi_sram<CFG_SRAM_LOG2_SIZE>("sram0",
+                                             async_reset);
     sram0->i_clk(i_sys_clk);
     sram0->i_nrst(i_sys_nrst);
     sram0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_SRAM]);
@@ -148,7 +153,8 @@ accel_soc::accel_soc(sc_module_name name,
     sram0->i_xslvi(axisi[CFG_BUS0_XSLV_SRAM]);
     sram0->o_xslvo(axiso[CFG_BUS0_XSLV_SRAM]);
 
-    clint0 = new clint<CFG_CPU_MAX>("clint0", async_reset);
+    clint0 = new clint<CFG_CPU_MAX>("clint0",
+                                    async_reset);
     clint0->i_clk(i_sys_clk);
     clint0->i_nrst(i_sys_nrst);
     clint0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_CLINT]);
@@ -160,7 +166,8 @@ accel_soc::accel_soc(sc_module_name name,
     clint0->o_mtip(wb_clint_mtip);
 
     plic0 = new plic<SOC_PLIC_CONTEXT_TOTAL,
-                     SOC_PLIC_IRQ_TOTAL>("plic0", async_reset);
+                     SOC_PLIC_IRQ_TOTAL>("plic0",
+                                         async_reset);
     plic0->i_clk(i_sys_clk);
     plic0->i_nrst(i_sys_nrst);
     plic0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PLIC]);
@@ -180,7 +187,8 @@ accel_soc::accel_soc(sc_module_name name,
     u_cdc_ddr0->o_xmsto(o_ddr_xslvi);
     u_cdc_ddr0->i_xmsti(i_ddr_xslvo);
 
-    uart1 = new apb_uart<SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset,
+    uart1 = new apb_uart<SOC_UART1_LOG2_FIFOSZ>("uart1",
+                                                async_reset,
                                                 sim_uart_speedup_rate);
     uart1->i_clk(i_sys_clk);
     uart1->i_nrst(i_sys_nrst);
@@ -192,7 +200,8 @@ accel_soc::accel_soc(sc_module_name name,
     uart1->o_td(o_uart1_td);
     uart1->o_irq(w_irq_uart1);
 
-    gpio0 = new apb_gpio<SOC_GPIO0_WIDTH>("gpio0", async_reset);
+    gpio0 = new apb_gpio<SOC_GPIO0_WIDTH>("gpio0",
+                                          async_reset);
     gpio0->i_clk(i_sys_clk);
     gpio0->i_nrst(i_sys_nrst);
     gpio0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_GPIO]);
@@ -205,7 +214,8 @@ accel_soc::accel_soc(sc_module_name name,
     gpio0->o_irq(wb_irq_gpio);
 
     // See reference: pg054-7series-pcie.pdf
-    pcidma0 = new pcie_dma("pcidma0", async_reset);
+    pcidma0 = new pcie_dma("pcidma0",
+                            async_reset);
     pcidma0->i_nrst(i_pcie_nrst);
     pcidma0->i_clk(i_sys_clk);
     pcidma0->i_pcie_phy_clk(i_pcie_clk);
@@ -218,7 +228,8 @@ accel_soc::accel_soc(sc_module_name name,
     pcidma0->o_xmsto(aximo[CFG_BUS0_XMST_PCIE]);
     pcidma0->o_dbg_pcie_dmai(wb_dbg_pcie_dmai);
 
-    ppcie0 = new apb_pcie("ppcie0", async_reset);
+    ppcie0 = new apb_pcie("ppcie0",
+                           async_reset);
     ppcie0->i_clk(i_sys_clk);
     ppcie0->i_nrst(i_sys_nrst);
     ppcie0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PCIE]);
@@ -229,7 +240,8 @@ accel_soc::accel_soc(sc_module_name name,
     ppcie0->i_dma_state(wb_pcie_dma_state);
     ppcie0->i_dbg_pcie_dmai(wb_dbg_pcie_dmai);
 
-    pnp0 = new apb_pnp<SOC_PNP_TOTAL>("pnp0", async_reset,
+    pnp0 = new apb_pnp<SOC_PNP_TOTAL>("pnp0",
+                                      async_reset,
                                       SOC_HW_ID,
                                       CFG_CPU_NUM,
                                       CFG_L2CACHE_ENA,
@@ -380,9 +392,6 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_pcie_completer_id, i_pcie_completer_id.name());
         sc_trace(o_vcd, o_pcie_dmao, o_pcie_dmao.name());
         sc_trace(o_vcd, i_pcie_dmai, i_pcie_dmai.name());
-        sc_trace(o_vcd, acpo, acpo.name());
-        sc_trace(o_vcd, acpi, acpi.name());
-        sc_trace(o_vcd, wb_dbg_pcie_dmai, wb_dbg_pcie_dmai.name());
     }
 
     if (bus0) {
@@ -436,10 +445,10 @@ void accel_soc::comb() {
 
     // assign interrupts:
     vb_ext_irqs(22, 0) = 0;
-    vb_ext_irqs(((23 + SOC_GPIO0_WIDTH) - 1), 23) = wb_irq_gpio;// FU740: 16 bits, current 12-bits
-    vb_ext_irqs[39] = w_irq_uart1;
+    vb_ext_irqs(((23 + SOC_GPIO0_WIDTH) - 1), 23) = wb_irq_gpio.read();// FU740: 16 bits, current 12-bits
+    vb_ext_irqs[39] = w_irq_uart1.read();
     vb_ext_irqs(69, 40) = 0;
-    vb_ext_irqs[70] = w_irq_pnp;
+    vb_ext_irqs[70] = w_irq_pnp.read();
     vb_ext_irqs((SOC_PLIC_IRQ_TOTAL - 1), 71) = 0;
     wb_ext_irqs = vb_ext_irqs;
 
@@ -464,16 +473,16 @@ void accel_soc::comb() {
 
     // PRCI:
     o_prci_apbi = apbi[CFG_BUS1_PSLV_PRCI];
-    apbo[CFG_BUS1_PSLV_PRCI] = i_prci_apbo;
-    dev_pnp[SOC_PNP_PRCI] = i_prci_pdevcfg;
+    apbo[CFG_BUS1_PSLV_PRCI] = i_prci_apbo.read();
+    dev_pnp[SOC_PNP_PRCI] = i_prci_pdevcfg.read();
 
     // DDR:
     o_ddr_xmapinfo = bus0_mapinfo[CFG_BUS0_XSLV_DDR];
-    dev_pnp[SOC_PNP_DDR_AXI] = i_ddr_xdevcfg;
+    dev_pnp[SOC_PNP_DDR_AXI] = i_ddr_xdevcfg.read();
     o_ddr_pmapinfo = bus1_mapinfo[CFG_BUS1_PSLV_DDR];
-    dev_pnp[SOC_PNP_DDR_APB] = i_ddr_pdevcfg;
+    dev_pnp[SOC_PNP_DDR_APB] = i_ddr_pdevcfg.read();
     o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
-    apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
+    apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo.read();
 }
 
 }  // namespace debugger

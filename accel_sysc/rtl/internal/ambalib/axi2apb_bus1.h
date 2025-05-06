@@ -68,9 +68,9 @@ SC_MODULE(axi2apb_bus1) {
         sc_signal<bool> penable;
         sc_signal<bool> pslverr;
         sc_signal<sc_uint<8>> size;
-    } v, r;
+    };
 
-    void axi2apb_bus1_r_reset(axi2apb_bus1_registers &iv) {
+    void axi2apb_bus1_r_reset(axi2apb_bus1_registers& iv) {
         iv.state = State_Idle;
         iv.selidx = 0;
         iv.pvalid = 0;
@@ -94,6 +94,8 @@ SC_MODULE(axi2apb_bus1) {
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_req_wstrb;
     sc_signal<bool> w_req_last;
     sc_signal<bool> w_req_ready;
+    axi2apb_bus1_registers v;
+    axi2apb_bus1_registers r;
 
     axi_slv *axi0;
 

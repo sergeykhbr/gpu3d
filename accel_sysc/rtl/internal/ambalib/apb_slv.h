@@ -68,9 +68,9 @@ SC_MODULE(apb_slv) {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
-    } v, r;
+    };
 
-    void apb_slv_r_reset(apb_slv_registers &iv) {
+    void apb_slv_r_reset(apb_slv_registers& iv) {
         iv.state = State_Idle;
         iv.req_valid = 0;
         iv.req_addr = 0;
@@ -80,6 +80,9 @@ SC_MODULE(apb_slv) {
         iv.resp_rdata = 0;
         iv.resp_err = 0;
     }
+
+    apb_slv_registers v;
+    apb_slv_registers r;
 
 };
 

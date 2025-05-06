@@ -29,13 +29,9 @@ SC_MODULE(apb_prci) {
     sc_in<bool> i_dmireset;                                 // Debug reset: system reset except DMI interface
     sc_in<bool> i_sys_locked;
     sc_in<bool> i_ddr_locked;
-    sc_in<bool> i_pcie_phy_rst;                             // PCIE user reset: active HIGH
-    sc_in<bool> i_pcie_phy_clk;                             // PCIE user clock: 62.5 MHz (default)
-    sc_in<bool> i_pcie_phy_lnk_up;                          // PCIE PHY link status up
     sc_out<bool> o_sys_rst;                                 // System reset except DMI. Active HIGH
     sc_out<bool> o_sys_nrst;                                // System reset except DMI. Active LOW
     sc_out<bool> o_dbg_nrst;                                // Reset DMI. Active LOW
-    sc_out<bool> o_pcie_nrst;                               // Reset PCIE DMA. Active LOW. Reset until link is up.
     sc_in<mapinfo_type> i_mapinfo;                          // interconnect slot information
     sc_out<dev_config_type> o_cfg;                          // Device descriptor
     sc_in<apb_in_type> i_apbi;                              // APB  Slave to Bridge interface
@@ -59,10 +55,8 @@ SC_MODULE(apb_prci) {
         sc_signal<bool> sys_rst;
         sc_signal<bool> sys_nrst;
         sc_signal<bool> dbg_nrst;
-        sc_signal<bool> pcie_nrst;
         sc_signal<bool> sys_locked;
         sc_signal<bool> ddr_locked;
-        sc_signal<bool> pcie_lnk_up;
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
@@ -72,10 +66,8 @@ SC_MODULE(apb_prci) {
         iv.sys_rst = 0;
         iv.sys_nrst = 0;
         iv.dbg_nrst = 0;
-        iv.pcie_nrst = 0;
         iv.sys_locked = 0;
         iv.ddr_locked = 0;
-        iv.pcie_lnk_up = 0;
         iv.resp_valid = 0;
         iv.resp_rdata = 0;
         iv.resp_err = 0;

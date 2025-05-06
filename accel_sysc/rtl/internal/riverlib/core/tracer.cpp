@@ -208,7 +208,6 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.tr_rcnt, pn + ".r_tr_rcnt");
         sc_trace(o_vcd, r.tr_total, pn + ".r_tr_total");
         sc_trace(o_vcd, r.tr_opened, pn + ".r_tr_opened");
-        sc_trace(o_vcd, .registers, pn + "._registers");
     }
 
 }

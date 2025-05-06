@@ -80,7 +80,10 @@ class mapinfo_type {
 };
 
 // @brief Empty entry value for the map info table
-static const mapinfo_type mapinfo_none = {0, 0};
+static const mapinfo_type mapinfo_none = {
+    0,                                  // addr_start
+    0                                   // addr_end
+};
 
 // Burst length size decoder
 static const int XSIZE_TOTAL = 8;

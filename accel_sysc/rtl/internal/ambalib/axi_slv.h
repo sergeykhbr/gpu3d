@@ -85,9 +85,9 @@ SC_MODULE(axi_slv) {
         sc_signal<bool> resp_last;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> resp_rdata;
         sc_signal<bool> resp_err;
-    } v, r;
+    };
 
-    void axi_slv_r_reset(axi_slv_registers &iv) {
+    void axi_slv_r_reset(axi_slv_registers& iv) {
         iv.state = State_Idle;
         iv.req_valid = 0;
         iv.req_addr = 0;
@@ -107,6 +107,9 @@ SC_MODULE(axi_slv) {
         iv.resp_rdata = 0;
         iv.resp_err = 0;
     }
+
+    axi_slv_registers v;
+    axi_slv_registers r;
 
 };
 

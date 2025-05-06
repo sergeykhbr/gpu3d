@@ -27,13 +27,9 @@ apb_prci::apb_prci(sc_module_name name,
     i_dmireset("i_dmireset"),
     i_sys_locked("i_sys_locked"),
     i_ddr_locked("i_ddr_locked"),
-    i_pcie_phy_rst("i_pcie_phy_rst"),
-    i_pcie_phy_clk("i_pcie_phy_clk"),
-    i_pcie_phy_lnk_up("i_pcie_phy_lnk_up"),
     o_sys_rst("o_sys_rst"),
     o_sys_nrst("o_sys_nrst"),
     o_dbg_nrst("o_dbg_nrst"),
-    o_pcie_nrst("o_pcie_nrst"),
     i_mapinfo("i_mapinfo"),
     o_cfg("o_cfg"),
     i_apbi("i_apbi"),
@@ -64,9 +60,6 @@ apb_prci::apb_prci(sc_module_name name,
     sensitive << i_dmireset;
     sensitive << i_sys_locked;
     sensitive << i_ddr_locked;
-    sensitive << i_pcie_phy_rst;
-    sensitive << i_pcie_phy_clk;
-    sensitive << i_pcie_phy_lnk_up;
     sensitive << i_mapinfo;
     sensitive << i_apbi;
     sensitive << w_req_valid;
@@ -76,10 +69,8 @@ apb_prci::apb_prci(sc_module_name name,
     sensitive << rh.sys_rst;
     sensitive << rh.sys_nrst;
     sensitive << rh.dbg_nrst;
-    sensitive << rh.pcie_nrst;
     sensitive << rh.sys_locked;
     sensitive << rh.ddr_locked;
-    sensitive << rh.pcie_lnk_up;
     sensitive << rh.resp_valid;
     sensitive << rh.resp_rdata;
     sensitive << rh.resp_err;
@@ -102,22 +93,16 @@ void apb_prci::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dmireset, i_dmireset.name());
         sc_trace(o_vcd, i_sys_locked, i_sys_locked.name());
         sc_trace(o_vcd, i_ddr_locked, i_ddr_locked.name());
-        sc_trace(o_vcd, i_pcie_phy_rst, i_pcie_phy_rst.name());
-        sc_trace(o_vcd, i_pcie_phy_clk, i_pcie_phy_clk.name());
-        sc_trace(o_vcd, i_pcie_phy_lnk_up, i_pcie_phy_lnk_up.name());
         sc_trace(o_vcd, o_sys_rst, o_sys_rst.name());
         sc_trace(o_vcd, o_sys_nrst, o_sys_nrst.name());
         sc_trace(o_vcd, o_dbg_nrst, o_dbg_nrst.name());
-        sc_trace(o_vcd, o_pcie_nrst, o_pcie_nrst.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, rh.sys_rst, pn + ".rh_sys_rst");
         sc_trace(o_vcd, rh.sys_nrst, pn + ".rh_sys_nrst");
         sc_trace(o_vcd, rh.dbg_nrst, pn + ".rh_dbg_nrst");
-        sc_trace(o_vcd, rh.pcie_nrst, pn + ".rh_pcie_nrst");
         sc_trace(o_vcd, rh.sys_locked, pn + ".rh_sys_locked");
         sc_trace(o_vcd, rh.ddr_locked, pn + ".rh_ddr_locked");
-        sc_trace(o_vcd, rh.pcie_lnk_up, pn + ".rh_pcie_lnk_up");
         sc_trace(o_vcd, rh.resp_valid, pn + ".rh_resp_valid");
         sc_trace(o_vcd, rh.resp_rdata, pn + ".rh_resp_rdata");
         sc_trace(o_vcd, rh.resp_err, pn + ".rh_resp_err");
@@ -135,20 +120,15 @@ void apb_prci::comb() {
 
     vh = rh;
 
-    vh.sys_locked = i_sys_locked;
-    vh.ddr_locked = i_ddr_locked;
-    vh.pcie_lnk_up = i_pcie_phy_lnk_up;
     vh.sys_rst = (i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read());
     vh.sys_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read()));
     vh.dbg_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read())));
-    vh.pcie_nrst = (~(i_pwrreset.read() || (!i_sys_locked.read()) || (!rh.pcie_lnk_up.read()) || i_pcie_phy_rst.read()));
 
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
     case 0:                                                 // 0x00: pll statuses
-        vb_rdata[0] = rh.sys_locked;
-        vb_rdata[1] = rh.ddr_locked;
-        vb_rdata[2] = rh.pcie_lnk_up;
+        vb_rdata[0] = i_sys_locked;
+        vb_rdata[1] = i_ddr_locked;
         break;
     case 1:                                                 // 0x04: reset status
         vb_rdata[0] = rh.sys_nrst;
@@ -174,7 +154,6 @@ void apb_prci::comb() {
     o_sys_rst = rh.sys_rst;
     o_sys_nrst = rh.sys_nrst;
     o_dbg_nrst = rh.dbg_nrst;
-    o_pcie_nrst = rh.pcie_nrst;
 }
 
 void apb_prci::rhegisters() {

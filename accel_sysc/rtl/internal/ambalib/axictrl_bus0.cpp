@@ -34,7 +34,8 @@ axictrl_bus0::axictrl_bus0(sc_module_name name,
     async_reset_ = async_reset;
     xdef0 = 0;
 
-    xdef0 = new axi_slv("xdef0", async_reset,
+    xdef0 = new axi_slv("xdef0",
+                         async_reset,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_AXI_INTERCONNECT);
     xdef0->i_clk(i_clk);
@@ -98,14 +99,12 @@ axictrl_bus0::~axictrl_bus0() {
 void axictrl_bus0::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, wb_def_xslvi, wb_def_xslvi.name());
-        sc_trace(o_vcd, wb_def_xslvo, wb_def_xslvo.name());
-        sc_trace(o_vcd, r.r_midx, pn + ".r_r_midx");
-        sc_trace(o_vcd, r.r_sidx, pn + ".r_r_sidx");
-        sc_trace(o_vcd, r.w_midx, pn + ".r_w_midx");
-        sc_trace(o_vcd, r.w_sidx, pn + ".r_w_sidx");
-        sc_trace(o_vcd, r.b_midx, pn + ".r_b_midx");
-        sc_trace(o_vcd, r.b_sidx, pn + ".r_b_sidx");
+        sc_trace(o_vcd, r.r_midx, pn + ".r.r_midx");
+        sc_trace(o_vcd, r.r_sidx, pn + ".r.r_sidx");
+        sc_trace(o_vcd, r.w_midx, pn + ".r.w_midx");
+        sc_trace(o_vcd, r.w_sidx, pn + ".r.w_sidx");
+        sc_trace(o_vcd, r.b_midx, pn + ".r.b_midx");
+        sc_trace(o_vcd, r.b_sidx, pn + ".r.b_sidx");
     }
 
     if (xdef0) {
@@ -138,6 +137,7 @@ void axictrl_bus0::comb() {
     bool v_b_fire;
     bool v_b_busy;
 
+    v = r;
     for (int i = 0; i < (CFG_BUS0_XMST_TOTAL + 1); i++) {
         vmsti[i] = axi4_master_in_none;
     }
@@ -170,12 +170,10 @@ void axictrl_bus0::comb() {
     v_b_fire = 0;
     v_b_busy = 0;
 
-    v = r;
-
     vb_def_mapinfo.addr_start = 0;
     vb_def_mapinfo.addr_end = 0;
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
-        vmsto[i] = i_xmsto[i];                              // Cannot read vector item from port in systemc
+        vmsto[i] = i_xmsto[i].read();                       // Cannot read vector item from port in systemc
         vmsti[i] = axi4_master_in_none;
     }
     // Unmapped default slots:
@@ -183,11 +181,11 @@ void axictrl_bus0::comb() {
     vmsti[CFG_BUS0_XMST_TOTAL] = axi4_master_in_none;
 
     for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
-        vslvo[i] = i_xslvo[i];                              // Cannot read vector item from port in systemc
+        vslvo[i] = i_xslvo[i].read();                       // Cannot read vector item from port in systemc
         vslvi[i] = axi4_slave_in_none;
     }
     // Unmapped default slots:
-    vslvo[CFG_BUS0_XSLV_TOTAL] = wb_def_xslvo;
+    vslvo[CFG_BUS0_XSLV_TOTAL] = wb_def_xslvo.read();
     vslvi[CFG_BUS0_XSLV_TOTAL] = axi4_slave_in_none;
 
     w_def_req_ready = 1;
@@ -266,8 +264,8 @@ void axictrl_bus0::comb() {
     }
 
     if ((v_w_fire == 1) && (v_b_busy == 0)) {
-        v.b_sidx = r.w_sidx;
-        v.b_midx = r.w_midx;
+        v.b_sidx = r.w_sidx.read();
+        v.b_midx = r.w_midx.read();
     } else if (v_b_fire == 1) {
         v.b_sidx = CFG_BUS0_XSLV_TOTAL;
         v.b_midx = CFG_BUS0_XMST_TOTAL;
@@ -306,7 +304,7 @@ void axictrl_bus0::comb() {
     vmsti[i_b_midx].b_user = vslvo[i_b_sidx].b_user;
     vslvi[i_b_sidx].b_ready = vmsto[i_b_midx].b_ready;
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         axictrl_bus0_r_reset(v);
     }
 
@@ -322,7 +320,7 @@ void axictrl_bus0::comb() {
 }
 
 void axictrl_bus0::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         axictrl_bus0_r_reset(r);
     } else {
         r = v;

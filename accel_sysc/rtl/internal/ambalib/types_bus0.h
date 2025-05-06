@@ -67,12 +67,30 @@ typedef sc_vector<sc_signal<mapinfo_type>> bus0_mapinfo_vector;
 
 // Bus 0 device tree
 static const mapinfo_type CFG_BUS0_MAP[CFG_BUS0_XSLV_TOTAL] = {
-    {0x0000000000010000, 0x0000000000050000},               // 0, bootrom, 256 KB
-    {0x0000000002000000, 0x0000000002010000},               // 1, clint
-    {0x0000000008000000, 0x0000000008200000},               // 2, sram, 2MB
-    {0x000000000C000000, 0x0000000010000000},               // 3, plic
-    {0x0000000010000000, 0x0000000010100000},               // 4, APB bridge: uart1
-    {0x0000000080000000, 0x00000000C0000000}                // 5, ddr, 512 MB
+        {
+            0x0000000000010000,         // addr_start
+            0x0000000000050000          // addr_end
+        },// 0, bootrom, 256 KB
+        {
+            0x0000000002000000,         // addr_start
+            0x0000000002010000          // addr_end
+        },// 1, clint
+        {
+            0x0000000008000000,         // addr_start
+            0x0000000008200000          // addr_end
+        },// 2, sram, 2MB
+        {
+            0x000000000C000000,         // addr_start
+            0x0000000010000000          // addr_end
+        },// 3, plic
+        {
+            0x0000000010000000,         // addr_start
+            0x0000000010100000          // addr_end
+        },// 4, APB bridge: uart1
+        {
+            0x0000000080000000,         // addr_start
+            0x00000000C0000000          // addr_end
+        }// 5, ddr, 1 GB
 };
 
 }  // namespace debugger

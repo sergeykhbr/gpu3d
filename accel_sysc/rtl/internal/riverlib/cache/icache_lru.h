@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "../../../../prj/impl/asic/target_cfg.h"
+#include "../../../prj/impl/asic/target_cfg.h"
 #include "tagmemcoupled.h"
 
 namespace debugger {

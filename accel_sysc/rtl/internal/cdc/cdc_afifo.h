@@ -35,9 +35,9 @@ SC_MODULE(cdc_afifo) {
     sc_out<bool> o_rempty;                                  // fifo is empty it rclk domain
 
     void comb();
+    void mreg();
     void registers();
     void r2egisters();
-    void rx2egisters();
 
     SC_HAS_PROCESS(cdc_afifo);
 
@@ -54,9 +54,9 @@ SC_MODULE(cdc_afifo) {
         sc_signal<sc_uint<(abits + 1)>> wq2_rgray;
         sc_signal<sc_uint<(abits + 1)>> wq1_rgray;
         sc_signal<bool> wfull;
-    } v, r;
+    };
 
-    void cdc_afifo_r_reset(cdc_afifo_registers &iv) {
+    void cdc_afifo_r_reset(cdc_afifo_registers& iv) {
         iv.wgray = 0;
         iv.wbin = 0;
         iv.wq2_rgray = 0;
@@ -70,9 +70,9 @@ SC_MODULE(cdc_afifo) {
         sc_signal<sc_uint<(abits + 1)>> rq2_wgray;
         sc_signal<sc_uint<(abits + 1)>> rq1_wgray;
         sc_signal<bool> rempty;
-    } v2, r2;
+    };
 
-    void cdc_afifo_r2_reset(cdc_afifo_r2egisters &iv) {
+    void cdc_afifo_r2_reset(cdc_afifo_r2egisters& iv) {
         iv.rgray = 0;
         iv.rbin = 0;
         iv.rq2_wgray = 0;
@@ -80,9 +80,11 @@ SC_MODULE(cdc_afifo) {
         iv.rempty = 1;
     }
 
-    struct cdc_afifo_rx2egisters {
-        sc_signal<sc_uint<dbits>> mem[DEPTH];
-    } vx2, rx2;
+    sc_uint<dbits> mem[DEPTH];
+    cdc_afifo_registers v;
+    cdc_afifo_registers r;
+    cdc_afifo_r2egisters v2;
+    cdc_afifo_r2egisters r2;
 
 };
 
@@ -117,9 +119,9 @@ cdc_afifo<abits, dbits>::cdc_afifo(sc_module_name name)
     sensitive << r2.rq2_wgray;
     sensitive << r2.rq1_wgray;
     sensitive << r2.rempty;
-    for (int i = 0; i < DEPTH; i++) {
-        sensitive << rx2.mem[i];
-    }
+
+    SC_METHOD(mreg);
+    sensitive << i_wclk.pos();
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -128,9 +130,6 @@ cdc_afifo<abits, dbits>::cdc_afifo(sc_module_name name)
     SC_METHOD(r2egisters);
     sensitive << i_nrst;
     sensitive << i_rclk.pos();
-
-    SC_METHOD(rx2egisters);
-    sensitive << i_wclk.pos();
 }
 
 template<int abits, int dbits>
@@ -145,21 +144,16 @@ void cdc_afifo<abits, dbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o
         sc_trace(o_vcd, i_rd, i_rd.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
         sc_trace(o_vcd, o_rempty, o_rempty.name());
-        sc_trace(o_vcd, r.wgray, pn + ".r_wgray");
-        sc_trace(o_vcd, r.wbin, pn + ".r_wbin");
-        sc_trace(o_vcd, r.wq2_rgray, pn + ".r_wq2_rgray");
-        sc_trace(o_vcd, r.wq1_rgray, pn + ".r_wq1_rgray");
-        sc_trace(o_vcd, r.wfull, pn + ".r_wfull");
-        sc_trace(o_vcd, r2.rgray, pn + ".r2_rgray");
-        sc_trace(o_vcd, r2.rbin, pn + ".r2_rbin");
-        sc_trace(o_vcd, r2.rq2_wgray, pn + ".r2_rq2_wgray");
-        sc_trace(o_vcd, r2.rq1_wgray, pn + ".r2_rq1_wgray");
-        sc_trace(o_vcd, r2.rempty, pn + ".r2_rempty");
-        for (int i = 0; i < DEPTH; i++) {
-            char tstr[1024];
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.rx2_mem%d", pn.c_str(), i);
-            sc_trace(o_vcd, rx2.mem[i], tstr);
-        }
+        sc_trace(o_vcd, r.wgray, pn + ".r.wgray");
+        sc_trace(o_vcd, r.wbin, pn + ".r.wbin");
+        sc_trace(o_vcd, r.wq2_rgray, pn + ".r.wq2_rgray");
+        sc_trace(o_vcd, r.wq1_rgray, pn + ".r.wq1_rgray");
+        sc_trace(o_vcd, r.wfull, pn + ".r.wfull");
+        sc_trace(o_vcd, r2.rgray, pn + ".r2.rgray");
+        sc_trace(o_vcd, r2.rbin, pn + ".r2.rbin");
+        sc_trace(o_vcd, r2.rq2_wgray, pn + ".r2.rq2_wgray");
+        sc_trace(o_vcd, r2.rq1_wgray, pn + ".r2.rq1_wgray");
+        sc_trace(o_vcd, r2.rempty, pn + ".r2.rempty");
     }
 
 }
@@ -175,6 +169,8 @@ void cdc_afifo<abits, dbits>::comb() {
     sc_uint<(abits + 1)> vb_rgraynext;
     sc_uint<(abits + 1)> vb_rbinnext;
 
+    v2 = r2;
+    v = r;
     vb_waddr = 0;
     vb_raddr = 0;
     v_wfull_next = 0;
@@ -184,15 +180,9 @@ void cdc_afifo<abits, dbits>::comb() {
     vb_rgraynext = 0;
     vb_rbinnext = 0;
 
-    v = r;
-    v2 = r2;
-    for (int i = 0; i < DEPTH; i++) {
-        vx2.mem[i] = rx2.mem[i];
-    }
-
     // Cross the Gray pointer to write clock domain:
-    v.wq1_rgray = r2.rgray;
-    v.wq2_rgray = r.wq1_rgray;
+    v.wq1_rgray = r2.rgray.read();
+    v.wq2_rgray = r.wq1_rgray.read();
 
     // Next write address and Gray write pointer
     vb_wbinnext = (r.wbin.read() + (0, (i_wr.read() && (!r.wfull.read()))));
@@ -206,13 +196,9 @@ void cdc_afifo<abits, dbits>::comb() {
     }
     v.wfull = v_wfull_next;
 
-    if ((i_wr.read() && (!r.wfull.read())) == 1) {
-        vx2.mem[vb_waddr.to_int()] = i_wdata;
-    }
-
     // Write Gray pointer into read clock domain
-    v2.rq1_wgray = r.wgray;
-    v2.rq2_wgray = r2.rq1_wgray;
+    v2.rq1_wgray = r.wgray.read();
+    v2.rq2_wgray = r2.rq1_wgray.read();
     vb_rbinnext = (r2.rbin.read() + (0, (i_rd.read() && (!r2.rempty.read()))));
     vb_rgraynext = ((vb_rbinnext >> 1) ^ vb_rbinnext);
     v2.rgray = vb_rgraynext;
@@ -231,9 +217,16 @@ void cdc_afifo<abits, dbits>::comb() {
         cdc_afifo_r2_reset(v2);
     }
 
-    o_wfull = r.wfull;
-    o_rempty = r2.rempty;
-    o_rdata = rx2.mem[vb_raddr.to_int()];
+    o_wfull = r.wfull.read();
+    o_rempty = r2.rempty.read();
+    o_rdata = mem[vb_raddr.to_int()];
+}
+
+template<int abits, int dbits>
+void cdc_afifo<abits, dbits>::mreg() {
+    if ((i_wr.read() && (!r.wfull.read())) == 1) {
+        mem[r.wbin.read()((abits - 1), 0).to_int()] = i_wdata.read();
+    }
 }
 
 template<int abits, int dbits>
@@ -251,13 +244,6 @@ void cdc_afifo<abits, dbits>::r2egisters() {
         cdc_afifo_r2_reset(r2);
     } else {
         r2 = v2;
-    }
-}
-
-template<int abits, int dbits>
-void cdc_afifo<abits, dbits>::rx2egisters() {
-    for (int i = 0; i < DEPTH; i++) {
-        rx2.mem[i] = vx2.mem[i];
     }
 }
 

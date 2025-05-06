@@ -295,6 +295,7 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_cores_nrst, i_cores_nrst.name());
         sc_trace(o_vcd, i_dmi_nrst, i_dmi_nrst.name());
+        sc_trace(o_vcd, i_clk, i_clk.name());
         sc_trace(o_vcd, i_trst, i_trst.name());
         sc_trace(o_vcd, i_tck, i_tck.name());
         sc_trace(o_vcd, i_tms, i_tms.name());

@@ -50,13 +50,34 @@ typedef sc_vector<sc_signal<mapinfo_type>> bus1_mapinfo_vector;
 
 // Bus 1 device tree
 static const mapinfo_type CFG_BUS1_MAP[CFG_BUS1_PSLV_TOTAL] = {
-    {0x0000000000010000, 0x0000000000011000},               // uart1 4KB
-    {0x0000000000012000, 0x0000000000013000},               // PRCI 4KB
-    {0x000000000001E000, 0x000000000001F000},               // dmi 4KB. TODO: change base address
-    {0x0000000000060000, 0x0000000000061000},               // GPIO 4KB
-    {0x00000000000C0000, 0x00000000000C1000},               // DDR MGMT 4KB
-    {0x00000000000C1000, 0x00000000000C2000},               // PCIE Controller 4KB
-    {0x00000000000FF000, 0x0000000000100000}                // Plug'n'Play 4KB
+        {
+            0x0000000000010000,         // addr_start
+            0x0000000000011000          // addr_end
+        },// uart1 4KB
+        {
+            0x0000000000012000,         // addr_start
+            0x0000000000013000          // addr_end
+        },// PRCI 4KB
+        {
+            0x000000000001E000,         // addr_start
+            0x000000000001F000          // addr_end
+        },// dmi 4KB. TODO: change base address
+        {
+            0x0000000000060000,         // addr_start
+            0x0000000000061000          // addr_end
+        },// GPIO 4KB
+        {
+            0x00000000000C0000,         // addr_start
+            0x00000000000C1000          // addr_end
+        },// DDR MGMT 4KB
+        {
+            0x00000000000C1000,         // addr_start
+            0x00000000000C2000          // addr_end
+        },// PCIE Controller 4KB
+        {
+            0x00000000000FF000,         // addr_start
+            0x0000000000100000          // addr_end
+        }// Plug'n'Play 4KB
 };
 
 }  // namespace debugger

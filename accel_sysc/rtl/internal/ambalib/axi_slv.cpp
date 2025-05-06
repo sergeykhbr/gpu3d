@@ -94,24 +94,24 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_valid, i_resp_valid.name());
         sc_trace(o_vcd, i_resp_rdata, i_resp_rdata.name());
         sc_trace(o_vcd, i_resp_err, i_resp_err.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_valid, pn + ".r_req_valid");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
-        sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
-        sc_trace(o_vcd, r.req_xsize, pn + ".r_req_xsize");
-        sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
-        sc_trace(o_vcd, r.req_user, pn + ".r_req_user");
-        sc_trace(o_vcd, r.req_id, pn + ".r_req_id");
-        sc_trace(o_vcd, r.req_burst, pn + ".r_req_burst");
-        sc_trace(o_vcd, r.req_last_a, pn + ".r_req_last_a");
-        sc_trace(o_vcd, r.req_last_r, pn + ".r_req_last_r");
-        sc_trace(o_vcd, r.req_done, pn + ".r_req_done");
-        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
-        sc_trace(o_vcd, r.resp_last, pn + ".r_resp_last");
-        sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
-        sc_trace(o_vcd, r.resp_err, pn + ".r_resp_err");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.req_valid, pn + ".r.req_valid");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_write, pn + ".r.req_write");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
+        sc_trace(o_vcd, r.req_wstrb, pn + ".r.req_wstrb");
+        sc_trace(o_vcd, r.req_xsize, pn + ".r.req_xsize");
+        sc_trace(o_vcd, r.req_len, pn + ".r.req_len");
+        sc_trace(o_vcd, r.req_user, pn + ".r.req_user");
+        sc_trace(o_vcd, r.req_id, pn + ".r.req_id");
+        sc_trace(o_vcd, r.req_burst, pn + ".r.req_burst");
+        sc_trace(o_vcd, r.req_last_a, pn + ".r.req_last_a");
+        sc_trace(o_vcd, r.req_last_r, pn + ".r.req_last_r");
+        sc_trace(o_vcd, r.req_done, pn + ".r.req_done");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
+        sc_trace(o_vcd, r.resp_last, pn + ".r.resp_last");
+        sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
+        sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
     }
 
 }
@@ -122,12 +122,11 @@ void axi_slv::comb() {
     dev_config_type vcfg;
     axi4_slave_out_type vxslvo;
 
+    v = r;
     vb_req_addr_next = 0;
     vb_req_len_next = 0;
     vcfg = dev_config_none;
     vxslvo = axi4_slave_out_none;
-
-    v = r;
 
     vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
@@ -155,7 +154,7 @@ void axi_slv::comb() {
         }
     }
 
-    vb_req_len_next = r.req_len;
+    vb_req_len_next = r.req_len.read();
     if (r.req_len.read().or_reduce() == 1) {
         vb_req_len_next = (r.req_len.read() - 1);
     }
@@ -213,7 +212,7 @@ void axi_slv::comb() {
         }
         break;
     case State_burst_w:
-        vxslvo.w_ready = i_req_ready;
+        vxslvo.w_ready = i_req_ready.read();
         if (i_xslvi.read().w_valid == 1) {
             v.req_valid = 1;
             v.req_wdata = i_xslvi.read().w_data;
@@ -235,7 +234,7 @@ void axi_slv::comb() {
         }
         break;
     case State_b:
-        vxslvo.b_valid = i_resp_valid;
+        vxslvo.b_valid = i_resp_valid.read();
         if ((i_xslvi.read().b_ready == 1) && (i_resp_valid.read() == 1)) {
             v.req_done = 0;
             v.state = State_Idle;
@@ -248,7 +247,7 @@ void axi_slv::comb() {
             v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
             v.req_len = vb_req_len_next;
             v.req_last_a = (!vb_req_len_next.or_reduce());
-            v.req_last_r = r.req_last_a;
+            v.req_last_r = r.req_last_a.read();
             v.req_valid = r.req_len.read().or_reduce();
             v.req_done = 1;
         }
@@ -258,9 +257,9 @@ void axi_slv::comb() {
         if ((i_resp_valid.read() == 1) && (r.req_done.read() == 1)) {
             v.req_done = 0;
             v.resp_valid = 1;
-            v.resp_last = r.req_last_r;
-            v.resp_rdata = i_resp_rdata;
-            v.resp_err = i_resp_err;
+            v.resp_last = r.req_last_r.read();
+            v.resp_rdata = i_resp_rdata.read();
+            v.resp_err = i_resp_err.read();
             if (r.req_last_r.read() == 1) {
                 v.state = State_out_r;
             }
@@ -271,7 +270,7 @@ void axi_slv::comb() {
             v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
             v.req_len = vb_req_len_next;
             v.req_last_a = (!vb_req_len_next.or_reduce());
-            v.req_last_r = r.req_last_a;
+            v.req_last_r = r.req_last_a.read();
             v.req_valid = ((!r.req_last_a.read()) & i_xslvi.read().r_ready);
             v.req_done = 1;
         }
@@ -289,33 +288,33 @@ void axi_slv::comb() {
         break;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         axi_slv_r_reset(v);
     }
 
-    o_req_valid = r.req_valid;
-    o_req_last = r.req_last_a;
-    o_req_addr = r.req_addr;
-    o_req_size = r.req_xsize;
-    o_req_write = r.req_write;
-    o_req_wdata = r.req_wdata;
-    o_req_wstrb = r.req_wstrb;
+    o_req_valid = r.req_valid.read();
+    o_req_last = r.req_last_a.read();
+    o_req_addr = r.req_addr.read();
+    o_req_size = r.req_xsize.read();
+    o_req_write = r.req_write.read();
+    o_req_wdata = r.req_wdata.read();
+    o_req_wstrb = r.req_wstrb.read();
 
-    vxslvo.b_id = r.req_id;
-    vxslvo.b_user = r.req_user;
+    vxslvo.b_id = r.req_id.read();
+    vxslvo.b_user = r.req_user.read();
     vxslvo.b_resp = (i_resp_err.read() << 1);
-    vxslvo.r_valid = r.resp_valid;
-    vxslvo.r_id = r.req_id;
-    vxslvo.r_user = r.req_user;
+    vxslvo.r_valid = r.resp_valid.read();
+    vxslvo.r_id = r.req_id.read();
+    vxslvo.r_user = r.req_user.read();
     vxslvo.r_resp = (r.resp_err.read() << 1);
-    vxslvo.r_data = r.resp_rdata;
-    vxslvo.r_last = r.resp_last;
+    vxslvo.r_data = r.resp_rdata.read();
+    vxslvo.r_last = r.resp_last.read();
     o_xslvo = vxslvo;
     o_cfg = vcfg;
 }
 
 void axi_slv::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         axi_slv_r_reset(r);
     } else {
         r = v;

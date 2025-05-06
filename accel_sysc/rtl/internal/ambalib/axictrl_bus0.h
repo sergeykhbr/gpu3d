@@ -55,9 +55,9 @@ SC_MODULE(axictrl_bus0) {
         sc_signal<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>> w_sidx;
         sc_signal<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>> b_midx;
         sc_signal<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>> b_sidx;
-    } v, r;
+    };
 
-    void axictrl_bus0_r_reset(axictrl_bus0_registers &iv) {
+    void axictrl_bus0_r_reset(axictrl_bus0_registers& iv) {
         iv.r_midx = CFG_BUS0_XMST_TOTAL;
         iv.r_sidx = CFG_BUS0_XSLV_TOTAL;
         iv.w_midx = CFG_BUS0_XMST_TOTAL;
@@ -80,6 +80,8 @@ SC_MODULE(axictrl_bus0) {
     sc_signal<bool> w_def_resp_valid;
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_def_resp_rdata;
     sc_signal<bool> w_def_resp_err;
+    axictrl_bus0_registers v;
+    axictrl_bus0_registers r;
 
     axi_slv *xdef0;
 
