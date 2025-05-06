@@ -75,9 +75,9 @@ SC_MODULE(apb_pnp) {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
-    } v, r;
+    };
 
-    void apb_pnp_r_reset(apb_pnp_registers &iv) {
+    void apb_pnp_r_reset(apb_pnp_registers& iv) {
         iv.fw_id = 0;
         iv.idt_l = 0;
         iv.idt_m = 0;
@@ -101,6 +101,8 @@ SC_MODULE(apb_pnp) {
     sc_signal<sc_uint<32>> wb_req_addr;
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<32>> wb_req_wdata;
+    apb_pnp_registers v;
+    apb_pnp_registers r;
 
     apb_slv *pslv0;
 
@@ -130,7 +132,8 @@ apb_pnp<cfg_slots>::apb_pnp(sc_module_name name,
     plic_irq_max_ = plic_irq_max;
     pslv0 = 0;
 
-    pslv0 = new apb_slv("pslv0", async_reset,
+    pslv0 = new apb_slv("pslv0",
+                         async_reset,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_PNP);
     pslv0->i_clk(i_clk);
@@ -195,23 +198,23 @@ void apb_pnp<cfg_slots>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, o_irq, o_irq.name());
-        sc_trace(o_vcd, r.fw_id, pn + ".r_fw_id");
-        sc_trace(o_vcd, r.idt_l, pn + ".r_idt_l");
-        sc_trace(o_vcd, r.idt_m, pn + ".r_idt_m");
-        sc_trace(o_vcd, r.malloc_addr_l, pn + ".r_malloc_addr_l");
-        sc_trace(o_vcd, r.malloc_addr_m, pn + ".r_malloc_addr_m");
-        sc_trace(o_vcd, r.malloc_size_l, pn + ".r_malloc_size_l");
-        sc_trace(o_vcd, r.malloc_size_m, pn + ".r_malloc_size_m");
-        sc_trace(o_vcd, r.fwdbg1, pn + ".r_fwdbg1");
-        sc_trace(o_vcd, r.fwdbg2, pn + ".r_fwdbg2");
-        sc_trace(o_vcd, r.fwdbg3, pn + ".r_fwdbg3");
-        sc_trace(o_vcd, r.fwdbg4, pn + ".r_fwdbg4");
-        sc_trace(o_vcd, r.fwdbg5, pn + ".r_fwdbg5");
-        sc_trace(o_vcd, r.fwdbg6, pn + ".r_fwdbg6");
-        sc_trace(o_vcd, r.irq, pn + ".r_irq");
-        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
-        sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
-        sc_trace(o_vcd, r.resp_err, pn + ".r_resp_err");
+        sc_trace(o_vcd, r.fw_id, pn + ".r.fw_id");
+        sc_trace(o_vcd, r.idt_l, pn + ".r.idt_l");
+        sc_trace(o_vcd, r.idt_m, pn + ".r.idt_m");
+        sc_trace(o_vcd, r.malloc_addr_l, pn + ".r.malloc_addr_l");
+        sc_trace(o_vcd, r.malloc_addr_m, pn + ".r.malloc_addr_m");
+        sc_trace(o_vcd, r.malloc_size_l, pn + ".r.malloc_size_l");
+        sc_trace(o_vcd, r.malloc_size_m, pn + ".r.malloc_size_m");
+        sc_trace(o_vcd, r.fwdbg1, pn + ".r.fwdbg1");
+        sc_trace(o_vcd, r.fwdbg2, pn + ".r.fwdbg2");
+        sc_trace(o_vcd, r.fwdbg3, pn + ".r.fwdbg3");
+        sc_trace(o_vcd, r.fwdbg4, pn + ".r.fwdbg4");
+        sc_trace(o_vcd, r.fwdbg5, pn + ".r.fwdbg5");
+        sc_trace(o_vcd, r.fwdbg6, pn + ".r.fwdbg6");
+        sc_trace(o_vcd, r.irq, pn + ".r.irq");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
+        sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
+        sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
     }
 
     if (pslv0) {
@@ -224,12 +227,11 @@ void apb_pnp<cfg_slots>::comb() {
     sc_uint<32> cfgmap[(8 * cfg_slots)];
     sc_uint<32> vrdata;
 
+    v = r;
     for (int i = 0; i < (8 * cfg_slots); i++) {
         cfgmap[i] = 0;
     }
     vrdata = 0;
-
-    v = r;
 
     v.irq = 0;
 
@@ -248,9 +250,9 @@ void apb_pnp<cfg_slots>::comb() {
             v.irq = 1;
         }
     } else if (wb_req_addr.read()(11, 2) == 1) {
-        vrdata = r.fw_id;
+        vrdata = r.fw_id.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.fw_id = wb_req_wdata;
+            v.fw_id = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 2) {
         vrdata(31, 28) = (cpu_max_ >> 0);
@@ -260,83 +262,83 @@ void apb_pnp<cfg_slots>::comb() {
     } else if (wb_req_addr.read()(11, 2) == 3) {
         vrdata = 0;
     } else if (wb_req_addr.read()(11, 2) == 4) {
-        vrdata = r.idt_l;
+        vrdata = r.idt_l.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.idt_l = wb_req_wdata;
+            v.idt_l = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 5) {
-        vrdata = r.idt_m;
+        vrdata = r.idt_m.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.idt_m = wb_req_wdata;
+            v.idt_m = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 6) {
-        vrdata = r.malloc_addr_l;
+        vrdata = r.malloc_addr_l.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.malloc_addr_l = wb_req_wdata;
+            v.malloc_addr_l = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 7) {
-        vrdata = r.malloc_addr_m;
+        vrdata = r.malloc_addr_m.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.malloc_addr_m = wb_req_wdata;
+            v.malloc_addr_m = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 8) {
-        vrdata = r.malloc_size_l;
+        vrdata = r.malloc_size_l.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.malloc_size_l = wb_req_wdata;
+            v.malloc_size_l = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 9) {
-        vrdata = r.malloc_size_m;
+        vrdata = r.malloc_size_m.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.malloc_size_m = wb_req_wdata;
+            v.malloc_size_m = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 10) {
-        vrdata = r.fwdbg1;
+        vrdata = r.fwdbg1.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.fwdbg1 = wb_req_wdata;
+            v.fwdbg1 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 11) {
-        vrdata = r.fwdbg2;
+        vrdata = r.fwdbg2.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.fwdbg2 = wb_req_wdata;
+            v.fwdbg2 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 12) {
-        vrdata = r.fwdbg3;
+        vrdata = r.fwdbg3.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.fwdbg3 = wb_req_wdata;
+            v.fwdbg3 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 13) {
-        vrdata = r.fwdbg4;
+        vrdata = r.fwdbg4.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.fwdbg4 = wb_req_wdata;
+            v.fwdbg4 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 14) {
-        vrdata = r.fwdbg5;
+        vrdata = r.fwdbg5.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.fwdbg5 = wb_req_wdata;
+            v.fwdbg5 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 15) {
-        vrdata = r.fwdbg6;
+        vrdata = r.fwdbg6.read();
         if ((w_req_valid.read() & w_req_write.read()) == 1) {
-            v.fwdbg6 = wb_req_wdata;
+            v.fwdbg6 = wb_req_wdata.read();
         }
     } else if ((wb_req_addr.read()(11, 2) >= 16)
                 && (wb_req_addr.read()(11, 2) < (16 + (8 * cfg_slots)))) {
         vrdata = cfgmap[(wb_req_addr.read()(11, 2).to_int() - 16)];
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         apb_pnp_r_reset(v);
     }
 
-    v.resp_valid = w_req_valid;
+    v.resp_valid = w_req_valid.read();
     v.resp_rdata = vrdata;
     v.resp_err = 0;
-    o_irq = r.irq;
+    o_irq = r.irq.read();
 }
 
 template<int cfg_slots>
 void apb_pnp<cfg_slots>::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         apb_pnp_r_reset(r);
     } else {
         r = v;

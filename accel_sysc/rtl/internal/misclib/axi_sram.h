@@ -19,7 +19,7 @@
 #include "../ambalib/types_amba.h"
 #include "../ambalib/types_pnp.h"
 #include "../ambalib/axi_slv.h"
-#include "../techmap/mem/ram_bytes_tech.h"
+#include "../mem/ram_bytes_tech.h"
 #include "api_core.h"
 
 namespace debugger {
@@ -80,7 +80,8 @@ axi_sram<abits>::axi_sram(sc_module_name name,
     xslv0 = 0;
     tech0 = 0;
 
-    xslv0 = new axi_slv("xslv0", async_reset,
+    xslv0 = new axi_slv("xslv0",
+                         async_reset,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_SRAM);
     xslv0->i_clk(i_clk);

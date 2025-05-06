@@ -19,7 +19,7 @@
 #include "../ambalib/types_amba.h"
 #include "../ambalib/types_pnp.h"
 #include "../ambalib/axi_slv.h"
-#include "../techmap/mem/rom_tech.h"
+#include "../mem/rom_tech.h"
 #include "api_core.h"
 #include "sv_func.h"
 
@@ -85,7 +85,8 @@ axi_rom<abits>::axi_rom(sc_module_name name,
     xslv0 = 0;
     tech0 = 0;
 
-    xslv0 = new axi_slv("xslv0", async_reset,
+    xslv0 = new axi_slv("xslv0",
+                         async_reset,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_ROM);
     xslv0->i_clk(i_clk);

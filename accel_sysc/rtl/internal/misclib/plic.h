@@ -60,14 +60,29 @@ SC_MODULE(plic) {
         sc_signal<sc_uint<10>> irq_prio;                    // currently selected prio level
     };
 
-
     struct plic_registers {
         sc_signal<sc_bv<(4 * 1024)>> src_priority;
         sc_signal<sc_bv<1024>> pending;
         sc_signal<sc_uint<ctxmax>> ip;
         plic_context_type ctx[ctxmax];
         sc_signal<sc_uint<64>> rdata;
-    } v, r;
+    };
+
+    void plic_r_reset(plic_registers& iv) {
+        iv.src_priority = 0;
+        iv.pending = 0;
+        iv.ip = 0;
+        for (int i = 0; i < ctxmax; i++) {
+            iv.ctx[i].priority_th = 0;
+            iv.ctx[i].ie = 0;
+            iv.ctx[i].ip_prio = 0;
+            iv.ctx[i].prio_mask = 0;
+            iv.ctx[i].sel_prio = 0;
+            iv.ctx[i].irq_idx = 0;
+            iv.ctx[i].irq_prio = 0;
+        }
+        iv.rdata = 0;
+    }
 
     sc_signal<bool> w_req_valid;
     sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> wb_req_addr;
@@ -80,6 +95,8 @@ SC_MODULE(plic) {
     sc_signal<bool> w_resp_valid;
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_resp_rdata;
     sc_signal<bool> wb_resp_err;
+    plic_registers v;
+    plic_registers r;
 
     axi_slv *xslv0;
 
@@ -101,7 +118,8 @@ plic<ctxmax, irqmax>::plic(sc_module_name name,
     async_reset_ = async_reset;
     xslv0 = 0;
 
-    xslv0 = new axi_slv("xslv0", async_reset,
+    xslv0 = new axi_slv("xslv0",
+                         async_reset,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_PLIC);
     xslv0->i_clk(i_clk);
@@ -172,27 +190,19 @@ void plic<ctxmax, irqmax>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
         sc_trace(o_vcd, i_irq_request, i_irq_request.name());
         sc_trace(o_vcd, o_ip, o_ip.name());
-        sc_trace(o_vcd, r.src_priority, pn + ".r_src_priority");
-        sc_trace(o_vcd, r.pending, pn + ".r_pending");
-        sc_trace(o_vcd, r.ip, pn + ".r_ip");
+        sc_trace(o_vcd, r.src_priority, pn + ".r.src_priority");
+        sc_trace(o_vcd, r.pending, pn + ".r.pending");
+        sc_trace(o_vcd, r.ip, pn + ".r.ip");
         for (int i = 0; i < ctxmax; i++) {
-            char tstr[1024];
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_priority_th", pn.c_str(), i);
-            sc_trace(o_vcd, r.ctx[i].priority_th, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_ie", pn.c_str(), i);
-            sc_trace(o_vcd, r.ctx[i].ie, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_ip_prio", pn.c_str(), i);
-            sc_trace(o_vcd, r.ctx[i].ip_prio, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_prio_mask", pn.c_str(), i);
-            sc_trace(o_vcd, r.ctx[i].prio_mask, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_sel_prio", pn.c_str(), i);
-            sc_trace(o_vcd, r.ctx[i].sel_prio, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_irq_idx", pn.c_str(), i);
-            sc_trace(o_vcd, r.ctx[i].irq_idx, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_irq_prio", pn.c_str(), i);
-            sc_trace(o_vcd, r.ctx[i].irq_prio, tstr);
+            sc_trace(o_vcd, r.ctx[i].priority_th, pn + ".r.ctx[i].priority_th");
+            sc_trace(o_vcd, r.ctx[i].ie, pn + ".r.ctx[i].ie");
+            sc_trace(o_vcd, r.ctx[i].ip_prio, pn + ".r.ctx[i].ip_prio");
+            sc_trace(o_vcd, r.ctx[i].prio_mask, pn + ".r.ctx[i].prio_mask");
+            sc_trace(o_vcd, r.ctx[i].sel_prio, pn + ".r.ctx[i].sel_prio");
+            sc_trace(o_vcd, r.ctx[i].irq_idx, pn + ".r.ctx[i].irq_idx");
+            sc_trace(o_vcd, r.ctx[i].irq_prio, pn + ".r.ctx[i].irq_prio");
         }
-        sc_trace(o_vcd, r.rdata, pn + ".r_rdata");
+        sc_trace(o_vcd, r.rdata, pn + ".r.rdata");
     }
 
     if (xslv0) {
@@ -217,6 +227,19 @@ void plic<ctxmax, irqmax>::comb() {
     sc_uint<ctxmax> vb_ip;
     int rctx_idx;
 
+    v.src_priority = r.src_priority.read();
+    v.pending = r.pending.read();
+    v.ip = r.ip.read();
+    for (int i = 0; i < ctxmax; i++) {
+        v.ctx[i].priority_th = r.ctx[i].priority_th.read();
+        v.ctx[i].ie = r.ctx[i].ie.read();
+        v.ctx[i].ip_prio = r.ctx[i].ip_prio.read();
+        v.ctx[i].prio_mask = r.ctx[i].prio_mask.read();
+        v.ctx[i].sel_prio = r.ctx[i].sel_prio.read();
+        v.ctx[i].irq_idx = r.ctx[i].irq_idx.read();
+        v.ctx[i].irq_prio = r.ctx[i].irq_prio.read();
+    }
+    v.rdata = r.rdata.read();
     vrdata = 0;
     for (int i = 0; i < ctxmax; i++) {
         vb_irq_idx[i] = 0;
@@ -250,30 +273,16 @@ void plic<ctxmax, irqmax>::comb() {
     vb_ip = 0;
     rctx_idx = 0;
 
-    v.src_priority = r.src_priority;
-    v.pending = r.pending;
-    v.ip = r.ip;
-    for (int i = 0; i < ctxmax; i++) {
-        v.ctx[i].priority_th = r.ctx[i].priority_th;
-        v.ctx[i].ie = r.ctx[i].ie;
-        v.ctx[i].ip_prio = r.ctx[i].ip_prio;
-        v.ctx[i].prio_mask = r.ctx[i].prio_mask;
-        v.ctx[i].sel_prio = r.ctx[i].sel_prio;
-        v.ctx[i].irq_idx = r.ctx[i].irq_idx;
-        v.ctx[i].irq_prio = r.ctx[i].irq_prio;
-    }
-    v.rdata = r.rdata;
-
     // Warning SystemC limitation workaround:
     //   Cannot directly write into bitfields of the signals v.* registers
     //   So, use the following vb_* logic variables for that and then copy them.
-    vb_src_priority = r.src_priority;
-    vb_pending = r.pending;
+    vb_src_priority = r.src_priority.read();
+    vb_pending = r.pending.read();
     for (int i = 0; i < ctxmax; i++) {
-        vb_ctx_priority_th[i] = r.ctx[i].priority_th;
-        vb_ctx_ie[i] = r.ctx[i].ie;
-        vb_ctx_irq_idx[i] = r.ctx[i].irq_idx;
-        vb_ctx_irq_prio[i] = r.ctx[i].irq_prio;
+        vb_ctx_priority_th[i] = r.ctx[i].priority_th.read();
+        vb_ctx_ie[i] = r.ctx[i].ie.read();
+        vb_ctx_irq_idx[i] = r.ctx[i].irq_idx.read();
+        vb_ctx_irq_prio[i] = r.ctx[i].irq_prio.read();
     }
 
     for (int i = 1; i < irqmax; i++) {
@@ -306,10 +315,10 @@ void plic<ctxmax, irqmax>::comb() {
     for (int n = 0; n < ctxmax; n++) {
         for (int i = 0; i < irqmax; i++) {
             if (r.ctx[n].sel_prio.read().or_reduce()
-                    && (r.ctx[n].ip_prio.read()((4 * i) + 4 - 1, (4 * i)) == r.ctx[n].sel_prio)) {
+                    && (r.ctx[n].ip_prio.read()((4 * i) + 4 - 1, (4 * i)) == r.ctx[n].sel_prio.read())) {
                 // Most prio irq and prio level
                 vb_irq_idx[n] = i;
-                vb_irq_prio[n] = r.ctx[n].sel_prio;
+                vb_irq_prio[n] = r.ctx[n].sel_prio.read();
             }
         }
     }
@@ -367,8 +376,8 @@ void plic<ctxmax, irqmax>::comb() {
         // 0x200000,0x201000,...,0x4000000
         if (wb_req_addr.read()(11, 3) == 0) {
             // masking (disabling) all interrupt with <= priority
-            vrdata(3, 0) = r.ctx[rctx_idx].priority_th;
-            vrdata(41, 32) = r.ctx[rctx_idx].irq_idx;
+            vrdata(3, 0) = r.ctx[rctx_idx].priority_th.read();
+            vrdata(41, 32) = r.ctx[rctx_idx].irq_idx.read();
             // claim/ complete. Reading clears pending bit
             if (r.ip.read()[rctx_idx] == 1) {
                 vb_pending[r.ctx[rctx_idx].irq_idx.read()] = 0;
@@ -401,59 +410,35 @@ void plic<ctxmax, irqmax>::comb() {
         v.ctx[n].irq_prio = vb_ctx_irq_prio[n];
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
-        v.src_priority = 0;
-        v.pending = 0;
-        v.ip = 0;
-        for (int i = 0; i < ctxmax; i++) {
-            v.ctx[i].priority_th = 0;
-            v.ctx[i].ie = 0;
-            v.ctx[i].ip_prio = 0;
-            v.ctx[i].prio_mask = 0;
-            v.ctx[i].sel_prio = 0;
-            v.ctx[i].irq_idx = 0;
-            v.ctx[i].irq_prio = 0;
-        }
-        v.rdata = 0;
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
+        plic_r_reset(v);
     }
 
     w_req_ready = 1;
     w_resp_valid = 1;
-    wb_resp_rdata = r.rdata;
+    wb_resp_rdata = r.rdata.read();
     wb_resp_err = 0;
-    o_ip = r.ip;
+    o_ip = r.ip.read();
 }
 
 template<int ctxmax, int irqmax>
 void plic<ctxmax, irqmax>::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        r.src_priority = 0;
-        r.pending = 0;
-        r.ip = 0;
-        for (int i = 0; i < ctxmax; i++) {
-            r.ctx[i].priority_th = 0;
-            r.ctx[i].ie = 0;
-            r.ctx[i].ip_prio = 0;
-            r.ctx[i].prio_mask = 0;
-            r.ctx[i].sel_prio = 0;
-            r.ctx[i].irq_idx = 0;
-            r.ctx[i].irq_prio = 0;
-        }
-        r.rdata = 0;
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        plic_r_reset(r);
     } else {
-        r.src_priority = v.src_priority;
-        r.pending = v.pending;
-        r.ip = v.ip;
+        r.src_priority = v.src_priority.read();
+        r.pending = v.pending.read();
+        r.ip = v.ip.read();
         for (int i = 0; i < ctxmax; i++) {
-            r.ctx[i].priority_th = v.ctx[i].priority_th;
-            r.ctx[i].ie = v.ctx[i].ie;
-            r.ctx[i].ip_prio = v.ctx[i].ip_prio;
-            r.ctx[i].prio_mask = v.ctx[i].prio_mask;
-            r.ctx[i].sel_prio = v.ctx[i].sel_prio;
-            r.ctx[i].irq_idx = v.ctx[i].irq_idx;
-            r.ctx[i].irq_prio = v.ctx[i].irq_prio;
+            r.ctx[i].priority_th = v.ctx[i].priority_th.read();
+            r.ctx[i].ie = v.ctx[i].ie.read();
+            r.ctx[i].ip_prio = v.ctx[i].ip_prio.read();
+            r.ctx[i].prio_mask = v.ctx[i].prio_mask.read();
+            r.ctx[i].sel_prio = v.ctx[i].sel_prio.read();
+            r.ctx[i].irq_idx = v.ctx[i].irq_idx.read();
+            r.ctx[i].irq_prio = v.ctx[i].irq_prio.read();
         }
-        r.rdata = v.rdata;
+        r.rdata = v.rdata.read();
     }
 }
 

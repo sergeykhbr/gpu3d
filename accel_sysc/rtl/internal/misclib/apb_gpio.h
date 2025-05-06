@@ -61,9 +61,9 @@ SC_MODULE(apb_gpio) {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
-    } v, r;
+    };
 
-    void apb_gpio_r_reset(apb_gpio_registers &iv) {
+    void apb_gpio_r_reset(apb_gpio_registers& iv) {
         iv.input_val = 0;
         iv.input_en = ~0ull;
         iv.output_en = 0;
@@ -79,6 +79,8 @@ SC_MODULE(apb_gpio) {
     sc_signal<sc_uint<32>> wb_req_addr;
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<32>> wb_req_wdata;
+    apb_gpio_registers v;
+    apb_gpio_registers r;
 
     apb_slv *pslv0;
 
@@ -102,7 +104,8 @@ apb_gpio<width>::apb_gpio(sc_module_name name,
     async_reset_ = async_reset;
     pslv0 = 0;
 
-    pslv0 = new apb_slv("pslv0", async_reset,
+    pslv0 = new apb_slv("pslv0",
+                         async_reset,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_GPIO);
     pslv0->i_clk(i_clk);
@@ -160,15 +163,15 @@ void apb_gpio<width>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_gpio_dir, o_gpio_dir.name());
         sc_trace(o_vcd, o_gpio, o_gpio.name());
         sc_trace(o_vcd, o_irq, o_irq.name());
-        sc_trace(o_vcd, r.input_val, pn + ".r_input_val");
-        sc_trace(o_vcd, r.input_en, pn + ".r_input_en");
-        sc_trace(o_vcd, r.output_en, pn + ".r_output_en");
-        sc_trace(o_vcd, r.output_val, pn + ".r_output_val");
-        sc_trace(o_vcd, r.ie, pn + ".r_ie");
-        sc_trace(o_vcd, r.ip, pn + ".r_ip");
-        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
-        sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
-        sc_trace(o_vcd, r.resp_err, pn + ".r_resp_err");
+        sc_trace(o_vcd, r.input_val, pn + ".r.input_val");
+        sc_trace(o_vcd, r.input_en, pn + ".r.input_en");
+        sc_trace(o_vcd, r.output_en, pn + ".r.output_en");
+        sc_trace(o_vcd, r.output_val, pn + ".r.output_val");
+        sc_trace(o_vcd, r.ie, pn + ".r.ie");
+        sc_trace(o_vcd, r.ip, pn + ".r.ip");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
+        sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
+        sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
     }
 
     if (pslv0) {
@@ -180,43 +183,42 @@ template<int width>
 void apb_gpio<width>::comb() {
     sc_uint<32> vb_rdata;
 
-    vb_rdata = 0;
-
     v = r;
+    vb_rdata = 0;
 
     v.input_val = (i_gpio.read() & r.input_en.read());
 
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
     case 0:                                                 // 0x00: RO input_val
-        vb_rdata((width - 1), 0) = r.input_val;
+        vb_rdata((width - 1), 0) = r.input_val.read();
         break;
     case 1:                                                 // 0x04: input_en
-        vb_rdata((width - 1), 0) = r.input_en;
+        vb_rdata((width - 1), 0) = r.input_en.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.input_en = wb_req_wdata.read()((width - 1), 0);
         }
         break;
     case 2:                                                 // 0x08: output_en
-        vb_rdata((width - 1), 0) = r.output_en;
+        vb_rdata((width - 1), 0) = r.output_en.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.output_en = wb_req_wdata.read()((width - 1), 0);
         }
         break;
     case 3:                                                 // 0x0C: output_val
-        vb_rdata((width - 1), 0) = r.output_val;
+        vb_rdata((width - 1), 0) = r.output_val.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.output_val = wb_req_wdata.read()((width - 1), 0);
         }
         break;
     case 4:                                                 // 0x10: ie
-        vb_rdata((width - 1), 0) = r.ie;
+        vb_rdata((width - 1), 0) = r.ie.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.ie = wb_req_wdata.read()((width - 1), 0);
         }
         break;
     case 5:                                                 // 0x14: ip
-        vb_rdata((width - 1), 0) = r.ip;
+        vb_rdata((width - 1), 0) = r.ip.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.ip = wb_req_wdata.read()((width - 1), 0);
         }
@@ -225,22 +227,22 @@ void apb_gpio<width>::comb() {
         break;
     }
 
-    v.resp_valid = w_req_valid;
+    v.resp_valid = w_req_valid.read();
     v.resp_rdata = vb_rdata;
     v.resp_err = 0;
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         apb_gpio_r_reset(v);
     }
 
-    o_gpio_dir = r.input_en;
-    o_gpio = r.output_val;
+    o_gpio_dir = r.input_en.read();
+    o_gpio = r.output_val.read();
     o_irq = (r.ie.read() & r.ip.read());
 }
 
 template<int width>
 void apb_gpio<width>::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         apb_gpio_r_reset(r);
     } else {
         r = v;

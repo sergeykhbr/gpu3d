@@ -38,7 +38,8 @@ apb_ddr::apb_ddr(sc_module_name name,
     async_reset_ = async_reset;
     pslv0 = 0;
 
-    pslv0 = new apb_slv("pslv0", async_reset,
+    pslv0 = new apb_slv("pslv0",
+                         async_reset,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_DDRCTRL);
     pslv0->i_clk(i_clk);
@@ -101,15 +102,15 @@ void apb_ddr::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_sr_active, i_sr_active.name());
         sc_trace(o_vcd, i_ref_ack, i_ref_ack.name());
         sc_trace(o_vcd, i_zq_ack, i_zq_ack.name());
-        sc_trace(o_vcd, r.pll_locked, pn + ".r_pll_locked");
-        sc_trace(o_vcd, r.init_calib_done, pn + ".r_init_calib_done");
-        sc_trace(o_vcd, r.device_temp, pn + ".r_device_temp");
-        sc_trace(o_vcd, r.sr_active, pn + ".r_sr_active");
-        sc_trace(o_vcd, r.ref_ack, pn + ".r_ref_ack");
-        sc_trace(o_vcd, r.zq_ack, pn + ".r_zq_ack");
-        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
-        sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
-        sc_trace(o_vcd, r.resp_err, pn + ".r_resp_err");
+        sc_trace(o_vcd, r.pll_locked, pn + ".r.pll_locked");
+        sc_trace(o_vcd, r.init_calib_done, pn + ".r.init_calib_done");
+        sc_trace(o_vcd, r.device_temp, pn + ".r.device_temp");
+        sc_trace(o_vcd, r.sr_active, pn + ".r.sr_active");
+        sc_trace(o_vcd, r.ref_ack, pn + ".r.ref_ack");
+        sc_trace(o_vcd, r.zq_ack, pn + ".r.zq_ack");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
+        sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
+        sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
     }
 
     if (pslv0) {
@@ -120,46 +121,45 @@ void apb_ddr::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void apb_ddr::comb() {
     sc_uint<32> vb_rdata;
 
+    v = r;
     vb_rdata = 0;
 
-    v = r;
-
-    v.pll_locked = i_pll_locked;
-    v.init_calib_done = i_init_calib_done;
-    v.device_temp = i_device_temp;
-    v.sr_active = i_sr_active;
-    v.ref_ack = i_ref_ack;
-    v.zq_ack = i_zq_ack;
+    v.pll_locked = i_pll_locked.read();
+    v.init_calib_done = i_init_calib_done.read();
+    v.device_temp = i_device_temp.read();
+    v.sr_active = i_sr_active.read();
+    v.ref_ack = i_ref_ack.read();
+    v.zq_ack = i_zq_ack.read();
 
     v.resp_err = 0;
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
     case 0:                                                 // 0x00: clock status
-        vb_rdata[0] = r.pll_locked;
-        vb_rdata[1] = r.init_calib_done;
+        vb_rdata[0] = r.pll_locked.read();
+        vb_rdata[1] = r.init_calib_done.read();
         break;
     case 1:                                                 // 0x04: temperature
-        vb_rdata(11, 0) = r.device_temp;
+        vb_rdata(11, 0) = r.device_temp.read();
         break;
     case 2:                                                 // 0x08: app bits
-        vb_rdata[0] = r.sr_active;                          // [0] 
-        vb_rdata[1] = r.ref_ack;                            // [1] 
-        vb_rdata[2] = r.zq_ack;                             // [2] 
+        vb_rdata[0] = r.sr_active.read();                   // [0] 
+        vb_rdata[1] = r.ref_ack.read();                     // [1] 
+        vb_rdata[2] = r.zq_ack.read();                      // [2] 
         break;
     default:
         break;
     }
 
-    v.resp_valid = w_req_valid;
+    v.resp_valid = w_req_valid.read();
     v.resp_rdata = vb_rdata;
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         apb_ddr_r_reset(v);
     }
 }
 
 void apb_ddr::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         apb_ddr_r_reset(r);
     } else {
         r = v;

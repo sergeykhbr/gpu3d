@@ -52,7 +52,19 @@ SC_MODULE(sfifo) {
         sc_signal<sc_uint<log2_depth>> wr_cnt;
         sc_signal<sc_uint<log2_depth>> rd_cnt;
         sc_signal<sc_uint<(log2_depth + 1)>> total_cnt;
-    } v, r;
+    };
+
+    void sfifo_r_reset(sfifo_registers& iv) {
+        for (int i = 0; i < DEPTH; i++) {
+            iv.databuf[i] = 0;
+        }
+        iv.wr_cnt = 0;
+        iv.rd_cnt = 0;
+        iv.total_cnt = 0;
+    }
+
+    sfifo_registers v;
+    sfifo_registers r;
 
 };
 
@@ -97,13 +109,11 @@ void sfifo<dbits, log2_depth>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *
         sc_trace(o_vcd, o_rdata, o_rdata.name());
         sc_trace(o_vcd, o_count, o_count.name());
         for (int i = 0; i < DEPTH; i++) {
-            char tstr[1024];
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_databuf%d", pn.c_str(), i);
-            sc_trace(o_vcd, r.databuf[i], tstr);
+            sc_trace(o_vcd, r.databuf[i], pn + ".r.databuf[i]");
         }
-        sc_trace(o_vcd, r.wr_cnt, pn + ".r_wr_cnt");
-        sc_trace(o_vcd, r.rd_cnt, pn + ".r_rd_cnt");
-        sc_trace(o_vcd, r.total_cnt, pn + ".r_total_cnt");
+        sc_trace(o_vcd, r.wr_cnt, pn + ".r.wr_cnt");
+        sc_trace(o_vcd, r.rd_cnt, pn + ".r.rd_cnt");
+        sc_trace(o_vcd, r.total_cnt, pn + ".r.total_cnt");
     }
 
 }
@@ -113,15 +123,14 @@ void sfifo<dbits, log2_depth>::comb() {
     bool v_full;
     bool v_empty;
 
+    for (int i = 0; i < DEPTH; i++) {
+        v.databuf[i] = r.databuf[i].read();
+    }
+    v.wr_cnt = r.wr_cnt.read();
+    v.rd_cnt = r.rd_cnt.read();
+    v.total_cnt = r.total_cnt.read();
     v_full = 0;
     v_empty = 0;
-
-    for (int i = 0; i < DEPTH; i++) {
-        v.databuf[i] = r.databuf[i];
-    }
-    v.wr_cnt = r.wr_cnt;
-    v.rd_cnt = r.rd_cnt;
-    v.total_cnt = r.total_cnt;
 
 
     // Check FIFO counter:
@@ -134,7 +143,7 @@ void sfifo<dbits, log2_depth>::comb() {
 
     if ((i_we.read() == 1) && ((v_full == 0) || (i_re.read() == 1))) {
         v.wr_cnt = (r.wr_cnt.read() + 1);
-        v.databuf[r.wr_cnt.read().to_int()] = i_wdata;
+        v.databuf[r.wr_cnt.read().to_int()] = i_wdata.read();
         if (i_re.read() == 0) {
             v.total_cnt = (r.total_cnt.read() + 1);
         }
@@ -147,35 +156,25 @@ void sfifo<dbits, log2_depth>::comb() {
         }
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < DEPTH; i++) {
-            v.databuf[i] = 0;
-        }
-        v.wr_cnt = 0;
-        v.rd_cnt = 0;
-        v.total_cnt = 0;
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
+        sfifo_r_reset(v);
     }
 
-    o_rdata = r.databuf[r.rd_cnt.read().to_int()];
-    o_count = r.total_cnt;
+    o_rdata = r.databuf[r.rd_cnt.read().to_int()].read();
+    o_count = r.total_cnt.read();
 }
 
 template<int dbits, int log2_depth>
 void sfifo<dbits, log2_depth>::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < DEPTH; i++) {
-            r.databuf[i] = 0;
-        }
-        r.wr_cnt = 0;
-        r.rd_cnt = 0;
-        r.total_cnt = 0;
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        sfifo_r_reset(r);
     } else {
         for (int i = 0; i < DEPTH; i++) {
-            r.databuf[i] = v.databuf[i];
+            r.databuf[i] = v.databuf[i].read();
         }
-        r.wr_cnt = v.wr_cnt;
-        r.rd_cnt = v.rd_cnt;
-        r.total_cnt = v.total_cnt;
+        r.wr_cnt = v.wr_cnt.read();
+        r.rd_cnt = v.rd_cnt.read();
+        r.total_cnt = v.total_cnt.read();
     }
 }
 

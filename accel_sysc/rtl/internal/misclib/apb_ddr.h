@@ -61,9 +61,9 @@ SC_MODULE(apb_ddr) {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
-    } v, r;
+    };
 
-    void apb_ddr_r_reset(apb_ddr_registers &iv) {
+    void apb_ddr_r_reset(apb_ddr_registers& iv) {
         iv.pll_locked = 0;
         iv.init_calib_done = 0;
         iv.device_temp = 0;
@@ -79,6 +79,8 @@ SC_MODULE(apb_ddr) {
     sc_signal<sc_uint<32>> wb_req_addr;
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<32>> wb_req_wdata;
+    apb_ddr_registers v;
+    apb_ddr_registers r;
 
     apb_slv *pslv0;
 
