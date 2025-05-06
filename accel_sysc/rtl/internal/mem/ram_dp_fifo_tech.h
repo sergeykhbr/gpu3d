@@ -69,7 +69,7 @@ ram_dp_fifo_tech<abits, dbits>::ram_dp_fifo_tech(sc_module_name name)
 template<int abits, int dbits>
 void ram_dp_fifo_tech<abits, dbits>::wr() {
     if (i_wena.read() == 1) {
-        mem[i_addr.read().to_int()] = i_wdata;
+        mem[i_addr.read().to_int()] = i_wdata.read();
     }
 }
 
