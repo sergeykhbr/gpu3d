@@ -50,7 +50,6 @@ SC_MODULE(vip_spi_top) {
     int instnum_;
     int baudrate_;
     int scaler_;
-    double pll_period;
 
     struct vip_spi_top_registers {
         sc_signal<bool> resp_valid;
@@ -61,9 +60,9 @@ SC_MODULE(vip_spi_top) {
         sc_signal<bool> uart_loopback;
         sc_signal<sc_uint<16>> gpio_out;
         sc_signal<sc_uint<16>> gpio_dir;
-    } v, r;
+    };
 
-    void vip_spi_top_r_reset(vip_spi_top_registers &iv) {
+    void vip_spi_top_r_reset(vip_spi_top_registers& iv) {
         iv.resp_valid = 0;
         iv.resp_rdata = 0;
         iv.scratch0 = 0;
@@ -84,6 +83,8 @@ SC_MODULE(vip_spi_top) {
     sc_signal<sc_uint<32>> wb_resp_rdata;
     sc_signal<bool> w_resp_ready;
     sc_signal<sc_uint<16>> wb_gpio_in;
+    vip_spi_top_registers v;
+    vip_spi_top_registers r;
 
     vip_clk *clk0;
     vip_spi_transmitter *tx0;

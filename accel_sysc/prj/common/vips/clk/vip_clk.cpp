@@ -27,7 +27,7 @@ vip_clk::vip_clk(sc_module_name name,
 
     period_ = period;
     // initial
-    // pll = 0;
+    pll = 0;
     // end initial
 
     SC_METHOD(comb);
@@ -42,6 +42,7 @@ void vip_clk::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void vip_clk::comb() {
+    pll.write((!pll), ((0.5 * 1000000000.0) * period_);
     o_clk = pll;
 }
 

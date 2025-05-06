@@ -48,15 +48,15 @@ SC_MODULE(asic_top) {
 
 
     asic_top(sc_module_name name,
+             bool async_reset,
              int sim_uart_speedup_rate);
     virtual ~asic_top();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    bool async_reset_;
     int sim_uart_speedup_rate_;
-
-    static const bool async_reset = 0;
 
     sc_signal<bool> ib_clk_tcxo;
     sc_signal<sc_uint<12>> ib_gpio_ipins;

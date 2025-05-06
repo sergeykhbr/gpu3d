@@ -32,6 +32,7 @@ SC_MODULE(vip_uart_top) {
     sc_in<bool> i_loopback_ena;                             // redirect Rx bytes into Tx
 
     void comb();
+    void fileout();
     void registers();
 
     SC_HAS_PROCESS(vip_uart_top);
@@ -52,19 +53,18 @@ SC_MODULE(vip_uart_top) {
     int baudrate_;
     int scaler_;
     std::string logpath_;
-    double pll_period;
 
     static const uint8_t EOF_0x0D = 0x0D;
 
-    std::string U8ToString(std::string istr, sc_uint<8> symb);
-
     struct vip_uart_top_registers {
         sc_signal<sc_uint<2>> initdone;
-    } v, r;
+    };
 
-    void vip_uart_top_r_reset(vip_uart_top_registers &iv) {
+    void vip_uart_top_r_reset(vip_uart_top_registers& iv) {
         iv.initdone = 0;
     }
+
+    std::string U8ToString(std::string istr, sc_uint<8> symb);
 
     sc_signal<bool> w_clk;
     sc_signal<bool> w_rx_rdy;
@@ -78,6 +78,8 @@ SC_MODULE(vip_uart_top) {
     std::string outfilename;                                // formatted string name with instnum
     FILE* fl;
     FILE* fl_tmp;
+    vip_uart_top_registers v;
+    vip_uart_top_registers r;
 
     vip_clk *clk0;
     vip_uart_receiver *rx0;

@@ -20,6 +20,7 @@
 namespace debugger {
 
 asic_top::asic_top(sc_module_name name,
+                   bool async_reset,
                    int sim_uart_speedup_rate)
     : sc_module(name),
     i_rst("i_rst"),
@@ -35,6 +36,7 @@ asic_top::asic_top(sc_module_name name,
     i_uart1_rd("i_uart1_rd"),
     o_uart1_td("o_uart1_td") {
 
+    async_reset_ = async_reset;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     iclk0 = 0;
     pll0 = 0;
@@ -54,7 +56,8 @@ asic_top::asic_top(sc_module_name name,
     pll0->o_clk_pcie(w_pcie_clk);
     pll0->o_locked(w_pll_lock);
 
-    prci0 = new apb_prci("prci0", async_reset);
+    prci0 = new apb_prci("prci0",
+                          async_reset);
     prci0->i_clk(ib_clk_tcxo);
     prci0->i_pwrreset(i_rst);
     prci0->i_dmireset(w_dmreset);
@@ -72,7 +75,8 @@ asic_top::asic_top(sc_module_name name,
     prci0->i_apbi(prci_apbi);
     prci0->o_apbo(prci_apbo);
 
-    soc0 = new accel_soc("soc0", async_reset,
+    soc0 = new accel_soc("soc0",
+                          async_reset,
                           sim_uart_speedup_rate);
     soc0->i_sys_nrst(w_sys_nrst);
     soc0->i_sys_clk(w_sys_clk);
@@ -139,14 +143,6 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_jtag_vref, o_jtag_vref.name());
         sc_trace(o_vcd, i_uart1_rd, i_uart1_rd.name());
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
-        sc_trace(o_vcd, ddr_xslvo, ddr_xslvo.name());
-        sc_trace(o_vcd, ddr_xslvi, ddr_xslvi.name());
-        sc_trace(o_vcd, ddr_apbi, ddr_apbi.name());
-        sc_trace(o_vcd, ddr_apbo, ddr_apbo.name());
-        sc_trace(o_vcd, prci_apbi, prci_apbi.name());
-        sc_trace(o_vcd, prci_apbo, prci_apbo.name());
-        sc_trace(o_vcd, pcie_dmao, pcie_dmao.name());
-        sc_trace(o_vcd, pcie_dmai, pcie_dmai.name());
     }
 
     if (iclk0) {
