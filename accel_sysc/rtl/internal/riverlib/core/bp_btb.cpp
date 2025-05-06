@@ -43,13 +43,13 @@ BpBTB::BpBTB(sc_module_name name,
     sensitive << i_we_pc;
     sensitive << i_we_npc;
     sensitive << i_bp_pc;
+    for (int i = 0; i < CFG_BP_DEPTH; i++) {
+        sensitive << dbg_npc[i];
+    }
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
         sensitive << r.btb[i].pc;
         sensitive << r.btb[i].npc;
         sensitive << r.btb[i].exec;
-    }
-    for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        sensitive << dbg_npc[i];
     }
 
     SC_METHOD(registers);
@@ -69,13 +69,9 @@ void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_bp_npc, o_bp_npc.name());
         sc_trace(o_vcd, o_bp_exec, o_bp_exec.name());
         for (int i = 0; i < CFG_BTB_SIZE; i++) {
-            char tstr[1024];
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_btb%d_pc", pn.c_str(), i);
-            sc_trace(o_vcd, r.btb[i].pc, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_btb%d_npc", pn.c_str(), i);
-            sc_trace(o_vcd, r.btb[i].npc, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_btb%d_exec", pn.c_str(), i);
-            sc_trace(o_vcd, r.btb[i].exec, tstr);
+            sc_trace(o_vcd, r.btb[i].pc, pn + ".r.btb[i].pc");
+            sc_trace(o_vcd, r.btb[i].npc, pn + ".r.btb[i].npc");
+            sc_trace(o_vcd, r.btb[i].exec, pn + ".r.btb[i].exec");
         }
     }
 
@@ -90,6 +86,11 @@ void BpBTB::comb() {
     sc_uint<CFG_BP_DEPTH> vb_bp_exec;
     bool v_dont_update;
 
+    for (int i = 0; i < CFG_BTB_SIZE; i++) {
+        v.btb[i].pc = r.btb[i].pc.read();
+        v.btb[i].npc = r.btb[i].npc.read();
+        v.btb[i].exec = r.btb[i].exec.read();
+    }
     vb_addr = 0;
     vb_hit = 0;
     t_addr = 0;
@@ -98,22 +99,16 @@ void BpBTB::comb() {
     vb_bp_exec = 0;
     v_dont_update = 0;
 
-    for (int i = 0; i < CFG_BTB_SIZE; i++) {
-        v.btb[i].pc = r.btb[i].pc;
-        v.btb[i].npc = r.btb[i].npc;
-        v.btb[i].exec = r.btb[i].exec;
-    }
-
-    vb_addr((RISCV_ARCH - 1), 0) = i_bp_pc;
-    vb_bp_exec[0] = i_e;
+    vb_addr((RISCV_ARCH - 1), 0) = i_bp_pc.read();
+    vb_bp_exec[0] = i_e.read();
 
     for (int i = 1; i < CFG_BP_DEPTH; i++) {
         t_addr = vb_addr(((i - 1) * RISCV_ARCH) + RISCV_ARCH - 1, ((i - 1) * RISCV_ARCH));
         for (int n = (CFG_BTB_SIZE - 1); n >= 0; n--) {
-            if (t_addr == r.btb[n].pc) {
-                vb_addr((i * RISCV_ARCH) + RISCV_ARCH - 1, (i * RISCV_ARCH)) = r.btb[n].npc;
+            if (t_addr == r.btb[n].pc.read()) {
+                vb_addr((i * RISCV_ARCH) + RISCV_ARCH - 1, (i * RISCV_ARCH)) = r.btb[n].npc.read();
                 vb_hit[i] = 1;
-                vb_bp_exec[i] = r.btb[n].exec;              // Used for: Do not override by pre-decoded jumps
+                vb_bp_exec[i] = r.btb[n].exec.read();       // Used for: Do not override by pre-decoded jumps
             } else if (vb_hit[i] == 0) {
                 vb_addr((i * RISCV_ARCH) + RISCV_ARCH - 1, (i * RISCV_ARCH)) = (t_addr + 4);
             }
@@ -123,9 +118,9 @@ void BpBTB::comb() {
     v_dont_update = 0;
     vb_pc_equal = 0;
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
-        if (r.btb[i].pc == i_we_pc.read()) {
+        if (r.btb[i].pc.read() == i_we_pc.read()) {
             vb_pc_equal[i] = 1;
-            v_dont_update = (r.btb[i].exec && (!i_e.read()));
+            v_dont_update = (r.btb[i].exec.read() && (!i_e.read()));
         }
     }
     vb_pc_nshift = 0;
@@ -134,9 +129,9 @@ void BpBTB::comb() {
     }
 
     if ((i_we.read() && (!v_dont_update)) == 1) {
-        v.btb[0].exec = i_e;
-        v.btb[0].pc = i_we_pc;
-        v.btb[0].npc = i_we_npc;
+        v.btb[0].exec = i_e.read();
+        v.btb[0].pc = i_we_pc.read();
+        v.btb[0].npc = i_we_npc.read();
         for (int i = 1; i < CFG_BTB_SIZE; i++) {
             if (vb_pc_nshift[i] == 0) {
                 v.btb[i] = r.btb[(i - 1)];
@@ -146,12 +141,8 @@ void BpBTB::comb() {
         }
     }
 
-    if ((!async_reset_ && i_nrst.read() == 0) || i_flush_pipeline) {
-        for (int i = 0; i < CFG_BTB_SIZE; i++) {
-            v.btb[i].pc = ~0ull;
-            v.btb[i].npc = 0;
-            v.btb[i].exec = 0;
-        }
+    if (((~async_reset_) && (i_nrst.read() == 0)) || i_flush_pipeline.read()) {
+        BpBTB_r_reset(v);
     }
 
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
@@ -162,17 +153,13 @@ void BpBTB::comb() {
 }
 
 void BpBTB::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < CFG_BTB_SIZE; i++) {
-            r.btb[i].pc = ~0ull;
-            r.btb[i].npc = 0;
-            r.btb[i].exec = 0;
-        }
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        BpBTB_r_reset(r);
     } else {
         for (int i = 0; i < CFG_BTB_SIZE; i++) {
-            r.btb[i].pc = v.btb[i].pc;
-            r.btb[i].npc = v.btb[i].npc;
-            r.btb[i].exec = v.btb[i].exec;
+            r.btb[i].pc = v.btb[i].pc.read();
+            r.btb[i].npc = v.btb[i].npc.read();
+            r.btb[i].exec = v.btb[i].exec.read();
         }
     }
 }

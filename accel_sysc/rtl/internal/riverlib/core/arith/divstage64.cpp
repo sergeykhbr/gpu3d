@@ -90,7 +90,7 @@ void divstage64::comb() {
     }
 
     wb_divident = i_divident.read().to_uint64();
-    wb_divisor = i_divisor;
+    wb_divisor = i_divisor.read();
 
     wb_divx1(63, 0) = wb_divisor(63, 0);
     if (wb_divisor(123, 64).or_reduce() == 1) {

@@ -50,7 +50,7 @@ void AluLogic::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_a1, i_a1.name());
         sc_trace(o_vcd, i_a2, i_a2.name());
         sc_trace(o_vcd, o_res, o_res.name());
-        sc_trace(o_vcd, r.res, pn + ".r_res");
+        sc_trace(o_vcd, r.res, pn + ".r.res");
     }
 
 }
@@ -66,15 +66,15 @@ void AluLogic::comb() {
         v.res = (i_a1.read() & i_a2.read());
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         AluLogic_r_reset(v);
     }
 
-    o_res = r.res;
+    o_res = r.res.read();
 }
 
 void AluLogic::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         AluLogic_r_reset(r);
     } else {
         r = v;

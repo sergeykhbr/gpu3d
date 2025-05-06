@@ -123,27 +123,28 @@ void DecoderRv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
         sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
-        sc_trace(o_vcd, r.pc, pn + ".r_pc");
-        sc_trace(o_vcd, r.isa_type, pn + ".r_isa_type");
-        sc_trace(o_vcd, r.instr, pn + ".r_instr");
-        sc_trace(o_vcd, r.memop_store, pn + ".r_memop_store");
-        sc_trace(o_vcd, r.memop_load, pn + ".r_memop_load");
-        sc_trace(o_vcd, r.memop_sign_ext, pn + ".r_memop_sign_ext");
-        sc_trace(o_vcd, r.memop_size, pn + ".r_memop_size");
-        sc_trace(o_vcd, r.unsigned_op, pn + ".r_unsigned_op");
-        sc_trace(o_vcd, r.rv32, pn + ".r_rv32");
-        sc_trace(o_vcd, r.f64, pn + ".r_f64");
-        sc_trace(o_vcd, r.compressed, pn + ".r_compressed");
-        sc_trace(o_vcd, r.amo, pn + ".r_amo");
-        sc_trace(o_vcd, r.instr_load_fault, pn + ".r_instr_load_fault");
-        sc_trace(o_vcd, r.instr_page_fault_x, pn + ".r_instr_page_fault_x");
-        sc_trace(o_vcd, r.instr_unimplemented, pn + ".r_instr_unimplemented");
-        sc_trace(o_vcd, r.radr1, pn + ".r_radr1");
-        sc_trace(o_vcd, r.radr2, pn + ".r_radr2");
-        sc_trace(o_vcd, r.waddr, pn + ".r_waddr");
-        sc_trace(o_vcd, r.csr_addr, pn + ".r_csr_addr");
-        sc_trace(o_vcd, r.imm, pn + ".r_imm");
-        sc_trace(o_vcd, r.progbuf_ena, pn + ".r_progbuf_ena");
+        sc_trace(o_vcd, r.pc, pn + ".r.pc");
+        sc_trace(o_vcd, r.isa_type, pn + ".r.isa_type");
+        sc_trace(o_vcd, r.instr_vec, pn + ".r.instr_vec");
+        sc_trace(o_vcd, r.instr, pn + ".r.instr");
+        sc_trace(o_vcd, r.memop_store, pn + ".r.memop_store");
+        sc_trace(o_vcd, r.memop_load, pn + ".r.memop_load");
+        sc_trace(o_vcd, r.memop_sign_ext, pn + ".r.memop_sign_ext");
+        sc_trace(o_vcd, r.memop_size, pn + ".r.memop_size");
+        sc_trace(o_vcd, r.unsigned_op, pn + ".r.unsigned_op");
+        sc_trace(o_vcd, r.rv32, pn + ".r.rv32");
+        sc_trace(o_vcd, r.f64, pn + ".r.f64");
+        sc_trace(o_vcd, r.compressed, pn + ".r.compressed");
+        sc_trace(o_vcd, r.amo, pn + ".r.amo");
+        sc_trace(o_vcd, r.instr_load_fault, pn + ".r.instr_load_fault");
+        sc_trace(o_vcd, r.instr_page_fault_x, pn + ".r.instr_page_fault_x");
+        sc_trace(o_vcd, r.instr_unimplemented, pn + ".r.instr_unimplemented");
+        sc_trace(o_vcd, r.radr1, pn + ".r.radr1");
+        sc_trace(o_vcd, r.radr2, pn + ".r.radr2");
+        sc_trace(o_vcd, r.waddr, pn + ".r.waddr");
+        sc_trace(o_vcd, r.csr_addr, pn + ".r.csr_addr");
+        sc_trace(o_vcd, r.imm, pn + ".r.imm");
+        sc_trace(o_vcd, r.progbuf_ena, pn + ".r.progbuf_ena");
     }
 
 }
@@ -170,6 +171,7 @@ void DecoderRv::comb() {
     bool v_f64;
     bool v_amo;
 
+    v = r;
     v_error = 0;
     v_compressed = 0;
     vb_instr = 0;
@@ -191,9 +193,7 @@ void DecoderRv::comb() {
     v_f64 = 0;
     v_amo = 0;
 
-    v = r;
-
-    vb_instr = i_f_instr;
+    vb_instr = i_f_instr.read();
 
     if (vb_instr(1, 0) != 0x3) {
         v_compressed = 1;
@@ -1053,10 +1053,10 @@ void DecoderRv::comb() {
             || vb_dec[Instr_FLD]
             || vb_dec[Instr_FSD]);
 
-    v.pc = i_f_pc;
+    v.pc = i_f_pc.read();
     v.isa_type = vb_isa_type;
     v.instr_vec = vb_dec;
-    v.instr = i_f_instr;
+    v.instr = i_f_instr.read();
     v.memop_store = v_memop_store;
     v.memop_load = v_memop_load;
     v.memop_sign_ext = v_memop_sign_ext;
@@ -1066,46 +1066,46 @@ void DecoderRv::comb() {
     v.f64 = v_f64;
     v.compressed = v_compressed;
     v.amo = v_amo;
-    v.instr_load_fault = i_instr_load_fault;
-    v.instr_page_fault_x = i_instr_page_fault_x;
+    v.instr_load_fault = i_instr_load_fault.read();
+    v.instr_page_fault_x = i_instr_page_fault_x.read();
     v.instr_unimplemented = v_error;
     v.radr1 = vb_radr1;
     v.radr2 = vb_radr2;
     v.waddr = vb_waddr;
     v.csr_addr = vb_csr_addr;
     v.imm = vb_imm;
-    v.progbuf_ena = i_progbuf_ena;
+    v.progbuf_ena = i_progbuf_ena.read();
 
-    if ((!async_reset_ && i_nrst.read() == 0) || (i_flush_pipeline.read() == 1)) {
+    if (((~async_reset_) && (i_nrst.read() == 0)) || (i_flush_pipeline.read() == 1)) {
         DecoderRv_r_reset(v);
     }
 
-    o_pc = r.pc;
-    o_instr = r.instr;
-    o_memop_load = r.memop_load;
-    o_memop_store = r.memop_store;
-    o_memop_sign_ext = r.memop_sign_ext;
-    o_memop_size = r.memop_size;
-    o_unsigned_op = r.unsigned_op;
-    o_rv32 = r.rv32;
-    o_f64 = r.f64;
-    o_compressed = r.compressed;
-    o_amo = r.amo;
-    o_isa_type = r.isa_type;
-    o_instr_vec = r.instr_vec;
-    o_exception = r.instr_unimplemented;
-    o_instr_load_fault = r.instr_load_fault;
-    o_instr_page_fault_x = r.instr_page_fault_x;
-    o_radr1 = r.radr1;
-    o_radr2 = r.radr2;
-    o_waddr = r.waddr;
-    o_csr_addr = r.csr_addr;
-    o_imm = r.imm;
-    o_progbuf_ena = r.progbuf_ena;
+    o_pc = r.pc.read();
+    o_instr = r.instr.read();
+    o_memop_load = r.memop_load.read();
+    o_memop_store = r.memop_store.read();
+    o_memop_sign_ext = r.memop_sign_ext.read();
+    o_memop_size = r.memop_size.read();
+    o_unsigned_op = r.unsigned_op.read();
+    o_rv32 = r.rv32.read();
+    o_f64 = r.f64.read();
+    o_compressed = r.compressed.read();
+    o_amo = r.amo.read();
+    o_isa_type = r.isa_type.read();
+    o_instr_vec = r.instr_vec.read();
+    o_exception = r.instr_unimplemented.read();
+    o_instr_load_fault = r.instr_load_fault.read();
+    o_instr_page_fault_x = r.instr_page_fault_x.read();
+    o_radr1 = r.radr1.read();
+    o_radr2 = r.radr2.read();
+    o_waddr = r.waddr.read();
+    o_csr_addr = r.csr_addr.read();
+    o_imm = r.imm.read();
+    o_progbuf_ena = r.progbuf_ena.read();
 }
 
 void DecoderRv::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         DecoderRv_r_reset(r);
     } else {
         r = v;

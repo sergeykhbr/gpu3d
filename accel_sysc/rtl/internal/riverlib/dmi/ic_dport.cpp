@@ -85,7 +85,7 @@ void ic_dport::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dport_resp_valid, o_dport_resp_valid.name());
         sc_trace(o_vcd, o_dport_resp_error, o_dport_resp_error.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
-        sc_trace(o_vcd, r.hartsel, pn + ".r_hartsel");
+        sc_trace(o_vcd, r.hartsel, pn + ".r.hartsel");
     }
 
 }
@@ -105,6 +105,7 @@ void ic_dport::comb() {
     dport_out_type vb_dporto[CFG_CPU_MAX];
     bool v_req_accepted;
 
+    v = r;
     vb_hartsel = 0;
     vb_cpu_mask = 0;
     vb_req_ready_mask = 0;
@@ -122,8 +123,6 @@ void ic_dport::comb() {
         vb_dporto[i] = dport_out_none;
     }
     v_req_accepted = 0;
-
-    v = r;
 
     vb_cpu_mask[i_hartsel.read().to_int()] = 1;
     if (i_haltreq.read() == 1) {
@@ -155,18 +154,18 @@ void ic_dport::comb() {
         vb_dporti[i].resethaltreq = (vb_resethaltreq[i] && vb_cpu_mask[i]);
         vb_dporti[i].hartreset = (vb_hartreset[i] && vb_cpu_mask[i]);
         vb_dporti[i].req_valid = (vb_req_valid[i] && vb_cpu_mask[i]);
-        vb_dporti[i].dtype = i_dport_req_type;
-        vb_dporti[i].addr = i_dport_addr;
-        vb_dporti[i].wdata = i_dport_wdata;
-        vb_dporti[i].size = i_dport_size;
-        vb_dporti[i].resp_ready = i_dport_resp_ready;
+        vb_dporti[i].dtype = i_dport_req_type.read();
+        vb_dporti[i].addr = i_dport_addr.read();
+        vb_dporti[i].wdata = i_dport_wdata.read();
+        vb_dporti[i].size = i_dport_size.read();
+        vb_dporti[i].resp_ready = i_dport_resp_ready.read();
     }
 
     if (v_req_accepted == 1) {
-        vb_hartsel = i_hartsel;
+        vb_hartsel = i_hartsel.read();
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         ic_dport_r_reset(v);
     }
 
@@ -181,7 +180,7 @@ void ic_dport::comb() {
 }
 
 void ic_dport::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         ic_dport_r_reset(r);
     } else {
         r = v;

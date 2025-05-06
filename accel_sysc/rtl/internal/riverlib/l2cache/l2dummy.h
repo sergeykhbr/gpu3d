@@ -67,9 +67,9 @@ SC_MODULE(L2Dummy) {
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> rdata;
         sc_signal<sc_uint<2>> resp;
-    } v, r;
+    };
 
-    void L2Dummy_r_reset(L2Dummy_registers &iv) {
+    void L2Dummy_r_reset(L2Dummy_registers& iv) {
         iv.state = Idle;
         iv.srcid = CFG_SLOT_L1_TOTAL;
         iv.req_addr = 0;
@@ -83,6 +83,9 @@ SC_MODULE(L2Dummy) {
         iv.rdata = 0;
         iv.resp = 0;
     }
+
+    L2Dummy_registers v;
+    L2Dummy_registers r;
 
 };
 

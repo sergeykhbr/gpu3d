@@ -115,9 +115,9 @@ SC_MODULE(DbgPort) {
         sc_signal<bool> progbuf_ena;
         sc_signal<sc_uint<RISCV_ARCH>> progbuf_pc;
         sc_signal<sc_uint<64>> progbuf_instr;
-    } v, r;
+    };
 
-    void DbgPort_r_reset(DbgPort_registers &iv) {
+    void DbgPort_r_reset(DbgPort_registers& iv) {
         iv.dport_write = 0;
         iv.dport_addr = 0;
         iv.dport_wdata = 0;
@@ -138,6 +138,8 @@ SC_MODULE(DbgPort) {
     sc_signal<bool> w_stack_we;
     sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> wb_stack_waddr;
     sc_signal<sc_biguint<(2 * RISCV_ARCH)>> wb_stack_wdata;
+    DbgPort_registers v;
+    DbgPort_registers r;
 
     StackTraceBuffer *trbuf0;
 

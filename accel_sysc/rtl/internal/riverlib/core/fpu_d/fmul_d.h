@@ -66,9 +66,9 @@ SC_MODULE(DoubleMul) {
         sc_signal<bool> nanB;
         sc_signal<bool> overflow;
         sc_signal<bool> illegal_op;
-    } v, r;
+    };
 
-    void DoubleMul_r_reset(DoubleMul_registers &iv) {
+    void DoubleMul_r_reset(DoubleMul_registers& iv) {
         iv.busy = 0;
         iv.ena = 0;
         iv.a = 0;
@@ -94,6 +94,8 @@ SC_MODULE(DoubleMul) {
     sc_signal<sc_uint<7>> wb_imul_shift;
     sc_signal<bool> w_imul_rdy;
     sc_signal<bool> w_imul_overflow;
+    DoubleMul_registers v;
+    DoubleMul_registers r;
 
     imul53 *u_imul53;
 

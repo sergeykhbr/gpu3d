@@ -73,9 +73,6 @@ SC_MODULE(RiverAmba) {
     static const uint8_t snoop_cd = 4;
     static const uint8_t snoop_cd_wait_accept = 5;
 
-    sc_uint<4> reqtype2arsnoop(sc_uint<REQ_MEM_TYPE_BITS> reqtype);
-    sc_uint<4> reqtype2awsnoop(sc_uint<REQ_MEM_TYPE_BITS> reqtype);
-
     struct RiverAmba_registers {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
@@ -94,9 +91,9 @@ SC_MODULE(RiverAmba) {
         sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data;
         sc_signal<bool> cache_access;
-    } v, r;
+    };
 
-    void RiverAmba_r_reset(RiverAmba_registers &iv) {
+    void RiverAmba_r_reset(RiverAmba_registers& iv) {
         iv.state = state_idle;
         iv.req_addr = 0;
         iv.req_path = 0;
@@ -115,6 +112,9 @@ SC_MODULE(RiverAmba) {
         iv.resp_snoop_data = 0;
         iv.cache_access = 0;
     }
+
+    sc_uint<4> reqtype2arsnoop(sc_uint<REQ_MEM_TYPE_BITS> reqtype);
+    sc_uint<4> reqtype2awsnoop(sc_uint<REQ_MEM_TYPE_BITS> reqtype);
 
     sc_signal<bool> req_mem_ready_i;
     sc_signal<bool> req_mem_path_o;
@@ -151,6 +151,8 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> w_dporto_resp_valid;
     sc_signal<bool> w_dporto_resp_error;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dporto_rdata;
+    RiverAmba_registers v;
+    RiverAmba_registers r;
 
     RiverTop *river0;
 

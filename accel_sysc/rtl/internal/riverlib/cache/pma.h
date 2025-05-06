@@ -38,11 +38,11 @@ SC_MODULE(PMA) {
 
  private:
     static const uint64_t CLINT_BAR = 0x000002000000;
-    static const uint64_t CLINT_MASK = 0x00000000FFFF;
+    static const uint64_t CLINT_MASK = 0x00000000FFFF;      // 64 KB
     static const uint64_t PLIC_BAR = 0x00000C000000;
-    static const uint64_t PLIC_MASK = 0x000003FFFFFF;
+    static const uint64_t PLIC_MASK = 0x000003FFFFFF;       // 64 MB
     static const uint64_t IO1_BAR = 0x000010000000;
-    static const uint64_t IO1_MASK = 0x0000000FFFFF;
+    static const uint64_t IO1_MASK = 0x0000000FFFFF;        // 1 MB
 
 };
 

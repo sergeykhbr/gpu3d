@@ -108,8 +108,8 @@ void ic_csr_m2_s1::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_s0_resp_ready, o_s0_resp_ready.name());
         sc_trace(o_vcd, i_s0_resp_data, i_s0_resp_data.name());
         sc_trace(o_vcd, i_s0_resp_exception, i_s0_resp_exception.name());
-        sc_trace(o_vcd, r.midx, pn + ".r_midx");
-        sc_trace(o_vcd, r.acquired, pn + ".r_acquired");
+        sc_trace(o_vcd, r.midx, pn + ".r.midx");
+        sc_trace(o_vcd, r.acquired, pn + ".r.acquired");
     }
 
 }
@@ -131,42 +131,42 @@ void ic_csr_m2_s1::comb() {
     }
 
     if ((r.midx.read() == 0) || (((!r.acquired.read()) && i_m0_req_valid.read()) == 1)) {
-        o_s0_req_valid = i_m0_req_valid;
-        o_m0_req_ready = i_s0_req_ready;
-        o_s0_req_type = i_m0_req_type;
-        o_s0_req_addr = i_m0_req_addr;
-        o_s0_req_data = i_m0_req_data;
-        o_m0_resp_valid = i_s0_resp_valid;
-        o_s0_resp_ready = i_m0_resp_ready;
-        o_m0_resp_data = i_s0_resp_data;
-        o_m0_resp_exception = i_s0_resp_exception;
+        o_s0_req_valid = i_m0_req_valid.read();
+        o_m0_req_ready = i_s0_req_ready.read();
+        o_s0_req_type = i_m0_req_type.read();
+        o_s0_req_addr = i_m0_req_addr.read();
+        o_s0_req_data = i_m0_req_data.read();
+        o_m0_resp_valid = i_s0_resp_valid.read();
+        o_s0_resp_ready = i_m0_resp_ready.read();
+        o_m0_resp_data = i_s0_resp_data.read();
+        o_m0_resp_exception = i_s0_resp_exception.read();
         o_m1_req_ready = 0;
         o_m1_resp_valid = 0;
         o_m1_resp_data = 0;
         o_m1_resp_exception = 0;
     } else {
-        o_s0_req_valid = i_m1_req_valid;
-        o_m1_req_ready = i_s0_req_ready;
-        o_s0_req_type = i_m1_req_type;
-        o_s0_req_addr = i_m1_req_addr;
-        o_s0_req_data = i_m1_req_data;
-        o_m1_resp_valid = i_s0_resp_valid;
-        o_s0_resp_ready = i_m1_resp_ready;
-        o_m1_resp_data = i_s0_resp_data;
-        o_m1_resp_exception = i_s0_resp_exception;
+        o_s0_req_valid = i_m1_req_valid.read();
+        o_m1_req_ready = i_s0_req_ready.read();
+        o_s0_req_type = i_m1_req_type.read();
+        o_s0_req_addr = i_m1_req_addr.read();
+        o_s0_req_data = i_m1_req_data.read();
+        o_m1_resp_valid = i_s0_resp_valid.read();
+        o_s0_resp_ready = i_m1_resp_ready.read();
+        o_m1_resp_data = i_s0_resp_data.read();
+        o_m1_resp_exception = i_s0_resp_exception.read();
         o_m0_req_ready = 0;
         o_m0_resp_valid = 0;
         o_m0_resp_data = 0;
         o_m0_resp_exception = 0;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         ic_csr_m2_s1_r_reset(v);
     }
 }
 
 void ic_csr_m2_s1::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         ic_csr_m2_s1_r_reset(r);
     } else {
         r = v;

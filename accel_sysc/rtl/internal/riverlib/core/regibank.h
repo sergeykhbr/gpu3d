@@ -91,10 +91,19 @@ SC_MODULE(RegIntBank) {
         sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> tag;
     };
 
-
     struct RegIntBank_registers {
         RegValueType arr[REGS_TOTAL];
-    } v, r;
+    };
+
+    void RegIntBank_r_reset(RegIntBank_registers& iv) {
+        for (int i = 0; i < REGS_TOTAL; i++) {
+            iv.arr[i].val = 0;
+            iv.arr[i].tag = 0;
+        }
+    }
+
+    RegIntBank_registers v;
+    RegIntBank_registers r;
 
 };
 

@@ -82,19 +82,25 @@ void IntMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_a2, i_a2.name());
         sc_trace(o_vcd, o_res, o_res.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
-        sc_trace(o_vcd, r.busy, pn + ".r_busy");
-        sc_trace(o_vcd, r.ena, pn + ".r_ena");
-        sc_trace(o_vcd, r.a1, pn + ".r_a1");
-        sc_trace(o_vcd, r.a2, pn + ".r_a2");
-        sc_trace(o_vcd, r.unsign, pn + ".r_unsign");
-        sc_trace(o_vcd, r.high, pn + ".r_high");
-        sc_trace(o_vcd, r.rv32, pn + ".r_rv32");
-        sc_trace(o_vcd, r.zero, pn + ".r_zero");
-        sc_trace(o_vcd, r.inv, pn + ".r_inv");
-        sc_trace(o_vcd, r.result, pn + ".r_result");
-        sc_trace(o_vcd, r.a1_dbg, pn + ".r_a1_dbg");
-        sc_trace(o_vcd, r.a2_dbg, pn + ".r_a2_dbg");
-        sc_trace(o_vcd, r.reference_mul, pn + ".r_reference_mul");
+        sc_trace(o_vcd, r.busy, pn + ".r.busy");
+        sc_trace(o_vcd, r.ena, pn + ".r.ena");
+        sc_trace(o_vcd, r.a1, pn + ".r.a1");
+        sc_trace(o_vcd, r.a2, pn + ".r.a2");
+        sc_trace(o_vcd, r.unsign, pn + ".r.unsign");
+        sc_trace(o_vcd, r.high, pn + ".r.high");
+        sc_trace(o_vcd, r.rv32, pn + ".r.rv32");
+        sc_trace(o_vcd, r.zero, pn + ".r.zero");
+        sc_trace(o_vcd, r.inv, pn + ".r.inv");
+        sc_trace(o_vcd, r.result, pn + ".r.result");
+        sc_trace(o_vcd, r.a1_dbg, pn + ".r.a1_dbg");
+        sc_trace(o_vcd, r.a2_dbg, pn + ".r.a2_dbg");
+        sc_trace(o_vcd, r.reference_mul, pn + ".r.reference_mul");
+        for (int i = 0; i < 16; i++) {
+            sc_trace(o_vcd, r.lvl1[i], pn + ".r.lvl1[i]");
+        }
+        for (int i = 0; i < 4; i++) {
+            sc_trace(o_vcd, r.lvl3[i], pn + ".r.lvl3[i]");
+        }
     }
 
 }
@@ -115,6 +121,25 @@ void IntMul::comb() {
     bool v_a2s_nzero;
     sc_uint<1> v_ena;
 
+    v.busy = r.busy.read();
+    v.ena = r.ena.read();
+    v.a1 = r.a1.read();
+    v.a2 = r.a2.read();
+    v.unsign = r.unsign.read();
+    v.high = r.high.read();
+    v.rv32 = r.rv32.read();
+    v.zero = r.zero.read();
+    v.inv = r.inv.read();
+    v.result = r.result.read();
+    v.a1_dbg = r.a1_dbg.read();
+    v.a2_dbg = r.a2_dbg.read();
+    v.reference_mul = r.reference_mul.read();
+    for (int i = 0; i < 16; i++) {
+        v.lvl1[i] = r.lvl1[i].read();
+    }
+    for (int i = 0; i < 4; i++) {
+        v.lvl3[i] = r.lvl3[i].read();
+    }
     vb_a1 = 0;
     vb_a2 = 0;
     wb_mux_lvl0 = 0;
@@ -136,26 +161,6 @@ void IntMul::comb() {
     v_a2s_nzero = 0;
     v_ena = 0;
 
-    v.busy = r.busy;
-    v.ena = r.ena;
-    v.a1 = r.a1;
-    v.a2 = r.a2;
-    v.unsign = r.unsign;
-    v.high = r.high;
-    v.rv32 = r.rv32;
-    v.zero = r.zero;
-    v.inv = r.inv;
-    v.result = r.result;
-    v.a1_dbg = r.a1_dbg;
-    v.a2_dbg = r.a2_dbg;
-    v.reference_mul = r.reference_mul;
-    for (int i = 0; i < 16; i++) {
-        v.lvl1[i] = r.lvl1[i];
-    }
-    for (int i = 0; i < 4; i++) {
-        v.lvl3[i] = r.lvl3[i];
-    }
-
 
     if (i_a1.read()(62, 0).or_reduce() == 1) {
         v_a1s_nzero = 1;
@@ -163,7 +168,7 @@ void IntMul::comb() {
     if ((v_a1s_nzero && i_a1.read()[63]) == 1) {
         vb_a1s = ((~i_a1.read()) + 1);
     } else {
-        vb_a1s = i_a1;
+        vb_a1s = i_a1.read();
     }
 
     if (i_a2.read()(62, 0).or_reduce() == 1) {
@@ -172,7 +177,7 @@ void IntMul::comb() {
     if ((v_a2s_nzero && i_a2.read()[63]) == 1) {
         vb_a2s = ((~i_a2.read()) + 1);
     } else {
-        vb_a2s = i_a2;
+        vb_a2s = i_a2.read();
     }
 
     v_ena = (i_ena.read() && (!r.busy.read()));
@@ -198,10 +203,10 @@ void IntMul::comb() {
                 }
                 v.inv = i_a1.read()[63];
                 vb_a1 = vb_a1s;
-                vb_a2 = i_a2;
+                vb_a2 = i_a2.read();
             } else if (i_unsigned.read() == 1) {
-                vb_a1 = i_a1;
-                vb_a2 = i_a2;
+                vb_a1 = i_a1.read();
+                vb_a2 = i_a2.read();
             } else {
                 v.zero = ((!v_a1s_nzero) || (!v_a2s_nzero));
                 v.inv = (i_a1.read()[63] ^ i_a2.read()[63]);
@@ -209,18 +214,18 @@ void IntMul::comb() {
                 vb_a2 = vb_a2s;
             }
         } else {
-            vb_a1 = i_a1;
-            vb_a2 = i_a2;
+            vb_a1 = i_a1.read();
+            vb_a2 = i_a2.read();
         }
         v.a1 = vb_a1;
         v.a2 = vb_a2;
-        v.rv32 = i_rv32;
-        v.unsign = i_unsigned;
-        v.high = i_high;
+        v.rv32 = i_rv32.read();
+        v.unsign = i_unsigned.read();
+        v.high = i_high.read();
 
         // Just for run-rime control (not for VHDL)
-        v.a1_dbg = i_a1;
-        v.a2_dbg = i_a2;
+        v.a1_dbg = i_a1.read();
+        v.a2_dbg = i_a2.read();
     }
 
     if (r.ena.read()[0] == 1) {
@@ -245,8 +250,8 @@ void IntMul::comb() {
 
     if (r.ena.read()[1] == 1) {
         for (int i = 0; i < 8; i++) {
-            wb_lvl2[i] = ((sc_biguint<74>(r.lvl1[((2 * i) + 1)]) << 4)
-                    + sc_biguint<74>(r.lvl1[(2 * i)]));
+            wb_lvl2[i] = ((sc_biguint<74>(r.lvl1[((2 * i) + 1)].read()) << 4)
+                    + sc_biguint<74>(r.lvl1[(2 * i)].read()));
         }
         for (int i = 0; i < 4; i++) {
             v.lvl3[i] = ((sc_biguint<83>(wb_lvl2[((2 * i) + 1)]) << 8)
@@ -257,8 +262,8 @@ void IntMul::comb() {
     if (r.ena.read()[2] == 1) {
         v.busy = 0;
         for (int i = 0; i < 2; i++) {
-            wb_lvl4[i] = ((sc_biguint<100>(r.lvl3[((2 * i) + 1)]) << 16)
-                    + sc_biguint<100>(r.lvl3[(2 * i)]));
+            wb_lvl4[i] = ((sc_biguint<100>(r.lvl3[((2 * i) + 1)].read()) << 16)
+                    + sc_biguint<100>(r.lvl3[(2 * i)].read()));
         }
         wb_lvl5 = ((sc_biguint<128>(wb_lvl4[1]) << 32)
                 + sc_biguint<128>(wb_lvl4[0]));
@@ -288,26 +293,8 @@ void IntMul::comb() {
         wb_res = r.result.read()(127, 64);
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
-        v.busy = 0;
-        v.ena = 0;
-        v.a1 = 0;
-        v.a2 = 0;
-        v.unsign = 0;
-        v.high = 0;
-        v.rv32 = 0;
-        v.zero = 0;
-        v.inv = 0;
-        v.result = 0;
-        v.a1_dbg = 0;
-        v.a2_dbg = 0;
-        v.reference_mul = 0;
-        for (int i = 0; i < 16; i++) {
-            v.lvl1[i] = 0;
-        }
-        for (int i = 0; i < 4; i++) {
-            v.lvl3[i] = 0;
-        }
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
+        IntMul_r_reset(v);
     }
 
     o_res = wb_res;
@@ -315,45 +302,27 @@ void IntMul::comb() {
 }
 
 void IntMul::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        r.busy = 0;
-        r.ena = 0;
-        r.a1 = 0;
-        r.a2 = 0;
-        r.unsign = 0;
-        r.high = 0;
-        r.rv32 = 0;
-        r.zero = 0;
-        r.inv = 0;
-        r.result = 0;
-        r.a1_dbg = 0;
-        r.a2_dbg = 0;
-        r.reference_mul = 0;
-        for (int i = 0; i < 16; i++) {
-            r.lvl1[i] = 0;
-        }
-        for (int i = 0; i < 4; i++) {
-            r.lvl3[i] = 0;
-        }
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        IntMul_r_reset(r);
     } else {
-        r.busy = v.busy;
-        r.ena = v.ena;
-        r.a1 = v.a1;
-        r.a2 = v.a2;
-        r.unsign = v.unsign;
-        r.high = v.high;
-        r.rv32 = v.rv32;
-        r.zero = v.zero;
-        r.inv = v.inv;
-        r.result = v.result;
-        r.a1_dbg = v.a1_dbg;
-        r.a2_dbg = v.a2_dbg;
-        r.reference_mul = v.reference_mul;
+        r.busy = v.busy.read();
+        r.ena = v.ena.read();
+        r.a1 = v.a1.read();
+        r.a2 = v.a2.read();
+        r.unsign = v.unsign.read();
+        r.high = v.high.read();
+        r.rv32 = v.rv32.read();
+        r.zero = v.zero.read();
+        r.inv = v.inv.read();
+        r.result = v.result.read();
+        r.a1_dbg = v.a1_dbg.read();
+        r.a2_dbg = v.a2_dbg.read();
+        r.reference_mul = v.reference_mul.read();
         for (int i = 0; i < 16; i++) {
-            r.lvl1[i] = v.lvl1[i];
+            r.lvl1[i] = v.lvl1[i].read();
         }
         for (int i = 0; i < 4; i++) {
-            r.lvl3[i] = v.lvl3[i];
+            r.lvl3[i] = v.lvl3[i].read();
         }
     }
 }

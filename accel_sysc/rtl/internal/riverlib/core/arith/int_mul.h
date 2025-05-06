@@ -63,7 +63,32 @@ SC_MODULE(IntMul) {
         sc_signal<sc_uint<RISCV_ARCH>> reference_mul;       // Used for run-time comparision
         sc_signal<sc_biguint<69>> lvl1[16];
         sc_signal<sc_biguint<83>> lvl3[4];
-    } v, r;
+    };
+
+    void IntMul_r_reset(IntMul_registers& iv) {
+        iv.busy = 0;
+        iv.ena = 0;
+        iv.a1 = 0;
+        iv.a2 = 0;
+        iv.unsign = 0;
+        iv.high = 0;
+        iv.rv32 = 0;
+        iv.zero = 0;
+        iv.inv = 0;
+        iv.result = 0;
+        iv.a1_dbg = 0;
+        iv.a2_dbg = 0;
+        iv.reference_mul = 0;
+        for (int i = 0; i < 16; i++) {
+            iv.lvl1[i] = 0;
+        }
+        for (int i = 0; i < 4; i++) {
+            iv.lvl3[i] = 0;
+        }
+    }
+
+    IntMul_registers v;
+    IntMul_registers r;
 
 };
 

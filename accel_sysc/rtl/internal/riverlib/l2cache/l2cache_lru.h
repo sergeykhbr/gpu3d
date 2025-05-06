@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "../../../prj/impl/asic/target_cfg.h"
+#include "../../../../prj/impl/asic/target_cfg.h"
 #include "../cache/tagmemnway.h"
 
 namespace debugger {
@@ -90,7 +90,7 @@ SC_MODULE(L2CacheLru) {
     static const uint8_t State_ResetWrite = 11;
 
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_L2_LOG2_BYTES_PER_LINE) - 1);
-    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_L2_LOG2_LINES_PER_WAY + CFG_L2_LOG2_NWAYS)) - 1);
+    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_L2_LOG2_LINES_PER_WAY + CFG_L2_LOG2_NWAYS)) - 1);// Actual bitwidth is (ibits + waybits) but to avoid sc template generation use 32-bits
 
     struct L2CacheLru_registers {
         sc_signal<sc_uint<L2_REQ_TYPE_BITS>> req_type;
@@ -114,9 +114,9 @@ SC_MODULE(L2CacheLru) {
         sc_signal<sc_uint<32>> flush_cnt;
         sc_signal<sc_biguint<L2CACHE_LINE_BITS>> cache_line_i;
         sc_signal<sc_biguint<L2CACHE_LINE_BITS>> cache_line_o;
-    } v, r;
+    };
 
-    void L2CacheLru_r_reset(L2CacheLru_registers &iv) {
+    void L2CacheLru_r_reset(L2CacheLru_registers& iv) {
         iv.req_type = 0;
         iv.req_size = 0;
         iv.req_prot = 0;
@@ -156,6 +156,8 @@ SC_MODULE(L2CacheLru) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_snoop_addr_i;
     sc_signal<bool> line_snoop_ready_o;
     sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_snoop_flags_o;
+    L2CacheLru_registers v;
+    L2CacheLru_registers r;
 
     TagMemNWay<abus, CFG_L2_LOG2_NWAYS, CFG_L2_LOG2_LINES_PER_WAY, lnbits, flbits, 0> *mem0;
 

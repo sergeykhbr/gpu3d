@@ -74,7 +74,8 @@ dmidebug::dmidebug(sc_module_name name,
     tap->i_dmi_error(w_jtag_dmi_error);
     tap->o_dmi_hardreset(w_tap_dmi_hardreset);
 
-    cdc = new jtagcdc("cdc", async_reset);
+    cdc = new jtagcdc("cdc",
+                       async_reset);
     cdc->i_clk(i_clk);
     cdc->i_nrst(i_nrst);
     cdc->i_dmi_req_valid(w_tap_dmi_req_valid);
@@ -201,46 +202,46 @@ void dmidebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dport_resp_error, i_dport_resp_error.name());
         sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());
         sc_trace(o_vcd, o_progbuf, o_progbuf.name());
-        sc_trace(o_vcd, r.bus_jtag, pn + ".r_bus_jtag");
-        sc_trace(o_vcd, r.jtag_resp_data, pn + ".r_jtag_resp_data");
-        sc_trace(o_vcd, r.prdata, pn + ".r_prdata");
-        sc_trace(o_vcd, r.regidx, pn + ".r_regidx");
-        sc_trace(o_vcd, r.wdata, pn + ".r_wdata");
-        sc_trace(o_vcd, r.regwr, pn + ".r_regwr");
-        sc_trace(o_vcd, r.regrd, pn + ".r_regrd");
-        sc_trace(o_vcd, r.dmstate, pn + ".r_dmstate");
-        sc_trace(o_vcd, r.cmdstate, pn + ".r_cmdstate");
-        sc_trace(o_vcd, r.haltreq, pn + ".r_haltreq");
-        sc_trace(o_vcd, r.resumereq, pn + ".r_resumereq");
-        sc_trace(o_vcd, r.resumeack, pn + ".r_resumeack");
-        sc_trace(o_vcd, r.hartreset, pn + ".r_hartreset");
-        sc_trace(o_vcd, r.resethaltreq, pn + ".r_resethaltreq");
-        sc_trace(o_vcd, r.ndmreset, pn + ".r_ndmreset");
-        sc_trace(o_vcd, r.dmactive, pn + ".r_dmactive");
-        sc_trace(o_vcd, r.hartsel, pn + ".r_hartsel");
-        sc_trace(o_vcd, r.cmd_regaccess, pn + ".r_cmd_regaccess");
-        sc_trace(o_vcd, r.cmd_quickaccess, pn + ".r_cmd_quickaccess");
-        sc_trace(o_vcd, r.cmd_memaccess, pn + ".r_cmd_memaccess");
-        sc_trace(o_vcd, r.cmd_progexec, pn + ".r_cmd_progexec");
-        sc_trace(o_vcd, r.cmd_read, pn + ".r_cmd_read");
-        sc_trace(o_vcd, r.cmd_write, pn + ".r_cmd_write");
-        sc_trace(o_vcd, r.postincrement, pn + ".r_postincrement");
-        sc_trace(o_vcd, r.aamvirtual, pn + ".r_aamvirtual");
-        sc_trace(o_vcd, r.command, pn + ".r_command");
-        sc_trace(o_vcd, r.autoexecdata, pn + ".r_autoexecdata");
-        sc_trace(o_vcd, r.autoexecprogbuf, pn + ".r_autoexecprogbuf");
-        sc_trace(o_vcd, r.cmderr, pn + ".r_cmderr");
-        sc_trace(o_vcd, r.data0, pn + ".r_data0");
-        sc_trace(o_vcd, r.data1, pn + ".r_data1");
-        sc_trace(o_vcd, r.data2, pn + ".r_data2");
-        sc_trace(o_vcd, r.data3, pn + ".r_data3");
-        sc_trace(o_vcd, r.progbuf_data, pn + ".r_progbuf_data");
-        sc_trace(o_vcd, r.dport_req_valid, pn + ".r_dport_req_valid");
-        sc_trace(o_vcd, r.dport_addr, pn + ".r_dport_addr");
-        sc_trace(o_vcd, r.dport_wdata, pn + ".r_dport_wdata");
-        sc_trace(o_vcd, r.dport_size, pn + ".r_dport_size");
-        sc_trace(o_vcd, r.dport_resp_ready, pn + ".r_dport_resp_ready");
-        sc_trace(o_vcd, r.pready, pn + ".r_pready");
+        sc_trace(o_vcd, r.bus_jtag, pn + ".r.bus_jtag");
+        sc_trace(o_vcd, r.jtag_resp_data, pn + ".r.jtag_resp_data");
+        sc_trace(o_vcd, r.prdata, pn + ".r.prdata");
+        sc_trace(o_vcd, r.regidx, pn + ".r.regidx");
+        sc_trace(o_vcd, r.wdata, pn + ".r.wdata");
+        sc_trace(o_vcd, r.regwr, pn + ".r.regwr");
+        sc_trace(o_vcd, r.regrd, pn + ".r.regrd");
+        sc_trace(o_vcd, r.dmstate, pn + ".r.dmstate");
+        sc_trace(o_vcd, r.cmdstate, pn + ".r.cmdstate");
+        sc_trace(o_vcd, r.haltreq, pn + ".r.haltreq");
+        sc_trace(o_vcd, r.resumereq, pn + ".r.resumereq");
+        sc_trace(o_vcd, r.resumeack, pn + ".r.resumeack");
+        sc_trace(o_vcd, r.hartreset, pn + ".r.hartreset");
+        sc_trace(o_vcd, r.resethaltreq, pn + ".r.resethaltreq");
+        sc_trace(o_vcd, r.ndmreset, pn + ".r.ndmreset");
+        sc_trace(o_vcd, r.dmactive, pn + ".r.dmactive");
+        sc_trace(o_vcd, r.hartsel, pn + ".r.hartsel");
+        sc_trace(o_vcd, r.cmd_regaccess, pn + ".r.cmd_regaccess");
+        sc_trace(o_vcd, r.cmd_quickaccess, pn + ".r.cmd_quickaccess");
+        sc_trace(o_vcd, r.cmd_memaccess, pn + ".r.cmd_memaccess");
+        sc_trace(o_vcd, r.cmd_progexec, pn + ".r.cmd_progexec");
+        sc_trace(o_vcd, r.cmd_read, pn + ".r.cmd_read");
+        sc_trace(o_vcd, r.cmd_write, pn + ".r.cmd_write");
+        sc_trace(o_vcd, r.postincrement, pn + ".r.postincrement");
+        sc_trace(o_vcd, r.aamvirtual, pn + ".r.aamvirtual");
+        sc_trace(o_vcd, r.command, pn + ".r.command");
+        sc_trace(o_vcd, r.autoexecdata, pn + ".r.autoexecdata");
+        sc_trace(o_vcd, r.autoexecprogbuf, pn + ".r.autoexecprogbuf");
+        sc_trace(o_vcd, r.cmderr, pn + ".r.cmderr");
+        sc_trace(o_vcd, r.data0, pn + ".r.data0");
+        sc_trace(o_vcd, r.data1, pn + ".r.data1");
+        sc_trace(o_vcd, r.data2, pn + ".r.data2");
+        sc_trace(o_vcd, r.data3, pn + ".r.data3");
+        sc_trace(o_vcd, r.progbuf_data, pn + ".r.progbuf_data");
+        sc_trace(o_vcd, r.dport_req_valid, pn + ".r.dport_req_valid");
+        sc_trace(o_vcd, r.dport_addr, pn + ".r.dport_addr");
+        sc_trace(o_vcd, r.dport_wdata, pn + ".r.dport_wdata");
+        sc_trace(o_vcd, r.dport_size, pn + ".r.dport_size");
+        sc_trace(o_vcd, r.dport_resp_ready, pn + ".r.dport_resp_ready");
+        sc_trace(o_vcd, r.pready, pn + ".r.pready");
     }
 
     if (cdc) {
@@ -266,6 +267,7 @@ void dmidebug::comb() {
     sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)> t_progbuf;
     int t_idx;
 
+    v = r;
     vcfg = dev_config_none;
     vapbo = apb_out_none;
     vb_req_type = 0;
@@ -280,8 +282,6 @@ void dmidebug::comb() {
     t_progbuf = 0;
     t_idx = 0;
 
-    v = r;
-
     vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
     vcfg.addr_start = i_mapinfo.read().addr_start;
@@ -293,8 +293,8 @@ void dmidebug::comb() {
     hsel = r.hartsel.read().to_int();
     v_cmd_busy = r.cmdstate.read().or_reduce();
     vb_arg1 = (r.data3.read(), r.data2.read());
-    t_command = r.command;
-    t_progbuf = r.progbuf_data;
+    t_command = r.command.read();
+    t_progbuf = r.progbuf_data.read();
     t_idx = r.regidx.read()(3, 0).to_int();
 
     if ((r.haltreq.read() & i_halted.read()[hsel]) == 1) {
@@ -311,9 +311,9 @@ void dmidebug::comb() {
             v_cdc_dmi_req_ready = 1;
             v.bus_jtag = 1;
             v.dmstate = DM_STATE_ACCESS;
-            v.regidx = wb_cdc_dmi_req_addr;
-            v.wdata = wb_cdc_dmi_req_data;
-            v.regwr = w_cdc_dmi_req_write;
+            v.regidx = wb_cdc_dmi_req_addr.read();
+            v.wdata = wb_cdc_dmi_req_data.read();
+            v.regwr = w_cdc_dmi_req_write.read();
             v.regrd = (~w_cdc_dmi_req_write.read());
         } else if (((i_apbi.read().pselx == 1) && (i_apbi.read().pwrite == 0))
                     || ((i_apbi.read().pselx == 1) && (i_apbi.read().penable == 1) && (i_apbi.read().pwrite == 1))) {
@@ -329,9 +329,9 @@ void dmidebug::comb() {
         v_resp_valid = 1;
         v.dmstate = DM_STATE_IDLE;
         if (r.regidx.read() == 0x04) {                      // arg0[31:0]
-            vb_resp_data = r.data0;
+            vb_resp_data = r.data0.read();
             if (r.regwr.read() == 1) {
-                v.data0 = r.wdata;
+                v.data0 = r.wdata.read();
             }
             if ((r.autoexecdata.read()[0] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
@@ -341,9 +341,9 @@ void dmidebug::comb() {
                 }
             }
         } else if (r.regidx.read() == 0x05) {               // arg0[63:32]
-            vb_resp_data = r.data1;
+            vb_resp_data = r.data1.read();
             if (r.regwr.read() == 1) {
-                v.data1 = r.wdata;
+                v.data1 = r.wdata.read();
             }
             if ((r.autoexecdata.read()[1] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
@@ -353,9 +353,9 @@ void dmidebug::comb() {
                 }
             }
         } else if (r.regidx.read() == 0x06) {               // arg1[31:0]
-            vb_resp_data = r.data2;
+            vb_resp_data = r.data2.read();
             if (r.regwr.read() == 1) {
-                v.data2 = r.wdata;
+                v.data2 = r.wdata.read();
             }
             if ((r.autoexecdata.read()[2] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
@@ -365,9 +365,9 @@ void dmidebug::comb() {
                 }
             }
         } else if (r.regidx.read() == 0x07) {               // arg1[63:32]
-            vb_resp_data = r.data3;
+            vb_resp_data = r.data3.read();
             if (r.regwr.read() == 1) {
-                v.data3 = r.wdata;
+                v.data3 = r.wdata.read();
             }
             if ((r.autoexecdata.read()[3] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
@@ -377,12 +377,12 @@ void dmidebug::comb() {
                 }
             }
         } else if (r.regidx.read() == 0x10) {               // dmcontrol
-            vb_resp_data[29] = r.hartreset;                 // hartreset
+            vb_resp_data[29] = r.hartreset.read();          // hartreset
             vb_resp_data[28] = 0;                           // ackhavereset
             vb_resp_data[26] = 0;                           // hasel: single selected hart only
-            vb_resp_data(((16 + CFG_LOG2_CPU_MAX) - 1), 16) = r.hartsel;// hartsello
-            vb_resp_data[1] = r.ndmreset;
-            vb_resp_data[0] = r.dmactive;
+            vb_resp_data(((16 + CFG_LOG2_CPU_MAX) - 1), 16) = r.hartsel.read();// hartsello
+            vb_resp_data[1] = r.ndmreset.read();
+            vb_resp_data[0] = r.dmactive.read();
             if (r.regwr.read() == 1) {
                 if (r.wdata.read()[31] == 1) {
                     // Do not set cmderr before/after ndmreset
@@ -415,8 +415,8 @@ void dmidebug::comb() {
             vb_resp_data[22] = 0;                           // impebreak
             vb_resp_data[19] = 0;                           // allhavereset: selected hart reset but not acknowledged
             vb_resp_data[18] = 0;                           // anyhavereset
-            vb_resp_data[17] = r.resumeack;                 // allresumeack
-            vb_resp_data[16] = r.resumeack;                 // anyresumeack
+            vb_resp_data[17] = r.resumeack.read();          // allresumeack
+            vb_resp_data[16] = r.resumeack.read();          // anyresumeack
             vb_resp_data[15] = (!i_available.read()[hsel]); // allnonexistent
             vb_resp_data[14] = (!i_available.read()[hsel]); // anynonexistent
             vb_resp_data[13] = (!i_available.read()[hsel]); // allunavail
@@ -439,7 +439,7 @@ void dmidebug::comb() {
         } else if (r.regidx.read() == 0x16) {               // abstractcs
             vb_resp_data(28, 24) = CFG_PROGBUF_REG_TOTAL;
             vb_resp_data[12] = v_cmd_busy;                  // busy
-            vb_resp_data(10, 8) = r.cmderr;
+            vb_resp_data(10, 8) = r.cmderr.read();
             vb_resp_data(3, 0) = CFG_DATA_REG_TOTAL;
             if ((r.regwr.read() == 1) && (r.wdata.read()(10, 8) == 1)) {
                 v.cmderr = CMDERR_NONE;
@@ -451,14 +451,14 @@ void dmidebug::comb() {
                     if (v_cmd_busy == 1) {
                         v.cmderr = CMDERR_BUSY;
                     } else {
-                        v.command = r.wdata;
+                        v.command = r.wdata.read();
                         v.cmdstate = CMD_STATE_INIT;
                     }
                 }
             }
         } else if (r.regidx.read() == 0x18) {               // abstractauto
-            vb_resp_data((CFG_DATA_REG_TOTAL - 1), 0) = r.autoexecdata;
-            vb_resp_data(((16 + CFG_PROGBUF_REG_TOTAL) - 1), 16) = r.autoexecprogbuf;
+            vb_resp_data((CFG_DATA_REG_TOTAL - 1), 0) = r.autoexecdata.read();
+            vb_resp_data(((16 + CFG_PROGBUF_REG_TOTAL) - 1), 16) = r.autoexecprogbuf.read();
             if (r.regwr.read() == 1) {
                 v.autoexecdata = r.wdata.read()((CFG_DATA_REG_TOTAL - 1), 0);
                 v.autoexecprogbuf = r.wdata.read()(((16 + CFG_PROGBUF_REG_TOTAL) - 1), 16);
@@ -466,7 +466,7 @@ void dmidebug::comb() {
         } else if (r.regidx.read()(6, 4) == 0x2) {          // progbuf[n]
             vb_resp_data = r.progbuf_data.read()((32 * t_idx) + 32 - 1, (32 * t_idx)).to_uint64();
             if (r.regwr.read() == 1) {
-                t_progbuf((32 * t_idx) + 32 - 1, (32 * t_idx)) = r.wdata;
+                t_progbuf((32 * t_idx) + 32 - 1, (32 * t_idx)) = r.wdata.read();
                 v.progbuf_data = t_progbuf;
             }
             if ((r.autoexecprogbuf.read()[t_idx] == 1)
@@ -478,7 +478,7 @@ void dmidebug::comb() {
                 }
             }
         } else if (r.regidx.read() == 0x40) {               // haltsum0
-            vb_resp_data((CFG_CPU_MAX - 1), 0) = i_halted;
+            vb_resp_data((CFG_CPU_MAX - 1), 0) = i_halted.read();
         }
         break;
     default:
@@ -662,36 +662,36 @@ void dmidebug::comb() {
         v.pready = 0;
     }
 
-    vapbo.pready = r.pready;
-    vapbo.prdata = r.prdata;
+    vapbo.pready = r.pready.read();
+    vapbo.prdata = r.prdata.read();
 
-    vb_req_type[DPortReq_Write] = r.cmd_write;
-    vb_req_type[DPortReq_RegAccess] = r.cmd_regaccess;
-    vb_req_type[DPortReq_MemAccess] = r.cmd_memaccess;
-    vb_req_type[DPortReq_MemVirtual] = r.aamvirtual;
-    vb_req_type[DPortReq_Progexec] = r.cmd_progexec;
+    vb_req_type[DPortReq_Write] = r.cmd_write.read();
+    vb_req_type[DPortReq_RegAccess] = r.cmd_regaccess.read();
+    vb_req_type[DPortReq_MemAccess] = r.cmd_memaccess.read();
+    vb_req_type[DPortReq_MemVirtual] = r.aamvirtual.read();
+    vb_req_type[DPortReq_Progexec] = r.cmd_progexec.read();
 
-    if ((!async_reset_ && i_nrst.read() == 0) || (w_cdc_dmi_hardreset.read() == 1)) {
+    if (((~async_reset_) && (i_nrst.read() == 0)) || (w_cdc_dmi_hardreset.read() == 1)) {
         dmidebug_r_reset(v);
     }
 
-    o_ndmreset = r.ndmreset;
-    o_hartsel = r.hartsel;
-    o_haltreq = r.haltreq;
-    o_resumereq = r.resumereq;
-    o_resethaltreq = r.resethaltreq;
-    o_hartreset = r.hartreset;
-    o_dport_req_valid = r.dport_req_valid;
+    o_ndmreset = r.ndmreset.read();
+    o_hartsel = r.hartsel.read();
+    o_haltreq = r.haltreq.read();
+    o_resumereq = r.resumereq.read();
+    o_resethaltreq = r.resethaltreq.read();
+    o_hartreset = r.hartreset.read();
+    o_dport_req_valid = r.dport_req_valid.read();
     o_dport_req_type = vb_req_type;
-    o_dport_addr = r.dport_addr;
-    o_dport_wdata = r.dport_wdata;
-    o_dport_size = r.dport_size;
-    o_dport_resp_ready = r.dport_resp_ready;
-    o_progbuf = r.progbuf_data;
+    o_dport_addr = r.dport_addr.read();
+    o_dport_wdata = r.dport_wdata.read();
+    o_dport_size = r.dport_size.read();
+    o_dport_resp_ready = r.dport_resp_ready.read();
+    o_progbuf = r.progbuf_data.read();
 
     w_cdc_dmi_req_ready = v_cdc_dmi_req_ready;
-    wb_jtag_dmi_resp_data = r.jtag_resp_data;
-    w_jtag_dmi_busy = r.dmstate;
+    wb_jtag_dmi_resp_data = r.jtag_resp_data.read();
+    w_jtag_dmi_busy = r.dmstate.read();
     // There are no specified cases in which the DM would respond with an error,
     // and DMI is not required to support returning errors.
     w_jtag_dmi_error = 0;
@@ -701,7 +701,7 @@ void dmidebug::comb() {
 }
 
 void dmidebug::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         dmidebug_r_reset(r);
     } else {
         r = v;

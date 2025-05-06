@@ -161,8 +161,6 @@ SC_MODULE(InstrExecute) {
     static const uint8_t AmoState_Modify = 2;
     static const uint8_t AmoState_Write = 3;
 
-    sc_uint<4> irq2idx(sc_uint<IRQ_TOTAL> irqbus);
-
     struct select_type {
         sc_signal<bool> ena;
         sc_signal<bool> valid;
@@ -186,7 +184,6 @@ SC_MODULE(InstrExecute) {
         sc_biguint<Instr_Total> ivec;
         sc_uint<ISA_Total> isa_type;
     };
-
 
     struct InstrExecute_registers {
         sc_signal<sc_uint<4>> state;
@@ -242,9 +239,9 @@ SC_MODULE(InstrExecute) {
         sc_signal<bool> ret;
         sc_signal<bool> jmp;
         sc_signal<bool> stepdone;
-    } v, r;
+    };
 
-    void InstrExecute_r_reset(InstrExecute_registers &iv) {
+    void InstrExecute_r_reset(InstrExecute_registers& iv) {
         iv.state = State_Idle;
         iv.csrstate = CsrState_Idle;
         iv.amostate = AmoState_WaitMemAccess;
@@ -300,6 +297,8 @@ SC_MODULE(InstrExecute) {
         iv.stepdone = 0;
     }
 
+    sc_uint<4> irq2idx(sc_uint<IRQ_TOTAL> irqbus);
+
     select_type wb_select[Res_Total];
     sc_signal<sc_uint<3>> wb_alu_mode;
     sc_signal<sc_uint<7>> wb_addsub_mode;
@@ -319,6 +318,8 @@ SC_MODULE(InstrExecute) {
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;           // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;                    // Shifters operand 2
     sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> tag_expected[INTREGS_TOTAL];
+    InstrExecute_registers v;
+    InstrExecute_registers r;
 
     AluLogic *alu0;
     IntAddSub *addsub0;

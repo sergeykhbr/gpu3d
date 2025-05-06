@@ -55,10 +55,20 @@ SC_MODULE(PMP) {
         sc_signal<sc_uint<CFG_PMP_FL_TOTAL>> flags;
     };
 
-
     struct PMP_registers {
         PmpTableItemType tbl[CFG_PMP_TBL_SIZE];
-    } v, r;
+    };
+
+    void PMP_r_reset(PMP_registers& iv) {
+        for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
+            iv.tbl[i].start_addr = 0;
+            iv.tbl[i].end_addr = 0;
+            iv.tbl[i].flags = 0;
+        }
+    }
+
+    PMP_registers v;
+    PMP_registers r;
 
 };
 

@@ -44,11 +44,14 @@ SC_MODULE(Shifter) {
 
     struct Shifter_registers {
         sc_signal<sc_uint<RISCV_ARCH>> res;
-    } v, r;
+    };
 
-    void Shifter_r_reset(Shifter_registers &iv) {
+    void Shifter_r_reset(Shifter_registers& iv) {
         iv.res = 0;
     }
+
+    Shifter_registers v;
+    Shifter_registers r;
 
 };
 

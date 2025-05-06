@@ -73,7 +73,7 @@ SC_MODULE(InstrDecoder) {
     bool fpu_ena_;
 
     static const int DEC_NUM = 2;
-    static const int DEC_BLOCK = (2 * DEC_NUM);
+    static const int DEC_BLOCK = (2 * DEC_NUM);             // 2 rv + 2 rvc
     // shift registers depth to store previous decoded data
     static const int FULL_DEC_DEPTH = (DEC_BLOCK * ((CFG_DEC_DEPTH - 1) + CFG_BP_DEPTH));
 
@@ -102,14 +102,42 @@ SC_MODULE(InstrDecoder) {
         sc_signal<bool> progbuf_ena;
     };
 
-
     struct InstrDecoder_registers {
         DecoderDataType d[FULL_DEC_DEPTH];
-    } v, r;
+    };
+
+    void InstrDecoder_r_reset(InstrDecoder_registers& iv) {
+        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
+            iv.d[i].pc = ~0ull;
+            iv.d[i].isa_type = 0;
+            iv.d[i].instr_vec = 0;
+            iv.d[i].instr = ~0ull;
+            iv.d[i].memop_store = 0;
+            iv.d[i].memop_load = 0;
+            iv.d[i].memop_sign_ext = 0;
+            iv.d[i].memop_size = MEMOP_1B;
+            iv.d[i].unsigned_op = 0;
+            iv.d[i].rv32 = 0;
+            iv.d[i].f64 = 0;
+            iv.d[i].compressed = 0;
+            iv.d[i].amo = 0;
+            iv.d[i].instr_load_fault = 0;
+            iv.d[i].instr_page_fault_x = 0;
+            iv.d[i].instr_unimplemented = 0;
+            iv.d[i].radr1 = 0;
+            iv.d[i].radr2 = 0;
+            iv.d[i].waddr = 0;
+            iv.d[i].csr_addr = 0;
+            iv.d[i].imm = 0;
+            iv.d[i].progbuf_ena = 0;
+        }
+    }
 
     DecoderDataType wd[(FULL_DEC_DEPTH + DEC_BLOCK)];
     sc_signal<sc_uint<RISCV_ARCH>> wb_f_pc[DEC_NUM];
     sc_signal<sc_uint<32>> wb_f_instr[DEC_NUM];
+    InstrDecoder_registers v;
+    InstrDecoder_registers r;
 
     DecoderRv *rv[DEC_NUM];
     DecoderRvc *rvc[DEC_NUM];

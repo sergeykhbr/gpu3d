@@ -46,14 +46,14 @@ SC_MODULE(ic_axi4_to_l1) {
  private:
     bool async_reset_;
 
-    static const uint8_t Idle = 0;
-    static const uint8_t ReadLineRequest = 1;
-    static const uint8_t WaitReadLineResponse = 2;
-    static const uint8_t WriteDataAccept = 3;
-    static const uint8_t WriteLineRequest = 4;
-    static const uint8_t WaitWriteConfirmResponse = 5;
-    static const uint8_t WaitWriteAccept = 6;
-    static const uint8_t WaitReadAccept = 7;
+    static const uint8_t Idle = 0;                          // axi ar_ready=1,aw_ready=1
+    static const uint8_t ReadLineRequest = 1;               // l1 ar_valid=1
+    static const uint8_t WaitReadLineResponse = 2;          // l1 r_ready=1
+    static const uint8_t WriteDataAccept = 3;               // axi w_ready=1
+    static const uint8_t WriteLineRequest = 4;              // l1 w_valid=1
+    static const uint8_t WaitWriteConfirmResponse = 5;      // l1 b_ready
+    static const uint8_t WaitWriteAccept = 6;               // axi b_valid
+    static const uint8_t WaitReadAccept = 7;                // axi r_valid
     static const uint8_t CheckBurst = 8;
 
     struct ic_axi4_to_l1_registers {
@@ -71,9 +71,9 @@ SC_MODULE(ic_axi4_to_l1) {
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> line_data;
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> line_wstrb;
         sc_signal<sc_uint<64>> resp_data;
-    } v, r;
+    };
 
-    void ic_axi4_to_l1_r_reset(ic_axi4_to_l1_registers &iv) {
+    void ic_axi4_to_l1_r_reset(ic_axi4_to_l1_registers& iv) {
         iv.state = Idle;
         iv.req_addr = 0;
         iv.req_id = 0;
@@ -89,6 +89,9 @@ SC_MODULE(ic_axi4_to_l1) {
         iv.line_wstrb = 0;
         iv.resp_data = 0;
     }
+
+    ic_axi4_to_l1_registers v;
+    ic_axi4_to_l1_registers r;
 
 };
 

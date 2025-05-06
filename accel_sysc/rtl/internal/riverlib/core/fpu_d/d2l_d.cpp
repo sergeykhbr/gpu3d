@@ -71,17 +71,17 @@ void Double2Long::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_underflow, o_underflow.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_busy, o_busy.name());
-        sc_trace(o_vcd, r.busy, pn + ".r_busy");
-        sc_trace(o_vcd, r.ena, pn + ".r_ena");
-        sc_trace(o_vcd, r.signA, pn + ".r_signA");
-        sc_trace(o_vcd, r.expA, pn + ".r_expA");
-        sc_trace(o_vcd, r.mantA, pn + ".r_mantA");
-        sc_trace(o_vcd, r.result, pn + ".r_result");
-        sc_trace(o_vcd, r.op_signed, pn + ".r_op_signed");
-        sc_trace(o_vcd, r.w32, pn + ".r_w32");
-        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
-        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
-        sc_trace(o_vcd, r.underflow, pn + ".r_underflow");
+        sc_trace(o_vcd, r.busy, pn + ".r.busy");
+        sc_trace(o_vcd, r.ena, pn + ".r.ena");
+        sc_trace(o_vcd, r.signA, pn + ".r.signA");
+        sc_trace(o_vcd, r.expA, pn + ".r.expA");
+        sc_trace(o_vcd, r.mantA, pn + ".r.mantA");
+        sc_trace(o_vcd, r.result, pn + ".r.result");
+        sc_trace(o_vcd, r.op_signed, pn + ".r.op_signed");
+        sc_trace(o_vcd, r.w32, pn + ".r.w32");
+        sc_trace(o_vcd, r.mantPostScale, pn + ".r.mantPostScale");
+        sc_trace(o_vcd, r.overflow, pn + ".r.overflow");
+        sc_trace(o_vcd, r.underflow, pn + ".r.underflow");
     }
 
 }
@@ -102,6 +102,7 @@ void Double2Long::comb() {
     sc_uint<64> resMant;
     sc_uint<64> res;
 
+    v = r;
     v_ena = 0;
     mantA = 0;
     expDif_gr = 0;
@@ -117,8 +118,6 @@ void Double2Long::comb() {
     resMant = 0;
     res = 0;
 
-    v = r;
-
     v_ena = (i_ena.read() && (!r.busy.read()));
     v.ena = (r.ena.read()(1, 0), v_ena);
 
@@ -133,8 +132,8 @@ void Double2Long::comb() {
         v.signA = i_a.read()[63];
         v.expA = i_a.read()(62, 52);
         v.mantA = mantA;
-        v.op_signed = i_signed;
-        v.w32 = i_w32;
+        v.op_signed = i_signed.read();
+        v.w32 = i_w32.read();
         v.overflow = 0;
         v.underflow = 0;
     }
@@ -193,7 +192,7 @@ void Double2Long::comb() {
     if (r.signA.read() == 1) {
         resMant = ((~r.mantPostScale.read()) + 1);
     } else {
-        resMant = r.mantPostScale;
+        resMant = r.mantPostScale.read();
     }
 
     res = resMant;
@@ -218,19 +217,19 @@ void Double2Long::comb() {
         v.busy = 0;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         Double2Long_r_reset(v);
     }
 
-    o_res = r.result;
-    o_overflow = r.overflow;
-    o_underflow = r.underflow;
+    o_res = r.result.read();
+    o_overflow = r.overflow.read();
+    o_underflow = r.underflow.read();
     o_valid = r.ena.read()[2];
-    o_busy = r.busy;
+    o_busy = r.busy.read();
 }
 
 void Double2Long::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         Double2Long_r_reset(r);
     } else {
         r = v;

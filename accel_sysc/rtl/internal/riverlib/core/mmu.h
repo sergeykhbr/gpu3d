@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "../../techmap/mem/ram_mmu_tech.h"
+#include "../../mem/ram_mmu_tech.h"
 
 namespace debugger {
 
@@ -89,14 +89,14 @@ SC_MODULE(Mmu) {
     static const uint32_t UpdateTlb = 7;
     static const uint32_t AcceptCore = 8;
     static const uint32_t FlushTlb = 9;
-    static const int PTE_V = 0;
-    static const int PTE_R = 1;
-    static const int PTE_W = 2;
-    static const int PTE_X = 3;
-    static const int PTE_U = 4;
-    static const int PTE_G = 5;
-    static const int PTE_A = 6;
-    static const int PTE_D = 7;
+    static const int PTE_V = 0;                             // Valid PTE entry bit
+    static const int PTE_R = 1;                             // Read access PTE entry bit
+    static const int PTE_W = 2;                             // Write Access PTE entry bit
+    static const int PTE_X = 3;                             // Execute Access PTE entry bit
+    static const int PTE_U = 4;                             // Accessible in U-mode
+    static const int PTE_G = 5;                             // Global mapping
+    static const int PTE_A = 6;                             // Accessed bit
+    static const int PTE_D = 7;                             // Dirty bit
 
     struct Mmu_registers {
         sc_signal<sc_uint<4>> state;
@@ -125,9 +125,9 @@ SC_MODULE(Mmu) {
         sc_signal<sc_biguint<CFG_MMU_PTE_DWIDTH>> tlb_wdata;
         sc_signal<sc_uint<CFG_MMU_TLB_AWIDTH>> tlb_flush_cnt;
         sc_signal<sc_uint<CFG_MMU_TLB_AWIDTH>> tlb_flush_adr;
-    } v, r;
+    };
 
-    void Mmu_r_reset(Mmu_registers &iv) {
+    void Mmu_r_reset(Mmu_registers& iv) {
         iv.state = FlushTlb;
         iv.req_x = 0;
         iv.req_r = 0;
@@ -160,6 +160,8 @@ SC_MODULE(Mmu) {
     sc_signal<bool> w_tlb_wena;
     sc_signal<sc_biguint<CFG_MMU_PTE_DWIDTH>> wb_tlb_wdata;
     sc_signal<sc_biguint<CFG_MMU_PTE_DWIDTH>> wb_tlb_rdata;
+    Mmu_registers v;
+    Mmu_registers r;
 
     ram_mmu_tech<CFG_MMU_TLB_AWIDTH, CFG_MMU_PTE_DWIDTH> *tlb;
 

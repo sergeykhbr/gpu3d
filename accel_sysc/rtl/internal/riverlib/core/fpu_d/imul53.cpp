@@ -75,12 +75,12 @@ void imul53::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_shift, o_shift.name());
         sc_trace(o_vcd, o_rdy, o_rdy.name());
         sc_trace(o_vcd, o_overflow, o_overflow.name());
-        sc_trace(o_vcd, r.delay, pn + ".r_delay");
-        sc_trace(o_vcd, r.shift, pn + ".r_shift");
-        sc_trace(o_vcd, r.accum_ena, pn + ".r_accum_ena");
-        sc_trace(o_vcd, r.b, pn + ".r_b");
-        sc_trace(o_vcd, r.sum, pn + ".r_sum");
-        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
+        sc_trace(o_vcd, r.delay, pn + ".r.delay");
+        sc_trace(o_vcd, r.shift, pn + ".r.shift");
+        sc_trace(o_vcd, r.accum_ena, pn + ".r.accum_ena");
+        sc_trace(o_vcd, r.b, pn + ".r.b");
+        sc_trace(o_vcd, r.sum, pn + ".r.sum");
+        sc_trace(o_vcd, r.overflow, pn + ".r.overflow");
     }
 
     if (enc0) {
@@ -95,6 +95,7 @@ void imul53::comb() {
     sc_uint<7> vb_shift;
     sc_biguint<105> vb_sumInv;
 
+    v = r;
     v_ena = 0;
     for (int i = 0; i < 17; i++) {
         vb_mux[i] = 0;
@@ -103,11 +104,9 @@ void imul53::comb() {
     vb_shift = 0;
     vb_sumInv = 0;
 
-    v = r;
-
 
     vb_mux[0] = 0;
-    vb_mux[1] = i_a;
+    vb_mux[1] = i_a.read();
     vb_mux[2] = (i_a.read() << 1);
     vb_mux[3] = (vb_mux[2] + vb_mux[1]);
     vb_mux[4] = (i_a.read() << 2);
@@ -124,7 +123,7 @@ void imul53::comb() {
     vb_mux[14] = (vb_mux[16] - vb_mux[2]);
     vb_mux[15] = (vb_mux[16] - vb_mux[1]);
 
-    v_ena = i_ena;
+    v_ena = i_ena.read();
     v.delay = (r.delay.read()(14, 0), v_ena);
 
     if (i_ena.read() == 1) {
@@ -205,7 +204,7 @@ void imul53::comb() {
     } else if (r.sum.read()[104] == 1) {
         vb_shift = 0;
     } else {
-        vb_shift = wb_lshift;
+        vb_shift = wb_lshift.read();
     }
 
     if (r.delay.read()[14] == 1) {
@@ -216,18 +215,18 @@ void imul53::comb() {
         }
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         imul53_r_reset(v);
     }
 
-    o_result = r.sum;
-    o_shift = r.shift;
-    o_overflow = r.overflow;
+    o_result = r.sum.read();
+    o_shift = r.shift.read();
+    o_overflow = r.overflow.read();
     o_rdy = r.delay.read()[15];
 }
 
 void imul53::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         imul53_r_reset(r);
     } else {
         r = v;

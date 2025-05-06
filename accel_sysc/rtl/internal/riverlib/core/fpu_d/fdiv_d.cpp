@@ -38,7 +38,8 @@ DoubleDiv::DoubleDiv(sc_module_name name,
     async_reset_ = async_reset;
     u_idiv53 = 0;
 
-    u_idiv53 = new idiv53("u_idiv53", async_reset);
+    u_idiv53 = new idiv53("u_idiv53",
+                           async_reset);
     u_idiv53->i_clk(i_clk);
     u_idiv53->i_nrst(i_nrst);
     u_idiv53->i_ena(w_idiv_ena);
@@ -106,24 +107,24 @@ void DoubleDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_underflow, o_underflow.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_busy, o_busy.name());
-        sc_trace(o_vcd, r.busy, pn + ".r_busy");
-        sc_trace(o_vcd, r.ena, pn + ".r_ena");
-        sc_trace(o_vcd, r.a, pn + ".r_a");
-        sc_trace(o_vcd, r.b, pn + ".r_b");
-        sc_trace(o_vcd, r.result, pn + ".r_result");
-        sc_trace(o_vcd, r.zeroA, pn + ".r_zeroA");
-        sc_trace(o_vcd, r.zeroB, pn + ".r_zeroB");
-        sc_trace(o_vcd, r.divisor, pn + ".r_divisor");
-        sc_trace(o_vcd, r.preShift, pn + ".r_preShift");
-        sc_trace(o_vcd, r.expAB, pn + ".r_expAB");
-        sc_trace(o_vcd, r.expAlign, pn + ".r_expAlign");
-        sc_trace(o_vcd, r.mantAlign, pn + ".r_mantAlign");
-        sc_trace(o_vcd, r.postShift, pn + ".r_postShift");
-        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
-        sc_trace(o_vcd, r.nanRes, pn + ".r_nanRes");
-        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
-        sc_trace(o_vcd, r.underflow, pn + ".r_underflow");
-        sc_trace(o_vcd, r.illegal_op, pn + ".r_illegal_op");
+        sc_trace(o_vcd, r.busy, pn + ".r.busy");
+        sc_trace(o_vcd, r.ena, pn + ".r.ena");
+        sc_trace(o_vcd, r.a, pn + ".r.a");
+        sc_trace(o_vcd, r.b, pn + ".r.b");
+        sc_trace(o_vcd, r.result, pn + ".r.result");
+        sc_trace(o_vcd, r.zeroA, pn + ".r.zeroA");
+        sc_trace(o_vcd, r.zeroB, pn + ".r.zeroB");
+        sc_trace(o_vcd, r.divisor, pn + ".r.divisor");
+        sc_trace(o_vcd, r.preShift, pn + ".r.preShift");
+        sc_trace(o_vcd, r.expAB, pn + ".r.expAB");
+        sc_trace(o_vcd, r.expAlign, pn + ".r.expAlign");
+        sc_trace(o_vcd, r.mantAlign, pn + ".r.mantAlign");
+        sc_trace(o_vcd, r.postShift, pn + ".r.postShift");
+        sc_trace(o_vcd, r.mantPostScale, pn + ".r.mantPostScale");
+        sc_trace(o_vcd, r.nanRes, pn + ".r.nanRes");
+        sc_trace(o_vcd, r.overflow, pn + ".r.overflow");
+        sc_trace(o_vcd, r.underflow, pn + ".r.underflow");
+        sc_trace(o_vcd, r.illegal_op, pn + ".r.illegal_op");
     }
 
     if (u_idiv53) {
@@ -160,6 +161,7 @@ void DoubleDiv::comb() {
     bool mantZeroB;
     sc_uint<64> res;
 
+    v = r;
     vb_ena = 0;
     signA = 0;
     signB = 0;
@@ -188,8 +190,6 @@ void DoubleDiv::comb() {
     mantZeroB = 0;
     res = 0;
 
-    v = r;
-
     vb_ena[0] = (i_ena.read() && (!r.busy.read()));
     vb_ena[1] = r.ena.read()[0];
     vb_ena(4, 2) = (r.ena.read()(3, 2), w_idiv_rdy.read());
@@ -200,8 +200,8 @@ void DoubleDiv::comb() {
         v.overflow = 0;
         v.underflow = 0;
         v.illegal_op = 0;
-        v.a = i_a;
-        v.b = i_b;
+        v.a = i_a.read();
+        v.b = i_b.read();
     }
 
     signA = r.a.read()[63];
@@ -251,7 +251,7 @@ void DoubleDiv::comb() {
 
     w_idiv_ena = r.ena.read()[1];
     wb_divident = mantA;
-    wb_divisor = r.divisor;
+    wb_divisor = r.divisor.read();
 
     // idiv53 module:
     for (int i = 0; i < 105; i++) {
@@ -290,7 +290,7 @@ void DoubleDiv::comb() {
 
     // Prepare to mantissa post-scale
     if (r.postShift.read().or_reduce() == 0) {
-        mantPostScale = r.mantAlign;
+        mantPostScale = r.mantAlign.read();
     } else if (r.postShift.read() < 105) {
         for (int i = 0; i < 105; i++) {
             if (i == r.postShift.read()) {
@@ -380,21 +380,21 @@ void DoubleDiv::comb() {
         v.busy = 0;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         DoubleDiv_r_reset(v);
     }
 
-    o_res = r.result;
-    o_illegal_op = r.illegal_op;
-    o_divbyzero = r.zeroB;
-    o_overflow = r.overflow;
-    o_underflow = r.underflow;
+    o_res = r.result.read();
+    o_illegal_op = r.illegal_op.read();
+    o_divbyzero = r.zeroB.read();
+    o_overflow = r.overflow.read();
+    o_underflow = r.underflow.read();
     o_valid = r.ena.read()[4];
-    o_busy = r.busy;
+    o_busy = r.busy.read();
 }
 
 void DoubleDiv::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         DoubleDiv_r_reset(r);
     } else {
         r = v;

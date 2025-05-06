@@ -76,9 +76,9 @@ SC_MODULE(L2Destination) {
         sc_signal<sc_uint<(CFG_SLOT_L1_TOTAL + 1)>> ac_valid;
         sc_signal<sc_uint<(CFG_SLOT_L1_TOTAL + 1)>> cr_ready;
         sc_signal<sc_uint<(CFG_SLOT_L1_TOTAL + 1)>> cd_ready;
-    } v, r;
+    };
 
-    void L2Destination_r_reset(L2Destination_registers &iv) {
+    void L2Destination_r_reset(L2Destination_registers& iv) {
         iv.state = Idle;
         iv.srcid = CFG_SLOT_L1_TOTAL;
         iv.req_addr = 0;
@@ -92,6 +92,9 @@ SC_MODULE(L2Destination) {
         iv.cr_ready = 0;
         iv.cd_ready = 0;
     }
+
+    L2Destination_registers v;
+    L2Destination_registers r;
 
 };
 

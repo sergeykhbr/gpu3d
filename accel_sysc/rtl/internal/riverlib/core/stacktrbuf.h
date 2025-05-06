@@ -41,7 +41,10 @@ SC_MODULE(StackTraceBuffer) {
     struct StackTraceBuffer_rxegisters {
         sc_signal<sc_uint<5>> raddr;
         sc_signal<sc_biguint<(2 * RISCV_ARCH)>> stackbuf[STACK_TRACE_BUF_SIZE];
-    } vx, rx;
+    };
+
+    StackTraceBuffer_rxegisters vx;
+    StackTraceBuffer_rxegisters rx;
 
 };
 

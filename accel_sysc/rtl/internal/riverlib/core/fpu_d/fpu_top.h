@@ -73,9 +73,9 @@ SC_MODULE(FpuTop) {
         sc_signal<bool> ena_d2l;
         sc_signal<bool> ena_l2d;
         sc_signal<bool> ena_w32;
-    } v, r;
+    };
 
-    void FpuTop_r_reset(FpuTop_registers &iv) {
+    void FpuTop_r_reset(FpuTop_registers& iv) {
         iv.ivec = 0;
         iv.busy = 0;
         iv.ready = 0;
@@ -128,6 +128,8 @@ SC_MODULE(FpuTop) {
     sc_signal<sc_uint<64>> wb_res_l2d;
     sc_signal<bool> w_valid_l2d;
     sc_signal<bool> w_busy_l2d;
+    FpuTop_registers v;
+    FpuTop_registers r;
 
     DoubleAdd *fadd_d0;
     DoubleDiv *fdiv_d0;

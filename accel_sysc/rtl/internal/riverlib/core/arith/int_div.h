@@ -63,9 +63,9 @@ SC_MODULE(IntDiv) {
         sc_signal<sc_uint<RISCV_ARCH>> reference_div;
         sc_signal<sc_uint<64>> a1_dbg;                      // Store this value for output in a case of error
         sc_signal<sc_uint<64>> a2_dbg;
-    } v, r;
+    };
 
-    void IntDiv_r_reset(IntDiv_registers &iv) {
+    void IntDiv_r_reset(IntDiv_registers& iv) {
         iv.rv32 = 0;
         iv.resid = 0;
         iv.invert = 0;
@@ -88,6 +88,8 @@ SC_MODULE(IntDiv) {
     sc_signal<sc_uint<64>> wb_resid1_o;
     sc_signal<sc_uint<4>> wb_bits0_o;
     sc_signal<sc_uint<4>> wb_bits1_o;
+    IntDiv_registers v;
+    IntDiv_registers r;
 
     divstage64 *stage0;
     divstage64 *stage1;

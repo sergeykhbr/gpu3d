@@ -53,9 +53,6 @@ SC_MODULE(L2SerDes) {
     static const uint8_t State_Read = 1;
     static const uint8_t State_Write = 2;
 
-    sc_uint<8> size2len(sc_uint<3> size);
-    sc_uint<3> size2size(sc_uint<3> size);
-
     struct L2SerDes_registers {
         sc_signal<sc_uint<2>> state;
         sc_signal<sc_uint<8>> req_len;
@@ -63,9 +60,9 @@ SC_MODULE(L2SerDes) {
         sc_signal<sc_biguint<linew>> line;
         sc_signal<sc_uint<lineb>> wstrb;
         sc_signal<sc_uint<SERDES_BURST_LEN>> rmux;
-    } v, r;
+    };
 
-    void L2SerDes_r_reset(L2SerDes_registers &iv) {
+    void L2SerDes_r_reset(L2SerDes_registers& iv) {
         iv.state = State_Idle;
         iv.req_len = 0;
         iv.b_wait = 0;
@@ -73,6 +70,12 @@ SC_MODULE(L2SerDes) {
         iv.wstrb = 0;
         iv.rmux = 0;
     }
+
+    sc_uint<8> size2len(sc_uint<3> size);
+    sc_uint<3> size2size(sc_uint<3> size);
+
+    L2SerDes_registers v;
+    L2SerDes_registers r;
 
 };
 

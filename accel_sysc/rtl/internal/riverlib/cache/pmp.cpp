@@ -74,13 +74,9 @@ void PMP::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_w, o_w.name());
         sc_trace(o_vcd, o_x, o_x.name());
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-            char tstr[1024];
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_tbl%d_start_addr", pn.c_str(), i);
-            sc_trace(o_vcd, r.tbl[i].start_addr, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_tbl%d_end_addr", pn.c_str(), i);
-            sc_trace(o_vcd, r.tbl[i].end_addr, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_tbl%d_flags", pn.c_str(), i);
-            sc_trace(o_vcd, r.tbl[i].flags, tstr);
+            sc_trace(o_vcd, r.tbl[i].start_addr, pn + ".r.tbl[i].start_addr");
+            sc_trace(o_vcd, r.tbl[i].end_addr, pn + ".r.tbl[i].end_addr");
+            sc_trace(o_vcd, r.tbl[i].flags, pn + ".r.tbl[i].flags");
         }
     }
 
@@ -94,6 +90,11 @@ void PMP::comb() {
     sc_uint<RISCV_ARCH> vb_end_addr;
     sc_uint<CFG_PMP_FL_TOTAL> vb_flags;
 
+    for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
+        v.tbl[i].start_addr = r.tbl[i].start_addr.read();
+        v.tbl[i].end_addr = r.tbl[i].end_addr.read();
+        v.tbl[i].flags = r.tbl[i].flags.read();
+    }
     v_r = 0;
     v_w = 0;
     v_x = 0;
@@ -101,21 +102,15 @@ void PMP::comb() {
     vb_end_addr = 0;
     vb_flags = 0;
 
-    for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-        v.tbl[i].start_addr = r.tbl[i].start_addr;
-        v.tbl[i].end_addr = r.tbl[i].end_addr;
-        v.tbl[i].flags = r.tbl[i].flags;
-    }
-
     // PMP is active for S,U modes or in M-mode when L-bit is set:
     v_r = (!i_ena.read());
     v_w = (!i_ena.read());
     v_x = (!i_ena.read());
 
-    vb_flags = i_flags;
+    vb_flags = i_flags.read();
     if (i_flags.read()[CFG_PMP_FL_V] == 1) {
-        vb_start_addr = i_start_addr;
-        vb_end_addr = i_end_addr;
+        vb_start_addr = i_start_addr.read();
+        vb_end_addr = i_end_addr.read();
     } else {
         vb_start_addr = 0;
         vb_end_addr = 0;
@@ -146,12 +141,8 @@ void PMP::comb() {
         v.tbl[i_region.read().to_int()].flags = vb_flags;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-            v.tbl[i].start_addr = 0;
-            v.tbl[i].end_addr = 0;
-            v.tbl[i].flags = 0;
-        }
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
+        PMP_r_reset(v);
     }
 
     o_r = v_r;
@@ -160,17 +151,13 @@ void PMP::comb() {
 }
 
 void PMP::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-            r.tbl[i].start_addr = 0;
-            r.tbl[i].end_addr = 0;
-            r.tbl[i].flags = 0;
-        }
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        PMP_r_reset(r);
     } else {
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-            r.tbl[i].start_addr = v.tbl[i].start_addr;
-            r.tbl[i].end_addr = v.tbl[i].end_addr;
-            r.tbl[i].flags = v.tbl[i].flags;
+            r.tbl[i].start_addr = v.tbl[i].start_addr.read();
+            r.tbl[i].end_addr = v.tbl[i].end_addr.read();
+            r.tbl[i].flags = v.tbl[i].flags.read();
         }
     }
 }

@@ -84,17 +84,18 @@ SC_MODULE(TagMemCoupled) {
         sc_signal<sc_uint<flbits>> snoop_flags;
     };
 
-
     struct TagMemCoupled_registers {
         sc_signal<sc_uint<abus>> req_addr;
-    } v, r;
+    };
 
-    void TagMemCoupled_r_reset(TagMemCoupled_registers &iv) {
+    void TagMemCoupled_r_reset(TagMemCoupled_registers& iv) {
         iv.req_addr = 0;
     }
 
     tagmem_in_type linei[MemTotal];
     tagmem_out_type lineo[MemTotal];
+    TagMemCoupled_registers v;
+    TagMemCoupled_registers r;
 
     TagMemNWay<abus, waybits, (ibits - 1), lnbits, flbits, 0> *memx[MemTotal];
 
@@ -133,7 +134,8 @@ TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::TagMemCoupled(sc_module_nam
                                  (ibits - 1),
                                  lnbits,
                                  flbits,
-                                 0>(tstr, async_reset);
+                                 0>(tstr,
+                                    async_reset);
         memx[i]->i_clk(i_clk);
         memx[i]->i_nrst(i_nrst);
         memx[i]->i_direct_access(linei[i].direct_access);
@@ -216,6 +218,7 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     bool v_o_hit_next;
     sc_uint<flbits> vb_o_rflags;
 
+    v = r;
     v_addr_sel = 0;
     v_addr_sel_r = 0;
     v_use_overlay = 0;
@@ -232,10 +235,8 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     v_o_hit_next = 0;
     vb_o_rflags = 0;
 
-    v = r;
 
-
-    v.req_addr = i_addr;
+    v.req_addr = i_addr.read();
     v_addr_sel = i_addr.read()[lnbits];
     v_addr_sel_r = r.req_addr.read()[lnbits];
 
@@ -259,7 +260,7 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     //   [4:0]   byte in line           [4:0]
     //   [11:5]  line index             {[1'b0],[11:6]}
     //   [31:12] tag                    [31:12]
-    vb_addr_tag_direct = i_addr;
+    vb_addr_tag_direct = i_addr.read();
     vb_addr_tag_direct(((ibits + lnbits) - 1), lnbits) = (vb_index >> 1);
 
     vb_addr_tag_next = vb_addr_next;
@@ -267,14 +268,14 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
 
     if (v_addr_sel == 0) {
         linei[EVEN].addr = vb_addr_tag_direct;
-        linei[EVEN].wstrb = i_wstrb;
+        linei[EVEN].wstrb = i_wstrb.read();
         linei[ODD].addr = vb_addr_tag_next;
         linei[ODD].wstrb = 0;
     } else {
         linei[EVEN].addr = vb_addr_tag_next;
         linei[EVEN].wstrb = 0;
         linei[ODD].addr = vb_addr_tag_direct;
-        linei[ODD].wstrb = i_wstrb;
+        linei[ODD].wstrb = i_wstrb.read();
     }
 
     linei[EVEN].direct_access = (i_direct_access.read() && ((!v_addr_sel) || v_use_overlay));
@@ -289,34 +290,34 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     linei[EVEN].we = (i_we.read() && ((!v_addr_sel) || v_use_overlay));
     linei[ODD].we = (i_we.read() && (v_addr_sel || v_use_overlay));
 
-    linei[EVEN].wdata = i_wdata;
-    linei[ODD].wdata = i_wdata;
+    linei[EVEN].wdata = i_wdata.read();
+    linei[ODD].wdata = i_wdata.read();
 
-    linei[EVEN].wflags = i_wflags;
-    linei[ODD].wflags = i_wflags;
+    linei[EVEN].wflags = i_wflags.read();
+    linei[ODD].wflags = i_wflags.read();
 
     // Form output:
     if (v_addr_sel_r == 0) {
-        vb_o_rdata = (lineo[ODD].rdata.read()(31, 0), lineo[EVEN].rdata);
-        vb_raddr_tag = lineo[EVEN].raddr;
-        vb_o_rflags = lineo[EVEN].rflags;
+        vb_o_rdata = (lineo[ODD].rdata.read()(31, 0), lineo[EVEN].rdata.read());
+        vb_raddr_tag = lineo[EVEN].raddr.read();
+        vb_o_rflags = lineo[EVEN].rflags.read();
 
-        v_o_hit = lineo[EVEN].hit;
+        v_o_hit = lineo[EVEN].hit.read();
         if (v_use_overlay_r == 0) {
-            v_o_hit_next = lineo[EVEN].hit;
+            v_o_hit_next = lineo[EVEN].hit.read();
         } else {
-            v_o_hit_next = lineo[ODD].hit;
+            v_o_hit_next = lineo[ODD].hit.read();
         }
     } else {
-        vb_o_rdata = (lineo[EVEN].rdata.read()(31, 0), lineo[ODD].rdata);
-        vb_raddr_tag = lineo[ODD].raddr;
-        vb_o_rflags = lineo[ODD].rflags;
+        vb_o_rdata = (lineo[EVEN].rdata.read()(31, 0), lineo[ODD].rdata.read());
+        vb_raddr_tag = lineo[ODD].raddr.read();
+        vb_o_rflags = lineo[ODD].rflags.read();
 
-        v_o_hit = lineo[ODD].hit;
+        v_o_hit = lineo[ODD].hit.read();
         if (v_use_overlay_r == 0) {
-            v_o_hit_next = lineo[ODD].hit;
+            v_o_hit_next = lineo[ODD].hit.read();
         } else {
-            v_o_hit_next = lineo[EVEN].hit;
+            v_o_hit_next = lineo[EVEN].hit.read();
         }
     }
 
@@ -333,7 +334,7 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
 
 template<int abus, int waybits, int ibits, int lnbits, int flbits>
 void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         TagMemCoupled_r_reset(r);
     } else {
         r = v;

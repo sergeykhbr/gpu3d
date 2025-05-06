@@ -58,9 +58,9 @@ SC_MODULE(Double2Long) {
         sc_signal<sc_uint<64>> mantPostScale;
         sc_signal<bool> overflow;
         sc_signal<bool> underflow;
-    } v, r;
+    };
 
-    void Double2Long_r_reset(Double2Long_registers &iv) {
+    void Double2Long_r_reset(Double2Long_registers& iv) {
         iv.busy = 0;
         iv.ena = 0;
         iv.signA = 0;
@@ -73,6 +73,9 @@ SC_MODULE(Double2Long) {
         iv.overflow = 0;
         iv.underflow = 0;
     }
+
+    Double2Long_registers v;
+    Double2Long_registers r;
 
 };
 

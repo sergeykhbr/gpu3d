@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "../../../prj/impl/asic/target_cfg.h"
+#include "../../../../prj/impl/asic/target_cfg.h"
 #include "tagmemnway.h"
 
 namespace debugger {
@@ -109,7 +109,7 @@ SC_MODULE(DCacheLru) {
     static const uint8_t State_SnoopReadData = 13;
 
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
-    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)) - 1);
+    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)) - 1);// Actual bitwidth is (ibits + waybits) but to avoid sc template generation use 32-bits
 
     struct DCacheLru_registers {
         sc_signal<sc_uint<MemopType_Total>> req_type;
@@ -139,9 +139,9 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> snoop_restore_wait_resp;
         sc_signal<bool> snoop_restore_write_bus;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr_restore;
-    } v, r;
+    };
 
-    void DCacheLru_r_reset(DCacheLru_registers &iv) {
+    void DCacheLru_r_reset(DCacheLru_registers& iv) {
         iv.req_type = 0;
         iv.req_addr = 0;
         iv.req_wdata = 0;
@@ -187,6 +187,8 @@ SC_MODULE(DCacheLru) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_snoop_addr_i;
     sc_signal<bool> line_snoop_ready_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_snoop_flags_o;
+    DCacheLru_registers v;
+    DCacheLru_registers r;
 
     TagMemNWay<abus, CFG_DLOG2_NWAYS, CFG_DLOG2_LINES_PER_WAY, lnbits, flbits, 1> *mem0;
 

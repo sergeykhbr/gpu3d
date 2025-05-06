@@ -68,9 +68,9 @@ SC_MODULE(DoubleDiv) {
         sc_signal<bool> overflow;
         sc_signal<bool> underflow;
         sc_signal<bool> illegal_op;
-    } v, r;
+    };
 
-    void DoubleDiv_r_reset(DoubleDiv_registers &iv) {
+    void DoubleDiv_r_reset(DoubleDiv_registers& iv) {
         iv.busy = 0;
         iv.ena = 0;
         iv.a = 0;
@@ -99,6 +99,8 @@ SC_MODULE(DoubleDiv) {
     sc_signal<bool> w_idiv_rdy;
     sc_signal<bool> w_idiv_overflow;
     sc_signal<bool> w_idiv_zeroresid;
+    DoubleDiv_registers v;
+    DoubleDiv_registers r;
 
     idiv53 *u_idiv53;
 

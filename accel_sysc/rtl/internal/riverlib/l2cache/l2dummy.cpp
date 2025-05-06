@@ -63,18 +63,18 @@ void L2Dummy::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_l2i, i_l2i.name());
         sc_trace(o_vcd, o_l2o, o_l2o.name());
         sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.srcid, pn + ".r_srcid");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_size, pn + ".r_req_size");
-        sc_trace(o_vcd, r.req_prot, pn + ".r_req_prot");
-        sc_trace(o_vcd, r.req_lock, pn + ".r_req_lock");
-        sc_trace(o_vcd, r.req_id, pn + ".r_req_id");
-        sc_trace(o_vcd, r.req_user, pn + ".r_req_user");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
-        sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
-        sc_trace(o_vcd, r.rdata, pn + ".r_rdata");
-        sc_trace(o_vcd, r.resp, pn + ".r_resp");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.srcid, pn + ".r.srcid");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_size, pn + ".r.req_size");
+        sc_trace(o_vcd, r.req_prot, pn + ".r.req_prot");
+        sc_trace(o_vcd, r.req_lock, pn + ".r.req_lock");
+        sc_trace(o_vcd, r.req_id, pn + ".r.req_id");
+        sc_trace(o_vcd, r.req_user, pn + ".r.req_user");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
+        sc_trace(o_vcd, r.req_wstrb, pn + ".r.req_wstrb");
+        sc_trace(o_vcd, r.rdata, pn + ".r.rdata");
+        sc_trace(o_vcd, r.resp, pn + ".r.resp");
     }
 
 }
@@ -88,6 +88,7 @@ void L2Dummy::comb() {
     int vb_srcid;
     bool v_selected;
 
+    v = r;
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
         vl1o[i] = axi4_l1_out_none;
     }
@@ -100,10 +101,8 @@ void L2Dummy::comb() {
     vb_srcid = 0;
     v_selected = 0;
 
-    v = r;
-
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
-        vl1o[i] = i_l1o[i];
+        vl1o[i] = i_l1o[i].read();
         vlxi[i] = axi4_l1_in_none;
 
         vb_src_aw[i] = vl1o[i].aw_valid;
@@ -159,12 +158,12 @@ void L2Dummy::comb() {
         break;
     case state_ar:
         vl2o.ar_valid = 1;
-        vl2o.ar_bits.addr = r.req_addr;
-        vl2o.ar_bits.size = r.req_size;
-        vl2o.ar_bits.lock = r.req_lock;
-        vl2o.ar_bits.prot = r.req_prot;
-        vl2o.ar_id = r.req_id;
-        vl2o.ar_user = r.req_user;
+        vl2o.ar_bits.addr = r.req_addr.read();
+        vl2o.ar_bits.size = r.req_size.read();
+        vl2o.ar_bits.lock = r.req_lock.read();
+        vl2o.ar_bits.prot = r.req_prot.read();
+        vl2o.ar_id = r.req_id.read();
+        vl2o.ar_user = r.req_user.read();
         if (i_l2i.read().ar_ready == 1) {
             v.state = state_r;
         }
@@ -180,27 +179,27 @@ void L2Dummy::comb() {
     case l1_r_resp:
         vlxi[r.srcid.read().to_int()].r_valid = 1;
         vlxi[r.srcid.read().to_int()].r_last = 1;
-        vlxi[r.srcid.read().to_int()].r_data = r.rdata;
+        vlxi[r.srcid.read().to_int()].r_data = r.rdata.read();
         vlxi[r.srcid.read().to_int()].r_resp = (0, r.resp.read());
-        vlxi[r.srcid.read().to_int()].r_id = r.req_id;
-        vlxi[r.srcid.read().to_int()].r_user = r.req_user;
+        vlxi[r.srcid.read().to_int()].r_id = r.req_id.read();
+        vlxi[r.srcid.read().to_int()].r_user = r.req_user.read();
         if (vl1o[r.srcid.read().to_int()].r_ready == 1) {
             v.state = Idle;
         }
         break;
     case state_aw:
         vl2o.aw_valid = 1;
-        vl2o.aw_bits.addr = r.req_addr;
-        vl2o.aw_bits.size = r.req_size;
-        vl2o.aw_bits.lock = r.req_lock;
-        vl2o.aw_bits.prot = r.req_prot;
-        vl2o.aw_id = r.req_id;
-        vl2o.aw_user = r.req_user;
+        vl2o.aw_bits.addr = r.req_addr.read();
+        vl2o.aw_bits.size = r.req_size.read();
+        vl2o.aw_bits.lock = r.req_lock.read();
+        vl2o.aw_bits.prot = r.req_prot.read();
+        vl2o.aw_id = r.req_id.read();
+        vl2o.aw_user = r.req_user.read();
         vl2o.w_valid = 1;                                   // AXI-Lite request
         vl2o.w_last = 1;
-        vl2o.w_data = r.req_wdata;
-        vl2o.w_strb = r.req_wstrb;
-        vl2o.w_user = r.req_user;
+        vl2o.w_data = r.req_wdata.read();
+        vl2o.w_strb = r.req_wstrb.read();
+        vl2o.w_user = r.req_user.read();
         if (i_l2i.read().aw_ready == 1) {
             if (i_l2i.read().w_ready == 1) {
                 v.state = state_b;
@@ -212,9 +211,9 @@ void L2Dummy::comb() {
     case state_w:
         vl2o.w_valid = 1;
         vl2o.w_last = 1;
-        vl2o.w_data = r.req_wdata;
-        vl2o.w_strb = r.req_wstrb;
-        vl2o.w_user = r.req_user;
+        vl2o.w_data = r.req_wdata.read();
+        vl2o.w_strb = r.req_wstrb.read();
+        vl2o.w_user = r.req_user.read();
         if (i_l2i.read().w_ready == 1) {
             v.state = state_b;
         }
@@ -228,9 +227,9 @@ void L2Dummy::comb() {
         break;
     case l1_w_resp:
         vlxi[r.srcid.read().to_int()].b_valid = 1;
-        vlxi[r.srcid.read().to_int()].b_resp = r.resp;
-        vlxi[r.srcid.read().to_int()].b_id = r.req_id;
-        vlxi[r.srcid.read().to_int()].b_user = r.req_user;
+        vlxi[r.srcid.read().to_int()].b_resp = r.resp.read();
+        vlxi[r.srcid.read().to_int()].b_id = r.req_id.read();
+        vlxi[r.srcid.read().to_int()].b_user = r.req_user.read();
         if (vl1o[r.srcid.read().to_int()].b_ready == 1) {
             v.state = Idle;
         }
@@ -239,7 +238,7 @@ void L2Dummy::comb() {
         break;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         L2Dummy_r_reset(v);
     }
 
@@ -250,7 +249,7 @@ void L2Dummy::comb() {
 }
 
 void L2Dummy::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         L2Dummy_r_reset(r);
     } else {
         r = v;

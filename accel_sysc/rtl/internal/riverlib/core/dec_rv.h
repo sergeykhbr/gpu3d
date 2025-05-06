@@ -68,23 +68,23 @@ SC_MODULE(DecoderRv) {
     bool async_reset_;
     bool fpu_ena_;
 
-    static const uint8_t OPCODE_LB = 0x00;
-    static const uint8_t OPCODE_FPU_LD = 0x01;
-    static const uint8_t OPCODE_FENCE = 0x03;
-    static const uint8_t OPCODE_ADDI = 0x04;
-    static const uint8_t OPCODE_AUIPC = 0x05;
-    static const uint8_t OPCODE_ADDIW = 0x06;
-    static const uint8_t OPCODE_SB = 0x08;
-    static const uint8_t OPCODE_FPU_SD = 0x09;
-    static const uint8_t OPCODE_AMO = 0x0B;
-    static const uint8_t OPCODE_ADD = 0x0C;
-    static const uint8_t OPCODE_LUI = 0x0D;
-    static const uint8_t OPCODE_ADDW = 0x0E;
-    static const uint8_t OPCODE_FPU_OP = 0x14;
-    static const uint8_t OPCODE_BEQ = 0x18;
-    static const uint8_t OPCODE_JALR = 0x19;
-    static const uint8_t OPCODE_JAL = 0x1B;
-    static const uint8_t OPCODE_CSRR = 0x1C;
+    static const uint8_t OPCODE_LB = 0x00;                  // 00000: LB, LH, LW, LD, LBU, LHU, LWU
+    static const uint8_t OPCODE_FPU_LD = 0x01;              // 00001: FLD
+    static const uint8_t OPCODE_FENCE = 0x03;               // 00011: FENCE, FENCE_I
+    static const uint8_t OPCODE_ADDI = 0x04;                // 00100: ADDI, ANDI, ORI, SLLI, SLTI, SLTIU, SRAI, SRLI, XORI
+    static const uint8_t OPCODE_AUIPC = 0x05;               // 00101: AUIPC
+    static const uint8_t OPCODE_ADDIW = 0x06;               // 00110: ADDIW, SLLIW, SRAIW, SRLIW
+    static const uint8_t OPCODE_SB = 0x08;                  // 01000: SB, SH, SW, SD
+    static const uint8_t OPCODE_FPU_SD = 0x09;              // 01001: FSD
+    static const uint8_t OPCODE_AMO = 0x0B;                 // 01011: Atomic opcode (AMO)
+    static const uint8_t OPCODE_ADD = 0x0C;                 // 01100: ADD, AND, OR, SLT, SLTU, SLL, SRA, SRL, SUB, XOR, DIV, DIVU, MUL, REM, REMU
+    static const uint8_t OPCODE_LUI = 0x0D;                 // 01101: LUI
+    static const uint8_t OPCODE_ADDW = 0x0E;                // 01110: ADDW, SLLW, SRAW, SRLW, SUBW, DIVW, DIVUW, MULW, REMW, REMUW
+    static const uint8_t OPCODE_FPU_OP = 0x14;              // 10100: FPU operation
+    static const uint8_t OPCODE_BEQ = 0x18;                 // 11000: BEQ, BNE, BLT, BGE, BLTU, BGEU
+    static const uint8_t OPCODE_JALR = 0x19;                // 11001: JALR
+    static const uint8_t OPCODE_JAL = 0x1B;                 // 11011: JAL
+    static const uint8_t OPCODE_CSRR = 0x1C;                // 11100: CSRRC, CSRRCI, CSRRS, CSRRSI, CSRRW, CSRRWI, URET, SRET, HRET, MRET
 
     struct DecoderRv_registers {
         sc_signal<sc_uint<RISCV_ARCH>> pc;
@@ -109,9 +109,9 @@ SC_MODULE(DecoderRv) {
         sc_signal<sc_uint<12>> csr_addr;
         sc_signal<sc_uint<RISCV_ARCH>> imm;
         sc_signal<bool> progbuf_ena;
-    } v, r;
+    };
 
-    void DecoderRv_r_reset(DecoderRv_registers &iv) {
+    void DecoderRv_r_reset(DecoderRv_registers& iv) {
         iv.pc = ~0ull;
         iv.isa_type = 0;
         iv.instr_vec = 0;
@@ -135,6 +135,9 @@ SC_MODULE(DecoderRv) {
         iv.imm = 0;
         iv.progbuf_ena = 0;
     }
+
+    DecoderRv_registers v;
+    DecoderRv_registers r;
 
 };
 

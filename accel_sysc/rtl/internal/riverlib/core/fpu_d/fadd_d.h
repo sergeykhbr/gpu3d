@@ -82,9 +82,9 @@ SC_MODULE(DoubleAdd) {
         sc_signal<sc_uint<12>> expPostScale;
         sc_signal<sc_uint<12>> expPostScaleInv;
         sc_signal<sc_biguint<105>> mantPostScale;
-    } v, r;
+    };
 
-    void DoubleAdd_r_reset(DoubleAdd_registers &iv) {
+    void DoubleAdd_r_reset(DoubleAdd_registers& iv) {
         iv.busy = 0;
         iv.ena = 0;
         iv.a = 0;
@@ -115,6 +115,9 @@ SC_MODULE(DoubleAdd) {
         iv.expPostScaleInv = 0;
         iv.mantPostScale = 0;
     }
+
+    DoubleAdd_registers v;
+    DoubleAdd_registers r;
 
 };
 

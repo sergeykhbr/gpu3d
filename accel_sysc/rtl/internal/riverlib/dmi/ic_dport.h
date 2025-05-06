@@ -62,11 +62,14 @@ SC_MODULE(ic_dport) {
 
     struct ic_dport_registers {
         sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> hartsel;
-    } v, r;
+    };
 
-    void ic_dport_r_reset(ic_dport_registers &iv) {
+    void ic_dport_r_reset(ic_dport_registers& iv) {
         iv.hartsel = 0;
     }
+
+    ic_dport_registers v;
+    ic_dport_registers r;
 
 };
 

@@ -81,18 +81,18 @@ void L2Destination::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_req_prot, o_req_prot.name());
         sc_trace(o_vcd, o_req_wdata, o_req_wdata.name());
         sc_trace(o_vcd, o_req_wstrb, o_req_wstrb.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.srcid, pn + ".r_srcid");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_size, pn + ".r_req_size");
-        sc_trace(o_vcd, r.req_prot, pn + ".r_req_prot");
-        sc_trace(o_vcd, r.req_src, pn + ".r_req_src");
-        sc_trace(o_vcd, r.req_type, pn + ".r_req_type");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
-        sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
-        sc_trace(o_vcd, r.ac_valid, pn + ".r_ac_valid");
-        sc_trace(o_vcd, r.cr_ready, pn + ".r_cr_ready");
-        sc_trace(o_vcd, r.cd_ready, pn + ".r_cd_ready");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.srcid, pn + ".r.srcid");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_size, pn + ".r.req_size");
+        sc_trace(o_vcd, r.req_prot, pn + ".r.req_prot");
+        sc_trace(o_vcd, r.req_src, pn + ".r.req_src");
+        sc_trace(o_vcd, r.req_type, pn + ".r.req_type");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
+        sc_trace(o_vcd, r.req_wstrb, pn + ".r.req_wstrb");
+        sc_trace(o_vcd, r.ac_valid, pn + ".r.ac_valid");
+        sc_trace(o_vcd, r.cr_ready, pn + ".r.cr_ready");
+        sc_trace(o_vcd, r.cd_ready, pn + ".r.cd_ready");
     }
 
 }
@@ -111,6 +111,7 @@ void L2Destination::comb() {
     bool v_req_valid;
     sc_uint<L2_REQ_TYPE_BITS> vb_req_type;
 
+    v = r;
     for (int i = 0; i < (CFG_SLOT_L1_TOTAL + 1); i++) {
         vcoreo[i] = axi4_l1_out_none;
     }
@@ -128,13 +129,11 @@ void L2Destination::comb() {
     v_req_valid = 0;
     vb_req_type = 0;
 
-    v = r;
-
-    vb_req_type = r.req_type;
+    vb_req_type = r.req_type.read();
 
     vb_srcid = CFG_SLOT_L1_TOTAL;
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
-        vcoreo[i] = i_l1o[i];                               // Cannot read vector item from port in systemc
+        vcoreo[i] = i_l1o[i].read();                        // Cannot read vector item from port in systemc
         vlxi[i] = axi4_l1_in_none;
 
         vb_src_aw[i] = vcoreo[i].aw_valid;
@@ -157,9 +156,9 @@ void L2Destination::comb() {
         }
     }
 
-    vb_ac_valid = r.ac_valid;
-    vb_cr_ready = r.cr_ready;
-    vb_cd_ready = r.cd_ready;
+    vb_ac_valid = r.ac_valid.read();
+    vb_cr_ready = r.cr_ready.read();
+    vb_cd_ready = r.cd_ready.read();
 
     vb_broadband_mask_full = ~0ull;
     vb_broadband_mask_full[CFG_SLOT_L1_TOTAL] = 0;          // exclude empty slot
@@ -232,12 +231,12 @@ void L2Destination::comb() {
         }
         break;
     case ReadMem:
-        vlxi[r.srcid.read().to_int()].r_valid = i_resp_valid;
-        vlxi[r.srcid.read().to_int()].r_last = i_resp_valid;// Lite interface
+        vlxi[r.srcid.read().to_int()].r_valid = i_resp_valid.read();
+        vlxi[r.srcid.read().to_int()].r_last = i_resp_valid.read();// Lite interface
         if (r.req_type.read()[L2_REQ_TYPE_SNOOP] == 1) {
-            vlxi[r.srcid.read().to_int()].r_data = r.req_wdata;
+            vlxi[r.srcid.read().to_int()].r_data = r.req_wdata.read();
         } else {
-            vlxi[r.srcid.read().to_int()].r_data = i_resp_rdata;
+            vlxi[r.srcid.read().to_int()].r_data = i_resp_rdata.read();
         }
         if (i_resp_status.read().or_reduce() == 0) {
             vlxi[r.srcid.read().to_int()].r_resp = AXI_RESP_OKAY;
@@ -249,7 +248,7 @@ void L2Destination::comb() {
         }
         break;
     case WriteMem:
-        vlxi[r.srcid.read().to_int()].b_valid = i_resp_valid;
+        vlxi[r.srcid.read().to_int()].b_valid = i_resp_valid.read();
         if (i_resp_status.read().or_reduce() == 0) {
             vlxi[r.srcid.read().to_int()].b_resp = AXI_RESP_OKAY;
         } else {
@@ -262,7 +261,7 @@ void L2Destination::comb() {
     case snoop_ac:
         for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
             vlxi[i].ac_valid = r.ac_valid.read()[i];
-            vlxi[i].ac_addr = r.req_addr;
+            vlxi[i].ac_addr = r.req_addr.read();
             if (r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1) {
                 vlxi[i].ac_snoop = AC_SNOOP_READ_UNIQUE;
             } else {
@@ -328,7 +327,7 @@ void L2Destination::comb() {
         break;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         L2Destination_r_reset(v);
     }
 
@@ -337,16 +336,16 @@ void L2Destination::comb() {
     }
 
     o_req_valid = v_req_valid;
-    o_req_type = r.req_type;
-    o_req_addr = r.req_addr;
-    o_req_size = r.req_size;
-    o_req_prot = r.req_prot;
-    o_req_wdata = r.req_wdata;
-    o_req_wstrb = r.req_wstrb;
+    o_req_type = r.req_type.read();
+    o_req_addr = r.req_addr.read();
+    o_req_size = r.req_size.read();
+    o_req_prot = r.req_prot.read();
+    o_req_wdata = r.req_wdata.read();
+    o_req_wstrb = r.req_wstrb.read();
 }
 
 void L2Destination::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         L2Destination_r_reset(r);
     } else {
         r = v;

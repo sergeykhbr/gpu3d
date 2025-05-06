@@ -44,23 +44,23 @@ StackTraceBuffer::StackTraceBuffer(sc_module_name name)
 }
 
 void StackTraceBuffer::comb() {
-    vx.raddr = rx.raddr;
+    vx.raddr = rx.raddr.read();
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) {
-        vx.stackbuf[i] = rx.stackbuf[i];
+        vx.stackbuf[i] = rx.stackbuf[i].read();
     }
 
-    vx.raddr = i_raddr;
+    vx.raddr = i_raddr.read();
     if (i_we.read() == 1) {
-        vx.stackbuf[i_waddr.read().to_int()] = i_wdata;
+        vx.stackbuf[i_waddr.read().to_int()] = i_wdata.read();
     }
 
-    o_rdata = rx.stackbuf[rx.raddr.read().to_int()];
+    o_rdata = rx.stackbuf[rx.raddr.read().to_int()].read();
 }
 
 void StackTraceBuffer::rxegisters() {
-    rx.raddr = vx.raddr;
+    rx.raddr = vx.raddr.read();
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) {
-        rx.stackbuf[i] = vx.stackbuf[i];
+        rx.stackbuf[i] = vx.stackbuf[i].read();
     }
 }
 

@@ -74,14 +74,14 @@ void jtagcdc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dmi_req_addr, o_dmi_req_addr.name());
         sc_trace(o_vcd, o_dmi_req_data, o_dmi_req_data.name());
         sc_trace(o_vcd, o_dmi_hardreset, o_dmi_hardreset.name());
-        sc_trace(o_vcd, r.l1, pn + ".r_l1");
-        sc_trace(o_vcd, r.l2, pn + ".r_l2");
-        sc_trace(o_vcd, r.req_valid, pn + ".r_req_valid");
-        sc_trace(o_vcd, r.req_accepted, pn + ".r_req_accepted");
-        sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_data, pn + ".r_req_data");
-        sc_trace(o_vcd, r.req_hardreset, pn + ".r_req_hardreset");
+        sc_trace(o_vcd, r.l1, pn + ".r.l1");
+        sc_trace(o_vcd, r.l2, pn + ".r.l2");
+        sc_trace(o_vcd, r.req_valid, pn + ".r.req_valid");
+        sc_trace(o_vcd, r.req_accepted, pn + ".r.req_accepted");
+        sc_trace(o_vcd, r.req_write, pn + ".r.req_write");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_data, pn + ".r.req_data");
+        sc_trace(o_vcd, r.req_hardreset, pn + ".r.req_hardreset");
     }
 
 }
@@ -89,9 +89,8 @@ void jtagcdc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void jtagcdc::comb() {
     sc_uint<CDC_REG_WIDTH> vb_bus;
 
-    vb_bus = 0;
-
     v = r;
+    vb_bus = 0;
 
     vb_bus = (i_dmi_hardreset.read(),
             i_dmi_req_addr.read(),
@@ -100,7 +99,7 @@ void jtagcdc::comb() {
             i_dmi_req_valid.read());
 
     v.l1 = vb_bus;
-    v.l2 = r.l1;
+    v.l2 = r.l1.read();
     if ((r.l2.read()[0] && (!r.req_valid.read()) && (!r.req_accepted.read())) == 1) {
         // To avoid request repeading
         v.req_valid = 1;
@@ -117,19 +116,19 @@ void jtagcdc::comb() {
         v.req_accepted = 0;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         jtagcdc_r_reset(v);
     }
 
-    o_dmi_req_valid = r.req_valid;
-    o_dmi_req_write = r.req_write;
-    o_dmi_req_data = r.req_data;
-    o_dmi_req_addr = r.req_addr;
-    o_dmi_hardreset = r.req_hardreset;
+    o_dmi_req_valid = r.req_valid.read();
+    o_dmi_req_write = r.req_write.read();
+    o_dmi_req_data = r.req_data.read();
+    o_dmi_req_addr = r.req_addr.read();
+    o_dmi_hardreset = r.req_hardreset.read();
 }
 
 void jtagcdc::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         jtagcdc_r_reset(r);
     } else {
         r = v;

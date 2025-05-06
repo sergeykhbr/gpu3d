@@ -107,35 +107,35 @@ void DoubleAdd::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_overflow, o_overflow.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_busy, o_busy.name());
-        sc_trace(o_vcd, r.busy, pn + ".r_busy");
-        sc_trace(o_vcd, r.ena, pn + ".r_ena");
-        sc_trace(o_vcd, r.a, pn + ".r_a");
-        sc_trace(o_vcd, r.b, pn + ".r_b");
-        sc_trace(o_vcd, r.result, pn + ".r_result");
-        sc_trace(o_vcd, r.illegal_op, pn + ".r_illegal_op");
-        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
-        sc_trace(o_vcd, r.add, pn + ".r_add");
-        sc_trace(o_vcd, r.sub, pn + ".r_sub");
-        sc_trace(o_vcd, r.eq, pn + ".r_eq");
-        sc_trace(o_vcd, r.lt, pn + ".r_lt");
-        sc_trace(o_vcd, r.le, pn + ".r_le");
-        sc_trace(o_vcd, r.max, pn + ".r_max");
-        sc_trace(o_vcd, r.min, pn + ".r_min");
-        sc_trace(o_vcd, r.flMore, pn + ".r_flMore");
-        sc_trace(o_vcd, r.flEqual, pn + ".r_flEqual");
-        sc_trace(o_vcd, r.flLess, pn + ".r_flLess");
-        sc_trace(o_vcd, r.preShift, pn + ".r_preShift");
-        sc_trace(o_vcd, r.signOpMore, pn + ".r_signOpMore");
-        sc_trace(o_vcd, r.expMore, pn + ".r_expMore");
-        sc_trace(o_vcd, r.mantMore, pn + ".r_mantMore");
-        sc_trace(o_vcd, r.mantLess, pn + ".r_mantLess");
-        sc_trace(o_vcd, r.mantLessScale, pn + ".r_mantLessScale");
-        sc_trace(o_vcd, r.mantSum, pn + ".r_mantSum");
-        sc_trace(o_vcd, r.lshift, pn + ".r_lshift");
-        sc_trace(o_vcd, r.mantAlign, pn + ".r_mantAlign");
-        sc_trace(o_vcd, r.expPostScale, pn + ".r_expPostScale");
-        sc_trace(o_vcd, r.expPostScaleInv, pn + ".r_expPostScaleInv");
-        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
+        sc_trace(o_vcd, r.busy, pn + ".r.busy");
+        sc_trace(o_vcd, r.ena, pn + ".r.ena");
+        sc_trace(o_vcd, r.a, pn + ".r.a");
+        sc_trace(o_vcd, r.b, pn + ".r.b");
+        sc_trace(o_vcd, r.result, pn + ".r.result");
+        sc_trace(o_vcd, r.illegal_op, pn + ".r.illegal_op");
+        sc_trace(o_vcd, r.overflow, pn + ".r.overflow");
+        sc_trace(o_vcd, r.add, pn + ".r.add");
+        sc_trace(o_vcd, r.sub, pn + ".r.sub");
+        sc_trace(o_vcd, r.eq, pn + ".r.eq");
+        sc_trace(o_vcd, r.lt, pn + ".r.lt");
+        sc_trace(o_vcd, r.le, pn + ".r.le");
+        sc_trace(o_vcd, r.max, pn + ".r.max");
+        sc_trace(o_vcd, r.min, pn + ".r.min");
+        sc_trace(o_vcd, r.flMore, pn + ".r.flMore");
+        sc_trace(o_vcd, r.flEqual, pn + ".r.flEqual");
+        sc_trace(o_vcd, r.flLess, pn + ".r.flLess");
+        sc_trace(o_vcd, r.preShift, pn + ".r.preShift");
+        sc_trace(o_vcd, r.signOpMore, pn + ".r.signOpMore");
+        sc_trace(o_vcd, r.expMore, pn + ".r.expMore");
+        sc_trace(o_vcd, r.mantMore, pn + ".r.mantMore");
+        sc_trace(o_vcd, r.mantLess, pn + ".r.mantLess");
+        sc_trace(o_vcd, r.mantLessScale, pn + ".r.mantLessScale");
+        sc_trace(o_vcd, r.mantSum, pn + ".r.mantSum");
+        sc_trace(o_vcd, r.lshift, pn + ".r.lshift");
+        sc_trace(o_vcd, r.mantAlign, pn + ".r.mantAlign");
+        sc_trace(o_vcd, r.expPostScale, pn + ".r.expPostScale");
+        sc_trace(o_vcd, r.expPostScaleInv, pn + ".r.expPostScaleInv");
+        sc_trace(o_vcd, r.mantPostScale, pn + ".r.mantPostScale");
     }
 
 }
@@ -189,6 +189,7 @@ void DoubleAdd::comb() {
     sc_uint<64> resMax;
     sc_uint<64> resMin;
 
+    v = r;
     v_ena = 0;
     signOp = 0;
     signA = 0;
@@ -237,22 +238,20 @@ void DoubleAdd::comb() {
     resMax = 0;
     resMin = 0;
 
-    v = r;
-
     v_ena = (i_ena.read() && (!r.busy.read()));
     v.ena = (r.ena.read()(6, 0), v_ena);
 
     if (i_ena.read() == 1) {
         v.busy = 1;
-        v.add = i_add;
-        v.sub = i_sub;
-        v.eq = i_eq;
-        v.lt = i_lt;
-        v.le = i_le;
-        v.max = i_max;
-        v.min = i_min;
-        v.a = i_a;
-        v.b = i_b;
+        v.add = i_add.read();
+        v.sub = i_sub.read();
+        v.eq = i_eq.read();
+        v.lt = i_lt.read();
+        v.le = i_le.read();
+        v.max = i_max.read();
+        v.min = i_min.read();
+        v.a = i_a.read();
+        v.b = i_b.read();
         v.illegal_op = 0;
         v.overflow = 0;
     }
@@ -410,7 +409,7 @@ void DoubleAdd::comb() {
     if (r.lshift.read() == 0x7F) {
         vb_mantAlign = (r.mantSum.read() >> 1);
     } else if (r.lshift.read().or_reduce() == 0) {
-        vb_mantAlign = r.mantSum;
+        vb_mantAlign = r.mantSum.read();
     } else {
         for (int i = 1; i < 105; i++) {
             if (i == r.lshift.read()) {
@@ -446,7 +445,7 @@ void DoubleAdd::comb() {
 
     // Mantissa post-scale:
     //    Scaled = SumScale>>(-ExpSum) only if ExpSum < 0;
-    vb_mantPostScale = r.mantAlign;
+    vb_mantPostScale = r.mantAlign.read();
     if (r.expPostScale.read()[11] == 1) {
         for (int i = 1; i < 105; i++) {
             if (i == r.expPostScaleInv.read().to_int()) {
@@ -510,7 +509,7 @@ void DoubleAdd::comb() {
     } else if (sumZero == 1) {
         resAdd[63] = 0;
     } else {
-        resAdd[63] = r.signOpMore;
+        resAdd[63] = r.signOpMore.read();
     }
 
     if ((nanA || nanB) == 1) {
@@ -538,28 +537,28 @@ void DoubleAdd::comb() {
     }
 
     resEQ(63, 1) = 0;
-    resEQ[0] = r.flEqual;
+    resEQ[0] = r.flEqual.read();
 
     resLT(63, 1) = 0;
-    resLT[0] = r.flLess;
+    resLT[0] = r.flLess.read();
 
     resLE(63, 1) = 0;
     resLE[0] = (r.flLess.read() || r.flEqual.read());
 
     if ((nanA || nanB) == 1) {
-        resMax = r.b;
+        resMax = r.b.read();
     } else if (r.flMore.read() == 1) {
-        resMax = r.a;
+        resMax = r.a.read();
     } else {
-        resMax = r.b;
+        resMax = r.b.read();
     }
 
     if ((nanA || nanB) == 1) {
-        resMin = r.b;
+        resMin = r.b.read();
     } else if (r.flLess.read() == 1) {
-        resMin = r.a;
+        resMin = r.a.read();
     } else {
-        resMin = r.b;
+        resMin = r.b.read();
     }
 
     if (r.ena.read()[6] == 1) {
@@ -590,19 +589,19 @@ void DoubleAdd::comb() {
         v.min = 0;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         DoubleAdd_r_reset(v);
     }
 
-    o_res = r.result;
-    o_illegal_op = r.illegal_op;
-    o_overflow = r.overflow;
+    o_res = r.result.read();
+    o_illegal_op = r.illegal_op.read();
+    o_overflow = r.overflow.read();
     o_valid = r.ena.read()[7];
-    o_busy = r.busy;
+    o_busy = r.busy.read();
 }
 
 void DoubleAdd::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         DoubleAdd_r_reset(r);
     } else {
         r = v;

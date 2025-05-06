@@ -43,7 +43,8 @@ FpuTop::FpuTop(sc_module_name name,
     d2l_d0 = 0;
     l2d_d0 = 0;
 
-    fadd_d0 = new DoubleAdd("fadd_d0", async_reset);
+    fadd_d0 = new DoubleAdd("fadd_d0",
+                             async_reset);
     fadd_d0->i_clk(i_clk);
     fadd_d0->i_nrst(i_nrst);
     fadd_d0->i_ena(r.ena_fadd);
@@ -62,7 +63,8 @@ FpuTop::FpuTop(sc_module_name name,
     fadd_d0->o_valid(w_valid_fadd);
     fadd_d0->o_busy(w_busy_fadd);
 
-    fdiv_d0 = new DoubleDiv("fdiv_d0", async_reset);
+    fdiv_d0 = new DoubleDiv("fdiv_d0",
+                             async_reset);
     fdiv_d0->i_clk(i_clk);
     fdiv_d0->i_nrst(i_nrst);
     fdiv_d0->i_ena(r.ena_fdiv);
@@ -76,7 +78,8 @@ FpuTop::FpuTop(sc_module_name name,
     fdiv_d0->o_valid(w_valid_fdiv);
     fdiv_d0->o_busy(w_busy_fdiv);
 
-    fmul_d0 = new DoubleMul("fmul_d0", async_reset);
+    fmul_d0 = new DoubleMul("fmul_d0",
+                             async_reset);
     fmul_d0->i_clk(i_clk);
     fmul_d0->i_nrst(i_nrst);
     fmul_d0->i_ena(r.ena_fmul);
@@ -88,7 +91,8 @@ FpuTop::FpuTop(sc_module_name name,
     fmul_d0->o_valid(w_valid_fmul);
     fmul_d0->o_busy(w_busy_fmul);
 
-    d2l_d0 = new Double2Long("d2l_d0", async_reset);
+    d2l_d0 = new Double2Long("d2l_d0",
+                              async_reset);
     d2l_d0->i_clk(i_clk);
     d2l_d0->i_nrst(i_nrst);
     d2l_d0->i_ena(r.ena_d2l);
@@ -101,7 +105,8 @@ FpuTop::FpuTop(sc_module_name name,
     d2l_d0->o_valid(w_valid_d2l);
     d2l_d0->o_busy(w_busy_d2l);
 
-    l2d_d0 = new Long2Double("l2d_d0", async_reset);
+    l2d_d0 = new Long2Double("l2d_d0",
+                              async_reset);
     l2d_d0->i_clk(i_clk);
     l2d_d0->i_nrst(i_nrst);
     l2d_d0->i_ena(r.ena_l2d);
@@ -206,23 +211,23 @@ void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_ex_underflow, o_ex_underflow.name());
         sc_trace(o_vcd, o_ex_inexact, o_ex_inexact.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
-        sc_trace(o_vcd, r.ivec, pn + ".r_ivec");
-        sc_trace(o_vcd, r.busy, pn + ".r_busy");
-        sc_trace(o_vcd, r.ready, pn + ".r_ready");
-        sc_trace(o_vcd, r.a, pn + ".r_a");
-        sc_trace(o_vcd, r.b, pn + ".r_b");
-        sc_trace(o_vcd, r.result, pn + ".r_result");
-        sc_trace(o_vcd, r.ex_invalidop, pn + ".r_ex_invalidop");
-        sc_trace(o_vcd, r.ex_divbyzero, pn + ".r_ex_divbyzero");
-        sc_trace(o_vcd, r.ex_overflow, pn + ".r_ex_overflow");
-        sc_trace(o_vcd, r.ex_underflow, pn + ".r_ex_underflow");
-        sc_trace(o_vcd, r.ex_inexact, pn + ".r_ex_inexact");
-        sc_trace(o_vcd, r.ena_fadd, pn + ".r_ena_fadd");
-        sc_trace(o_vcd, r.ena_fdiv, pn + ".r_ena_fdiv");
-        sc_trace(o_vcd, r.ena_fmul, pn + ".r_ena_fmul");
-        sc_trace(o_vcd, r.ena_d2l, pn + ".r_ena_d2l");
-        sc_trace(o_vcd, r.ena_l2d, pn + ".r_ena_l2d");
-        sc_trace(o_vcd, r.ena_w32, pn + ".r_ena_w32");
+        sc_trace(o_vcd, r.ivec, pn + ".r.ivec");
+        sc_trace(o_vcd, r.busy, pn + ".r.busy");
+        sc_trace(o_vcd, r.ready, pn + ".r.ready");
+        sc_trace(o_vcd, r.a, pn + ".r.a");
+        sc_trace(o_vcd, r.b, pn + ".r.b");
+        sc_trace(o_vcd, r.result, pn + ".r.result");
+        sc_trace(o_vcd, r.ex_invalidop, pn + ".r.ex_invalidop");
+        sc_trace(o_vcd, r.ex_divbyzero, pn + ".r.ex_divbyzero");
+        sc_trace(o_vcd, r.ex_overflow, pn + ".r.ex_overflow");
+        sc_trace(o_vcd, r.ex_underflow, pn + ".r.ex_underflow");
+        sc_trace(o_vcd, r.ex_inexact, pn + ".r.ex_inexact");
+        sc_trace(o_vcd, r.ena_fadd, pn + ".r.ena_fadd");
+        sc_trace(o_vcd, r.ena_fdiv, pn + ".r.ena_fdiv");
+        sc_trace(o_vcd, r.ena_fmul, pn + ".r.ena_fmul");
+        sc_trace(o_vcd, r.ena_d2l, pn + ".r.ena_d2l");
+        sc_trace(o_vcd, r.ena_l2d, pn + ".r.ena_l2d");
+        sc_trace(o_vcd, r.ena_w32, pn + ".r.ena_w32");
     }
 
     if (fadd_d0) {
@@ -245,11 +250,10 @@ void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void FpuTop::comb() {
     sc_uint<Instr_FPU_Total> iv;
 
+    v = r;
     iv = 0;
 
-    v = r;
-
-    iv = i_ivec;
+    iv = i_ivec.read();
     v.ena_fadd = 0;
     v.ena_fdiv = 0;
     v.ena_fmul = 0;
@@ -258,9 +262,9 @@ void FpuTop::comb() {
     v.ready = 0;
     if ((i_ena.read() == 1) && (r.busy.read() == 0)) {
         v.busy = 1;
-        v.a = i_a;
-        v.b = i_b;
-        v.ivec = i_ivec;
+        v.a = i_a.read();
+        v.b = i_b.read();
+        v.ivec = i_ivec.read();
         v.ex_invalidop = 0;
         v.ex_divbyzero = 0;
         v.ex_overflow = 0;
@@ -294,40 +298,40 @@ void FpuTop::comb() {
                     || r.ivec.read()[(Instr_FMOV_D_X - Instr_FADD_D)]) == 1)) {
         v.busy = 0;
         v.ready = 1;
-        v.result = r.a;
+        v.result = r.a.read();
     } else if (w_valid_fadd.read() == 1) {
         v.busy = 0;
         v.ready = 1;
-        v.result = wb_res_fadd;
-        v.ex_invalidop = w_illegalop_fadd;
-        v.ex_overflow = w_overflow_fadd;
+        v.result = wb_res_fadd.read();
+        v.ex_invalidop = w_illegalop_fadd.read();
+        v.ex_overflow = w_overflow_fadd.read();
     } else if (w_valid_fdiv.read() == 1) {
         v.busy = 0;
         v.ready = 1;
-        v.result = wb_res_fdiv;
-        v.ex_invalidop = w_illegalop_fdiv;
-        v.ex_divbyzero = w_divbyzero_fdiv;
-        v.ex_overflow = w_overflow_fdiv;
-        v.ex_underflow = w_underflow_fdiv;
+        v.result = wb_res_fdiv.read();
+        v.ex_invalidop = w_illegalop_fdiv.read();
+        v.ex_divbyzero = w_divbyzero_fdiv.read();
+        v.ex_overflow = w_overflow_fdiv.read();
+        v.ex_underflow = w_underflow_fdiv.read();
     } else if (w_valid_fmul.read() == 1) {
         v.busy = 0;
         v.ready = 1;
-        v.result = wb_res_fmul;
-        v.ex_invalidop = w_illegalop_fmul;
-        v.ex_overflow = w_overflow_fmul;
+        v.result = wb_res_fmul.read();
+        v.ex_invalidop = w_illegalop_fmul.read();
+        v.ex_overflow = w_overflow_fmul.read();
     } else if (w_valid_d2l.read() == 1) {
         v.busy = 0;
         v.ready = 1;
-        v.result = wb_res_d2l;
-        v.ex_overflow = w_overflow_d2l;
-        v.ex_underflow = w_underflow_d2l;
+        v.result = wb_res_d2l.read();
+        v.ex_overflow = w_overflow_d2l.read();
+        v.ex_underflow = w_underflow_d2l.read();
     } else if (w_valid_l2d.read() == 1) {
         v.busy = 0;
         v.ready = 1;
-        v.result = wb_res_l2d;
+        v.result = wb_res_l2d.read();
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         FpuTop_r_reset(v);
     }
 
@@ -343,17 +347,17 @@ void FpuTop::comb() {
             || r.ivec.read()[(Instr_FCVT_W_D - Instr_FADD_D)]
             || r.ivec.read()[(Instr_FCVT_D_W - Instr_FADD_D)]);
 
-    o_res = r.result;
-    o_ex_invalidop = r.ex_invalidop;
-    o_ex_divbyzero = r.ex_divbyzero;
-    o_ex_overflow = r.ex_overflow;
-    o_ex_underflow = r.ex_underflow;
-    o_ex_inexact = r.ex_inexact;
-    o_valid = r.ready;
+    o_res = r.result.read();
+    o_ex_invalidop = r.ex_invalidop.read();
+    o_ex_divbyzero = r.ex_divbyzero.read();
+    o_ex_overflow = r.ex_overflow.read();
+    o_ex_underflow = r.ex_underflow.read();
+    o_ex_inexact = r.ex_inexact.read();
+    o_valid = r.ready.read();
 }
 
 void FpuTop::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         FpuTop_r_reset(r);
     } else {
         r = v;

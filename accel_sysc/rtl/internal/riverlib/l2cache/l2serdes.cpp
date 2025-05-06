@@ -54,12 +54,12 @@ void L2SerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_l2o, i_l2o.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
         sc_trace(o_vcd, o_msto, o_msto.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
-        sc_trace(o_vcd, r.b_wait, pn + ".r_b_wait");
-        sc_trace(o_vcd, r.line, pn + ".r_line");
-        sc_trace(o_vcd, r.wstrb, pn + ".r_wstrb");
-        sc_trace(o_vcd, r.rmux, pn + ".r_rmux");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.req_len, pn + ".r.req_len");
+        sc_trace(o_vcd, r.b_wait, pn + ".r.b_wait");
+        sc_trace(o_vcd, r.line, pn + ".r.line");
+        sc_trace(o_vcd, r.wstrb, pn + ".r.wstrb");
+        sc_trace(o_vcd, r.rmux, pn + ".r.rmux");
     }
 
 }
@@ -113,6 +113,7 @@ void L2SerDes::comb() {
     axi4_l2_in_type vl2i;
     axi4_master_out_type vmsto;
 
+    v = r;
     v_req_mem_ready = 0;
     vb_r_data = 0;
     vb_line_o = 0;
@@ -127,12 +128,10 @@ void L2SerDes::comb() {
     vl2i = axi4_l2_in_none;
     vmsto = axi4_master_out_none;
 
-    v = r;
-
-    t_line = r.line;
-    t_wstrb = r.wstrb;
+    t_line = r.line.read();
+    t_wstrb = r.wstrb.read();
     vb_r_data = i_msti.read().r_data;
-    vb_line_o = r.line;
+    vb_line_o = r.line.read();
     for (int i = 0; i < SERDES_BURST_LEN; i++) {
         if (r.rmux.read()[i] == 1) {
             vb_line_o((i * busw) + busw - 1, (i * busw)) = vb_r_data;
@@ -206,7 +205,7 @@ void L2SerDes::comb() {
         v.req_len = vb_len;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         L2SerDes_r_reset(v);
     }
 
@@ -261,7 +260,7 @@ void L2SerDes::comb() {
 }
 
 void L2SerDes::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         L2SerDes_r_reset(r);
     } else {
         r = v;

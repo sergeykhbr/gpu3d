@@ -66,9 +66,9 @@ SC_MODULE(jtagcdc) {
         sc_signal<sc_uint<7>> req_addr;
         sc_signal<sc_uint<32>> req_data;
         sc_signal<bool> req_hardreset;
-    } v, r;
+    };
 
-    void jtagcdc_r_reset(jtagcdc_registers &iv) {
+    void jtagcdc_r_reset(jtagcdc_registers& iv) {
         iv.l1 = ~0ull;
         iv.l2 = 0;
         iv.req_valid = 0;
@@ -78,6 +78,9 @@ SC_MODULE(jtagcdc) {
         iv.req_data = 0;
         iv.req_hardreset = 0;
     }
+
+    jtagcdc_registers v;
+    jtagcdc_registers r;
 
 };
 

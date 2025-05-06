@@ -73,7 +73,8 @@ Workgroup::Workgroup(sc_module_name name,
     l2dummy = 0;
     l2serdes0 = 0;
 
-    dmi0 = new dmidebug("dmi0", async_reset);
+    dmi0 = new dmidebug("dmi0",
+                         async_reset);
     dmi0->i_clk(i_clk);
     dmi0->i_nrst(i_dmi_nrst);
     dmi0->i_trst(i_trst);
@@ -105,7 +106,8 @@ Workgroup::Workgroup(sc_module_name name,
     dmi0->i_dport_rdata(wb_ic_dport_rdata);
     dmi0->o_progbuf(wb_progbuf);
 
-    dport_ic0 = new ic_dport("dport_ic0", async_reset);
+    dport_ic0 = new ic_dport("dport_ic0",
+                              async_reset);
     dport_ic0->i_clk(i_clk);
     dport_ic0->i_nrst(i_dmi_nrst);
     dport_ic0->i_hartsel(wb_dmi_hartsel);
@@ -126,7 +128,8 @@ Workgroup::Workgroup(sc_module_name name,
     dport_ic0->o_dporti(wb_dport_i);
     dport_ic0->i_dporto(wb_dport_o);
 
-    acp_bridge = new ic_axi4_to_l1("acp_bridge", async_reset);
+    acp_bridge = new ic_axi4_to_l1("acp_bridge",
+                                    async_reset);
     acp_bridge->i_clk(i_clk);
     acp_bridge->i_nrst(i_cores_nrst);
     acp_bridge->i_xmsto(i_acpo);
@@ -138,7 +141,8 @@ Workgroup::Workgroup(sc_module_name name,
     for (int i = 0; i < cpu_num_; i++) {
         char tstr[256];
         RISCV_sprintf(tstr, sizeof(tstr), "cpux%d", i);
-        cpux[i] = new RiverAmba(tstr, async_reset,
+        cpux[i] = new RiverAmba(tstr,
+                                 async_reset,
                                  i,
                                  CFG_HW_FPU_ENABLE,
                                  coherence_ena,
@@ -170,7 +174,8 @@ Workgroup::Workgroup(sc_module_name name,
     // endgenerate
 
     if (l2cache_ena_ == 1) {
-        l2cache = new L2Top("l2cache", async_reset);
+        l2cache = new L2Top("l2cache",
+                             async_reset);
         l2cache->i_clk(i_clk);
         l2cache->i_nrst(i_cores_nrst);
         l2cache->i_l1o(coreo);
@@ -179,7 +184,8 @@ Workgroup::Workgroup(sc_module_name name,
         l2cache->o_l2o(l2o);
         l2cache->i_flush_valid(w_flush_l2);
     } else {
-        l2dummy = new L2Dummy("l2dummy", async_reset);
+        l2dummy = new L2Dummy("l2dummy",
+                               async_reset);
         l2dummy->i_clk(i_clk);
         l2dummy->i_nrst(i_cores_nrst);
         l2dummy->i_l1o(coreo);
@@ -189,7 +195,8 @@ Workgroup::Workgroup(sc_module_name name,
         l2dummy->i_flush_valid(w_flush_l2);
     }
 
-    l2serdes0 = new L2SerDes("l2serdes0", async_reset);
+    l2serdes0 = new L2SerDes("l2serdes0",
+                              async_reset);
     l2serdes0->i_clk(i_clk);
     l2serdes0->i_nrst(i_cores_nrst);
     l2serdes0->o_l2i(l2i);
@@ -295,7 +302,6 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_cores_nrst, i_cores_nrst.name());
         sc_trace(o_vcd, i_dmi_nrst, i_dmi_nrst.name());
-        sc_trace(o_vcd, i_clk, i_clk.name());
         sc_trace(o_vcd, i_trst, i_trst.name());
         sc_trace(o_vcd, i_tck, i_tck.name());
         sc_trace(o_vcd, i_tms, i_tms.name());
@@ -313,8 +319,6 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dmi_apbi, i_dmi_apbi.name());
         sc_trace(o_vcd, o_dmi_apbo, o_dmi_apbo.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
-        sc_trace(o_vcd, l2i, l2i.name());
-        sc_trace(o_vcd, l2o, l2o.name());
     }
 
     if (dmi0) {
@@ -369,9 +373,9 @@ void Workgroup::comb() {
 
     // Vector to signal conversion is neccessary to implement compatibility with SystemC:
     for (int i = 0; i < CFG_CPU_MAX; i++) {
-        v_flush_l2 = (v_flush_l2 || vec_flush_l2[i]);
-        vb_halted[i] = vec_halted[i];
-        vb_available[i] = vec_available[i];
+        v_flush_l2 = (v_flush_l2 || vec_flush_l2[i].read());
+        vb_halted[i] = vec_halted[i].read();
+        vb_available[i] = vec_available[i].read();
         vb_irq[i][IRQ_MSIP] = i_msip.read()[i];
         vb_irq[i][IRQ_MTIP] = i_mtip.read()[i];
         vb_irq[i][IRQ_MEIP] = i_meip.read()[i];

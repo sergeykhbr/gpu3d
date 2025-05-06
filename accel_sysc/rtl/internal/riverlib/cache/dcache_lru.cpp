@@ -74,7 +74,8 @@ DCacheLru::DCacheLru(sc_module_name name,
                           CFG_DLOG2_LINES_PER_WAY,
                           lnbits,
                           flbits,
-                          1>("mem0", async_reset);
+                          1>("mem0",
+                             async_reset);
     mem0->i_clk(i_clk);
     mem0->i_nrst(i_nrst);
     mem0->i_direct_access(line_direct_access_i);
@@ -212,33 +213,33 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_flush_address, i_flush_address.name());
         sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
         sc_trace(o_vcd, o_flush_end, o_flush_end.name());
-        sc_trace(o_vcd, r.req_type, pn + ".r_req_type");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
-        sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
-        sc_trace(o_vcd, r.req_size, pn + ".r_req_size");
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_mem_valid, pn + ".r_req_mem_valid");
-        sc_trace(o_vcd, r.req_mem_type, pn + ".r_req_mem_type");
-        sc_trace(o_vcd, r.req_mem_size, pn + ".r_req_mem_size");
-        sc_trace(o_vcd, r.mem_addr, pn + ".r_mem_addr");
-        sc_trace(o_vcd, r.load_fault, pn + ".r_load_fault");
-        sc_trace(o_vcd, r.write_first, pn + ".r_write_first");
-        sc_trace(o_vcd, r.write_flush, pn + ".r_write_flush");
-        sc_trace(o_vcd, r.write_share, pn + ".r_write_share");
-        sc_trace(o_vcd, r.mem_wstrb, pn + ".r_mem_wstrb");
-        sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
-        sc_trace(o_vcd, r.req_flush_all, pn + ".r_req_flush_all");
-        sc_trace(o_vcd, r.req_flush_addr, pn + ".r_req_flush_addr");
-        sc_trace(o_vcd, r.req_flush_cnt, pn + ".r_req_flush_cnt");
-        sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
-        sc_trace(o_vcd, r.cache_line_i, pn + ".r_cache_line_i");
-        sc_trace(o_vcd, r.cache_line_o, pn + ".r_cache_line_o");
-        sc_trace(o_vcd, r.req_snoop_type, pn + ".r_req_snoop_type");
-        sc_trace(o_vcd, r.snoop_flags_valid, pn + ".r_snoop_flags_valid");
-        sc_trace(o_vcd, r.snoop_restore_wait_resp, pn + ".r_snoop_restore_wait_resp");
-        sc_trace(o_vcd, r.snoop_restore_write_bus, pn + ".r_snoop_restore_write_bus");
-        sc_trace(o_vcd, r.req_addr_restore, pn + ".r_req_addr_restore");
+        sc_trace(o_vcd, r.req_type, pn + ".r.req_type");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
+        sc_trace(o_vcd, r.req_wstrb, pn + ".r.req_wstrb");
+        sc_trace(o_vcd, r.req_size, pn + ".r.req_size");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.req_mem_valid, pn + ".r.req_mem_valid");
+        sc_trace(o_vcd, r.req_mem_type, pn + ".r.req_mem_type");
+        sc_trace(o_vcd, r.req_mem_size, pn + ".r.req_mem_size");
+        sc_trace(o_vcd, r.mem_addr, pn + ".r.mem_addr");
+        sc_trace(o_vcd, r.load_fault, pn + ".r.load_fault");
+        sc_trace(o_vcd, r.write_first, pn + ".r.write_first");
+        sc_trace(o_vcd, r.write_flush, pn + ".r.write_flush");
+        sc_trace(o_vcd, r.write_share, pn + ".r.write_share");
+        sc_trace(o_vcd, r.mem_wstrb, pn + ".r.mem_wstrb");
+        sc_trace(o_vcd, r.req_flush, pn + ".r.req_flush");
+        sc_trace(o_vcd, r.req_flush_all, pn + ".r.req_flush_all");
+        sc_trace(o_vcd, r.req_flush_addr, pn + ".r.req_flush_addr");
+        sc_trace(o_vcd, r.req_flush_cnt, pn + ".r.req_flush_cnt");
+        sc_trace(o_vcd, r.flush_cnt, pn + ".r.flush_cnt");
+        sc_trace(o_vcd, r.cache_line_i, pn + ".r.cache_line_i");
+        sc_trace(o_vcd, r.cache_line_o, pn + ".r.cache_line_o");
+        sc_trace(o_vcd, r.req_snoop_type, pn + ".r.req_snoop_type");
+        sc_trace(o_vcd, r.snoop_flags_valid, pn + ".r.snoop_flags_valid");
+        sc_trace(o_vcd, r.snoop_restore_wait_resp, pn + ".r.snoop_restore_wait_resp");
+        sc_trace(o_vcd, r.snoop_restore_write_bus, pn + ".r.snoop_restore_write_bus");
+        sc_trace(o_vcd, r.req_addr_restore, pn + ".r.req_addr_restore");
     }
 
     if (mem0) {
@@ -277,6 +278,7 @@ void DCacheLru::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> vb_addr_direct_next;
     sc_uint<MemopType_Total> t_req_type;
 
+    v = r;
     vb_cache_line_i_modified = 0;
     vb_line_rdata_o_modified = 0;
     vb_line_rdata_o_wstrb = 0;
@@ -307,10 +309,8 @@ void DCacheLru::comb() {
     vb_addr_direct_next = 0;
     t_req_type = 0;
 
-    v = r;
-
-    t_req_type = r.req_type;
-    v_resp_snoop_valid = r.snoop_flags_valid;
+    t_req_type = r.req_type.read();
+    v_resp_snoop_valid = r.snoop_flags_valid.read();
     ridx = r.req_addr.read()((CFG_LOG2_L1CACHE_BYTES_PER_LINE - 1), 3);
 
     vb_cached_data = line_rdata_o.read()((64 * ridx.to_int()) + 64 - 1, (64 * ridx.to_int()));
@@ -328,7 +328,7 @@ void DCacheLru::comb() {
             v.req_flush_addr = 0;
         } else {
             v.req_flush_cnt = 0;
-            v.req_flush_addr = i_flush_address;
+            v.req_flush_addr = i_flush_address.read();
         }
     }
 
@@ -338,8 +338,8 @@ void DCacheLru::comb() {
         }
     }
 
-    vb_line_rdata_o_modified = line_rdata_o;
-    vb_cache_line_i_modified = r.cache_line_i;
+    vb_line_rdata_o_modified = line_rdata_o.read();
+    vb_cache_line_i_modified = r.cache_line_i.read();
     for (int i = 0; i < (L1CACHE_BYTES_PER_LINE / 8); i++) {
         if (i == ridx.to_int()) {
             vb_line_rdata_o_modified((64 * i) + 64 - 1, (64 * i)) = ((vb_line_rdata_o_modified((64 * i) + 64 - 1, (64 * i))
@@ -348,7 +348,7 @@ void DCacheLru::comb() {
             vb_cache_line_i_modified((64 * i) + 64 - 1, (64 * i)) = ((vb_cache_line_i_modified((64 * i) + 64 - 1, (64 * i))
                             & (~vb_req_mask))
                     | (r.req_wdata.read() & vb_req_mask));
-            vb_line_rdata_o_wstrb((8 * i) + 8 - 1, (8 * i)) = r.req_wstrb;
+            vb_line_rdata_o_wstrb((8 * i) + 8 - 1, (8 * i)) = r.req_wstrb.read();
         }
     }
 
@@ -360,8 +360,8 @@ void DCacheLru::comb() {
         vb_addr_direct_next = (r.req_addr.read() + 1);
     }
 
-    vb_line_addr = r.req_addr;
-    vb_line_wdata = r.cache_line_i;
+    vb_line_addr = r.req_addr.read();
+    vb_line_wdata = r.cache_line_i.read();
 
     // System Bus access state machine
     switch (r.state.read()) {
@@ -413,7 +413,7 @@ void DCacheLru::comb() {
                             && (r.req_type.read()[MemopType_Reserve] == 1)) {
                     // Load with reserve
                     v_line_cs_write = 1;
-                    v_line_wflags = line_rflags_o;
+                    v_line_wflags = line_rflags_o.read();
                     v_line_wflags[DTAG_FL_RESERVED] = 1;
                     vb_line_wdata = vb_cached_data;
                     vb_line_wstrb = ~0ull;                  // flags will be modified only if wstrb != 0
@@ -471,19 +471,19 @@ void DCacheLru::comb() {
                 }
                 v.req_mem_size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
                 v.mem_wstrb = ~0ull;
-                v.cache_line_o = line_rdata_o;
+                v.cache_line_o = line_rdata_o.read();
             } else {
                 // Uncached read/write
-                v.mem_addr = r.req_addr;
+                v.mem_addr = r.req_addr.read();
                 v.mem_wstrb = (0, r.req_wstrb.read());
-                v.req_mem_size = r.req_size;
+                v.req_mem_size = r.req_size.read();
                 if (r.req_type.read()[MemopType_Store] == 1) {
                     v.req_mem_type = WriteNoSnoop();
                 } else {
                     v.req_mem_type = ReadNoSnoop();
                 }
                 t_cache_line_i = 0;
-                t_cache_line_i(63, 0) = r.req_wdata;
+                t_cache_line_i(63, 0) = r.req_wdata.read();
                 v.cache_line_o = t_cache_line_i;
             }
         }
@@ -507,7 +507,7 @@ void DCacheLru::comb() {
         break;
     case State_WaitResp:
         if (i_mem_data_valid.read() == 1) {
-            v.cache_line_i = i_mem_data;
+            v.cache_line_i = i_mem_data.read();
             v.state = State_CheckResp;
             if (i_mem_load_fault.read() == 1) {
                 v.load_fault = 1;
@@ -517,9 +517,9 @@ void DCacheLru::comb() {
             // Access cache data
             v_req_snoop_ready_on_wait = 1;
             v.snoop_restore_wait_resp = 1;
-            v.req_addr_restore = r.req_addr;
-            v.req_addr = i_req_snoop_addr;
-            v.req_snoop_type = i_req_snoop_type;
+            v.req_addr_restore = r.req_addr.read();
+            v.req_addr = i_req_snoop_addr.read();
+            v.req_snoop_type = i_req_snoop_type.read();
             v.state = State_SnoopSetupAddr;
         }
         break;
@@ -581,35 +581,35 @@ void DCacheLru::comb() {
                 // Non-cached write
                 v.state = State_Idle;
                 v_resp_valid = 1;
-                v_resp_er_store_fault = i_mem_store_fault;
+                v_resp_er_store_fault = i_mem_store_fault.read();
             }
         } else if (coherence_ena_
                     && ((i_req_snoop_valid.read() == 1) && (i_req_snoop_type.read().or_reduce() == 1))) {
             // Access cache data cannot be in the same clock as i_mem_data_valid
             v_req_snoop_ready_on_wait = 1;
             v.snoop_restore_write_bus = 1;
-            v.req_addr_restore = r.req_addr;
-            v.req_addr = i_req_snoop_addr;
-            v.req_snoop_type = i_req_snoop_type;
+            v.req_addr_restore = r.req_addr.read();
+            v.req_addr = i_req_snoop_addr.read();
+            v.req_snoop_type = i_req_snoop_type.read();
             v.state = State_SnoopSetupAddr;
         }
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
-        v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
+        v_direct_access = r.req_flush_all.read();           // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.write_flush = 0;
         v.cache_line_i = 0;
         break;
     case State_FlushCheck:
-        v.cache_line_o = line_rdata_o;
-        v_direct_access = r.req_flush_all;
-        v_line_cs_write = r.req_flush_all;
+        v.cache_line_o = line_rdata_o.read();
+        v_direct_access = r.req_flush_all.read();
+        v_line_cs_write = r.req_flush_all.read();
         if ((line_rflags_o.read()[TAG_FL_VALID] == 1)
                 && (line_rflags_o.read()[DTAG_FL_DIRTY] == 1)) {
             // Off-load valid line
             v.write_flush = 1;
-            v.mem_addr = line_raddr_o;
+            v.mem_addr = line_raddr_o.read();
             v.req_mem_valid = 1;
             v.req_mem_type = WriteBack();
             v.mem_wstrb = ~0ull;
@@ -660,9 +660,9 @@ void DCacheLru::comb() {
         v_resp_snoop_valid = 1;
         if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_READCLEAN] == 0) {
             v_line_cs_write = 1;
-            vb_line_wdata = line_rdata_o;
+            vb_line_wdata = line_rdata_o.read();
             vb_line_wstrb = ~0ull;
-            v_line_wflags = line_rflags_o;
+            v_line_wflags = line_rflags_o.read();
             v_line_wflags[DTAG_FL_DIRTY] = 0;
             v_line_wflags[DTAG_FL_SHARED] = 1;
             v_line_wflags[DTAG_FL_RESERVED] = 0;
@@ -671,10 +671,10 @@ void DCacheLru::comb() {
         v.snoop_restore_wait_resp = 0;
         v.snoop_restore_write_bus = 0;
         if (r.snoop_restore_wait_resp.read() == 1) {
-            v.req_addr = r.req_addr_restore;
+            v.req_addr = r.req_addr_restore.read();
             v.state = State_WaitResp;
         } else if (r.snoop_restore_write_bus.read() == 1) {
-            v.req_addr = r.req_addr_restore;
+            v.req_addr = r.req_addr_restore.read();
             v.state = State_WriteBus;
         } else {
             v.state = State_Idle;
@@ -696,8 +696,8 @@ void DCacheLru::comb() {
         if (coherence_ena_
                 && ((i_req_snoop_valid.read() == 1) && (i_req_snoop_type.read().or_reduce() == 1))) {
             // Access cache data
-            v.req_addr = i_req_snoop_addr;
-            v.req_snoop_type = i_req_snoop_type;
+            v.req_addr = i_req_snoop_addr.read();
+            v.req_snoop_type = i_req_snoop_type.read();
             v.state = State_SnoopSetupAddr;
         } else if (r.req_flush.read() == 1) {
             v.state = State_FlushAddr;
@@ -705,23 +705,23 @@ void DCacheLru::comb() {
             v.cache_line_i = 0;
             v.req_addr = (r.req_flush_addr.read() & (~LINE_BYTES_MASK));
             v.req_mem_size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
-            v.flush_cnt = r.req_flush_cnt;
+            v.flush_cnt = r.req_flush_cnt.read();
         } else {
             v_req_ready = 1;
-            v_line_cs_read = i_req_valid;
-            vb_line_addr = i_req_addr;
+            v_line_cs_read = i_req_valid.read();
+            vb_line_addr = i_req_addr.read();
             if (i_req_valid.read() == 1) {
-                v.req_addr = i_req_addr;
-                v.req_wstrb = i_req_wstrb;
+                v.req_addr = i_req_addr.read();
+                v.req_wstrb = i_req_wstrb.read();
                 v.req_size = (0, i_req_size.read());
-                v.req_wdata = i_req_wdata;
-                v.req_type = i_req_type;
+                v.req_wdata = i_req_wdata.read();
+                v.req_type = i_req_type.read();
                 v.state = State_CheckHit;
             }
         }
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         DCacheLru_r_reset(v);
     }
 
@@ -733,33 +733,33 @@ void DCacheLru::comb() {
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;
     line_wflags_i = v_line_wflags;
-    line_snoop_addr_i = i_req_snoop_addr;
+    line_snoop_addr_i = i_req_snoop_addr.read();
 
     o_req_ready = v_req_ready;
-    o_req_mem_valid = r.req_mem_valid;
-    o_req_mem_addr = r.mem_addr;
-    o_req_mem_type = r.req_mem_type;
-    o_req_mem_size = r.req_mem_size;
-    o_req_mem_strob = r.mem_wstrb;
-    o_req_mem_data = r.cache_line_o;
+    o_req_mem_valid = r.req_mem_valid.read();
+    o_req_mem_addr = r.mem_addr.read();
+    o_req_mem_type = r.req_mem_type.read();
+    o_req_mem_size = r.req_mem_size.read();
+    o_req_mem_strob = r.mem_wstrb.read();
+    o_req_mem_data = r.cache_line_o.read();
 
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;
-    o_resp_addr = r.req_addr;
+    o_resp_addr = r.req_addr.read();
     o_resp_er_load_fault = v_resp_er_load_fault;
     o_resp_er_store_fault = v_resp_er_store_fault;
-    o_mpu_addr = r.req_addr;
+    o_mpu_addr = r.req_addr.read();
 
     o_req_snoop_ready = v_req_snoop_ready;
     o_resp_snoop_valid = v_resp_snoop_valid;
-    o_resp_snoop_data = line_rdata_o;
-    o_resp_snoop_flags = line_snoop_flags_o;
+    o_resp_snoop_data = line_rdata_o.read();
+    o_resp_snoop_flags = line_snoop_flags_o.read();
 
     o_flush_end = v_flush_end;
 }
 
 void DCacheLru::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         DCacheLru_r_reset(r);
     } else {
         r = v;

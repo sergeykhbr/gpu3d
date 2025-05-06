@@ -62,11 +62,14 @@ SC_MODULE(L2Amba) {
 
     struct L2Amba_registers {
         sc_signal<sc_uint<2>> state;
-    } v, r;
+    };
 
-    void L2Amba_r_reset(L2Amba_registers &iv) {
+    void L2Amba_r_reset(L2Amba_registers& iv) {
         iv.state = idle;
     }
+
+    L2Amba_registers v;
+    L2Amba_registers r;
 
 };
 

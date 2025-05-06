@@ -150,11 +150,8 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_t5, o_t5.name());
         sc_trace(o_vcd, o_t6, o_t6.name());
         for (int i = 0; i < REGS_TOTAL; i++) {
-            char tstr[1024];
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_arr%d_val", pn.c_str(), i);
-            sc_trace(o_vcd, r.arr[i].val, tstr);
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_arr%d_tag", pn.c_str(), i);
-            sc_trace(o_vcd, r.arr[i].tag, tstr);
+            sc_trace(o_vcd, r.arr[i].val, pn + ".r.arr[i].val");
+            sc_trace(o_vcd, r.arr[i].tag, pn + ".r.arr[i].tag");
         }
     }
 
@@ -168,17 +165,16 @@ void RegIntBank::comb() {
     bool v_inordered;
     sc_uint<CFG_REG_TAG_WIDTH> next_tag;
 
+    for (int i = 0; i < REGS_TOTAL; i++) {
+        v.arr[i].val = r.arr[i].val.read();
+        v.arr[i].tag = r.arr[i].tag.read();
+    }
     int_daddr = 0;
     int_waddr = 0;
     int_radr1 = 0;
     int_radr2 = 0;
     v_inordered = 0;
     next_tag = 0;
-
-    for (int i = 0; i < REGS_TOTAL; i++) {
-        v.arr[i].val = r.arr[i].val;
-        v.arr[i].tag = r.arr[i].tag;
-    }
 
     int_daddr = i_dport_addr.read().to_int();
     int_waddr = i_waddr.read().to_int();
@@ -192,70 +188,64 @@ void RegIntBank::comb() {
 
     // Debug port has lower priority to avoid system hangup due the tags error
     if ((i_wena.read() == 1) && (i_waddr.read().or_reduce() == 1) && (((!i_inorder.read()) || v_inordered) == 1)) {
-        v.arr[int_waddr].val = i_wdata;
-        v.arr[int_waddr].tag = i_wtag;
+        v.arr[int_waddr].val = i_wdata.read();
+        v.arr[int_waddr].tag = i_wtag.read();
     } else if ((i_dport_ena.read() && i_dport_write.read()) == 1) {
         if (i_dport_addr.read().or_reduce() == 1) {
-            v.arr[int_daddr].val = i_dport_wdata;
+            v.arr[int_daddr].val = i_dport_wdata.read();
         }
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < REGS_TOTAL; i++) {
-            v.arr[i].val = 0;
-            v.arr[i].tag = 0;
-        }
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
+        RegIntBank_r_reset(v);
     }
 
     o_ignored = (i_wena.read() && i_waddr.read().or_reduce() && i_inorder.read() && (!v_inordered));
-    o_rdata1 = r.arr[int_radr1].val;
-    o_rtag1 = r.arr[int_radr1].tag;
-    o_rdata2 = r.arr[int_radr2].val;
-    o_rtag2 = r.arr[int_radr2].tag;
-    o_dport_rdata = r.arr[int_daddr].val;
-    o_ra = r.arr[REG_RA].val;
-    o_sp = r.arr[REG_SP].val;
-    o_gp = r.arr[REG_GP].val;
-    o_tp = r.arr[REG_TP].val;
-    o_t0 = r.arr[REG_T0].val;
-    o_t1 = r.arr[REG_T1].val;
-    o_t2 = r.arr[REG_T2].val;
-    o_fp = r.arr[REG_S0].val;
-    o_s1 = r.arr[REG_S1].val;
-    o_a0 = r.arr[REG_A0].val;
-    o_a1 = r.arr[REG_A1].val;
-    o_a2 = r.arr[REG_A2].val;
-    o_a3 = r.arr[REG_A3].val;
-    o_a4 = r.arr[REG_A4].val;
-    o_a5 = r.arr[REG_A5].val;
-    o_a6 = r.arr[REG_A6].val;
-    o_a7 = r.arr[REG_A7].val;
-    o_s2 = r.arr[REG_S2].val;
-    o_s3 = r.arr[REG_S3].val;
-    o_s4 = r.arr[REG_S4].val;
-    o_s5 = r.arr[REG_S5].val;
-    o_s6 = r.arr[REG_S6].val;
-    o_s7 = r.arr[REG_S7].val;
-    o_s8 = r.arr[REG_S8].val;
-    o_s9 = r.arr[REG_S9].val;
-    o_s10 = r.arr[REG_S10].val;
-    o_s11 = r.arr[REG_S11].val;
-    o_t3 = r.arr[REG_T3].val;
-    o_t4 = r.arr[REG_T4].val;
-    o_t5 = r.arr[REG_T5].val;
-    o_t6 = r.arr[REG_T6].val;
+    o_rdata1 = r.arr[int_radr1].val.read();
+    o_rtag1 = r.arr[int_radr1].tag.read();
+    o_rdata2 = r.arr[int_radr2].val.read();
+    o_rtag2 = r.arr[int_radr2].tag.read();
+    o_dport_rdata = r.arr[int_daddr].val.read();
+    o_ra = r.arr[REG_RA].val.read();
+    o_sp = r.arr[REG_SP].val.read();
+    o_gp = r.arr[REG_GP].val.read();
+    o_tp = r.arr[REG_TP].val.read();
+    o_t0 = r.arr[REG_T0].val.read();
+    o_t1 = r.arr[REG_T1].val.read();
+    o_t2 = r.arr[REG_T2].val.read();
+    o_fp = r.arr[REG_S0].val.read();
+    o_s1 = r.arr[REG_S1].val.read();
+    o_a0 = r.arr[REG_A0].val.read();
+    o_a1 = r.arr[REG_A1].val.read();
+    o_a2 = r.arr[REG_A2].val.read();
+    o_a3 = r.arr[REG_A3].val.read();
+    o_a4 = r.arr[REG_A4].val.read();
+    o_a5 = r.arr[REG_A5].val.read();
+    o_a6 = r.arr[REG_A6].val.read();
+    o_a7 = r.arr[REG_A7].val.read();
+    o_s2 = r.arr[REG_S2].val.read();
+    o_s3 = r.arr[REG_S3].val.read();
+    o_s4 = r.arr[REG_S4].val.read();
+    o_s5 = r.arr[REG_S5].val.read();
+    o_s6 = r.arr[REG_S6].val.read();
+    o_s7 = r.arr[REG_S7].val.read();
+    o_s8 = r.arr[REG_S8].val.read();
+    o_s9 = r.arr[REG_S9].val.read();
+    o_s10 = r.arr[REG_S10].val.read();
+    o_s11 = r.arr[REG_S11].val.read();
+    o_t3 = r.arr[REG_T3].val.read();
+    o_t4 = r.arr[REG_T4].val.read();
+    o_t5 = r.arr[REG_T5].val.read();
+    o_t6 = r.arr[REG_T6].val.read();
 }
 
 void RegIntBank::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < REGS_TOTAL; i++) {
-            r.arr[i].val = 0;
-            r.arr[i].tag = 0;
-        }
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        RegIntBank_r_reset(r);
     } else {
         for (int i = 0; i < REGS_TOTAL; i++) {
-            r.arr[i].val = v.arr[i].val;
-            r.arr[i].tag = v.arr[i].tag;
+            r.arr[i].val = v.arr[i].val.read();
+            r.arr[i].tag = v.arr[i].tag.read();
         }
     }
 }

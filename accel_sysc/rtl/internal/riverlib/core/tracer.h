@@ -47,6 +47,7 @@ SC_MODULE(Tracer) {
     sc_in<bool> i_reg_ignored;
 
     void comb();
+    void traceout();
     void registers();
 
     SC_HAS_PROCESS(Tracer);
@@ -65,9 +66,6 @@ SC_MODULE(Tracer) {
 
     static const int TRACE_TBL_ABITS = 6;
     static const int TRACE_TBL_SZ = 64;
-
-    std::string TaskDisassembler(sc_uint<32> instr);
-    std::string TraceOutput(sc_uint<TRACE_TBL_ABITS> rcnt);
 
     struct MemopActionType {
         sc_signal<bool> store;                              // 0=load;1=store
@@ -97,19 +95,53 @@ SC_MODULE(Tracer) {
         sc_signal<bool> completed;
     };
 
-
     struct Tracer_registers {
         TraceStepType trace_tbl[TRACE_TBL_SZ];
         sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_wcnt;
         sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_rcnt;
         sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_total;
         sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_opened;
-    } v, r;
+    };
+
+    void Tracer_r_reset(Tracer_registers& iv) {
+        for (int i = 0; i < TRACE_TBL_SZ; i++) {
+            iv.trace_tbl[i].exec_cnt = 0;
+            iv.trace_tbl[i].pc = 0;
+            iv.trace_tbl[i].instr = 0;
+            iv.trace_tbl[i].regactioncnt = 0;
+            iv.trace_tbl[i].memactioncnt = 0;
+            for (int j = 0; j < TRACE_TBL_SZ; j++) {
+                iv.trace_tbl[i].regaction[j].waddr = 0;
+                iv.trace_tbl[i].regaction[j].wres = 0;
+            }
+            for (int j = 0; j < TRACE_TBL_SZ; j++) {
+                iv.trace_tbl[i].memaction[j].store = 0;
+                iv.trace_tbl[i].memaction[j].size = 0;
+                iv.trace_tbl[i].memaction[j].mask = 0;
+                iv.trace_tbl[i].memaction[j].memaddr = 0;
+                iv.trace_tbl[i].memaction[j].data = 0;
+                iv.trace_tbl[i].memaction[j].regaddr = 0;
+                iv.trace_tbl[i].memaction[j].complete = 0;
+                iv.trace_tbl[i].memaction[j].sc_release = 0;
+                iv.trace_tbl[i].memaction[j].ignored = 0;
+            }
+            iv.trace_tbl[i].completed = 0;
+        }
+        iv.tr_wcnt = 0;
+        iv.tr_rcnt = 0;
+        iv.tr_total = 0;
+        iv.tr_opened = 0;
+    }
+
+    std::string TaskDisassembler(sc_uint<32> instr);
+    std::string TraceOutput(sc_uint<TRACE_TBL_ABITS> rcnt);
 
     std::string trfilename;                                 // formatted string name with hartid
     std::string outstr;
     std::string tracestr;
     FILE* fl;
+    Tracer_registers v;
+    Tracer_registers r;
 
 };
 

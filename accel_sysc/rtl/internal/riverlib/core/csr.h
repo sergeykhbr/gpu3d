@@ -110,8 +110,8 @@ SC_MODULE(CsrRegs) {
     static const uint8_t Fence_FlushInstr = 4;
     static const uint8_t Fence_End = 7;
 
-    static const uint8_t SATP_MODE_SV39 = 8;
-    static const uint8_t SATP_MODE_SV48 = 9;
+    static const uint8_t SATP_MODE_SV39 = 8;                // 39-bits Page mode
+    static const uint8_t SATP_MODE_SV48 = 9;                // 48-bits Page mode
 
     struct RegModeType {
         sc_signal<sc_uint<RISCV_ARCH>> xepc;
@@ -135,7 +135,6 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<RISCV_ARCH>> addr;                // Maximal PMP address bits [55:2]
         sc_signal<sc_uint<RISCV_ARCH>> mask;                // NAPOT mask formed from address
     };
-
 
     struct CsrRegs_registers {
         RegModeType xmode[4];
@@ -193,7 +192,87 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<RISCV_ARCH>> pmp_start_addr;
         sc_signal<sc_uint<RISCV_ARCH>> pmp_end_addr;
         sc_signal<sc_uint<CFG_PMP_FL_TOTAL>> pmp_flags;
-    } v, r;
+    };
+
+    void CsrRegs_r_reset(CsrRegs_registers& iv) {
+        for (int i = 0; i < 4; i++) {
+            iv.xmode[i].xepc = 0;
+            iv.xmode[i].xpp = 0;
+            iv.xmode[i].xpie = 0;
+            iv.xmode[i].xie = 0;
+            iv.xmode[i].xsie = 0;
+            iv.xmode[i].xtie = 0;
+            iv.xmode[i].xeie = 0;
+            iv.xmode[i].xtvec_off = 0;
+            iv.xmode[i].xtvec_mode = 0;
+            iv.xmode[i].xtval = 0;
+            iv.xmode[i].xcause_irq = 0;
+            iv.xmode[i].xcause_code = 0;
+            iv.xmode[i].xscratch = 0;
+            iv.xmode[i].xcounteren = 0;
+        }
+        for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
+            iv.pmp[i].cfg = 0;
+            iv.pmp[i].addr = 0;
+            iv.pmp[i].mask = 0;
+        }
+        iv.state = State_Idle;
+        iv.fencestate = Fence_None;
+        iv.irq_pending = 0;
+        iv.cmd_type = 0;
+        iv.cmd_addr = 0;
+        iv.cmd_data = 0;
+        iv.cmd_exception = 0;
+        iv.progbuf_end = 0;
+        iv.progbuf_err = 0;
+        iv.mip_ssip = 0;
+        iv.mip_stip = 0;
+        iv.mip_seip = 0;
+        iv.medeleg = 0;
+        iv.mideleg = 0;
+        iv.mcountinhibit = 0;
+        iv.mstackovr = 0;
+        iv.mstackund = 0;
+        iv.mmu_ena = 0;
+        iv.satp_ppn = 0;
+        iv.satp_sv39 = 0;
+        iv.satp_sv48 = 0;
+        iv.mode = PRV_M;
+        iv.mprv = 0;
+        iv.mxr = 0;
+        iv.sum = 0;
+        iv.tvm = 0;
+        iv.ex_fpu_invalidop = 0;
+        iv.ex_fpu_divbyzero = 0;
+        iv.ex_fpu_overflow = 0;
+        iv.ex_fpu_underflow = 0;
+        iv.ex_fpu_inexact = 0;
+        iv.trap_addr = 0;
+        iv.mcycle_cnt = 0;
+        iv.minstret_cnt = 0;
+        iv.dscratch0 = 0;
+        iv.dscratch1 = 0;
+        iv.dpc = CFG_RESET_VECTOR;
+        iv.halt_cause = 0;
+        iv.dcsr_ebreakm = 0;
+        iv.dcsr_stopcount = 0;
+        iv.dcsr_stoptimer = 0;
+        iv.dcsr_step = 0;
+        iv.dcsr_stepie = 0;
+        iv.stepping_mode_cnt = 0;
+        iv.ins_per_step = 1;
+        iv.pmp_upd_ena = 0;
+        iv.pmp_upd_cnt = 0;
+        iv.pmp_ena = 0;
+        iv.pmp_we = 0;
+        iv.pmp_region = 0;
+        iv.pmp_start_addr = 0;
+        iv.pmp_end_addr = 0;
+        iv.pmp_flags = 0;
+    }
+
+    CsrRegs_registers v;
+    CsrRegs_registers r;
 
 };
 

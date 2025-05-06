@@ -87,7 +87,8 @@ CacheTop::CacheTop(sc_module_name name,
     pmp0 = 0;
     queue0 = 0;
 
-    i1 = new ICacheLru("i1", async_reset);
+    i1 = new ICacheLru("i1",
+                        async_reset);
     i1->i_clk(i_clk);
     i1->i_nrst(i_nrst);
     i1->i_req_valid(i_req_ctrl_valid);
@@ -114,7 +115,8 @@ CacheTop::CacheTop(sc_module_name name,
     i1->i_flush_address(wb_i_flushi_addr);
     i1->i_flush_valid(i_flushi_valid);
 
-    d0 = new DCacheLru("d0", async_reset,
+    d0 = new DCacheLru("d0",
+                        async_reset,
                         coherence_ena);
     d0->i_clk(i_clk);
     d0->i_nrst(i_nrst);
@@ -165,7 +167,8 @@ CacheTop::CacheTop(sc_module_name name,
     pma0->o_icached(w_pma_icached);
     pma0->o_dcached(w_pma_dcached);
 
-    pmp0 = new PMP("pmp0", async_reset);
+    pmp0 = new PMP("pmp0",
+                    async_reset);
     pmp0->i_clk(i_clk);
     pmp0->i_nrst(i_nrst);
     pmp0->i_ena(i_pmp_ena);
@@ -181,7 +184,8 @@ CacheTop::CacheTop(sc_module_name name,
     pmp0->o_x(w_pmp_x);
 
     queue0 = new Queue<2,
-                       QUEUE_WIDTH>("queue0", async_reset);
+                       QUEUE_WIDTH>("queue0",
+                                    async_reset);
     queue0->i_clk(i_clk);
     queue0->i_nrst(i_nrst);
     queue0->i_re(queue_re_i);
@@ -386,7 +390,7 @@ void CacheTop::comb() {
     wb_i_req_data_addr = i_req_data_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
     wb_i_flushi_addr = i_flushi_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
     wb_i_flushd_addr = i_flushd_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
-    v_queue_re = i_req_mem_ready;
+    v_queue_re = i_req_mem_ready.read();
     v_queue_we = (i.req_mem_valid.read() || d.req_mem_valid.read());
 
     vb_ctrl_bus = (ctrl_path_id,
@@ -412,26 +416,26 @@ void CacheTop::comb() {
     w_data_req_ready = 1;
     w_ctrl_req_ready = (!d.req_mem_valid.read());
     if (i_resp_mem_path.read() == CTRL_PATH) {
-        w_ctrl_resp_mem_data_valid = i_resp_mem_valid;
-        w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault;
+        w_ctrl_resp_mem_data_valid = i_resp_mem_valid.read();
+        w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault.read();
         w_data_resp_mem_data_valid = 0;
         w_data_resp_mem_load_fault = 0;
     } else {
         w_ctrl_resp_mem_data_valid = 0;
         w_ctrl_resp_mem_load_fault = 0;
-        w_data_resp_mem_data_valid = i_resp_mem_valid;
-        w_data_resp_mem_load_fault = i_resp_mem_load_fault;
+        w_data_resp_mem_data_valid = i_resp_mem_valid.read();
+        w_data_resp_mem_load_fault = i_resp_mem_load_fault.read();
     }
 
-    wb_ctrl_resp_mem_data = i_resp_mem_data;
-    wb_data_resp_mem_data = i_resp_mem_data;
+    wb_ctrl_resp_mem_data = i_resp_mem_data.read();
+    wb_data_resp_mem_data = i_resp_mem_data.read();
     v_req_mem_path_o = queue_rdata_o.read()[54];
     vb_req_mem_type_o = queue_rdata_o.read()(53, 51);
     vb_req_mem_size_o = queue_rdata_o.read()(50, 48);
     vb_req_mem_addr_o = queue_rdata_o.read()(47, 0);
 
-    vb_resp_ctrl_addr((CFG_CPU_ADDR_BITS - 1), 0) = i.resp_addr;
-    vb_resp_data_addr((CFG_CPU_ADDR_BITS - 1), 0) = d.resp_addr;
+    vb_resp_ctrl_addr((CFG_CPU_ADDR_BITS - 1), 0) = i.resp_addr.read();
+    vb_resp_data_addr((CFG_CPU_ADDR_BITS - 1), 0) = d.resp_addr.read();
     if (CFG_CPU_ADDR_BITS < RISCV_ARCH) {
         if (i.resp_addr.read()[(CFG_CPU_ADDR_BITS - 1)] == 1) {
             vb_resp_ctrl_addr((RISCV_ARCH - 1), CFG_CPU_ADDR_BITS) = ~0ull;
@@ -441,13 +445,13 @@ void CacheTop::comb() {
         }
     }
 
-    o_req_mem_valid = queue_nempty_o;
+    o_req_mem_valid = queue_nempty_o.read();
     o_req_mem_path = v_req_mem_path_o;
     o_req_mem_type = vb_req_mem_type_o;
     o_req_mem_size = vb_req_mem_size_o;
     o_req_mem_addr = vb_req_mem_addr_o;
-    o_req_mem_strob = d.req_mem_strob;
-    o_req_mem_data = d.req_mem_wdata;
+    o_req_mem_strob = d.req_mem_strob.read();
+    o_req_mem_data = d.req_mem_wdata.read();
     o_resp_ctrl_addr = vb_resp_ctrl_addr;
     o_resp_data_addr = vb_resp_data_addr;
 }

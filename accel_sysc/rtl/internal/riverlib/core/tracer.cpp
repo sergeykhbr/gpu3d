@@ -176,6 +176,9 @@ Tracer::Tracer(sc_module_name name,
     sensitive << r.tr_total;
     sensitive << r.tr_opened;
 
+    SC_METHOD(traceout);
+    sensitive << i_clk.pos();
+
     SC_METHOD(registers);
     sensitive << i_nrst;
     sensitive << i_clk.pos();
@@ -204,10 +207,33 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_m_waddr, i_m_waddr.name());
         sc_trace(o_vcd, i_m_wdata, i_m_wdata.name());
         sc_trace(o_vcd, i_reg_ignored, i_reg_ignored.name());
-        sc_trace(o_vcd, r.tr_wcnt, pn + ".r_tr_wcnt");
-        sc_trace(o_vcd, r.tr_rcnt, pn + ".r_tr_rcnt");
-        sc_trace(o_vcd, r.tr_total, pn + ".r_tr_total");
-        sc_trace(o_vcd, r.tr_opened, pn + ".r_tr_opened");
+        for (int i = 0; i < TRACE_TBL_SZ; i++) {
+            sc_trace(o_vcd, r.trace_tbl[i].exec_cnt, pn + ".r.trace_tbl[i].exec_cnt");
+            sc_trace(o_vcd, r.trace_tbl[i].pc, pn + ".r.trace_tbl[i].pc");
+            sc_trace(o_vcd, r.trace_tbl[i].instr, pn + ".r.trace_tbl[i].instr");
+            sc_trace(o_vcd, r.trace_tbl[i].regactioncnt, pn + ".r.trace_tbl[i].regactioncnt");
+            sc_trace(o_vcd, r.trace_tbl[i].memactioncnt, pn + ".r.trace_tbl[i].memactioncnt");
+            for (int j = 0; j < TRACE_TBL_SZ; j++) {
+                sc_trace(o_vcd, r.trace_tbl[i].regaction[j].waddr, pn + ".r.trace_tbl[i].regaction[j].waddr");
+                sc_trace(o_vcd, r.trace_tbl[i].regaction[j].wres, pn + ".r.trace_tbl[i].regaction[j].wres");
+            }
+            for (int j = 0; j < TRACE_TBL_SZ; j++) {
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].store, pn + ".r.trace_tbl[i].memaction[j].store");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].size, pn + ".r.trace_tbl[i].memaction[j].size");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].mask, pn + ".r.trace_tbl[i].memaction[j].mask");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].memaddr, pn + ".r.trace_tbl[i].memaction[j].memaddr");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].data, pn + ".r.trace_tbl[i].memaction[j].data");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].regaddr, pn + ".r.trace_tbl[i].memaction[j].regaddr");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].complete, pn + ".r.trace_tbl[i].memaction[j].complete");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].sc_release, pn + ".r.trace_tbl[i].memaction[j].sc_release");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].ignored, pn + ".r.trace_tbl[i].memaction[j].ignored");
+            }
+            sc_trace(o_vcd, r.trace_tbl[i].completed, pn + ".r.trace_tbl[i].completed");
+        }
+        sc_trace(o_vcd, r.tr_wcnt, pn + ".r.tr_wcnt");
+        sc_trace(o_vcd, r.tr_rcnt, pn + ".r.tr_rcnt");
+        sc_trace(o_vcd, r.tr_total, pn + ".r.tr_total");
+        sc_trace(o_vcd, r.tr_opened, pn + ".r.tr_opened");
     }
 
 }
@@ -1218,7 +1244,7 @@ std::string Tracer::TraceOutput(sc_uint<TRACE_TBL_ABITS> rcnt) {
 
     ircnt = rcnt.to_int();
 
-    disasm = TaskDisassembler(r.trace_tbl[ircnt].instr);
+    disasm = TaskDisassembler(r.trace_tbl[ircnt].instr.read());
     RISCV_sprintf(tstr, sizeof(tstr), "%9" RV_PRI64 "d: %08" RV_PRI64 "x: ",
             r.trace_tbl[ircnt].exec_cnt.read().to_uint64(),
             r.trace_tbl[ircnt].pc.read().to_uint64());
@@ -1269,6 +1295,33 @@ void Tracer::comb() {
     bool entry_valid;
     sc_uint<TRACE_TBL_ABITS> rcnt_inc;
 
+    for (int i = 0; i < TRACE_TBL_SZ; i++) {
+        v.trace_tbl[i].exec_cnt = r.trace_tbl[i].exec_cnt.read();
+        v.trace_tbl[i].pc = r.trace_tbl[i].pc.read();
+        v.trace_tbl[i].instr = r.trace_tbl[i].instr.read();
+        v.trace_tbl[i].regactioncnt = r.trace_tbl[i].regactioncnt.read();
+        v.trace_tbl[i].memactioncnt = r.trace_tbl[i].memactioncnt.read();
+        for (int j = 0; j < TRACE_TBL_SZ; j++) {
+            v.trace_tbl[i].regaction[j].waddr = r.trace_tbl[i].regaction[j].waddr.read();
+            v.trace_tbl[i].regaction[j].wres = r.trace_tbl[i].regaction[j].wres.read();
+        }
+        for (int j = 0; j < TRACE_TBL_SZ; j++) {
+            v.trace_tbl[i].memaction[j].store = r.trace_tbl[i].memaction[j].store.read();
+            v.trace_tbl[i].memaction[j].size = r.trace_tbl[i].memaction[j].size.read();
+            v.trace_tbl[i].memaction[j].mask = r.trace_tbl[i].memaction[j].mask.read();
+            v.trace_tbl[i].memaction[j].memaddr = r.trace_tbl[i].memaction[j].memaddr.read();
+            v.trace_tbl[i].memaction[j].data = r.trace_tbl[i].memaction[j].data.read();
+            v.trace_tbl[i].memaction[j].regaddr = r.trace_tbl[i].memaction[j].regaddr.read();
+            v.trace_tbl[i].memaction[j].complete = r.trace_tbl[i].memaction[j].complete.read();
+            v.trace_tbl[i].memaction[j].sc_release = r.trace_tbl[i].memaction[j].sc_release.read();
+            v.trace_tbl[i].memaction[j].ignored = r.trace_tbl[i].memaction[j].ignored.read();
+        }
+        v.trace_tbl[i].completed = r.trace_tbl[i].completed.read();
+    }
+    v.tr_wcnt = r.tr_wcnt.read();
+    v.tr_rcnt = r.tr_rcnt.read();
+    v.tr_total = r.tr_total.read();
+    v.tr_opened = r.tr_opened.read();
     wcnt = 0;
     xcnt = 0;
     rcnt = 0;
@@ -1281,34 +1334,6 @@ void Tracer::comb() {
     entry_valid = 0;
     rcnt_inc = 0;
 
-    for (int i = 0; i < TRACE_TBL_SZ; i++) {
-        v.trace_tbl[i].exec_cnt = r.trace_tbl[i].exec_cnt;
-        v.trace_tbl[i].pc = r.trace_tbl[i].pc;
-        v.trace_tbl[i].instr = r.trace_tbl[i].instr;
-        v.trace_tbl[i].regactioncnt = r.trace_tbl[i].regactioncnt;
-        v.trace_tbl[i].memactioncnt = r.trace_tbl[i].memactioncnt;
-        for (int j = 0; j < TRACE_TBL_SZ; j++) {
-            v.trace_tbl[i].regaction[j].waddr = r.trace_tbl[i].regaction[j].waddr;
-            v.trace_tbl[i].regaction[j].wres = r.trace_tbl[i].regaction[j].wres;
-        }
-        for (int j = 0; j < TRACE_TBL_SZ; j++) {
-            v.trace_tbl[i].memaction[j].store = r.trace_tbl[i].memaction[j].store;
-            v.trace_tbl[i].memaction[j].size = r.trace_tbl[i].memaction[j].size;
-            v.trace_tbl[i].memaction[j].mask = r.trace_tbl[i].memaction[j].mask;
-            v.trace_tbl[i].memaction[j].memaddr = r.trace_tbl[i].memaction[j].memaddr;
-            v.trace_tbl[i].memaction[j].data = r.trace_tbl[i].memaction[j].data;
-            v.trace_tbl[i].memaction[j].regaddr = r.trace_tbl[i].memaction[j].regaddr;
-            v.trace_tbl[i].memaction[j].complete = r.trace_tbl[i].memaction[j].complete;
-            v.trace_tbl[i].memaction[j].sc_release = r.trace_tbl[i].memaction[j].sc_release;
-            v.trace_tbl[i].memaction[j].ignored = r.trace_tbl[i].memaction[j].ignored;
-        }
-        v.trace_tbl[i].completed = r.trace_tbl[i].completed;
-    }
-    v.tr_wcnt = r.tr_wcnt;
-    v.tr_rcnt = r.tr_rcnt;
-    v.tr_total = r.tr_total;
-    v.tr_opened = r.tr_opened;
-
     wcnt = r.tr_wcnt.read().to_int();
     rcnt = r.tr_rcnt.read().to_int();
     regcnt = r.trace_tbl[wcnt].regactioncnt.read().to_int();
@@ -1317,8 +1342,8 @@ void Tracer::comb() {
     tr_wcnt_nxt = (r.tr_wcnt.read() + 1);
     if (i_e_valid.read() == 1) {
         v.trace_tbl[wcnt].exec_cnt = (i_dbg_executed_cnt.read() + 1);
-        v.trace_tbl[wcnt].pc = i_e_pc;
-        v.trace_tbl[wcnt].instr = i_e_instr;
+        v.trace_tbl[wcnt].pc = i_e_pc.read();
+        v.trace_tbl[wcnt].instr = i_e_instr.read();
 
         v.tr_wcnt = (r.tr_wcnt.read() + 1);
         // Clear next element:
@@ -1330,8 +1355,8 @@ void Tracer::comb() {
     if ((i_e_memop_valid.read() == 1) && (i_m_memop_ready.read() == 1)) {
         v.trace_tbl[wcnt].memactioncnt = (r.trace_tbl[wcnt].memactioncnt.read() + 1);
         v.trace_tbl[wcnt].memaction[memcnt].store = i_e_memop_type.read()[MemopType_Store];
-        v.trace_tbl[wcnt].memaction[memcnt].memaddr = i_e_memop_addr;
-        v.trace_tbl[wcnt].memaction[memcnt].size = i_e_memop_size;
+        v.trace_tbl[wcnt].memaction[memcnt].memaddr = i_e_memop_addr.read();
+        v.trace_tbl[wcnt].memaction[memcnt].size = i_e_memop_size.read();
         // Compute and save mask bit
         mskoff = 0;
         mask = ~0ull;
@@ -1344,7 +1369,7 @@ void Tracer::comb() {
         }
         v.trace_tbl[wcnt].memaction[memcnt].mask = mask;
         v.trace_tbl[wcnt].memaction[memcnt].data = (i_e_memop_wdata.read() & mask);
-        v.trace_tbl[wcnt].memaction[memcnt].regaddr = i_e_waddr;
+        v.trace_tbl[wcnt].memaction[memcnt].regaddr = i_e_waddr.read();
         v.trace_tbl[wcnt].memaction[memcnt].ignored = 0;
         v.trace_tbl[wcnt].memaction[memcnt].complete = 0;
         if ((i_e_waddr.read().or_reduce() == 0)
@@ -1358,33 +1383,33 @@ void Tracer::comb() {
     if (i_e_wena.read() == 1) {
         // Direct register writting if it is not a Load operation
         v.trace_tbl[wcnt].regactioncnt = (r.trace_tbl[wcnt].regactioncnt.read() + 1);
-        v.trace_tbl[wcnt].regaction[regcnt].waddr = i_e_waddr;
-        v.trace_tbl[wcnt].regaction[regcnt].wres = i_e_wdata;
+        v.trace_tbl[wcnt].regaction[regcnt].waddr = i_e_waddr.read();
+        v.trace_tbl[wcnt].regaction[regcnt].wres = i_e_wdata.read();
     } else if (i_m_wena.read() == 1) {
         // Update current rd memory action (memory operations are strictly ordered)
         // Find next instruction with the unfinished memory operation
         checked = 0;
-        rcnt_inc = r.tr_rcnt;
+        rcnt_inc = r.tr_rcnt.read();
         while ((checked == 0) && (rcnt_inc != r.tr_wcnt.read())) {
             xcnt = rcnt_inc.to_int();
             regcnt = r.trace_tbl[xcnt].regactioncnt.read().to_int();
             for (int i = 0; i < r.trace_tbl[xcnt].memactioncnt.read().to_int(); i++) {
-                if ((checked == 0) && (r.trace_tbl[xcnt].memaction[i].complete == 0)) {
+                if ((checked == 0) && (r.trace_tbl[xcnt].memaction[i].complete.read() == 0)) {
                     checked = 1;
                     v.trace_tbl[xcnt].memaction[i].complete = 1;
-                    v.trace_tbl[xcnt].memaction[i].ignored = i_reg_ignored;
-                    if (r.trace_tbl[xcnt].memaction[i].sc_release == 1) {
+                    v.trace_tbl[xcnt].memaction[i].ignored = i_reg_ignored.read();
+                    if (r.trace_tbl[xcnt].memaction[i].sc_release.read() == 1) {
                         if (i_m_wdata.read() == 1) {
                             v.trace_tbl[xcnt].memaction[i].ignored = 1;
                         }
                         // do not re-write stored value by returning error status
                     } else {
-                        v.trace_tbl[xcnt].memaction[i].data = i_m_wdata;
+                        v.trace_tbl[xcnt].memaction[i].data = i_m_wdata.read();
                     }
 
                     if (i_reg_ignored.read() == 0) {
-                        v.trace_tbl[xcnt].regaction[regcnt].waddr = i_m_waddr;
-                        v.trace_tbl[xcnt].regaction[regcnt].wres = i_m_wdata;
+                        v.trace_tbl[xcnt].regaction[regcnt].waddr = i_m_waddr.read();
+                        v.trace_tbl[xcnt].regaction[regcnt].wres = i_m_wdata.read();
                         v.trace_tbl[xcnt].regactioncnt = (regcnt + 1);
                     }
                 }
@@ -1397,11 +1422,11 @@ void Tracer::comb() {
 
     // check instruction data completness
     entry_valid = 1;
-    rcnt_inc = r.tr_rcnt;
+    rcnt_inc = r.tr_rcnt.read();
     outstr = "";
     while ((entry_valid == 1) && (rcnt_inc != r.tr_wcnt.read())) {
         for (int i = 0; i < r.trace_tbl[rcnt_inc].memactioncnt.read().to_int(); i++) {
-            if (r.trace_tbl[rcnt_inc].memaction[i].complete == 0) {
+            if (r.trace_tbl[rcnt_inc].memaction[i].complete.read() == 0) {
                 entry_valid = 0;
             }
         }
@@ -1413,100 +1438,50 @@ void Tracer::comb() {
     }
     v.tr_rcnt = rcnt_inc;
 
-    if (!async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < TRACE_TBL_SZ; i++) {
-            v.trace_tbl[i].exec_cnt = 0;
-            v.trace_tbl[i].pc = 0;
-            v.trace_tbl[i].instr = 0;
-            v.trace_tbl[i].regactioncnt = 0;
-            v.trace_tbl[i].memactioncnt = 0;
-            for (int j = 0; j < TRACE_TBL_SZ; j++) {
-                v.trace_tbl[i].regaction[j].waddr = 0;
-                v.trace_tbl[i].regaction[j].wres = 0;
-            }
-            for (int j = 0; j < TRACE_TBL_SZ; j++) {
-                v.trace_tbl[i].memaction[j].store = 0;
-                v.trace_tbl[i].memaction[j].size = 0;
-                v.trace_tbl[i].memaction[j].mask = 0;
-                v.trace_tbl[i].memaction[j].memaddr = 0;
-                v.trace_tbl[i].memaction[j].data = 0;
-                v.trace_tbl[i].memaction[j].regaddr = 0;
-                v.trace_tbl[i].memaction[j].complete = 0;
-                v.trace_tbl[i].memaction[j].sc_release = 0;
-                v.trace_tbl[i].memaction[j].ignored = 0;
-            }
-            v.trace_tbl[i].completed = 0;
-        }
-        v.tr_wcnt = 0;
-        v.tr_rcnt = 0;
-        v.tr_total = 0;
-        v.tr_opened = 0;
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
+        Tracer_r_reset(v);
     }
 }
 
-void Tracer::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < TRACE_TBL_SZ; i++) {
-            r.trace_tbl[i].exec_cnt = 0;
-            r.trace_tbl[i].pc = 0;
-            r.trace_tbl[i].instr = 0;
-            r.trace_tbl[i].regactioncnt = 0;
-            r.trace_tbl[i].memactioncnt = 0;
-            for (int j = 0; j < TRACE_TBL_SZ; j++) {
-                r.trace_tbl[i].regaction[j].waddr = 0;
-                r.trace_tbl[i].regaction[j].wres = 0;
-            }
-            for (int j = 0; j < TRACE_TBL_SZ; j++) {
-                r.trace_tbl[i].memaction[j].store = 0;
-                r.trace_tbl[i].memaction[j].size = 0;
-                r.trace_tbl[i].memaction[j].mask = 0;
-                r.trace_tbl[i].memaction[j].memaddr = 0;
-                r.trace_tbl[i].memaction[j].data = 0;
-                r.trace_tbl[i].memaction[j].regaddr = 0;
-                r.trace_tbl[i].memaction[j].complete = 0;
-                r.trace_tbl[i].memaction[j].sc_release = 0;
-                r.trace_tbl[i].memaction[j].ignored = 0;
-            }
-            r.trace_tbl[i].completed = 0;
-        }
-        r.tr_wcnt = 0;
-        r.tr_rcnt = 0;
-        r.tr_total = 0;
-        r.tr_opened = 0;
-    } else {
-        for (int i = 0; i < TRACE_TBL_SZ; i++) {
-            r.trace_tbl[i].exec_cnt = v.trace_tbl[i].exec_cnt;
-            r.trace_tbl[i].pc = v.trace_tbl[i].pc;
-            r.trace_tbl[i].instr = v.trace_tbl[i].instr;
-            r.trace_tbl[i].regactioncnt = v.trace_tbl[i].regactioncnt;
-            r.trace_tbl[i].memactioncnt = v.trace_tbl[i].memactioncnt;
-            for (int j = 0; j < TRACE_TBL_SZ; j++) {
-                r.trace_tbl[i].regaction[j].waddr = v.trace_tbl[i].regaction[j].waddr;
-                r.trace_tbl[i].regaction[j].wres = v.trace_tbl[i].regaction[j].wres;
-            }
-            for (int j = 0; j < TRACE_TBL_SZ; j++) {
-                r.trace_tbl[i].memaction[j].store = v.trace_tbl[i].memaction[j].store;
-                r.trace_tbl[i].memaction[j].size = v.trace_tbl[i].memaction[j].size;
-                r.trace_tbl[i].memaction[j].mask = v.trace_tbl[i].memaction[j].mask;
-                r.trace_tbl[i].memaction[j].memaddr = v.trace_tbl[i].memaction[j].memaddr;
-                r.trace_tbl[i].memaction[j].data = v.trace_tbl[i].memaction[j].data;
-                r.trace_tbl[i].memaction[j].regaddr = v.trace_tbl[i].memaction[j].regaddr;
-                r.trace_tbl[i].memaction[j].complete = v.trace_tbl[i].memaction[j].complete;
-                r.trace_tbl[i].memaction[j].sc_release = v.trace_tbl[i].memaction[j].sc_release;
-                r.trace_tbl[i].memaction[j].ignored = v.trace_tbl[i].memaction[j].ignored;
-            }
-            r.trace_tbl[i].completed = v.trace_tbl[i].completed;
-        }
-        r.tr_wcnt = v.tr_wcnt;
-        r.tr_rcnt = v.tr_rcnt;
-        r.tr_total = v.tr_total;
-        r.tr_opened = v.tr_opened;
-    }
-
+void Tracer::traceout() {
     if (outstr != "") {
         fwrite(outstr.c_str(), 1, outstr.size(), fl);
     }
     outstr = "";
+}
+
+void Tracer::registers() {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        Tracer_r_reset(r);
+    } else {
+        for (int i = 0; i < TRACE_TBL_SZ; i++) {
+            r.trace_tbl[i].exec_cnt = v.trace_tbl[i].exec_cnt.read();
+            r.trace_tbl[i].pc = v.trace_tbl[i].pc.read();
+            r.trace_tbl[i].instr = v.trace_tbl[i].instr.read();
+            r.trace_tbl[i].regactioncnt = v.trace_tbl[i].regactioncnt.read();
+            r.trace_tbl[i].memactioncnt = v.trace_tbl[i].memactioncnt.read();
+            for (int j = 0; j < TRACE_TBL_SZ; j++) {
+                r.trace_tbl[i].regaction[j].waddr = v.trace_tbl[i].regaction[j].waddr.read();
+                r.trace_tbl[i].regaction[j].wres = v.trace_tbl[i].regaction[j].wres.read();
+            }
+            for (int j = 0; j < TRACE_TBL_SZ; j++) {
+                r.trace_tbl[i].memaction[j].store = v.trace_tbl[i].memaction[j].store.read();
+                r.trace_tbl[i].memaction[j].size = v.trace_tbl[i].memaction[j].size.read();
+                r.trace_tbl[i].memaction[j].mask = v.trace_tbl[i].memaction[j].mask.read();
+                r.trace_tbl[i].memaction[j].memaddr = v.trace_tbl[i].memaction[j].memaddr.read();
+                r.trace_tbl[i].memaction[j].data = v.trace_tbl[i].memaction[j].data.read();
+                r.trace_tbl[i].memaction[j].regaddr = v.trace_tbl[i].memaction[j].regaddr.read();
+                r.trace_tbl[i].memaction[j].complete = v.trace_tbl[i].memaction[j].complete.read();
+                r.trace_tbl[i].memaction[j].sc_release = v.trace_tbl[i].memaction[j].sc_release.read();
+                r.trace_tbl[i].memaction[j].ignored = v.trace_tbl[i].memaction[j].ignored.read();
+            }
+            r.trace_tbl[i].completed = v.trace_tbl[i].completed.read();
+        }
+        r.tr_wcnt = v.tr_wcnt.read();
+        r.tr_rcnt = v.tr_rcnt.read();
+        r.tr_total = v.tr_total.read();
+        r.tr_opened = v.tr_opened.read();
+    }
 }
 
 }  // namespace debugger

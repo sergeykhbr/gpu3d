@@ -53,9 +53,9 @@ SC_MODULE(imul53) {
         sc_signal<sc_uint<56>> b;
         sc_signal<sc_biguint<106>> sum;
         sc_signal<bool> overflow;
-    } v, r;
+    };
 
-    void imul53_r_reset(imul53_registers &iv) {
+    void imul53_r_reset(imul53_registers& iv) {
         iv.delay = 0;
         iv.shift = 0;
         iv.accum_ena = 0;
@@ -66,6 +66,8 @@ SC_MODULE(imul53) {
 
     sc_signal<sc_biguint<105>> wb_sumInv;
     sc_signal<sc_uint<7>> wb_lshift;
+    imul53_registers v;
+    imul53_registers r;
 
     zeroenc<105, 7> *enc0;
 

@@ -71,12 +71,15 @@ SC_MODULE(ic_csr_m2_s1) {
     struct ic_csr_m2_s1_registers {
         sc_signal<bool> midx;
         sc_signal<bool> acquired;
-    } v, r;
+    };
 
-    void ic_csr_m2_s1_r_reset(ic_csr_m2_s1_registers &iv) {
+    void ic_csr_m2_s1_r_reset(ic_csr_m2_s1_registers& iv) {
         iv.midx = 0;
         iv.acquired = 0;
     }
+
+    ic_csr_m2_s1_registers v;
+    ic_csr_m2_s1_registers r;
 
 };
 

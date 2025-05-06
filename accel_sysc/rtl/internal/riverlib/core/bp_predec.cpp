@@ -76,8 +76,8 @@ void BpPreDecoder::comb() {
     vb_c_j_off = 0;
     vb_c_j_addr = 0;
 
-    vb_pc = i_addr;
-    vb_tmp = i_data;
+    vb_pc = i_addr.read();
+    vb_tmp = i_data.read();
 
     // Unconditional jump "J"
     if (vb_tmp[31] == 1) {
@@ -132,13 +132,13 @@ void BpPreDecoder::comb() {
 
     v_c_j = 0;
     if ((vb_tmp(15, 13) == 0x5) && (vb_tmp(1, 0) == 0x1)) {
-        v_c_j = i_c_valid;
+        v_c_j = i_c_valid.read();
     }
 
     // Compressed RET pseudo-instruction
     v_c_ret = 0;
     if (vb_tmp(15, 0) == 0x8082) {
-        v_c_ret = i_c_valid;
+        v_c_ret = i_c_valid.read();
     }
 
     if (v_jal.read() == 1) {

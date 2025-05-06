@@ -104,9 +104,9 @@ SC_MODULE(DecoderRvc) {
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> imm;
         sc_signal<bool> progbuf_ena;
-    } v, r;
+    };
 
-    void DecoderRvc_r_reset(DecoderRvc_registers &iv) {
+    void DecoderRvc_r_reset(DecoderRvc_registers& iv) {
         iv.pc = ~0ull;
         iv.isa_type = 0;
         iv.instr_vec = 0;
@@ -125,6 +125,9 @@ SC_MODULE(DecoderRvc) {
         iv.imm = 0;
         iv.progbuf_ena = 0;
     }
+
+    DecoderRvc_registers v;
+    DecoderRvc_registers r;
 
 };
 

@@ -184,32 +184,32 @@ void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_sum, i_sum.name());
         sc_trace(o_vcd, i_fence, i_fence.name());
         sc_trace(o_vcd, i_fence_addr, i_fence_addr.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_x, pn + ".r_req_x");
-        sc_trace(o_vcd, r.req_r, pn + ".r_req_r");
-        sc_trace(o_vcd, r.req_w, pn + ".r_req_w");
-        sc_trace(o_vcd, r.req_pa, pn + ".r_req_pa");
-        sc_trace(o_vcd, r.req_type, pn + ".r_req_type");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
-        sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
-        sc_trace(o_vcd, r.req_size, pn + ".r_req_size");
-        sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
-        sc_trace(o_vcd, r.last_mmu_ena, pn + ".r_last_mmu_ena");
-        sc_trace(o_vcd, r.last_va, pn + ".r_last_va");
-        sc_trace(o_vcd, r.last_pa, pn + ".r_last_pa");
-        sc_trace(o_vcd, r.last_permission, pn + ".r_last_permission");
-        sc_trace(o_vcd, r.last_page_size, pn + ".r_last_page_size");
-        sc_trace(o_vcd, r.resp_addr, pn + ".r_resp_addr");
-        sc_trace(o_vcd, r.resp_data, pn + ".r_resp_data");
-        sc_trace(o_vcd, r.resp_load_fault, pn + ".r_resp_load_fault");
-        sc_trace(o_vcd, r.resp_store_fault, pn + ".r_resp_store_fault");
-        sc_trace(o_vcd, r.ex_page_fault, pn + ".r_ex_page_fault");
-        sc_trace(o_vcd, r.tlb_hit, pn + ".r_tlb_hit");
-        sc_trace(o_vcd, r.tlb_level, pn + ".r_tlb_level");
-        sc_trace(o_vcd, r.tlb_page_size, pn + ".r_tlb_page_size");
-        sc_trace(o_vcd, r.tlb_wdata, pn + ".r_tlb_wdata");
-        sc_trace(o_vcd, r.tlb_flush_cnt, pn + ".r_tlb_flush_cnt");
-        sc_trace(o_vcd, r.tlb_flush_adr, pn + ".r_tlb_flush_adr");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.req_x, pn + ".r.req_x");
+        sc_trace(o_vcd, r.req_r, pn + ".r.req_r");
+        sc_trace(o_vcd, r.req_w, pn + ".r.req_w");
+        sc_trace(o_vcd, r.req_pa, pn + ".r.req_pa");
+        sc_trace(o_vcd, r.req_type, pn + ".r.req_type");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
+        sc_trace(o_vcd, r.req_wstrb, pn + ".r.req_wstrb");
+        sc_trace(o_vcd, r.req_size, pn + ".r.req_size");
+        sc_trace(o_vcd, r.req_flush, pn + ".r.req_flush");
+        sc_trace(o_vcd, r.last_mmu_ena, pn + ".r.last_mmu_ena");
+        sc_trace(o_vcd, r.last_va, pn + ".r.last_va");
+        sc_trace(o_vcd, r.last_pa, pn + ".r.last_pa");
+        sc_trace(o_vcd, r.last_permission, pn + ".r.last_permission");
+        sc_trace(o_vcd, r.last_page_size, pn + ".r.last_page_size");
+        sc_trace(o_vcd, r.resp_addr, pn + ".r.resp_addr");
+        sc_trace(o_vcd, r.resp_data, pn + ".r.resp_data");
+        sc_trace(o_vcd, r.resp_load_fault, pn + ".r.resp_load_fault");
+        sc_trace(o_vcd, r.resp_store_fault, pn + ".r.resp_store_fault");
+        sc_trace(o_vcd, r.ex_page_fault, pn + ".r.ex_page_fault");
+        sc_trace(o_vcd, r.tlb_hit, pn + ".r.tlb_hit");
+        sc_trace(o_vcd, r.tlb_level, pn + ".r.tlb_level");
+        sc_trace(o_vcd, r.tlb_page_size, pn + ".r.tlb_page_size");
+        sc_trace(o_vcd, r.tlb_wdata, pn + ".r.tlb_wdata");
+        sc_trace(o_vcd, r.tlb_flush_cnt, pn + ".r.tlb_flush_cnt");
+        sc_trace(o_vcd, r.tlb_flush_adr, pn + ".r.tlb_flush_adr");
     }
 
 }
@@ -254,6 +254,7 @@ void Mmu::comb() {
     sc_biguint<CFG_MMU_PTE_DWIDTH> t_tlb_wdata;
     int t_idx_lsb;
 
+    v = r;
     v_core_req_x = 0;
     v_core_req_r = 0;
     v_core_req_w = 0;
@@ -293,8 +294,6 @@ void Mmu::comb() {
     t_tlb_wdata = 0;
     t_idx_lsb = 0;
 
-    v = r;
-
     t_idx_lsb = (12 + (9 * r.last_page_size.read().to_int()));
     vb_tlb_adr = i_core_req_addr.read()(t_idx_lsb + CFG_MMU_TLB_AWIDTH - 1, t_idx_lsb);
 
@@ -322,13 +321,13 @@ void Mmu::comb() {
     }
 
     // Start Page Physical Address
-    vb_pte_start_va(43, 0) = i_mmu_ppn;
+    vb_pte_start_va(43, 0) = i_mmu_ppn.read();
     if (i_mmu_ppn.read()[43] == 1) {
         vb_pte_start_va(51, 44) = ~0ull;
     }
     // Page walking base Physical Address
     vb_resp_ppn(43, 0) = r.resp_data.read()(53, 10);
-    v_va_ena = i_mmu_ena;
+    v_va_ena = i_mmu_ena.read();
     // M-mode can opearate with physical and virtual addresses when MPRV=1
     if ((i_mprv.read() == 1) && (i_core_req_addr.read()(63, 48).and_reduce() == 0)) {
         // Use physical address
@@ -392,7 +391,7 @@ void Mmu::comb() {
 
     t_tlb_wdata(115, 64) = r.last_va.read()(63, 12);
     t_tlb_wdata(63, 12) = vb_resp_ppn;
-    t_tlb_wdata(9, 8) = r.tlb_page_size;
+    t_tlb_wdata(9, 8) = r.tlb_page_size.read();
     t_tlb_wdata(7, 0) = r.resp_data.read()(7, 0);
 
     switch (r.state.read()) {
@@ -403,11 +402,11 @@ void Mmu::comb() {
         v.ex_page_fault = 0;
         if (i_core_req_valid.read() == 1) {
             v.last_mmu_ena = (i_mmu_ena.read() && v_va_ena);
-            v.last_va = i_core_req_addr;
-            v.req_type = i_core_req_type;
-            v.req_wdata = i_core_req_wdata;
-            v.req_wstrb = i_core_req_wstrb;
-            v.req_size = i_core_req_size;
+            v.last_va = i_core_req_addr.read();
+            v.req_type = i_core_req_type.read();
+            v.req_wdata = i_core_req_wdata.read();
+            v.req_wstrb = i_core_req_wstrb.read();
+            v.req_size = i_core_req_size.read();
         }
         if (r.req_flush.read() == 1) {
             v.req_flush = 0;
@@ -415,37 +414,37 @@ void Mmu::comb() {
             v.state = FlushTlb;
         } else if ((i_mmu_ena.read() == 0) || (v_va_ena == 0)) {// MMU disabled
             // Direct connection to Cache
-            v_core_req_ready = i_mem_req_ready;
-            v_core_resp_valid = i_mem_resp_valid;
-            vb_core_resp_addr = i_mem_resp_addr;
-            vb_core_resp_data = i_mem_resp_data;
-            v_core_resp_load_fault = i_mem_resp_load_fault;
-            v_core_resp_store_fault = i_mem_resp_store_fault;
-            v_mem_req_valid = i_core_req_valid;
-            vb_mem_req_addr = i_core_req_addr;
-            vb_mem_req_type = i_core_req_type;
-            vb_mem_req_wdata = i_core_req_wdata;
-            vb_mem_req_wstrb = i_core_req_wstrb;
-            vb_mem_req_size = i_core_req_size;
-            v_mem_resp_ready = i_core_resp_ready;
+            v_core_req_ready = i_mem_req_ready.read();
+            v_core_resp_valid = i_mem_resp_valid.read();
+            vb_core_resp_addr = i_mem_resp_addr.read();
+            vb_core_resp_data = i_mem_resp_data.read();
+            v_core_resp_load_fault = i_mem_resp_load_fault.read();
+            v_core_resp_store_fault = i_mem_resp_store_fault.read();
+            v_mem_req_valid = i_core_req_valid.read();
+            vb_mem_req_addr = i_core_req_addr.read();
+            vb_mem_req_type = i_core_req_type.read();
+            vb_mem_req_wdata = i_core_req_wdata.read();
+            vb_mem_req_wstrb = i_core_req_wstrb.read();
+            vb_mem_req_size = i_core_req_size.read();
+            v_mem_resp_ready = i_core_resp_ready.read();
             if ((i_core_req_valid.read() && i_mem_req_ready.read()) == 1) {
                 v.state = WaitRespNoMmu;
             }
         } else if ((r.last_mmu_ena.read() == 1) && (v_last_valid == 1)) {// MMU enabled: Check the request to the same page:
             // Direct connection to cache with the fast changing va to last_pa
-            v_core_req_ready = i_mem_req_ready;
-            v_core_resp_valid = i_mem_resp_valid;
-            vb_core_resp_addr = r.last_va;
-            vb_core_resp_data = i_mem_resp_data;
-            v_core_resp_load_fault = i_mem_resp_load_fault;
-            v_core_resp_store_fault = i_mem_resp_store_fault;
-            v_mem_req_valid = i_core_req_valid;
+            v_core_req_ready = i_mem_req_ready.read();
+            v_core_resp_valid = i_mem_resp_valid.read();
+            vb_core_resp_addr = r.last_va.read();
+            vb_core_resp_data = i_mem_resp_data.read();
+            v_core_resp_load_fault = i_mem_resp_load_fault.read();
+            v_core_resp_store_fault = i_mem_resp_store_fault.read();
+            v_mem_req_valid = i_core_req_valid.read();
             vb_mem_req_addr = vb_last_pa_req;
-            vb_mem_req_type = i_core_req_type;
-            vb_mem_req_wdata = i_core_req_wdata;
-            vb_mem_req_wstrb = i_core_req_wstrb;
-            vb_mem_req_size = i_core_req_size;
-            v_mem_resp_ready = i_core_resp_ready;
+            vb_mem_req_type = i_core_req_type.read();
+            vb_mem_req_wdata = i_core_req_wdata.read();
+            vb_mem_req_wstrb = i_core_req_wstrb.read();
+            vb_mem_req_size = i_core_req_size.read();
+            v_mem_resp_ready = i_core_resp_ready.read();
             if ((i_core_req_valid.read() && i_mem_req_ready.read()) == 1) {
                 v.state = WaitRespLast;
             }
@@ -461,19 +460,19 @@ void Mmu::comb() {
         }
         break;
     case WaitRespNoMmu:
-        v_core_req_ready = i_mem_req_ready;
-        v_core_resp_valid = i_mem_resp_valid;
-        vb_core_resp_addr = i_mem_resp_addr;
-        vb_core_resp_data = i_mem_resp_data;
-        v_core_resp_load_fault = i_mem_resp_load_fault;
-        v_core_resp_store_fault = i_mem_resp_store_fault;
-        v_mem_req_valid = i_core_req_valid;
-        vb_mem_req_addr = i_core_req_addr;
-        vb_mem_req_type = i_core_req_type;
-        vb_mem_req_wdata = i_core_req_wdata;
-        vb_mem_req_wstrb = i_core_req_wstrb;
-        vb_mem_req_size = i_core_req_size;
-        v_mem_resp_ready = i_core_resp_ready;
+        v_core_req_ready = i_mem_req_ready.read();
+        v_core_resp_valid = i_mem_resp_valid.read();
+        vb_core_resp_addr = i_mem_resp_addr.read();
+        vb_core_resp_data = i_mem_resp_data.read();
+        v_core_resp_load_fault = i_mem_resp_load_fault.read();
+        v_core_resp_store_fault = i_mem_resp_store_fault.read();
+        v_mem_req_valid = i_core_req_valid.read();
+        vb_mem_req_addr = i_core_req_addr.read();
+        vb_mem_req_type = i_core_req_type.read();
+        vb_mem_req_wdata = i_core_req_wdata.read();
+        vb_mem_req_wstrb = i_core_req_wstrb.read();
+        vb_mem_req_size = i_core_req_size.read();
+        v_mem_resp_ready = i_core_resp_ready.read();
         if ((i_mem_resp_valid.read() && i_core_resp_ready.read()) == 1) {
             if (i_mmu_ena.read() == 1) {
                 // Do not accept new request because MMU state changed
@@ -486,19 +485,19 @@ void Mmu::comb() {
         }
         break;
     case WaitRespLast:
-        v_core_req_ready = i_mem_req_ready;
-        v_core_resp_valid = i_mem_resp_valid;
-        vb_core_resp_addr = r.last_va;
-        vb_core_resp_data = i_mem_resp_data;
-        v_core_resp_load_fault = i_mem_resp_load_fault;
-        v_core_resp_store_fault = i_mem_resp_store_fault;
-        v_mem_req_valid = i_core_req_valid;
+        v_core_req_ready = i_mem_req_ready.read();
+        v_core_resp_valid = i_mem_resp_valid.read();
+        vb_core_resp_addr = r.last_va.read();
+        vb_core_resp_data = i_mem_resp_data.read();
+        v_core_resp_load_fault = i_mem_resp_load_fault.read();
+        v_core_resp_store_fault = i_mem_resp_store_fault.read();
+        v_mem_req_valid = i_core_req_valid.read();
         vb_mem_req_addr = vb_last_pa_req;
-        vb_mem_req_type = i_core_req_type;
-        vb_mem_req_wdata = i_core_req_wdata;
-        vb_mem_req_wstrb = i_core_req_wstrb;
-        vb_mem_req_size = i_core_req_size;
-        v_mem_resp_ready = i_core_resp_ready;
+        vb_mem_req_type = i_core_req_type.read();
+        vb_mem_req_wdata = i_core_req_wdata.read();
+        vb_mem_req_wstrb = i_core_req_wstrb.read();
+        vb_mem_req_size = i_core_req_size.read();
+        v_mem_resp_ready = i_core_resp_ready.read();
         if ((i_mem_resp_valid.read() && i_core_resp_ready.read()) == 1) {
             if (v_last_valid == 0) {
                 // Do not accept new request because of new VA request
@@ -508,11 +507,11 @@ void Mmu::comb() {
             if ((v_core_req_ready == 0) || (v_mem_req_valid == 0)) {
                 v.state = Idle;
             } else {
-                v.last_va = i_core_req_addr;
-                v.req_type = i_core_req_type;
-                v.req_wdata = i_core_req_wdata;
-                v.req_wstrb = i_core_req_wstrb;
-                v.req_size = i_core_req_size;
+                v.last_va = i_core_req_addr.read();
+                v.req_type = i_core_req_type.read();
+                v.req_wdata = i_core_req_wdata.read();
+                v.req_wstrb = i_core_req_wstrb.read();
+                v.req_size = i_core_req_size.read();
                 v.req_x = v_core_req_x;
                 v.req_r = v_core_req_r;
                 v.req_w = v_core_req_w;
@@ -547,15 +546,15 @@ void Mmu::comb() {
         break;
     case CacheReq:
         v_mem_req_valid = 1;
-        vb_mem_req_addr = r.req_pa;
+        vb_mem_req_addr = r.req_pa.read();
         if (r.tlb_hit.read() == 0) {
             vb_mem_req_type = 0;                            // Load tlb item
         } else {
-            vb_mem_req_type = r.req_type;
+            vb_mem_req_type = r.req_type.read();
         }
-        vb_mem_req_wdata = r.req_wdata;
-        vb_mem_req_wstrb = r.req_wstrb;
-        vb_mem_req_size = r.req_size;
+        vb_mem_req_wdata = r.req_wdata.read();
+        vb_mem_req_wstrb = r.req_wstrb.read();
+        vb_mem_req_size = r.req_size.read();
         if (i_mem_req_ready.read() == 1) {
             v.state = WaitResp;
         }
@@ -563,10 +562,10 @@ void Mmu::comb() {
     case WaitResp:
         v_mem_resp_ready = 1;
         if (i_mem_resp_valid.read() == 1) {
-            v.resp_addr = i_mem_resp_addr;
-            v.resp_data = i_mem_resp_data;
-            v.resp_load_fault = i_mem_resp_load_fault;      // Hardware error Load (unmapped access)
-            v.resp_store_fault = i_mem_resp_store_fault;    // Hardware error Store/AMO (unmapped access)
+            v.resp_addr = i_mem_resp_addr.read();
+            v.resp_data = i_mem_resp_data.read();
+            v.resp_load_fault = i_mem_resp_load_fault.read();// Hardware error Load (unmapped access)
+            v.resp_store_fault = i_mem_resp_store_fault.read();// Hardware error Store/AMO (unmapped access)
             if ((r.tlb_hit.read() || i_mem_resp_load_fault.read() || i_mem_resp_store_fault.read()) == 1) {
                 v.state = AcceptCore;
             } else {
@@ -613,7 +612,7 @@ void Mmu::comb() {
                 v.state = UpdateTlb;
             }
             v.last_permission = r.resp_data.read()(7, 0);
-            v.last_page_size = r.tlb_page_size;
+            v.last_page_size = r.tlb_page_size.read();
             v.tlb_wdata = t_tlb_wdata;
             // Pages more than 4KB support:
             if (r.tlb_level.read()[0] == 1) {
@@ -640,10 +639,10 @@ void Mmu::comb() {
         break;
     case AcceptCore:
         v_core_resp_valid = 1;
-        vb_core_resp_addr = r.last_va;
-        vb_core_resp_data = r.resp_data;
-        v_core_resp_load_fault = r.resp_load_fault;
-        v_core_resp_store_fault = r.resp_store_fault;
+        vb_core_resp_addr = r.last_va.read();
+        vb_core_resp_data = r.resp_data.read();
+        v_core_resp_load_fault = r.resp_load_fault.read();
+        v_core_resp_store_fault = r.resp_store_fault.read();
         if (i_core_resp_ready.read() == 1) {
             v.state = Idle;
             if (r.ex_page_fault.read() == 1) {
@@ -654,7 +653,7 @@ void Mmu::comb() {
         break;
     case FlushTlb:
         v_tlb_wena = 1;
-        vb_tlb_adr = r.tlb_flush_adr;
+        vb_tlb_adr = r.tlb_flush_adr.read();
         v.last_va = ~0ull;
         v.last_pa = ~0ull;
         v.last_mmu_ena = 0;
@@ -676,13 +675,13 @@ void Mmu::comb() {
         v.tlb_flush_adr = 0;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         Mmu_r_reset(v);
     }
 
     w_tlb_wena = v_tlb_wena;
     wb_tlb_adr = vb_tlb_adr;
-    wb_tlb_wdata = r.tlb_wdata;
+    wb_tlb_wdata = r.tlb_wdata.read();
     o_core_req_ready = v_core_req_ready;
     o_core_resp_valid = v_core_resp_valid;
     o_core_resp_addr = vb_core_resp_addr;
@@ -702,7 +701,7 @@ void Mmu::comb() {
 }
 
 void Mmu::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         Mmu_r_reset(r);
     } else {
         r = v;

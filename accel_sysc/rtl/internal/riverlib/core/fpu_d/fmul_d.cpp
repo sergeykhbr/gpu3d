@@ -36,7 +36,8 @@ DoubleMul::DoubleMul(sc_module_name name,
     async_reset_ = async_reset;
     u_imul53 = 0;
 
-    u_imul53 = new imul53("u_imul53", async_reset);
+    u_imul53 = new imul53("u_imul53",
+                           async_reset);
     u_imul53->i_clk(i_clk);
     u_imul53->i_nrst(i_nrst);
     u_imul53->i_ena(w_imul_ena);
@@ -98,24 +99,24 @@ void DoubleMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_overflow, o_overflow.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_busy, o_busy.name());
-        sc_trace(o_vcd, r.busy, pn + ".r_busy");
-        sc_trace(o_vcd, r.ena, pn + ".r_ena");
-        sc_trace(o_vcd, r.a, pn + ".r_a");
-        sc_trace(o_vcd, r.b, pn + ".r_b");
-        sc_trace(o_vcd, r.result, pn + ".r_result");
-        sc_trace(o_vcd, r.zeroA, pn + ".r_zeroA");
-        sc_trace(o_vcd, r.zeroB, pn + ".r_zeroB");
-        sc_trace(o_vcd, r.mantA, pn + ".r_mantA");
-        sc_trace(o_vcd, r.mantB, pn + ".r_mantB");
-        sc_trace(o_vcd, r.expAB, pn + ".r_expAB");
-        sc_trace(o_vcd, r.expAlign, pn + ".r_expAlign");
-        sc_trace(o_vcd, r.mantAlign, pn + ".r_mantAlign");
-        sc_trace(o_vcd, r.postShift, pn + ".r_postShift");
-        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
-        sc_trace(o_vcd, r.nanA, pn + ".r_nanA");
-        sc_trace(o_vcd, r.nanB, pn + ".r_nanB");
-        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
-        sc_trace(o_vcd, r.illegal_op, pn + ".r_illegal_op");
+        sc_trace(o_vcd, r.busy, pn + ".r.busy");
+        sc_trace(o_vcd, r.ena, pn + ".r.ena");
+        sc_trace(o_vcd, r.a, pn + ".r.a");
+        sc_trace(o_vcd, r.b, pn + ".r.b");
+        sc_trace(o_vcd, r.result, pn + ".r.result");
+        sc_trace(o_vcd, r.zeroA, pn + ".r.zeroA");
+        sc_trace(o_vcd, r.zeroB, pn + ".r.zeroB");
+        sc_trace(o_vcd, r.mantA, pn + ".r.mantA");
+        sc_trace(o_vcd, r.mantB, pn + ".r.mantB");
+        sc_trace(o_vcd, r.expAB, pn + ".r.expAB");
+        sc_trace(o_vcd, r.expAlign, pn + ".r.expAlign");
+        sc_trace(o_vcd, r.mantAlign, pn + ".r.mantAlign");
+        sc_trace(o_vcd, r.postShift, pn + ".r.postShift");
+        sc_trace(o_vcd, r.mantPostScale, pn + ".r.mantPostScale");
+        sc_trace(o_vcd, r.nanA, pn + ".r.nanA");
+        sc_trace(o_vcd, r.nanB, pn + ".r.nanB");
+        sc_trace(o_vcd, r.overflow, pn + ".r.overflow");
+        sc_trace(o_vcd, r.illegal_op, pn + ".r.illegal_op");
     }
 
     if (u_imul53) {
@@ -152,6 +153,7 @@ void DoubleMul::comb() {
     sc_uint<11> vb_res_exp;
     sc_uint<52> vb_res_mant;
 
+    v = r;
     vb_ena = 0;
     signA = 0;
     signB = 0;
@@ -180,8 +182,6 @@ void DoubleMul::comb() {
     vb_res_exp = 0;
     vb_res_mant = 0;
 
-    v = r;
-
     vb_ena[0] = (i_ena.read() && (!r.busy.read()));
     vb_ena[1] = r.ena.read()[0];
     vb_ena(4, 2) = (r.ena.read()(3, 2), w_imul_rdy.read());
@@ -190,8 +190,8 @@ void DoubleMul::comb() {
     if (i_ena.read() == 1) {
         v.busy = 1;
         v.overflow = 0;
-        v.a = i_a;
-        v.b = i_b;
+        v.a = i_a.read();
+        v.b = i_b.read();
     }
 
     signA = r.a.read()[63];
@@ -287,7 +287,7 @@ void DoubleMul::comb() {
 
     // Prepare to mantissa post-scale
     if (r.postShift.read().or_reduce() == 0) {
-        mantPostScale = r.mantAlign;
+        mantPostScale = r.mantAlign.read();
     } else if (r.postShift.read() < 105) {
         for (int i = 1; i < 105; i++) {
             if (i == r.postShift.read().to_int()) {
@@ -369,19 +369,19 @@ void DoubleMul::comb() {
         v.busy = 0;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         DoubleMul_r_reset(v);
     }
 
-    o_res = r.result;
-    o_illegal_op = r.illegal_op;
-    o_overflow = r.overflow;
+    o_res = r.result.read();
+    o_illegal_op = r.illegal_op.read();
+    o_overflow = r.overflow.read();
     o_valid = r.ena.read()[4];
-    o_busy = r.busy;
+    o_busy = r.busy.read();
 }
 
 void DoubleMul::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         DoubleMul_r_reset(r);
     } else {
         r = v;

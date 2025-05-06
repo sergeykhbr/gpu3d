@@ -56,9 +56,9 @@ SC_MODULE(idiv53) {
         sc_signal<sc_biguint<105>> bits;
         sc_signal<bool> overflow;
         sc_signal<bool> zero_resid;
-    } v, r;
+    };
 
-    void idiv53_r_reset(idiv53_registers &iv) {
+    void idiv53_r_reset(idiv53_registers& iv) {
         iv.delay = 0;
         iv.lshift = 0;
         iv.lshift_rdy = 0;
@@ -77,6 +77,8 @@ SC_MODULE(idiv53) {
     sc_signal<sc_uint<8>> wb_bits_o;
     sc_signal<sc_uint<7>> wb_muxind_o;
     sc_signal<bool> w_muxind_rdy_o;
+    idiv53_registers v;
+    idiv53_registers r;
 
     divstage53 *divstage0;
 

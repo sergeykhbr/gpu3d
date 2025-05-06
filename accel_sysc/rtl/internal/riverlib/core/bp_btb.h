@@ -52,12 +52,21 @@ SC_MODULE(BpBTB) {
         sc_signal<bool> exec;                               // 0=predec; 1=exec (high priority)
     };
 
-
     struct BpBTB_registers {
         BtbEntryType btb[CFG_BTB_SIZE];
-    } v, r;
+    };
+
+    void BpBTB_r_reset(BpBTB_registers& iv) {
+        for (int i = 0; i < CFG_BTB_SIZE; i++) {
+            iv.btb[i].pc = ~0ull;
+            iv.btb[i].npc = 0;
+            iv.btb[i].exec = 0;
+        }
+    }
 
     sc_signal<sc_uint<RISCV_ARCH>> dbg_npc[CFG_BP_DEPTH];
+    BpBTB_registers v;
+    BpBTB_registers r;
 
 };
 

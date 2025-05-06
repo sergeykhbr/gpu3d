@@ -314,7 +314,6 @@ SC_MODULE(Processor) {
         WriteBackType w;                                    // Write back registers value
     };
 
-
     PipelineType w;                                         // 5-stages CPU pipeline
     MmuType immu;
     MmuType dmmu;

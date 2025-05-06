@@ -103,20 +103,20 @@ void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_a2, i_a2.name());
         sc_trace(o_vcd, o_res, o_res.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
-        sc_trace(o_vcd, r.rv32, pn + ".r_rv32");
-        sc_trace(o_vcd, r.resid, pn + ".r_resid");
-        sc_trace(o_vcd, r.invert, pn + ".r_invert");
-        sc_trace(o_vcd, r.div_on_zero, pn + ".r_div_on_zero");
-        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
-        sc_trace(o_vcd, r.busy, pn + ".r_busy");
-        sc_trace(o_vcd, r.ena, pn + ".r_ena");
-        sc_trace(o_vcd, r.divident_i, pn + ".r_divident_i");
-        sc_trace(o_vcd, r.divisor_i, pn + ".r_divisor_i");
-        sc_trace(o_vcd, r.bits_i, pn + ".r_bits_i");
-        sc_trace(o_vcd, r.result, pn + ".r_result");
-        sc_trace(o_vcd, r.reference_div, pn + ".r_reference_div");
-        sc_trace(o_vcd, r.a1_dbg, pn + ".r_a1_dbg");
-        sc_trace(o_vcd, r.a2_dbg, pn + ".r_a2_dbg");
+        sc_trace(o_vcd, r.rv32, pn + ".r.rv32");
+        sc_trace(o_vcd, r.resid, pn + ".r.resid");
+        sc_trace(o_vcd, r.invert, pn + ".r.invert");
+        sc_trace(o_vcd, r.div_on_zero, pn + ".r.div_on_zero");
+        sc_trace(o_vcd, r.overflow, pn + ".r.overflow");
+        sc_trace(o_vcd, r.busy, pn + ".r.busy");
+        sc_trace(o_vcd, r.ena, pn + ".r.ena");
+        sc_trace(o_vcd, r.divident_i, pn + ".r.divident_i");
+        sc_trace(o_vcd, r.divisor_i, pn + ".r.divisor_i");
+        sc_trace(o_vcd, r.bits_i, pn + ".r.bits_i");
+        sc_trace(o_vcd, r.result, pn + ".r.result");
+        sc_trace(o_vcd, r.reference_div, pn + ".r.reference_div");
+        sc_trace(o_vcd, r.a1_dbg, pn + ".r.a1_dbg");
+        sc_trace(o_vcd, r.a2_dbg, pn + ".r.a2_dbg");
     }
 
     if (stage0) {
@@ -139,6 +139,7 @@ void IntDiv::comb() {
     sc_uint<1> v_ena;
     sc_biguint<120> t_divisor;
 
+    v = r;
     v_invert64 = 0;
     v_invert32 = 0;
     vb_a1 = 0;
@@ -149,8 +150,6 @@ void IntDiv::comb() {
     v_a2_m1 = 0;
     v_ena = 0;
     t_divisor = 0;
-
-    v = r;
 
     if (i_rv32.read() == 1) {
         if ((i_unsigned.read() == 1) || (i_a1.read()[31] == 0)) {
@@ -165,12 +164,12 @@ void IntDiv::comb() {
         }
     } else {
         if ((i_unsigned.read() == 1) || (i_a1.read()[63] == 0)) {
-            vb_a1(63, 0) = i_a1;
+            vb_a1(63, 0) = i_a1.read();
         } else {
             vb_a1(63, 0) = ((~i_a1.read()) + 1);
         }
         if ((i_unsigned.read() == 1) || (i_a2.read()[63] == 0)) {
-            vb_a2(63, 0) = i_a2;
+            vb_a2(63, 0) = i_a2.read();
         } else {
             vb_a2(63, 0) = ((~i_a2.read()) + 1);
         }
@@ -189,13 +188,13 @@ void IntDiv::comb() {
     if (r.invert.read() == 1) {
         vb_rem = ((~r.divident_i.read().to_uint64()) + 1);
     } else {
-        vb_rem = r.divident_i;
+        vb_rem = r.divident_i.read();
     }
 
     if (r.invert.read() == 1) {
         vb_div = ((~r.bits_i.read().to_uint64()) + 1);
     } else {
-        vb_div = r.bits_i;
+        vb_div = r.bits_i.read();
     }
 
     // DIVW, DIVUW, REMW and REMUW sign-extended accordingly with
@@ -213,8 +212,8 @@ void IntDiv::comb() {
 
     if (i_ena.read() == 1) {
         v.busy = 1;
-        v.rv32 = i_rv32;
-        v.resid = i_residual;
+        v.rv32 = i_rv32.read();
+        v.resid = i_residual.read();
 
         v.divident_i = vb_a1;
         t_divisor(119, 56) = vb_a2;
@@ -257,8 +256,8 @@ void IntDiv::comb() {
                 v.overflow = (v_a1_m0 && v_a2_m1);
             }
         }
-        v.a1_dbg = i_a1;
-        v.a2_dbg = i_a2;
+        v.a1_dbg = i_a1.read();
+        v.a2_dbg = i_a2.read();
         // v.reference_div = compute_reference(i_unsigned.read(), i_rv32.read(),
         //                              i_residual.read(),
         //                              i_a1.read(), i_a2.read());
@@ -278,23 +277,23 @@ void IntDiv::comb() {
             v.result = vb_div;
         }
     } else if (r.busy.read() == 1) {
-        v.divident_i = wb_resid1_o;
+        v.divident_i = wb_resid1_o.read();
         v.divisor_i = (0, r.divisor_i.read()(119, 8));
         v.bits_i = (r.bits_i.read(), wb_bits0_o.read(), wb_bits1_o.read());
     }
     wb_divisor0_i = (r.divisor_i.read() << 4);
     wb_divisor1_i = (0, r.divisor_i.read());
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         IntDiv_r_reset(v);
     }
 
-    o_res = r.result;
+    o_res = r.result.read();
     o_valid = r.ena.read()[9];
 }
 
 void IntDiv::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         IntDiv_r_reset(r);
     } else {
         r = v;

@@ -137,9 +137,9 @@ SC_MODULE(dmidebug) {
         sc_signal<sc_uint<3>> dport_size;
         sc_signal<bool> dport_resp_ready;
         sc_signal<bool> pready;
-    } v, r;
+    };
 
-    void dmidebug_r_reset(dmidebug_registers &iv) {
+    void dmidebug_r_reset(dmidebug_registers& iv) {
         iv.bus_jtag = 0;
         iv.jtag_resp_data = 0;
         iv.prdata = 0;
@@ -196,6 +196,8 @@ SC_MODULE(dmidebug) {
     sc_signal<sc_uint<32>> wb_jtag_dmi_resp_data;
     sc_signal<bool> w_jtag_dmi_busy;
     sc_signal<bool> w_jtag_dmi_error;
+    dmidebug_registers v;
+    dmidebug_registers r;
 
     jtagcdc *cdc;
     jtagtap<7, 5, CFG_DMI_TAP_ID> *tap;

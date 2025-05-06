@@ -67,7 +67,8 @@ InstrDecoder::InstrDecoder(sc_module_name name,
     for (int i = 0; i < DEC_NUM; i++) {
         char tstr[256];
         RISCV_sprintf(tstr, sizeof(tstr), "rv%d", i);
-        rv[i] = new DecoderRv(tstr, async_reset,
+        rv[i] = new DecoderRv(tstr,
+                               async_reset,
                                fpu_ena);
         rv[i]->i_clk(i_clk);
         rv[i]->i_nrst(i_nrst);
@@ -104,7 +105,8 @@ InstrDecoder::InstrDecoder(sc_module_name name,
     for (int i = 0; i < DEC_NUM; i++) {
         char tstr[256];
         RISCV_sprintf(tstr, sizeof(tstr), "rvc%d", i);
-        rvc[i] = new DecoderRvc(tstr, async_reset);
+        rvc[i] = new DecoderRvc(tstr,
+                                 async_reset);
         rvc[i]->i_clk(i_clk);
         rvc[i]->i_nrst(i_nrst);
         rvc[i]->i_flush_pipeline(i_flush_pipeline);
@@ -170,6 +172,12 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         sensitive << wd[i].imm;
         sensitive << wd[i].progbuf_ena;
     }
+    for (int i = 0; i < DEC_NUM; i++) {
+        sensitive << wb_f_pc[i];
+    }
+    for (int i = 0; i < DEC_NUM; i++) {
+        sensitive << wb_f_instr[i];
+    }
     for (int i = 0; i < FULL_DEC_DEPTH; i++) {
         sensitive << r.d[i].pc;
         sensitive << r.d[i].isa_type;
@@ -193,12 +201,6 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         sensitive << r.d[i].csr_addr;
         sensitive << r.d[i].imm;
         sensitive << r.d[i].progbuf_ena;
-    }
-    for (int i = 0; i < DEC_NUM; i++) {
-        sensitive << wb_f_pc[i];
-    }
-    for (int i = 0; i < DEC_NUM; i++) {
-        sensitive << wb_f_instr[i];
     }
 
     SC_METHOD(registers);
@@ -251,6 +253,30 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
         sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
+        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
+            sc_trace(o_vcd, r.d[i].pc, pn + ".r.d[i].pc");
+            sc_trace(o_vcd, r.d[i].isa_type, pn + ".r.d[i].isa_type");
+            sc_trace(o_vcd, r.d[i].instr_vec, pn + ".r.d[i].instr_vec");
+            sc_trace(o_vcd, r.d[i].instr, pn + ".r.d[i].instr");
+            sc_trace(o_vcd, r.d[i].memop_store, pn + ".r.d[i].memop_store");
+            sc_trace(o_vcd, r.d[i].memop_load, pn + ".r.d[i].memop_load");
+            sc_trace(o_vcd, r.d[i].memop_sign_ext, pn + ".r.d[i].memop_sign_ext");
+            sc_trace(o_vcd, r.d[i].memop_size, pn + ".r.d[i].memop_size");
+            sc_trace(o_vcd, r.d[i].unsigned_op, pn + ".r.d[i].unsigned_op");
+            sc_trace(o_vcd, r.d[i].rv32, pn + ".r.d[i].rv32");
+            sc_trace(o_vcd, r.d[i].f64, pn + ".r.d[i].f64");
+            sc_trace(o_vcd, r.d[i].compressed, pn + ".r.d[i].compressed");
+            sc_trace(o_vcd, r.d[i].amo, pn + ".r.d[i].amo");
+            sc_trace(o_vcd, r.d[i].instr_load_fault, pn + ".r.d[i].instr_load_fault");
+            sc_trace(o_vcd, r.d[i].instr_page_fault_x, pn + ".r.d[i].instr_page_fault_x");
+            sc_trace(o_vcd, r.d[i].instr_unimplemented, pn + ".r.d[i].instr_unimplemented");
+            sc_trace(o_vcd, r.d[i].radr1, pn + ".r.d[i].radr1");
+            sc_trace(o_vcd, r.d[i].radr2, pn + ".r.d[i].radr2");
+            sc_trace(o_vcd, r.d[i].waddr, pn + ".r.d[i].waddr");
+            sc_trace(o_vcd, r.d[i].csr_addr, pn + ".r.d[i].csr_addr");
+            sc_trace(o_vcd, r.d[i].imm, pn + ".r.d[i].imm");
+            sc_trace(o_vcd, r.d[i].progbuf_ena, pn + ".r.d[i].progbuf_ena");
+        }
     }
 
     for (int i = 0; i < DEC_NUM; i++) {
@@ -269,39 +295,38 @@ void InstrDecoder::comb() {
     int selidx;
     bool shift_ena;
 
+    for (int i = 0; i < FULL_DEC_DEPTH; i++) {
+        v.d[i].pc = r.d[i].pc.read();
+        v.d[i].isa_type = r.d[i].isa_type.read();
+        v.d[i].instr_vec = r.d[i].instr_vec.read();
+        v.d[i].instr = r.d[i].instr.read();
+        v.d[i].memop_store = r.d[i].memop_store.read();
+        v.d[i].memop_load = r.d[i].memop_load.read();
+        v.d[i].memop_sign_ext = r.d[i].memop_sign_ext.read();
+        v.d[i].memop_size = r.d[i].memop_size.read();
+        v.d[i].unsigned_op = r.d[i].unsigned_op.read();
+        v.d[i].rv32 = r.d[i].rv32.read();
+        v.d[i].f64 = r.d[i].f64.read();
+        v.d[i].compressed = r.d[i].compressed.read();
+        v.d[i].amo = r.d[i].amo.read();
+        v.d[i].instr_load_fault = r.d[i].instr_load_fault.read();
+        v.d[i].instr_page_fault_x = r.d[i].instr_page_fault_x.read();
+        v.d[i].instr_unimplemented = r.d[i].instr_unimplemented.read();
+        v.d[i].radr1 = r.d[i].radr1.read();
+        v.d[i].radr2 = r.d[i].radr2.read();
+        v.d[i].waddr = r.d[i].waddr.read();
+        v.d[i].csr_addr = r.d[i].csr_addr.read();
+        v.d[i].imm = r.d[i].imm.read();
+        v.d[i].progbuf_ena = r.d[i].progbuf_ena.read();
+    }
     selidx = 0;
     shift_ena = 0;
-
-    for (int i = 0; i < FULL_DEC_DEPTH; i++) {
-        v.d[i].pc = r.d[i].pc;
-        v.d[i].isa_type = r.d[i].isa_type;
-        v.d[i].instr_vec = r.d[i].instr_vec;
-        v.d[i].instr = r.d[i].instr;
-        v.d[i].memop_store = r.d[i].memop_store;
-        v.d[i].memop_load = r.d[i].memop_load;
-        v.d[i].memop_sign_ext = r.d[i].memop_sign_ext;
-        v.d[i].memop_size = r.d[i].memop_size;
-        v.d[i].unsigned_op = r.d[i].unsigned_op;
-        v.d[i].rv32 = r.d[i].rv32;
-        v.d[i].f64 = r.d[i].f64;
-        v.d[i].compressed = r.d[i].compressed;
-        v.d[i].amo = r.d[i].amo;
-        v.d[i].instr_load_fault = r.d[i].instr_load_fault;
-        v.d[i].instr_page_fault_x = r.d[i].instr_page_fault_x;
-        v.d[i].instr_unimplemented = r.d[i].instr_unimplemented;
-        v.d[i].radr1 = r.d[i].radr1;
-        v.d[i].radr2 = r.d[i].radr2;
-        v.d[i].waddr = r.d[i].waddr;
-        v.d[i].csr_addr = r.d[i].csr_addr;
-        v.d[i].imm = r.d[i].imm;
-        v.d[i].progbuf_ena = r.d[i].progbuf_ena;
-    }
 
     for (int i = 0; i < FULL_DEC_DEPTH; i++) {
         wd[(DEC_BLOCK + i)] = r.d[i];
     }
 
-    if (i_f_pc.read() != wd[0].pc) {
+    if (i_f_pc.read() != wd[0].pc.read()) {
         shift_ena = 1;
     }
 
@@ -317,8 +342,8 @@ void InstrDecoder::comb() {
 
     // Select output decoder:
     for (int i = 0; i < ((FULL_DEC_DEPTH + DEC_BLOCK) / 2); i++) {
-        if (i_e_npc.read() == wd[(2 * i)].pc) {
-            if (wd[(2 * i)].compressed == 0) {
+        if (i_e_npc.read() == wd[(2 * i)].pc.read()) {
+            if (wd[(2 * i)].compressed.read() == 0) {
                 selidx = (2 * i);
             } else {
                 selidx = ((2 * i) + 1);
@@ -332,107 +357,61 @@ void InstrDecoder::comb() {
         wb_f_instr[i] = i_f_instr.read()((16 * i) + 32 - 1, (16 * i));
     }
 
-    if ((!async_reset_ && i_nrst.read() == 0) || (i_flush_pipeline.read() == 1)) {
-        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
-            v.d[i].pc = ~0ull;
-            v.d[i].isa_type = 0;
-            v.d[i].instr_vec = 0;
-            v.d[i].instr = ~0ull;
-            v.d[i].memop_store = 0;
-            v.d[i].memop_load = 0;
-            v.d[i].memop_sign_ext = 0;
-            v.d[i].memop_size = MEMOP_1B;
-            v.d[i].unsigned_op = 0;
-            v.d[i].rv32 = 0;
-            v.d[i].f64 = 0;
-            v.d[i].compressed = 0;
-            v.d[i].amo = 0;
-            v.d[i].instr_load_fault = 0;
-            v.d[i].instr_page_fault_x = 0;
-            v.d[i].instr_unimplemented = 0;
-            v.d[i].radr1 = 0;
-            v.d[i].radr2 = 0;
-            v.d[i].waddr = 0;
-            v.d[i].csr_addr = 0;
-            v.d[i].imm = 0;
-            v.d[i].progbuf_ena = 0;
-        }
+    if (((~async_reset_) && (i_nrst.read() == 0)) || (i_flush_pipeline.read() == 1)) {
+        InstrDecoder_r_reset(v);
     }
 
-    o_pc = wd[selidx].pc;
-    o_instr = wd[selidx].instr;
-    o_memop_load = wd[selidx].memop_load;
-    o_memop_store = wd[selidx].memop_store;
-    o_memop_sign_ext = wd[selidx].memop_sign_ext;
-    o_memop_size = wd[selidx].memop_size;
-    o_unsigned_op = wd[selidx].unsigned_op;
-    o_rv32 = wd[selidx].rv32;
-    o_f64 = wd[selidx].f64;
-    o_compressed = wd[selidx].compressed;
-    o_amo = wd[selidx].amo;
-    o_isa_type = wd[selidx].isa_type;
-    o_instr_vec = wd[selidx].instr_vec;
-    o_exception = wd[selidx].instr_unimplemented;
-    o_instr_load_fault = wd[selidx].instr_load_fault;
-    o_instr_page_fault_x = wd[selidx].instr_page_fault_x;
-    o_radr1 = wd[selidx].radr1;
-    o_radr2 = wd[selidx].radr2;
-    o_waddr = wd[selidx].waddr;
-    o_csr_addr = wd[selidx].csr_addr;
-    o_imm = wd[selidx].imm;
-    o_progbuf_ena = wd[selidx].progbuf_ena;
+    o_pc = wd[selidx].pc.read();
+    o_instr = wd[selidx].instr.read();
+    o_memop_load = wd[selidx].memop_load.read();
+    o_memop_store = wd[selidx].memop_store.read();
+    o_memop_sign_ext = wd[selidx].memop_sign_ext.read();
+    o_memop_size = wd[selidx].memop_size.read();
+    o_unsigned_op = wd[selidx].unsigned_op.read();
+    o_rv32 = wd[selidx].rv32.read();
+    o_f64 = wd[selidx].f64.read();
+    o_compressed = wd[selidx].compressed.read();
+    o_amo = wd[selidx].amo.read();
+    o_isa_type = wd[selidx].isa_type.read();
+    o_instr_vec = wd[selidx].instr_vec.read();
+    o_exception = wd[selidx].instr_unimplemented.read();
+    o_instr_load_fault = wd[selidx].instr_load_fault.read();
+    o_instr_page_fault_x = wd[selidx].instr_page_fault_x.read();
+    o_radr1 = wd[selidx].radr1.read();
+    o_radr2 = wd[selidx].radr2.read();
+    o_waddr = wd[selidx].waddr.read();
+    o_csr_addr = wd[selidx].csr_addr.read();
+    o_imm = wd[selidx].imm.read();
+    o_progbuf_ena = wd[selidx].progbuf_ena.read();
 }
 
 void InstrDecoder::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
-            r.d[i].pc = ~0ull;
-            r.d[i].isa_type = 0;
-            r.d[i].instr_vec = 0;
-            r.d[i].instr = ~0ull;
-            r.d[i].memop_store = 0;
-            r.d[i].memop_load = 0;
-            r.d[i].memop_sign_ext = 0;
-            r.d[i].memop_size = MEMOP_1B;
-            r.d[i].unsigned_op = 0;
-            r.d[i].rv32 = 0;
-            r.d[i].f64 = 0;
-            r.d[i].compressed = 0;
-            r.d[i].amo = 0;
-            r.d[i].instr_load_fault = 0;
-            r.d[i].instr_page_fault_x = 0;
-            r.d[i].instr_unimplemented = 0;
-            r.d[i].radr1 = 0;
-            r.d[i].radr2 = 0;
-            r.d[i].waddr = 0;
-            r.d[i].csr_addr = 0;
-            r.d[i].imm = 0;
-            r.d[i].progbuf_ena = 0;
-        }
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        InstrDecoder_r_reset(r);
     } else {
         for (int i = 0; i < FULL_DEC_DEPTH; i++) {
-            r.d[i].pc = v.d[i].pc;
-            r.d[i].isa_type = v.d[i].isa_type;
-            r.d[i].instr_vec = v.d[i].instr_vec;
-            r.d[i].instr = v.d[i].instr;
-            r.d[i].memop_store = v.d[i].memop_store;
-            r.d[i].memop_load = v.d[i].memop_load;
-            r.d[i].memop_sign_ext = v.d[i].memop_sign_ext;
-            r.d[i].memop_size = v.d[i].memop_size;
-            r.d[i].unsigned_op = v.d[i].unsigned_op;
-            r.d[i].rv32 = v.d[i].rv32;
-            r.d[i].f64 = v.d[i].f64;
-            r.d[i].compressed = v.d[i].compressed;
-            r.d[i].amo = v.d[i].amo;
-            r.d[i].instr_load_fault = v.d[i].instr_load_fault;
-            r.d[i].instr_page_fault_x = v.d[i].instr_page_fault_x;
-            r.d[i].instr_unimplemented = v.d[i].instr_unimplemented;
-            r.d[i].radr1 = v.d[i].radr1;
-            r.d[i].radr2 = v.d[i].radr2;
-            r.d[i].waddr = v.d[i].waddr;
-            r.d[i].csr_addr = v.d[i].csr_addr;
-            r.d[i].imm = v.d[i].imm;
-            r.d[i].progbuf_ena = v.d[i].progbuf_ena;
+            r.d[i].pc = v.d[i].pc.read();
+            r.d[i].isa_type = v.d[i].isa_type.read();
+            r.d[i].instr_vec = v.d[i].instr_vec.read();
+            r.d[i].instr = v.d[i].instr.read();
+            r.d[i].memop_store = v.d[i].memop_store.read();
+            r.d[i].memop_load = v.d[i].memop_load.read();
+            r.d[i].memop_sign_ext = v.d[i].memop_sign_ext.read();
+            r.d[i].memop_size = v.d[i].memop_size.read();
+            r.d[i].unsigned_op = v.d[i].unsigned_op.read();
+            r.d[i].rv32 = v.d[i].rv32.read();
+            r.d[i].f64 = v.d[i].f64.read();
+            r.d[i].compressed = v.d[i].compressed.read();
+            r.d[i].amo = v.d[i].amo.read();
+            r.d[i].instr_load_fault = v.d[i].instr_load_fault.read();
+            r.d[i].instr_page_fault_x = v.d[i].instr_page_fault_x.read();
+            r.d[i].instr_unimplemented = v.d[i].instr_unimplemented.read();
+            r.d[i].radr1 = v.d[i].radr1.read();
+            r.d[i].radr2 = v.d[i].radr2.read();
+            r.d[i].waddr = v.d[i].waddr.read();
+            r.d[i].csr_addr = v.d[i].csr_addr.read();
+            r.d[i].imm = v.d[i].imm.read();
+            r.d[i].progbuf_ena = v.d[i].progbuf_ena.read();
         }
     }
 }

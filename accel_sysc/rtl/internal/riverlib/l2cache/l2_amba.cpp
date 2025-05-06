@@ -77,7 +77,7 @@ void L2Amba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_store_fault, o_resp_store_fault.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
         sc_trace(o_vcd, o_msto, o_msto.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
     }
 
 }
@@ -91,6 +91,7 @@ void L2Amba::comb() {
     bool v_next_ready;
     axi4_l2_out_type vmsto;
 
+    v = r;
     v_req_mem_ready = 0;
     v_resp_mem_valid = 0;
     v_resp_mem_ack = 0;
@@ -98,8 +99,6 @@ void L2Amba::comb() {
     v_mem_er_store_fault = 0;
     v_next_ready = 0;
     vmsto = axi4_l2_out_none;
-
-    v = r;
 
     vmsto.r_ready = 1;
     vmsto.w_valid = 0;
@@ -160,39 +159,39 @@ void L2Amba::comb() {
         }
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         L2Amba_r_reset(v);
     }
 
     o_resp_data = i_msti.read().r_data;                     // can't directly pass to lower level
 
     // o_msto_aw_valid = vmsto_aw_valid;
-    vmsto.aw_bits.addr = i_req_addr;
+    vmsto.aw_bits.addr = i_req_addr.read();
     vmsto.aw_bits.len = 0;
-    vmsto.aw_bits.size = i_req_size;                        // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
+    vmsto.aw_bits.size = i_req_size.read();                 // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
     vmsto.aw_bits.burst = 0x1;                              // 00=FIX; 01=INCR; 10=WRAP
     vmsto.aw_bits.lock = 0;
     vmsto.aw_bits.cache = i_req_type.read()[REQ_MEM_TYPE_CACHED];
-    vmsto.aw_bits.prot = i_req_prot;
+    vmsto.aw_bits.prot = i_req_prot.read();
     vmsto.aw_bits.qos = 0;
     vmsto.aw_bits.region = 0;
     vmsto.aw_id = 0;
     vmsto.aw_user = 0;
     // vmsto.w_valid = vmsto_w_valid;
-    vmsto.w_data = i_req_data;
+    vmsto.w_data = i_req_data.read();
     // vmsto.w_last = vmsto_w_last;
-    vmsto.w_strb = i_req_strob;
+    vmsto.w_strb = i_req_strob.read();
     vmsto.w_user = 0;
     vmsto.b_ready = 1;
 
     // vmsto.ar_valid = vmsto_ar_valid;
-    vmsto.ar_bits.addr = i_req_addr;
+    vmsto.ar_bits.addr = i_req_addr.read();
     vmsto.ar_bits.len = 0;
-    vmsto.ar_bits.size = i_req_size;                        // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    vmsto.ar_bits.size = i_req_size.read();                 // 0=1B; 1=2B; 2=4B; 3=8B; ...
     vmsto.ar_bits.burst = 0x1;                              // INCR
     vmsto.ar_bits.lock = 0;
     vmsto.ar_bits.cache = i_req_type.read()[REQ_MEM_TYPE_CACHED];
-    vmsto.ar_bits.prot = i_req_prot;
+    vmsto.ar_bits.prot = i_req_prot.read();
     vmsto.ar_bits.qos = 0;
     vmsto.ar_bits.region = 0;
     vmsto.ar_id = 0;
@@ -209,7 +208,7 @@ void L2Amba::comb() {
 }
 
 void L2Amba::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         L2Amba_r_reset(r);
     } else {
         r = v;

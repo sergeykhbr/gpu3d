@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "../../../prj/impl/asic/target_cfg.h"
+#include "../../../../prj/impl/asic/target_cfg.h"
 #include "tagmemcoupled.h"
 
 namespace debugger {
@@ -87,7 +87,7 @@ SC_MODULE(ICacheLru) {
     static const uint8_t State_ResetWrite = 11;
 
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
-    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_ILOG2_LINES_PER_WAY + CFG_ILOG2_NWAYS)) - 1);
+    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_ILOG2_LINES_PER_WAY + CFG_ILOG2_NWAYS)) - 1);// Actual bitwidth is (ibits + waybits) but to avoid sc template generation use 32-bits
 
     struct ICacheLru_registers {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
@@ -105,9 +105,9 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<32>> req_flush_cnt;
         sc_signal<sc_uint<32>> flush_cnt;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> cache_line_i;
-    } v, r;
+    };
 
-    void ICacheLru_r_reset(ICacheLru_registers &iv) {
+    void ICacheLru_r_reset(ICacheLru_registers& iv) {
         iv.req_addr = 0;
         iv.req_addr_next = 0;
         iv.write_addr = 0;
@@ -138,6 +138,8 @@ SC_MODULE(ICacheLru) {
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
     sc_signal<bool> line_hit_next_o;
+    ICacheLru_registers v;
+    ICacheLru_registers r;
 
     TagMemCoupled<abus, CFG_ILOG2_NWAYS, CFG_ILOG2_LINES_PER_WAY, lnbits, flbits> *mem0;
 

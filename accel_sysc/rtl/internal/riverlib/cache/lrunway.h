@@ -49,7 +49,10 @@ SC_MODULE(lrunway) {
     struct lrunway_rxegisters {
         sc_signal<sc_uint<abits>> radr;
         sc_signal<sc_uint<LINE_WIDTH>> mem[LINES_TOTAL];
-    } vx, rx;
+    };
+
+    lrunway_rxegisters vx;
+    lrunway_rxegisters rx;
 
 };
 
@@ -94,6 +97,10 @@ void lrunway<abits, waybits>::comb() {
     bool shift_ena_up;
     bool shift_ena_down;
 
+    vx.radr = rx.radr.read();
+    for (int i = 0; i < LINES_TOTAL; i++) {
+        vx.mem[i] = rx.mem[i].read();
+    }
     wb_tbl_rdata = 0;
     vb_tbl_wadr = 0;
     vb_tbl_wdata_init = 0;
@@ -104,13 +111,8 @@ void lrunway<abits, waybits>::comb() {
     shift_ena_up = 0;
     shift_ena_down = 0;
 
-    vx.radr = rx.radr;
-    for (int i = 0; i < LINES_TOTAL; i++) {
-        vx.mem[i] = rx.mem[i];
-    }
-
-    vx.radr = i_raddr;
-    wb_tbl_rdata = rx.mem[rx.radr.read().to_int()];
+    vx.radr = i_raddr.read();
+    wb_tbl_rdata = rx.mem[rx.radr.read().to_int()].read();
 
     v_we = (i_up.read() || i_down.read() || i_init.read());
 
@@ -122,7 +124,7 @@ void lrunway<abits, waybits>::comb() {
     // LRU next value, last used goes on top
     vb_tbl_wdata_up = wb_tbl_rdata;
     if (wb_tbl_rdata((LINE_WIDTH - waybits) + waybits - 1, (LINE_WIDTH - waybits)) != i_lru.read()) {
-        vb_tbl_wdata_up((LINE_WIDTH - waybits) + waybits - 1, (LINE_WIDTH - waybits)) = i_lru;
+        vb_tbl_wdata_up((LINE_WIDTH - waybits) + waybits - 1, (LINE_WIDTH - waybits)) = i_lru.read();
         shift_ena_up = 1;
 
         for (int i = (WAYS_TOTAL - 2); i >= 0; i--) {
@@ -138,7 +140,7 @@ void lrunway<abits, waybits>::comb() {
     // LRU next value when invalidate, marked as 'invalid' goes down
     vb_tbl_wdata_down = wb_tbl_rdata;
     if (wb_tbl_rdata((waybits - 1), 0) != i_lru.read()) {
-        vb_tbl_wdata_down((waybits - 1), 0) = i_lru;
+        vb_tbl_wdata_down((waybits - 1), 0) = i_lru.read();
         shift_ena_down = 1;
 
         for (int i = 1; i < WAYS_TOTAL; i++) {
@@ -169,9 +171,9 @@ void lrunway<abits, waybits>::comb() {
 
 template<int abits, int waybits>
 void lrunway<abits, waybits>::rxegisters() {
-    rx.radr = vx.radr;
+    rx.radr = vx.radr.read();
     for (int i = 0; i < LINES_TOTAL; i++) {
-        rx.mem[i] = vx.mem[i];
+        rx.mem[i] = vx.mem[i].read();
     }
 }
 

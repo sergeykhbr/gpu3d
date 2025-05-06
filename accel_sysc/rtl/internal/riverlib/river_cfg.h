@@ -20,8 +20,8 @@
 namespace debugger {
 
 static const uint32_t CFG_VENDOR_ID = 0x000000F1;
-static const uint32_t CFG_IMPLEMENTATION_ID = 0x20220813;
-static const bool CFG_HW_FPU_ENABLE = 1;
+static const uint32_t CFG_IMPLEMENTATION_ID = 0x20241103;
+static const bool CFG_HW_FPU_ENABLE = 0;
 static const bool CFG_TRACER_ENABLE = 0;
 
 // Architectural size definition

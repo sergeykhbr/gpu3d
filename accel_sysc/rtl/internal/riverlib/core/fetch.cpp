@@ -102,16 +102,16 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_valid, pn + ".r_req_valid");
-        sc_trace(o_vcd, r.resp_ready, pn + ".r_resp_ready");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.mem_resp_shadow, pn + ".r_mem_resp_shadow");
-        sc_trace(o_vcd, r.pc, pn + ".r_pc");
-        sc_trace(o_vcd, r.instr, pn + ".r_instr");
-        sc_trace(o_vcd, r.instr_load_fault, pn + ".r_instr_load_fault");
-        sc_trace(o_vcd, r.instr_page_fault_x, pn + ".r_instr_page_fault_x");
-        sc_trace(o_vcd, r.progbuf_ena, pn + ".r_progbuf_ena");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.req_valid, pn + ".r.req_valid");
+        sc_trace(o_vcd, r.resp_ready, pn + ".r.resp_ready");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.mem_resp_shadow, pn + ".r.mem_resp_shadow");
+        sc_trace(o_vcd, r.pc, pn + ".r.pc");
+        sc_trace(o_vcd, r.instr, pn + ".r.instr");
+        sc_trace(o_vcd, r.instr_load_fault, pn + ".r.instr_load_fault");
+        sc_trace(o_vcd, r.instr_page_fault_x, pn + ".r.instr_page_fault_x");
+        sc_trace(o_vcd, r.progbuf_ena, pn + ".r.progbuf_ena");
     }
 
 }
@@ -127,45 +127,45 @@ void InstrFetch::comb() {
         if (i_progbuf_ena.read() == 1) {
             // Execution from buffer
             v.progbuf_ena = 1;
-            v.pc = i_progbuf_pc;
-            v.instr = i_progbuf_instr;
+            v.pc = i_progbuf_pc.read();
+            v.instr = i_progbuf_instr.read();
             v.instr_load_fault = 0;
             v.instr_page_fault_x = 0;
         } else if (i_bp_valid.read() == 1) {
             v.state = WaitReqAccept;
-            v.req_addr = i_bp_pc;
+            v.req_addr = i_bp_pc.read();
             v.req_valid = 1;
         }
         break;
     case WaitReqAccept:
         if (i_mem_req_ready.read() == 1) {
             v.req_valid = (i_bp_valid.read() && (!i_progbuf_ena.read()));
-            v.req_addr = i_bp_pc;
-            v.mem_resp_shadow = r.req_addr;
+            v.req_addr = i_bp_pc.read();
+            v.mem_resp_shadow = r.req_addr.read();
             v.resp_ready = 1;
             v.state = WaitResp;
         } else if (i_bp_valid.read() == 1) {
             // re-write requested address (while it wasn't accepted)
-            v.req_addr = i_bp_pc;
+            v.req_addr = i_bp_pc.read();
         }
         break;
     case WaitResp:
         if (i_mem_data_valid.read() == 1) {
-            v.pc = i_mem_data_addr;
-            v.instr = i_mem_data;
-            v.instr_load_fault = i_mem_load_fault;
-            v.instr_page_fault_x = i_mem_page_fault_x;
+            v.pc = i_mem_data_addr.read();
+            v.instr = i_mem_data.read();
+            v.instr_load_fault = i_mem_load_fault.read();
+            v.instr_page_fault_x = i_mem_page_fault_x.read();
             v.req_valid = (i_bp_valid.read() && (!i_progbuf_ena.read()));
 
             if (r.req_valid.read() == 1) {
                 if (i_mem_req_ready.read() == 1) {
-                    v.req_addr = i_bp_pc;
-                    v.mem_resp_shadow = r.req_addr;
+                    v.req_addr = i_bp_pc.read();
+                    v.mem_resp_shadow = r.req_addr.read();
                 } else {
                     v.state = WaitReqAccept;
                 }
             } else if ((i_bp_valid.read() == 1) && (i_progbuf_ena.read() == 0)) {
-                v.req_addr = i_bp_pc;
+                v.req_addr = i_bp_pc.read();
                 v.state = WaitReqAccept;
             } else {
                 v.req_addr = ~0ull;
@@ -186,23 +186,23 @@ void InstrFetch::comb() {
         v.instr_page_fault_x = 0;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         InstrFetch_r_reset(v);
     }
 
-    o_mem_addr_valid = r.req_valid;
-    o_mem_addr = r.req_addr;
-    o_mem_resp_ready = r.resp_ready;
-    o_instr_load_fault = r.instr_load_fault;
-    o_instr_page_fault_x = r.instr_page_fault_x;
-    o_requested_pc = r.req_addr;
-    o_fetching_pc = r.mem_resp_shadow;
-    o_pc = r.pc;
-    o_instr = r.instr;
+    o_mem_addr_valid = r.req_valid.read();
+    o_mem_addr = r.req_addr.read();
+    o_mem_resp_ready = r.resp_ready.read();
+    o_instr_load_fault = r.instr_load_fault.read();
+    o_instr_page_fault_x = r.instr_page_fault_x.read();
+    o_requested_pc = r.req_addr.read();
+    o_fetching_pc = r.mem_resp_shadow.read();
+    o_pc = r.pc.read();
+    o_instr = r.instr.read();
 }
 
 void InstrFetch::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         InstrFetch_r_reset(r);
     } else {
         r = v;

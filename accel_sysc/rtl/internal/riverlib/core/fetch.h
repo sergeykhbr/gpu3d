@@ -74,9 +74,9 @@ SC_MODULE(InstrFetch) {
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_page_fault_x;
         sc_signal<bool> progbuf_ena;
-    } v, r;
+    };
 
-    void InstrFetch_r_reset(InstrFetch_registers &iv) {
+    void InstrFetch_r_reset(InstrFetch_registers& iv) {
         iv.state = Idle;
         iv.req_valid = 0;
         iv.resp_ready = 0;
@@ -88,6 +88,9 @@ SC_MODULE(InstrFetch) {
         iv.instr_page_fault_x = 0;
         iv.progbuf_ena = 0;
     }
+
+    InstrFetch_registers v;
+    InstrFetch_registers r;
 
 };
 

@@ -44,11 +44,14 @@ SC_MODULE(AluLogic) {
 
     struct AluLogic_registers {
         sc_signal<sc_uint<RISCV_ARCH>> res;
-    } v, r;
+    };
 
-    void AluLogic_r_reset(AluLogic_registers &iv) {
+    void AluLogic_r_reset(AluLogic_registers& iv) {
         iv.res = 0;
     }
+
+    AluLogic_registers v;
+    AluLogic_registers r;
 
 };
 

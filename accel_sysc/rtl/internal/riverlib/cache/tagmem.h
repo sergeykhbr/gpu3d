@@ -16,8 +16,8 @@
 #pragma once
 
 #include <systemc.h>
-#include "../../techmap/mem/ram_cache_bwe_tech.h"
-#include "../../techmap/mem/ram_tech.h"
+#include "../../mem/ram_cache_bwe_tech.h"
+#include "../../mem/ram_tech.h"
 #include "api_core.h"
 
 namespace debugger {
@@ -64,9 +64,9 @@ SC_MODULE(TagMem) {
         sc_signal<sc_uint<TAG_BITS>> tagaddr;
         sc_signal<sc_uint<ibits>> index;
         sc_signal<sc_uint<TAG_BITS>> snoop_tagaddr;
-    } v, r;
+    };
 
-    void TagMem_r_reset(TagMem_registers &iv) {
+    void TagMem_r_reset(TagMem_registers& iv) {
         iv.tagaddr = 0;
         iv.index = 0;
         iv.snoop_tagaddr = 0;
@@ -79,6 +79,8 @@ SC_MODULE(TagMem) {
     sc_signal<sc_uint<ibits>> wb_snoop_index;
     sc_signal<sc_uint<TAG_BITS>> wb_snoop_tagaddr;
     sc_signal<sc_uint<TAG_WITH_FLAGS>> wb_tago_snoop_rdata;
+    TagMem_registers v;
+    TagMem_registers r;
 
     ram_cache_bwe_tech<ibits, (8 * (1 << lnbits))> *data0;
     ram_tech<ibits, TAG_WITH_FLAGS> *tag0;
@@ -189,9 +191,9 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::generateVCD(sc_trace_file *i_vc
         sc_trace(o_vcd, o_hit, o_hit.name());
         sc_trace(o_vcd, i_snoop_addr, i_snoop_addr.name());
         sc_trace(o_vcd, o_snoop_flags, o_snoop_flags.name());
-        sc_trace(o_vcd, r.tagaddr, pn + ".r_tagaddr");
-        sc_trace(o_vcd, r.index, pn + ".r_index");
-        sc_trace(o_vcd, r.snoop_tagaddr, pn + ".r_snoop_tagaddr");
+        sc_trace(o_vcd, r.tagaddr, pn + ".r.tagaddr");
+        sc_trace(o_vcd, r.index, pn + ".r.index");
+        sc_trace(o_vcd, r.snoop_tagaddr, pn + ".r.snoop_tagaddr");
     }
 
 }
@@ -206,6 +208,7 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
     sc_uint<TAG_BITS> vb_snoop_tagaddr;
     sc_uint<flbits> vb_snoop_flags;
 
+    v = r;
     vb_index = 0;
     vb_raddr = 0;
     vb_tagi_wdata = 0;
@@ -214,19 +217,17 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
     vb_snoop_tagaddr = 0;
     vb_snoop_flags = 0;
 
-    v = r;
-
 
     if (r.tagaddr.read() == wb_tago_rdata.read()((TAG_BITS - 1), 0)) {
         v_hit = wb_tago_rdata.read()[TAG_BITS];             // valid bit
     }
 
     vb_raddr((abus - 1), (ibits + lnbits)) = wb_tago_rdata.read()((TAG_BITS - 1), 0);
-    vb_raddr(((ibits + lnbits) - 1), lnbits) = r.index;
+    vb_raddr(((ibits + lnbits) - 1), lnbits) = r.index.read();
 
     vb_index = i_addr.read()(((ibits + lnbits) - 1), lnbits);
     vb_tagi_wdata((TAG_BITS - 1), 0) = i_addr.read()((abus - 1), (ibits + lnbits));
-    vb_tagi_wdata((TAG_WITH_FLAGS - 1), TAG_BITS) = i_wflags;
+    vb_tagi_wdata((TAG_WITH_FLAGS - 1), TAG_BITS) = i_wflags.read();
 
     if (snoop == 1) {
         vb_snoop_flags = wb_tago_snoop_rdata.read()((TAG_WITH_FLAGS - 1), TAG_BITS);
@@ -244,7 +245,7 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
     v.index = vb_index;
     v.snoop_tagaddr = vb_snoop_tagaddr;
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         TagMem_r_reset(v);
     }
 
@@ -263,7 +264,7 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
 
 template<int abus, int ibits, int lnbits, int flbits, int snoop>
 void TagMem<abus, ibits, lnbits, flbits, snoop>::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         TagMem_r_reset(r);
     } else {
         r = v;

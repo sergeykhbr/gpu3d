@@ -62,20 +62,20 @@ void ic_axi4_to_l1::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_xmsti, o_xmsti.name());
         sc_trace(o_vcd, i_l1i, i_l1i.name());
         sc_trace(o_vcd, o_l1o, o_l1o.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_id, pn + ".r_req_id");
-        sc_trace(o_vcd, r.req_user, pn + ".r_req_user");
-        sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
-        sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
-        sc_trace(o_vcd, r.req_size, pn + ".r_req_size");
-        sc_trace(o_vcd, r.req_prot, pn + ".r_req_prot");
-        sc_trace(o_vcd, r.writing, pn + ".r_writing");
-        sc_trace(o_vcd, r.read_modify_write, pn + ".r_read_modify_write");
-        sc_trace(o_vcd, r.line_data, pn + ".r_line_data");
-        sc_trace(o_vcd, r.line_wstrb, pn + ".r_line_wstrb");
-        sc_trace(o_vcd, r.resp_data, pn + ".r_resp_data");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_id, pn + ".r.req_id");
+        sc_trace(o_vcd, r.req_user, pn + ".r.req_user");
+        sc_trace(o_vcd, r.req_wstrb, pn + ".r.req_wstrb");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
+        sc_trace(o_vcd, r.req_len, pn + ".r.req_len");
+        sc_trace(o_vcd, r.req_size, pn + ".r.req_size");
+        sc_trace(o_vcd, r.req_prot, pn + ".r.req_prot");
+        sc_trace(o_vcd, r.writing, pn + ".r.writing");
+        sc_trace(o_vcd, r.read_modify_write, pn + ".r.read_modify_write");
+        sc_trace(o_vcd, r.line_data, pn + ".r.line_data");
+        sc_trace(o_vcd, r.line_wstrb, pn + ".r.line_wstrb");
+        sc_trace(o_vcd, r.resp_data, pn + ".r.resp_data");
     }
 
 }
@@ -91,6 +91,7 @@ void ic_axi4_to_l1::comb() {
     sc_uint<64> vb_resp_data;
     sc_uint<CFG_SYSBUS_ADDR_BITS> t_req_addr;
 
+    v = r;
     vb_xmsti = axi4_master_in_none;
     vb_l1o = axi4_l1_out_none;
     idx = 0;
@@ -101,14 +102,12 @@ void ic_axi4_to_l1::comb() {
     vb_resp_data = 0;
     t_req_addr = 0;
 
-    v = r;
-
     vb_xmsti = axi4_master_in_none;
     vb_l1o = axi4_l1_out_none;
-    t_req_addr = r.req_addr;
+    t_req_addr = r.req_addr.read();
 
     idx = r.req_addr.read()((CFG_LOG2_L1CACHE_BYTES_PER_LINE - 1), 3);
-    vb_req_xbytes = XSizeToBytes(r.req_size);
+    vb_req_xbytes = XSizeToBytes(r.req_size.read());
 
     vb_req_mask = 0;
     for (int i = 0; i < 8; i++) {
@@ -124,7 +123,7 @@ void ic_axi4_to_l1::comb() {
             | (r.req_wdata.read() & vb_req_mask));
 
     vb_line_wstrb = 0;
-    vb_line_wstrb((idx * 8) + 8 - 1, (idx * 8)) = r.req_wstrb;
+    vb_line_wstrb((idx * 8) + 8 - 1, (idx * 8)) = r.req_wstrb.read();
 
     switch (r.state.read()) {
     case Idle:
@@ -168,10 +167,10 @@ void ic_axi4_to_l1::comb() {
         vb_l1o.ar_bits.cache = ARCACHE_WRBACK_READ_ALLOCATE;
         vb_l1o.ar_bits.size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
         vb_l1o.ar_bits.len = 0;
-        vb_l1o.ar_bits.prot = r.req_prot;
+        vb_l1o.ar_bits.prot = r.req_prot.read();
         vb_l1o.ar_snoop = ARSNOOP_READ_MAKE_UNIQUE;
-        vb_l1o.ar_id = r.req_id;
-        vb_l1o.ar_user = r.req_user;
+        vb_l1o.ar_id = r.req_id.read();
+        vb_l1o.ar_user = r.req_user.read();
         if (i_l1i.read().ar_ready == 1) {
             v.state = WaitReadLineResponse;
         }
@@ -196,15 +195,15 @@ void ic_axi4_to_l1::comb() {
         vb_l1o.aw_bits.cache = AWCACHE_DEVICE_NON_BUFFERABLE;
         vb_l1o.aw_bits.size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
         vb_l1o.aw_bits.len = 0;
-        vb_l1o.aw_bits.prot = r.req_prot;
+        vb_l1o.aw_bits.prot = r.req_prot.read();
         vb_l1o.aw_snoop = AWSNOOP_WRITE_NO_SNOOP;           // offloading non-cached always
-        vb_l1o.aw_id = r.req_id;
-        vb_l1o.aw_user = r.req_user;
+        vb_l1o.aw_id = r.req_id.read();
+        vb_l1o.aw_user = r.req_user.read();
         // axi lite for L2-cache
         vb_l1o.w_valid = 1;
         vb_l1o.w_last = 1;
-        vb_l1o.w_data = r.line_data;
-        vb_l1o.w_strb = r.line_wstrb;
+        vb_l1o.w_data = r.line_data.read();
+        vb_l1o.w_strb = r.line_wstrb.read();
         if ((i_l1i.read().aw_ready == 1) && (i_l1i.read().w_ready == 1)) {
             if (r.req_len.read().or_reduce() == 0) {
                 v.state = WaitWriteConfirmResponse;
@@ -221,18 +220,18 @@ void ic_axi4_to_l1::comb() {
         break;
     case WaitWriteAccept:
         vb_xmsti.b_valid = 1;
-        vb_xmsti.b_id = r.req_id;
-        vb_xmsti.b_user = r.req_user;
+        vb_xmsti.b_id = r.req_id.read();
+        vb_xmsti.b_user = r.req_user.read();
         if (i_xmsto.read().b_ready == 1) {
             v.state = Idle;
         }
         break;
     case WaitReadAccept:
         vb_xmsti.r_valid = 1;
-        vb_xmsti.r_data = r.resp_data;
+        vb_xmsti.r_data = r.resp_data.read();
         vb_xmsti.r_last = (~r.req_len.read().or_reduce());
-        vb_xmsti.r_id = r.req_id;
-        vb_xmsti.r_user = r.req_user;
+        vb_xmsti.r_id = r.req_id.read();
+        vb_xmsti.r_user = r.req_user.read();
         if (i_xmsto.read().r_ready == 1) {
             v.state = CheckBurst;
         }
@@ -262,7 +261,7 @@ void ic_axi4_to_l1::comb() {
 }
 
 void ic_axi4_to_l1::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         ic_axi4_to_l1_r_reset(r);
     } else {
         r = v;

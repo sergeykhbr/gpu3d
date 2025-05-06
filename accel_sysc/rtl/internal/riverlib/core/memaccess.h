@@ -125,9 +125,9 @@ SC_MODULE(MemAccess) {
         sc_signal<sc_uint<RISCV_ARCH>> hold_rdata;
         sc_signal<sc_uint<RISCV_ARCH>> pc;
         sc_signal<bool> valid;
-    } v, r;
+    };
 
-    void MemAccess_r_reset(MemAccess_registers &iv) {
+    void MemAccess_r_reset(MemAccess_registers& iv) {
         iv.state = State_Idle;
         iv.mmu_ena = 0;
         iv.mmu_sv39 = 0;
@@ -156,6 +156,8 @@ SC_MODULE(MemAccess) {
     sc_signal<sc_biguint<QUEUE_WIDTH>> queue_data_o;
     sc_signal<bool> queue_nempty;
     sc_signal<bool> queue_full;
+    MemAccess_registers v;
+    MemAccess_registers r;
 
     Queue<CFG_MEMACCESS_QUEUE_DEPTH, QUEUE_WIDTH> *queue0;
 

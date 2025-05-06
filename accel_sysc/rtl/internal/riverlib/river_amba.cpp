@@ -46,7 +46,8 @@ RiverAmba::RiverAmba(sc_module_name name,
     tracer_ena_ = tracer_ena;
     river0 = 0;
 
-    river0 = new RiverTop("river0", async_reset,
+    river0 = new RiverTop("river0",
+                           async_reset,
                            hartid,
                            fpu_ena,
                            coherence_ena,
@@ -175,23 +176,23 @@ void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_halted, o_halted.name());
         sc_trace(o_vcd, o_available, o_available.name());
         sc_trace(o_vcd, i_progbuf, i_progbuf.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_path, pn + ".r_req_path");
-        sc_trace(o_vcd, r.req_cached, pn + ".r_req_cached");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
-        sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
-        sc_trace(o_vcd, r.req_size, pn + ".r_req_size");
-        sc_trace(o_vcd, r.req_prot, pn + ".r_req_prot");
-        sc_trace(o_vcd, r.req_ar_snoop, pn + ".r_req_ar_snoop");
-        sc_trace(o_vcd, r.req_aw_snoop, pn + ".r_req_aw_snoop");
-        sc_trace(o_vcd, r.snoop_state, pn + ".r_snoop_state");
-        sc_trace(o_vcd, r.ac_addr, pn + ".r_ac_addr");
-        sc_trace(o_vcd, r.ac_snoop, pn + ".r_ac_snoop");
-        sc_trace(o_vcd, r.cr_resp, pn + ".r_cr_resp");
-        sc_trace(o_vcd, r.req_snoop_type, pn + ".r_req_snoop_type");
-        sc_trace(o_vcd, r.resp_snoop_data, pn + ".r_resp_snoop_data");
-        sc_trace(o_vcd, r.cache_access, pn + ".r_cache_access");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_path, pn + ".r.req_path");
+        sc_trace(o_vcd, r.req_cached, pn + ".r.req_cached");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
+        sc_trace(o_vcd, r.req_wstrb, pn + ".r.req_wstrb");
+        sc_trace(o_vcd, r.req_size, pn + ".r.req_size");
+        sc_trace(o_vcd, r.req_prot, pn + ".r.req_prot");
+        sc_trace(o_vcd, r.req_ar_snoop, pn + ".r.req_ar_snoop");
+        sc_trace(o_vcd, r.req_aw_snoop, pn + ".r.req_aw_snoop");
+        sc_trace(o_vcd, r.snoop_state, pn + ".r.snoop_state");
+        sc_trace(o_vcd, r.ac_addr, pn + ".r.ac_addr");
+        sc_trace(o_vcd, r.ac_snoop, pn + ".r.ac_snoop");
+        sc_trace(o_vcd, r.cr_resp, pn + ".r.cr_resp");
+        sc_trace(o_vcd, r.req_snoop_type, pn + ".r.req_snoop_type");
+        sc_trace(o_vcd, r.resp_snoop_data, pn + ".r.resp_snoop_data");
+        sc_trace(o_vcd, r.cache_access, pn + ".r.cache_access");
     }
 
     if (river0) {
@@ -247,6 +248,7 @@ void RiverAmba::comb() {
     bool v_cd_valid;
     sc_biguint<L1CACHE_LINE_BITS> vb_cd_data;
 
+    v = r;
     v_resp_mem_valid = 0;
     v_mem_er_load_fault = 0;
     v_mem_er_store_fault = 0;
@@ -262,8 +264,6 @@ void RiverAmba::comb() {
     v_cd_valid = 0;
     vb_cd_data = 0;
 
-    v = r;
-
 
     w_dporti_haltreq = i_dport.read().haltreq;              // systemc compatibility
     w_dporti_resumereq = i_dport.read().resumereq;          // systemc compatibility
@@ -276,10 +276,10 @@ void RiverAmba::comb() {
     wb_dporti_size = i_dport.read().size;                   // systemc compatibility
     w_dporti_resp_ready = i_dport.read().resp_ready;        // systemc compatibility
 
-    vdporto.req_ready = w_dporto_req_ready;                 // systemc compatibility
-    vdporto.resp_valid = w_dporto_resp_valid;               // systemc compatibility
-    vdporto.resp_error = w_dporto_resp_error;               // systemc compatibility
-    vdporto.rdata = wb_dporto_rdata;                        // systemc compatibility
+    vdporto.req_ready = w_dporto_req_ready.read();          // systemc compatibility
+    vdporto.resp_valid = w_dporto_resp_valid.read();        // systemc compatibility
+    vdporto.resp_error = w_dporto_resp_error.read();        // systemc compatibility
+    vdporto.rdata = wb_dporto_rdata.read();                 // systemc compatibility
 
     vmsto = axi4_l1_out_none;
     vmsto.ar_bits.burst = AXI_BURST_INCR;                   // INCR (possible any value actually)
@@ -288,9 +288,9 @@ void RiverAmba::comb() {
     case state_idle:
         v_next_ready = 1;
         if (req_mem_valid_o.read() == 1) {
-            v.req_path = req_mem_path_o;
-            v.req_addr = req_mem_addr_o;
-            v.req_size = req_mem_size_o;
+            v.req_path = req_mem_path_o.read();
+            v.req_addr = req_mem_addr_o.read();
+            v.req_size = req_mem_size_o.read();
             // [0] 0=Unpriv/1=Priv;
             // [1] 0=Secure/1=Non-secure;
             // [2] 0=Data/1=Instruction
@@ -305,30 +305,30 @@ void RiverAmba::comb() {
                     v.req_cached = ARCACHE_DEVICE_NON_BUFFERABLE;
                 }
                 if (coherence_ena_ == 1) {
-                    v.req_ar_snoop = reqtype2arsnoop(req_mem_type_o);
+                    v.req_ar_snoop = reqtype2arsnoop(req_mem_type_o.read());
                 }
             } else {
                 v.state = state_aw;
-                v.req_wdata = req_mem_data_o;
-                v.req_wstrb = req_mem_strob_o;
+                v.req_wdata = req_mem_data_o.read();
+                v.req_wstrb = req_mem_strob_o.read();
                 if (req_mem_type_o.read()[REQ_MEM_TYPE_CACHED] == 1) {
                     v.req_cached = AWCACHE_WRBACK_WRITE_ALLOCATE;
                 } else {
                     v.req_cached = AWCACHE_DEVICE_NON_BUFFERABLE;
                 }
                 if (coherence_ena_ == 1) {
-                    v.req_aw_snoop = reqtype2awsnoop(req_mem_type_o);
+                    v.req_aw_snoop = reqtype2awsnoop(req_mem_type_o.read());
                 }
             }
         }
         break;
     case state_ar:
         vmsto.ar_valid = 1;
-        vmsto.ar_bits.addr = r.req_addr;
-        vmsto.ar_bits.cache = r.req_cached;
-        vmsto.ar_bits.size = r.req_size;
-        vmsto.ar_bits.prot = r.req_prot;
-        vmsto.ar_snoop = r.req_ar_snoop;
+        vmsto.ar_bits.addr = r.req_addr.read();
+        vmsto.ar_bits.cache = r.req_cached.read();
+        vmsto.ar_bits.size = r.req_size.read();
+        vmsto.ar_bits.prot = r.req_prot.read();
+        vmsto.ar_snoop = r.req_ar_snoop.read();
         if (i_msti.read().ar_ready == 1) {
             v.state = state_r;
         }
@@ -344,16 +344,16 @@ void RiverAmba::comb() {
         break;
     case state_aw:
         vmsto.aw_valid = 1;
-        vmsto.aw_bits.addr = r.req_addr;
-        vmsto.aw_bits.cache = r.req_cached;
-        vmsto.aw_bits.size = r.req_size;
-        vmsto.aw_bits.prot = r.req_prot;
-        vmsto.aw_snoop = r.req_aw_snoop;
+        vmsto.aw_bits.addr = r.req_addr.read();
+        vmsto.aw_bits.cache = r.req_cached.read();
+        vmsto.aw_bits.size = r.req_size.read();
+        vmsto.aw_bits.prot = r.req_prot.read();
+        vmsto.aw_snoop = r.req_aw_snoop.read();
         // axi lite to simplify L2-cache
         vmsto.w_valid = 1;
         vmsto.w_last = 1;
-        vmsto.w_data = r.req_wdata;
-        vmsto.w_strb = r.req_wstrb;
+        vmsto.w_data = r.req_wdata.read();
+        vmsto.w_strb = r.req_wstrb.read();
         if (i_msti.read().aw_ready == 1) {
             if (i_msti.read().w_ready == 1) {
                 v.state = state_b;
@@ -366,8 +366,8 @@ void RiverAmba::comb() {
         // Shoudln't get here because of Lite interface:
         vmsto.w_valid = 1;
         vmsto.w_last = 1;
-        vmsto.w_data = r.req_wdata;
-        vmsto.w_strb = r.req_wstrb;
+        vmsto.w_data = r.req_wdata.read();
+        vmsto.w_strb = r.req_wstrb.read();
         if (i_msti.read().w_ready == 1) {
             v.state = state_b;
         }
@@ -391,8 +391,8 @@ void RiverAmba::comb() {
         break;
     case snoop_ac_wait_accept:
         req_snoop_valid = 1;
-        vb_req_snoop_addr = r.ac_addr;
-        vb_req_snoop_type = r.req_snoop_type;
+        vb_req_snoop_addr = r.ac_addr.read();
+        vb_req_snoop_type = r.req_snoop_type.read();
         if (req_snoop_ready_o.read() == 1) {
             if (r.cache_access.read() == 0) {
                 v.snoop_state = snoop_cr;
@@ -437,7 +437,7 @@ void RiverAmba::comb() {
         break;
     case snoop_cr_wait_accept:
         v_cr_valid = 1;
-        vb_cr_resp = r.cr_resp;
+        vb_cr_resp = r.cr_resp.read();
         if (i_msti.read().cr_ready == 1) {
             if (r.cache_access.read() == 1) {
                 v.snoop_state = snoop_ac_wait_accept;
@@ -449,8 +449,8 @@ void RiverAmba::comb() {
     case snoop_cd:
         if (resp_snoop_valid_o.read() == 1) {
             v_cd_valid = 1;
-            vb_cd_data = resp_snoop_data_o;
-            v.resp_snoop_data = resp_snoop_data_o;
+            vb_cd_data = resp_snoop_data_o.read();
+            v.resp_snoop_data = resp_snoop_data_o.read();
             if (i_msti.read().cd_ready == 1) {
                 v.snoop_state = snoop_idle;
             } else {
@@ -460,7 +460,7 @@ void RiverAmba::comb() {
         break;
     case snoop_cd_wait_accept:
         v_cd_valid = 1;
-        vb_cd_data = r.resp_snoop_data;
+        vb_cd_data = r.resp_snoop_data.read();
         if (i_msti.read().cd_ready == 1) {
             v.snoop_state = snoop_idle;
         }
@@ -489,7 +489,7 @@ void RiverAmba::comb() {
         v_cr_valid = 1;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         RiverAmba_r_reset(v);
     }
 
@@ -519,7 +519,7 @@ void RiverAmba::comb() {
 }
 
 void RiverAmba::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         RiverAmba_r_reset(r);
     } else {
         r = v;

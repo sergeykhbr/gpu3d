@@ -50,7 +50,7 @@ void IntAddSub::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_a1, i_a1.name());
         sc_trace(o_vcd, i_a2, i_a2.name());
         sc_trace(o_vcd, o_res, o_res.name());
-        sc_trace(o_vcd, r.res, pn + ".r_res");
+        sc_trace(o_vcd, r.res, pn + ".r.res");
     }
 
 }
@@ -62,13 +62,12 @@ void IntAddSub::comb() {
     sc_uint<RISCV_ARCH> vb_sub;
     sc_uint<RISCV_ARCH> vb_res;
 
+    v = r;
     vb_rdata1 = 0;
     vb_rdata2 = 0;
     vb_add = 0;
     vb_sub = 0;
     vb_res = 0;
-
-    v = r;
 
     // To support 32-bits instruction transform 32-bits operands to 64 bits
     if (i_mode.read()[0] == 1) {
@@ -81,8 +80,8 @@ void IntAddSub::comb() {
             vb_rdata2(63, 32) = ~0ull;
         }
     } else {
-        vb_rdata1 = i_a1;
-        vb_rdata2 = i_a2;
+        vb_rdata1 = i_a1.read();
+        vb_rdata2 = i_a2.read();
     }
 
     vb_add = (vb_rdata1 + vb_rdata2);
@@ -144,15 +143,15 @@ void IntAddSub::comb() {
 
     v.res = vb_res;
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         IntAddSub_r_reset(v);
     }
 
-    o_res = r.res;
+    o_res = r.res.read();
 }
 
 void IntAddSub::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         IntAddSub_r_reset(r);
     } else {
         r = v;

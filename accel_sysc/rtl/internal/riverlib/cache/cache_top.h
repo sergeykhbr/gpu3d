@@ -123,7 +123,6 @@ SC_MODULE(CacheTop) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> resp_addr;
     };
 
-
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_i_req_ctrl_addr;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_i_req_data_addr;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_i_flushi_addr;

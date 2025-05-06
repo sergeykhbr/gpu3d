@@ -44,11 +44,14 @@ SC_MODULE(IntAddSub) {
 
     struct IntAddSub_registers {
         sc_signal<sc_uint<RISCV_ARCH>> res;
-    } v, r;
+    };
 
-    void IntAddSub_r_reset(IntAddSub_registers &iv) {
+    void IntAddSub_r_reset(IntAddSub_registers& iv) {
         iv.res = 0;
     }
+
+    IntAddSub_registers v;
+    IntAddSub_registers r;
 
 };
 

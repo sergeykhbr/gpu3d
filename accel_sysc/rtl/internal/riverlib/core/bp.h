@@ -63,7 +63,6 @@ SC_MODULE(BranchPredictor) {
         sc_signal<sc_uint<RISCV_ARCH>> npc;
     };
 
-
     PreDecType wb_pd[2];
     sc_signal<bool> w_btb_e;
     sc_signal<bool> w_btb_we;

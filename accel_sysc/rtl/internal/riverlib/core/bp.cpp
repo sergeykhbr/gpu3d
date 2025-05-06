@@ -58,7 +58,8 @@ BranchPredictor::BranchPredictor(sc_module_name name,
         predec[i]->o_npc(wb_pd[i].npc);
     }
 
-    btb = new BpBTB("btb", async_reset);
+    btb = new BpBTB("btb",
+                     async_reset);
     btb->i_clk(i_clk);
     btb->i_nrst(i_nrst);
     btb->i_flush_pipeline(i_flush_pipeline);
@@ -205,29 +206,29 @@ void BranchPredictor::comb() {
         }
     }
 
-    v_btb_we = (i_e_jmp.read() || wb_pd[0].jmp || wb_pd[1].jmp);
+    v_btb_we = (i_e_jmp.read() || wb_pd[0].jmp.read() || wb_pd[1].jmp.read());
     if (i_e_jmp.read() == 1) {
-        vb_btb_we_pc = i_e_pc;
-        vb_btb_we_npc = i_e_npc;
-    } else if (wb_pd[0].jmp) {
-        vb_btb_we_pc = wb_pd[0].pc;
-        vb_btb_we_npc = wb_pd[0].npc;
+        vb_btb_we_pc = i_e_pc.read();
+        vb_btb_we_npc = i_e_npc.read();
+    } else if (wb_pd[0].jmp.read()) {
+        vb_btb_we_pc = wb_pd[0].pc.read();
+        vb_btb_we_npc = wb_pd[0].npc.read();
         if ((vb_hit(2, 0) == 0x7) && (wb_bp_exec.read()[2] == 0) && (vb_ignore_pd[0] == 0)) {
-            vb_fetch_npc = wb_pd[0].npc;
+            vb_fetch_npc = wb_pd[0].npc.read();
         }
-    } else if (wb_pd[1].jmp) {
-        vb_btb_we_pc = wb_pd[1].pc;
-        vb_btb_we_npc = wb_pd[1].npc;
+    } else if (wb_pd[1].jmp.read()) {
+        vb_btb_we_pc = wb_pd[1].pc.read();
+        vb_btb_we_npc = wb_pd[1].npc.read();
         if ((vb_hit(2, 0) == 0x7) && (wb_bp_exec.read()[2] == 0) && (vb_ignore_pd[1] == 0)) {
-            vb_fetch_npc = wb_pd[1].npc;
+            vb_fetch_npc = wb_pd[1].npc.read();
         }
     } else {
-        vb_btb_we_pc = i_e_pc;
-        vb_btb_we_npc = i_e_npc;
+        vb_btb_we_pc = i_e_pc.read();
+        vb_btb_we_npc = i_e_npc.read();
     }
 
-    wb_start_pc = i_e_npc;
-    w_btb_e = i_e_jmp;
+    wb_start_pc = i_e_npc.read();
+    w_btb_e = i_e_jmp.read();
     w_btb_we = v_btb_we;
     wb_btb_we_pc = vb_btb_we_pc;
     wb_btb_we_npc = vb_btb_we_npc;

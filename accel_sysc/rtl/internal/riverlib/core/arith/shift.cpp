@@ -50,7 +50,7 @@ void Shifter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_a1, i_a1.name());
         sc_trace(o_vcd, i_a2, i_a2.name());
         sc_trace(o_vcd, o_res, o_res.name());
-        sc_trace(o_vcd, r.res, pn + ".r_res");
+        sc_trace(o_vcd, r.res, pn + ".r.res");
     }
 
 }
@@ -67,6 +67,7 @@ void Shifter::comb() {
     sc_uint<64> msk64;
     sc_uint<64> msk32;
 
+    v = r;
     wb_sll = 0;
     wb_sllw = 0;
     wb_srl = 0;
@@ -78,9 +79,7 @@ void Shifter::comb() {
     msk64 = 0;
     msk32 = 0;
 
-    v = r;
-
-    v64 = i_a1;
+    v64 = i_a1.read();
     v32 = i_a1.read()(31, 0);
 
     if (i_a1.read()[63] == 1) {
@@ -613,15 +612,15 @@ void Shifter::comb() {
         }
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         Shifter_r_reset(v);
     }
 
-    o_res = r.res;
+    o_res = r.res.read();
 }
 
 void Shifter::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         Shifter_r_reset(r);
     } else {
         r = v;

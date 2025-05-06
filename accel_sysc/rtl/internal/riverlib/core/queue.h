@@ -50,15 +50,20 @@ SC_MODULE(Queue) {
 
     struct Queue_registers {
         sc_signal<sc_uint<(abits + 1)>> wcnt;
-    } v, r;
+    };
 
-    void Queue_r_reset(Queue_registers &iv) {
+    void Queue_r_reset(Queue_registers& iv) {
         iv.wcnt = 0;
     }
 
     struct Queue_rxegisters {
         sc_signal<sc_biguint<dbits>> mem[DEPTH];
-    } vx, rx;
+    };
+
+    Queue_registers v;
+    Queue_registers r;
+    Queue_rxegisters vx;
+    Queue_rxegisters rx;
 
 };
 
@@ -102,15 +107,14 @@ void Queue<abits, dbits>::comb() {
     bool full;
     bool show_full;
 
+    for (int i = 0; i < DEPTH; i++) {
+        vx.mem[i] = rx.mem[i].read();
+    }
+    v = r;
     nempty = 0;
     vb_data_o = 0;
     full = 0;
     show_full = 0;
-
-    v = r;
-    for (int i = 0; i < DEPTH; i++) {
-        vx.mem[i] = rx.mem[i];
-    }
 
     if (r.wcnt.read() == DEPTH) {
         full = 1;
@@ -121,38 +125,38 @@ void Queue<abits, dbits>::comb() {
 
     if ((i_re.read() == 1) && (i_we.read() == 1)) {
         for (int i = 1; i < DEPTH; i++) {
-            vx.mem[(i - 1)] = rx.mem[i];
+            vx.mem[(i - 1)] = rx.mem[i].read();
         }
         if (r.wcnt.read().or_reduce() == 1) {
-            vx.mem[(r.wcnt.read().to_int() - 1)] = i_wdata;
+            vx.mem[(r.wcnt.read().to_int() - 1)] = i_wdata.read();
         } else {
             // do nothing, it will directly pass to output
         }
     } else if ((i_re.read() == 0) && (i_we.read() == 1)) {
         if (full == 0) {
             v.wcnt = (r.wcnt.read() + 1);
-            vx.mem[r.wcnt.read().to_int()] = i_wdata;
+            vx.mem[r.wcnt.read().to_int()] = i_wdata.read();
         }
     } else if ((i_re.read() == 1) && (i_we.read() == 0)) {
         if (r.wcnt.read().or_reduce() == 1) {
             v.wcnt = (r.wcnt.read() - 1);
         }
         for (int i = 1; i < DEPTH; i++) {
-            vx.mem[(i - 1)] = rx.mem[i];
+            vx.mem[(i - 1)] = rx.mem[i].read();
         }
     }
 
     if (r.wcnt.read().or_reduce() == 0) {
-        vb_data_o = i_wdata;
+        vb_data_o = i_wdata.read();
     } else {
-        vb_data_o = rx.mem[0];
+        vb_data_o = rx.mem[0].read();
     }
 
     if ((i_we.read() == 1) || (r.wcnt.read().or_reduce() == 1)) {
         nempty = 1;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((~async_reset_) && (i_nrst.read() == 0)) {
         Queue_r_reset(v);
     }
 
@@ -163,7 +167,7 @@ void Queue<abits, dbits>::comb() {
 
 template<int abits, int dbits>
 void Queue<abits, dbits>::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         Queue_r_reset(r);
     } else {
         r = v;
@@ -173,7 +177,7 @@ void Queue<abits, dbits>::registers() {
 template<int abits, int dbits>
 void Queue<abits, dbits>::rxegisters() {
     for (int i = 0; i < DEPTH; i++) {
-        rx.mem[i] = vx.mem[i];
+        rx.mem[i] = vx.mem[i].read();
     }
 }
 

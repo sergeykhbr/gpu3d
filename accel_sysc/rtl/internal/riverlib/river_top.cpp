@@ -75,7 +75,8 @@ RiverTop::RiverTop(sc_module_name name,
     proc0 = 0;
     cache0 = 0;
 
-    proc0 = new Processor("proc0", async_reset,
+    proc0 = new Processor("proc0",
+                           async_reset,
                            hartid,
                            fpu_ena,
                            tracer_ena);
@@ -130,7 +131,8 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->o_flushd_addr(wb_flushd_addr);
     proc0->i_flushd_end(w_flushd_end);
 
-    cache0 = new CacheTop("cache0", async_reset,
+    cache0 = new CacheTop("cache0",
+                           async_reset,
                            coherence_ena);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
@@ -305,7 +307,7 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void RiverTop::comb() {
-    o_flush_l2 = w_flushd_end;
+    o_flush_l2 = w_flushd_end.read();
 }
 
 }  // namespace debugger

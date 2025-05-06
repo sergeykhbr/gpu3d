@@ -53,9 +53,9 @@ SC_MODULE(Long2Double) {
         sc_signal<bool> op_signed;
         sc_signal<sc_uint<64>> mantAlign;
         sc_signal<sc_uint<6>> lshift;
-    } v, r;
+    };
 
-    void Long2Double_r_reset(Long2Double_registers &iv) {
+    void Long2Double_r_reset(Long2Double_registers& iv) {
         iv.busy = 0;
         iv.ena = 0;
         iv.signA = 0;
@@ -65,6 +65,9 @@ SC_MODULE(Long2Double) {
         iv.mantAlign = 0;
         iv.lshift = 0;
     }
+
+    Long2Double_registers v;
+    Long2Double_registers r;
 
 };
 
