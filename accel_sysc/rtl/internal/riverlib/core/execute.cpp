@@ -668,7 +668,7 @@ void InstrExecute::comb() {
     v.ret = 0;
     v.reg_write = 0;
     for (int i = 0; i < Res_Total; i++) {
-        wb_select[i].ena.read() = 0;
+        wb_select[i].ena = 0;
     }
     vb_reg_waddr = i_d_waddr.read();
 

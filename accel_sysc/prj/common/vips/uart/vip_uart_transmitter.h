@@ -42,6 +42,7 @@ SC_MODULE(vip_uart_transmitter) {
  private:
     bool async_reset_;
     int scaler_;
+    int scaler_max_;
 
     static const uint8_t idle = 0x0;
     static const uint8_t startbit = 0x1;

@@ -27,11 +27,11 @@ SC_MODULE(cdc_afifo) {
     sc_in<bool> i_nrst;                                     // reset active LOW
     sc_in<bool> i_wclk;                                     // clock write
     sc_in<bool> i_wr;                                       // write enable strob
-    sc_in<sc_uint<dbits>> i_wdata;                          // write data
+    sc_in<sc_biguint<dbits>> i_wdata;                       // write data
     sc_out<bool> o_wfull;                                   // fifo is full in wclk domain
     sc_in<bool> i_rclk;                                     // read clock
     sc_in<bool> i_rd;                                       // read enable strob
-    sc_out<sc_uint<dbits>> o_rdata;                         // fifo payload read
+    sc_out<sc_biguint<dbits>> o_rdata;                      // fifo payload read
     sc_out<bool> o_rempty;                                  // fifo is empty it rclk domain
 
     void comb();
@@ -80,7 +80,7 @@ SC_MODULE(cdc_afifo) {
         iv.rempty = 1;
     }
 
-    sc_uint<dbits> mem[DEPTH];
+    sc_biguint<dbits> mem[DEPTH];
     cdc_afifo_registers v;
     cdc_afifo_registers r;
     cdc_afifo_r2egisters v2;

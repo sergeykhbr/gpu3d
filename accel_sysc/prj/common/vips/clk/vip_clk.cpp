@@ -15,23 +15,16 @@
 // 
 
 #include "vip_clk.h"
-#include "api_core.h"
 
 namespace debugger {
 
 vip_clk::vip_clk(sc_module_name name,
                  double period)
     : sc_module(name),
-    o_clk("o_clk"),
-    pll("pll", period, SC_SEC) {
+    o_clk("o_clk") {
 
     period_ = period;
-    // initial
-    pll = 0;
-    // end initial
-
-    SC_METHOD(comb);
-    sensitive << pll;
+    SC_THREAD(comb);
 }
 
 void vip_clk::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -42,8 +35,14 @@ void vip_clk::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void vip_clk::comb() {
-    pll.write((!pll), ((0.5 * 1000000000.0) * period_);
-    o_clk = pll;
+    std::cout << "vip_clk started\n";
+    while (true) {
+        wait(static_cast<int>(0.5*period_), SC_NS);
+        o_clk = 1;
+        wait(static_cast<int>(0.5*period_), SC_NS);
+        o_clk = 0;
+    }
+    std::cout << "vip_clk exit\n";
 }
 
 }  // namespace debugger

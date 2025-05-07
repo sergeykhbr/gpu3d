@@ -32,7 +32,7 @@ vip_uart_transmitter::vip_uart_transmitter(sc_module_name name,
 
     async_reset_ = async_reset;
     scaler_ = scaler;
-    scaler_max = ((2 * scaler_) - 1);
+    scaler_max_ = ((2 * scaler_) - 1);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -84,7 +84,7 @@ void vip_uart_transmitter::comb() {
         }
     }
 
-    if (r.sample.read() == scaler_max) {
+    if (r.sample.read() == scaler_max_) {
         v.sample = 0;
         v_next = 1;
     } else {

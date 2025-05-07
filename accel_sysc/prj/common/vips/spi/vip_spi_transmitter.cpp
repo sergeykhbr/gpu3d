@@ -40,8 +40,8 @@ vip_spi_transmitter::vip_spi_transmitter(sc_module_name name,
 
     async_reset_ = async_reset;
     scaler_ = scaler;
-    scaler_max = ((2 * scaler_) - 1);
-    scaler_mid = scaler;
+    scaler_max_ = ((2 * scaler_) - 1);
+    scaler_mid_ = scaler;
 
     SC_METHOD(comb);
     sensitive << i_nrst;

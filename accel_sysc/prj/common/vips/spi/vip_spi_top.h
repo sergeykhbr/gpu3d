@@ -50,6 +50,7 @@ SC_MODULE(vip_spi_top) {
     int instnum_;
     int baudrate_;
     int scaler_;
+    double pll_period_;
 
     struct vip_spi_top_registers {
         sc_signal<bool> resp_valid;

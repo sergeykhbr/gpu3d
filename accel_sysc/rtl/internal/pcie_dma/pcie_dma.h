@@ -132,6 +132,8 @@ SC_MODULE(pcie_dma) {
         iv.byte_cnt = 0;
     }
 
+    sc_signal<bool> w_pcie_dmai_valid;
+    sc_signal<bool> w_pcie_dmai_ready;
     sc_signal<sc_biguint<REQ_FIFO_WIDTH>> wb_reqfifo_payload_i;
     sc_signal<sc_biguint<REQ_FIFO_WIDTH>> wb_reqfifo_payload_o;
     sc_signal<bool> w_reqfifo_full;

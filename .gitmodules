@@ -4,3 +4,6 @@
 [submodule "software/xilinx-hdmi-modules"]
 	path = software/xilinx-hdmi-modules
 	url = https://github.com/Xilinx/hdmi-modules
+[submodule "accel_sysc/systemc"]
+	path = accel_sysc/systemc
+	url = https://github.com/accellera-official/systemc.git

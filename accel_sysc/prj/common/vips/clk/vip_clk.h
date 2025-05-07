@@ -25,7 +25,6 @@ SC_MODULE(vip_clk) {
 
     void comb();
 
-    SC_HAS_PROCESS(vip_clk);
 
     vip_clk(sc_module_name name,
             double period);
@@ -34,9 +33,6 @@ SC_MODULE(vip_clk) {
 
  private:
     double period_;
-
-    sc_clock pll;
-
 };
 
 }  // namespace debugger

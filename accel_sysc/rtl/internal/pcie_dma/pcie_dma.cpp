@@ -43,7 +43,7 @@ pcie_dma::pcie_dma(sc_module_name name,
                             REQ_FIFO_WIDTH>("reqfifo");
     reqfifo->i_nrst(i_nrst);
     reqfifo->i_wclk(i_pcie_phy_clk);
-    reqfifo->i_wr(i_pcie_dmai.valid);
+    reqfifo->i_wr(w_pcie_dmai_valid);
     reqfifo->i_wdata(wb_reqfifo_payload_i);
     reqfifo->o_wfull(w_reqfifo_full);
     reqfifo->i_rclk(i_clk);
@@ -59,7 +59,7 @@ pcie_dma::pcie_dma(sc_module_name name,
     respfifo->i_wdata(wb_respfifo_payload_i);
     respfifo->o_wfull(w_respfifo_full);
     respfifo->i_rclk(i_pcie_phy_clk);
-    respfifo->i_rd(i_pcie_dmai.ready);
+    respfifo->i_rd(w_pcie_dmai_ready);
     respfifo->o_rdata(wb_respfifo_payload_o);
     respfifo->o_rempty(w_respfifo_empty);
 
@@ -156,6 +156,8 @@ void pcie_dma::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void pcie_dma::comb() {
     dev_config_type vb_xmst_cfg;
     axi4_master_out_type vb_xmsto;
+    pcie_dma64_out_type vb_pcie_dmao;
+    pcie_dma64_in_type vb_dbg_pcie_dmai;
     sc_uint<XSIZE_TOTAL> vb_xbytes;                         // result of function call XSize2XBytes(xsize)
     bool v_req_ready;
     sc_uint<64> vb_req_addr;
@@ -203,6 +205,9 @@ void pcie_dma::comb() {
     vb_xmst_cfg.vid = VENDOR_OPTIMITECH;
     vb_xmst_cfg.did = OPTIMITECH_PCIE_DMA;
     vb_xbytes = XSizeToBytes(r.xsize.read());
+
+    w_pcie_dmai_valid = i_pcie_dmai.read().valid;
+    w_pcie_dmai_ready = i_pcie_dmai.read().ready;
 
     // Request address bits [1:0] are not transmitted, should be restored from BE[3:0]:
     // be[3:0] => addr[1:0]
@@ -520,24 +525,26 @@ void pcie_dma::comb() {
     wb_respfifo_payload_i = (v_resp_last,
             vb_resp_strob,
             vb_resp_data);
-    o_pcie_dmao.last = wb_respfifo_payload_o.read()[72];
-    o_pcie_dmao.strob = wb_respfifo_payload_o.read()(71, 64);
-    o_pcie_dmao.data = wb_respfifo_payload_o.read()(63, 0);
-    o_pcie_dmao.ready = (!w_reqfifo_full.read());
-    o_pcie_dmao.valid = (!w_respfifo_empty.read());
+    vb_pcie_dmao.last = wb_respfifo_payload_o.read()[72];
+    vb_pcie_dmao.strob = wb_respfifo_payload_o.read()(71, 64);
+    vb_pcie_dmao.data = wb_respfifo_payload_o.read()(63, 0);
+    vb_pcie_dmao.ready = (!w_reqfifo_full.read());
+    vb_pcie_dmao.valid = (!w_respfifo_empty.read());
+    o_pcie_dmao = vb_pcie_dmao;
     w_respfifo_wr = v_resp_valid;
     w_reqfifo_rd = v_req_ready;
     o_xmst_cfg = vb_xmst_cfg;
     o_xmsto = vb_xmsto;
     // Debug signals
-    o_dbg_pcie_dmai.valid = (~w_reqfifo_empty.read());
-    o_dbg_pcie_dmai.data = vb_req_data;
-    o_dbg_pcie_dmai.strob = vb_req_strob;
-    o_dbg_pcie_dmai.last = v_req_last;
-    o_dbg_pcie_dmai.ready = 0;
-    o_dbg_pcie_dmai.bar_hit = 0;
-    o_dbg_pcie_dmai.ecrc_err = 0;
-    o_dbg_pcie_dmai.err_fwd = 0;
+    vb_dbg_pcie_dmai.valid = (~w_reqfifo_empty.read());
+    vb_dbg_pcie_dmai.data = vb_req_data;
+    vb_dbg_pcie_dmai.strob = vb_req_strob;
+    vb_dbg_pcie_dmai.last = v_req_last;
+    vb_dbg_pcie_dmai.ready = 0;
+    vb_dbg_pcie_dmai.bar_hit = 0;
+    vb_dbg_pcie_dmai.ecrc_err = 0;
+    vb_dbg_pcie_dmai.err_fwd = 0;
+    o_dbg_pcie_dmai = vb_dbg_pcie_dmai;
 }
 
 void pcie_dma::registers() {

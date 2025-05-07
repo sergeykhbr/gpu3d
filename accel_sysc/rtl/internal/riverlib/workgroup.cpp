@@ -59,7 +59,7 @@ Workgroup::Workgroup(sc_module_name name,
     async_reset_ = async_reset;
     cpu_num_ = cpu_num;
     l2cache_ena_ = l2cache_ena;
-    coherence_ena = ((cpu_num_ * l2cache_ena_) > 1);
+    coherence_ena_ = ((cpu_num_ * l2cache_ena_) > 1);
     dmi0 = 0;
     dport_ic0 = 0;
     acp_bridge = 0;
@@ -145,7 +145,7 @@ Workgroup::Workgroup(sc_module_name name,
                                  async_reset,
                                  i,
                                  CFG_HW_FPU_ENABLE,
-                                 coherence_ena,
+                                 coherence_ena_,
                                  CFG_TRACER_ENABLE);
         cpux[i]->i_clk(i_clk);
         cpux[i]->i_nrst(i_cores_nrst);
