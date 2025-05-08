@@ -52,8 +52,8 @@ SC_MODULE(vip_uart_top) {
     int instnum_;
     int baudrate_;
     int scaler_;
-    double pll_period_;
     std::string logpath_;
+    double pll_period;
 
     static const uint8_t EOF_0x0D = 0x0D;
 

@@ -42,8 +42,8 @@ SC_MODULE(vip_uart_receiver) {
  private:
     bool async_reset_;
     int scaler_;
-    int scaler_max_;
-    int scaler_mid_;
+    int scaler_max;
+    int scaler_mid;
 
     static const uint8_t startbit = 0x0;
     static const uint8_t data = 0x1;

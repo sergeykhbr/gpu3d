@@ -50,8 +50,8 @@ SC_MODULE(vip_spi_transmitter) {
  private:
     bool async_reset_;
     int scaler_;
-    int scaler_max_;
-    int scaler_mid_;
+    int scaler_max;
+    int scaler_mid;
 
     static const uint8_t state_cmd = 0;
     static const uint8_t state_addr = 1;

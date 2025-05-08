@@ -55,8 +55,8 @@ void cdc_axi_sync_tech::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
 }
 
 void cdc_axi_sync_tech::comb() {
-    o_xmsto = i_xslvi;
-    o_xslvo = i_xmsti;
+    o_xmsto = i_xslvi.read();
+    o_xslvo = i_xmsti.read();
 }
 
 }  // namespace debugger

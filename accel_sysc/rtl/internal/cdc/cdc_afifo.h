@@ -21,7 +21,7 @@
 namespace debugger {
 
 template<int abits = 3,                                     // fifo log2(depth)
-         int dbits = 32>                                    // payload width
+         int dbits = 65>                                    // payload width
 SC_MODULE(cdc_afifo) {
  public:
     sc_in<bool> i_nrst;                                     // reset active LOW

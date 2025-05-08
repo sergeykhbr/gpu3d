@@ -41,7 +41,7 @@ void ids_tech::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void ids_tech::comb() {
-    o_clk = i_clk_p;
+    o_clk = i_clk_p.read();
 }
 
 }  // namespace debugger

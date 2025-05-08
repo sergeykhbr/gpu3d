@@ -36,7 +36,7 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     baudrate_ = baudrate;
     scaler_ = scaler;
     logpath_ = logpath;
-    pll_period_ = (1.0 / ((2 * scaler_) * baudrate_));
+    pll_period = (1.0 / ((2 * scaler_) * baudrate_));
     clk0 = 0;
     rx0 = 0;
     tx0 = 0;
@@ -58,7 +58,7 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     // end initial
 
     clk0 = new vip_clk("clk0",
-                        pll_period_);
+                        pll_period);
     clk0->o_clk(w_clk);
 
     rx0 = new vip_uart_receiver("rx0",

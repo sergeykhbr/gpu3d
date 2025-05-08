@@ -47,9 +47,9 @@ void SysPLL_tech::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void SysPLL_tech::comb() {
-    o_clk_sys = i_clk_tcxo;
-    o_clk_ddr = i_clk_tcxo;
-    o_clk_pcie = i_clk_tcxo;
+    o_clk_sys = i_clk_tcxo.read();
+    o_clk_ddr = i_clk_tcxo.read();
+    o_clk_pcie = i_clk_tcxo.read();
     o_locked = 1;
 }
 

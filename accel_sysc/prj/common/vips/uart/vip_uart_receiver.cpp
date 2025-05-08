@@ -32,8 +32,8 @@ vip_uart_receiver::vip_uart_receiver(sc_module_name name,
 
     async_reset_ = async_reset;
     scaler_ = scaler;
-    scaler_max_ = ((2 * scaler_) - 1);
-    scaler_mid_ = scaler;
+    scaler_max = ((2 * scaler_) - 1);
+    scaler_mid = scaler;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -97,7 +97,7 @@ void vip_uart_receiver::comb() {
             v.sample = (r.sample.read() + 1);
         }
 
-        if ((r.sample.read() == scaler_max_) || (v_rx_pos == 1)) {
+        if ((r.sample.read() == scaler_max) || (v_rx_pos == 1)) {
             v.state = data;
             v.bitpos = 0;
             v.sample = 0;
@@ -106,8 +106,8 @@ void vip_uart_receiver::comb() {
         }
         break;
     case data:
-        if ((r.sample.read() == scaler_max_)
-                || ((r.sample.read() > scaler_mid_) && ((v_rx_neg == 1) || (v_rx_pos == 1)))) {
+        if ((r.sample.read() == scaler_max)
+                || ((r.sample.read() > scaler_mid) && ((v_rx_neg == 1) || (v_rx_pos == 1)))) {
             v.sample = 0;
             if (r.bitpos.read() == 8) {
                 v.state = stopbit;
@@ -116,13 +116,13 @@ void vip_uart_receiver::comb() {
             v.sample = (r.sample.read() + 1);
         }
 
-        if (r.sample.read() == scaler_mid_) {
+        if (r.sample.read() == scaler_mid) {
             v.scratch = (i_rx.read(), r.scratch.read()(7, 1));
             v.bitpos = (r.bitpos.read() + 1);
         }
         break;
     case stopbit:
-        if (r.sample.read() == scaler_mid_) {
+        if (r.sample.read() == scaler_mid) {
             v.rdata = r.scratch.read();
             v.rdy = 1;
             if (i_rx.read() == 0) {
@@ -130,7 +130,7 @@ void vip_uart_receiver::comb() {
             } else {
             }
         }
-        if (r.sample.read() == scaler_max_) {
+        if (r.sample.read() == scaler_max) {
             v.state = startbit;                             // dummy bit disabled
             v.sample = 0;
         } else {
@@ -140,7 +140,7 @@ void vip_uart_receiver::comb() {
     case dummy:
         // Idle state in UART generates additional byte and it works
         // even if rx=0 on real device:
-        if (r.sample.read() >= scaler_mid_) {
+        if (r.sample.read() >= scaler_mid) {
             v.state = startbit;
             v.sample = 0;
         } else {

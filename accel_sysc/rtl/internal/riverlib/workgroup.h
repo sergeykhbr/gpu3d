@@ -76,7 +76,7 @@ SC_MODULE(Workgroup) {
     bool async_reset_;
     uint32_t cpu_num_;
     uint32_t l2cache_ena_;
-    uint32_t coherence_ena_;
+    bool coherence_ena;
 
     static const uint32_t ACP_SLOT_IDX = CFG_CPU_MAX;
 

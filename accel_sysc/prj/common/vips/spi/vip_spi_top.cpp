@@ -37,12 +37,12 @@ vip_spi_top::vip_spi_top(sc_module_name name,
     instnum_ = instnum;
     baudrate_ = baudrate;
     scaler_ = scaler;
-    pll_period_ = (1.0 / ((2 * scaler_) * baudrate_));
+    pll_period = (1.0 / ((2 * scaler_) * baudrate_));
     clk0 = 0;
     tx0 = 0;
 
     clk0 = new vip_clk("clk0",
-                        pll_period_);
+                        pll_period);
     clk0->o_clk(w_clk);
 
     tx0 = new vip_spi_transmitter("tx0",

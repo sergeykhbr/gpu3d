@@ -46,12 +46,12 @@ void iobuf_tech::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void iobuf_tech::comb() {
     if (t.read() == 1) {
         // IO as input:
-        o = io;
+        o = io.read();
         // io = 1'bz;
     } else {
         // IO as output:
         o = 0;
-        io = i;
+        io = i.read();
     }
 }
 

@@ -69,6 +69,8 @@ pcie_dma::pcie_dma(sc_module_name name,
     sensitive << i_pcie_completer_id;
     sensitive << i_pcie_dmai;
     sensitive << i_xmsti;
+    sensitive << w_pcie_dmai_valid;
+    sensitive << w_pcie_dmai_ready;
     sensitive << wb_reqfifo_payload_i;
     sensitive << wb_reqfifo_payload_o;
     sensitive << w_reqfifo_full;
@@ -174,6 +176,8 @@ void pcie_dma::comb() {
     v = r;
     vb_xmst_cfg = dev_config_none;
     vb_xmsto = axi4_master_out_none;
+    vb_pcie_dmao = pcie_dma64_out_none;
+    vb_dbg_pcie_dmai = pcie_dma64_in_none;
     vb_xbytes = 0;
     v_req_ready = 0;
     vb_req_addr = 0;
@@ -187,14 +191,8 @@ void pcie_dma::comb() {
     vb_resp_strob = 0;
     v_resp_last = 0;
 
-    v_req_ready = 0;
-    vb_req_addr = 0;
-    v_resp_valid = 0;
-    vb_resp_data = 0;
-    vb_resp_strob = 0;
-    v_resp_last = 0;
-    v_single_tlp = 0;
-    vb_xmsto = axi4_master_out_none;
+    w_pcie_dmai_valid = i_pcie_dmai.read().valid;
+    w_pcie_dmai_ready = i_pcie_dmai.read().ready;
 
     if (r.dw0.read()(9, 0) == 1) {
         // DW0[9:0] = Length number of DW (4-bytes) for 32/64 bars
@@ -205,9 +203,6 @@ void pcie_dma::comb() {
     vb_xmst_cfg.vid = VENDOR_OPTIMITECH;
     vb_xmst_cfg.did = OPTIMITECH_PCIE_DMA;
     vb_xbytes = XSizeToBytes(r.xsize.read());
-
-    w_pcie_dmai_valid = i_pcie_dmai.read().valid;
-    w_pcie_dmai_ready = i_pcie_dmai.read().ready;
 
     // Request address bits [1:0] are not transmitted, should be restored from BE[3:0]:
     // be[3:0] => addr[1:0]
@@ -540,10 +535,6 @@ void pcie_dma::comb() {
     vb_dbg_pcie_dmai.data = vb_req_data;
     vb_dbg_pcie_dmai.strob = vb_req_strob;
     vb_dbg_pcie_dmai.last = v_req_last;
-    vb_dbg_pcie_dmai.ready = 0;
-    vb_dbg_pcie_dmai.bar_hit = 0;
-    vb_dbg_pcie_dmai.ecrc_err = 0;
-    vb_dbg_pcie_dmai.err_fwd = 0;
     o_dbg_pcie_dmai = vb_dbg_pcie_dmai;
 }
 
