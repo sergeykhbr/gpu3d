@@ -254,28 +254,28 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
         for (int i = 0; i < FULL_DEC_DEPTH; i++) {
-            sc_trace(o_vcd, r.d[i].pc, pn + ".r.d[i].pc");
-            sc_trace(o_vcd, r.d[i].isa_type, pn + ".r.d[i].isa_type");
-            sc_trace(o_vcd, r.d[i].instr_vec, pn + ".r.d[i].instr_vec");
-            sc_trace(o_vcd, r.d[i].instr, pn + ".r.d[i].instr");
-            sc_trace(o_vcd, r.d[i].memop_store, pn + ".r.d[i].memop_store");
-            sc_trace(o_vcd, r.d[i].memop_load, pn + ".r.d[i].memop_load");
-            sc_trace(o_vcd, r.d[i].memop_sign_ext, pn + ".r.d[i].memop_sign_ext");
-            sc_trace(o_vcd, r.d[i].memop_size, pn + ".r.d[i].memop_size");
-            sc_trace(o_vcd, r.d[i].unsigned_op, pn + ".r.d[i].unsigned_op");
-            sc_trace(o_vcd, r.d[i].rv32, pn + ".r.d[i].rv32");
-            sc_trace(o_vcd, r.d[i].f64, pn + ".r.d[i].f64");
-            sc_trace(o_vcd, r.d[i].compressed, pn + ".r.d[i].compressed");
-            sc_trace(o_vcd, r.d[i].amo, pn + ".r.d[i].amo");
-            sc_trace(o_vcd, r.d[i].instr_load_fault, pn + ".r.d[i].instr_load_fault");
-            sc_trace(o_vcd, r.d[i].instr_page_fault_x, pn + ".r.d[i].instr_page_fault_x");
-            sc_trace(o_vcd, r.d[i].instr_unimplemented, pn + ".r.d[i].instr_unimplemented");
-            sc_trace(o_vcd, r.d[i].radr1, pn + ".r.d[i].radr1");
-            sc_trace(o_vcd, r.d[i].radr2, pn + ".r.d[i].radr2");
-            sc_trace(o_vcd, r.d[i].waddr, pn + ".r.d[i].waddr");
-            sc_trace(o_vcd, r.d[i].csr_addr, pn + ".r.d[i].csr_addr");
-            sc_trace(o_vcd, r.d[i].imm, pn + ".r.d[i].imm");
-            sc_trace(o_vcd, r.d[i].progbuf_ena, pn + ".r.d[i].progbuf_ena");
+            sc_trace(o_vcd, r.d[i].pc, pn + ".r.d(i).pc");
+            sc_trace(o_vcd, r.d[i].isa_type, pn + ".r.d(i).isa_type");
+            sc_trace(o_vcd, r.d[i].instr_vec, pn + ".r.d(i).instr_vec");
+            sc_trace(o_vcd, r.d[i].instr, pn + ".r.d(i).instr");
+            sc_trace(o_vcd, r.d[i].memop_store, pn + ".r.d(i).memop_store");
+            sc_trace(o_vcd, r.d[i].memop_load, pn + ".r.d(i).memop_load");
+            sc_trace(o_vcd, r.d[i].memop_sign_ext, pn + ".r.d(i).memop_sign_ext");
+            sc_trace(o_vcd, r.d[i].memop_size, pn + ".r.d(i).memop_size");
+            sc_trace(o_vcd, r.d[i].unsigned_op, pn + ".r.d(i).unsigned_op");
+            sc_trace(o_vcd, r.d[i].rv32, pn + ".r.d(i).rv32");
+            sc_trace(o_vcd, r.d[i].f64, pn + ".r.d(i).f64");
+            sc_trace(o_vcd, r.d[i].compressed, pn + ".r.d(i).compressed");
+            sc_trace(o_vcd, r.d[i].amo, pn + ".r.d(i).amo");
+            sc_trace(o_vcd, r.d[i].instr_load_fault, pn + ".r.d(i).instr_load_fault");
+            sc_trace(o_vcd, r.d[i].instr_page_fault_x, pn + ".r.d(i).instr_page_fault_x");
+            sc_trace(o_vcd, r.d[i].instr_unimplemented, pn + ".r.d(i).instr_unimplemented");
+            sc_trace(o_vcd, r.d[i].radr1, pn + ".r.d(i).radr1");
+            sc_trace(o_vcd, r.d[i].radr2, pn + ".r.d(i).radr2");
+            sc_trace(o_vcd, r.d[i].waddr, pn + ".r.d(i).waddr");
+            sc_trace(o_vcd, r.d[i].csr_addr, pn + ".r.d(i).csr_addr");
+            sc_trace(o_vcd, r.d[i].imm, pn + ".r.d(i).imm");
+            sc_trace(o_vcd, r.d[i].progbuf_ena, pn + ".r.d(i).progbuf_ena");
         }
     }
 

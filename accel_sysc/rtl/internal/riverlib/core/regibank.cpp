@@ -150,8 +150,8 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_t5, o_t5.name());
         sc_trace(o_vcd, o_t6, o_t6.name());
         for (int i = 0; i < REGS_TOTAL; i++) {
-            sc_trace(o_vcd, r.arr[i].val, pn + ".r.arr[i].val");
-            sc_trace(o_vcd, r.arr[i].tag, pn + ".r.arr[i].tag");
+            sc_trace(o_vcd, r.arr[i].val, pn + ".r.arr(i).val");
+            sc_trace(o_vcd, r.arr[i].tag, pn + ".r.arr(i).tag");
         }
     }
 

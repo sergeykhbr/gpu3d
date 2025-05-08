@@ -99,7 +99,7 @@ void apb_pcie::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
         sc_trace(o_vcd, r.req_cnt, pn + ".r.req_cnt");
         for (int i = 0; i < 16; i++) {
-            sc_trace(o_vcd, rx.req_data_arr[i], pn + ".rx.req_data_arr[i]");
+            sc_trace(o_vcd, rx.req_data_arr[i], pn + ".rx.req_data_arr(i)");
         }
     }
 

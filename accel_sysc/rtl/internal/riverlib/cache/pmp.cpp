@@ -74,9 +74,9 @@ void PMP::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_w, o_w.name());
         sc_trace(o_vcd, o_x, o_x.name());
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-            sc_trace(o_vcd, r.tbl[i].start_addr, pn + ".r.tbl[i].start_addr");
-            sc_trace(o_vcd, r.tbl[i].end_addr, pn + ".r.tbl[i].end_addr");
-            sc_trace(o_vcd, r.tbl[i].flags, pn + ".r.tbl[i].flags");
+            sc_trace(o_vcd, r.tbl[i].start_addr, pn + ".r.tbl(i).start_addr");
+            sc_trace(o_vcd, r.tbl[i].end_addr, pn + ".r.tbl(i).end_addr");
+            sc_trace(o_vcd, r.tbl[i].flags, pn + ".r.tbl(i).flags");
         }
     }
 

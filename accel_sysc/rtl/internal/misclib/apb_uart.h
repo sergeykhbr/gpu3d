@@ -272,7 +272,7 @@ void apb_uart<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
         sc_trace(o_vcd, r.err_stopbit, pn + ".r.err_stopbit");
         sc_trace(o_vcd, r.fwcpuid, pn + ".r.fwcpuid");
         for (int i = 0; i < fifosz; i++) {
-            sc_trace(o_vcd, r.rx_fifo[i], pn + ".r.rx_fifo[i]");
+            sc_trace(o_vcd, r.rx_fifo[i], pn + ".r.rx_fifo(i)");
         }
         sc_trace(o_vcd, r.rx_state, pn + ".r.rx_state");
         sc_trace(o_vcd, r.rx_ena, pn + ".r.rx_ena");
@@ -288,7 +288,7 @@ void apb_uart<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
         sc_trace(o_vcd, r.rx_stop_cnt, pn + ".r.rx_stop_cnt");
         sc_trace(o_vcd, r.rx_shift, pn + ".r.rx_shift");
         for (int i = 0; i < fifosz; i++) {
-            sc_trace(o_vcd, r.tx_fifo[i], pn + ".r.tx_fifo[i]");
+            sc_trace(o_vcd, r.tx_fifo[i], pn + ".r.tx_fifo(i)");
         }
         sc_trace(o_vcd, r.tx_state, pn + ".r.tx_state");
         sc_trace(o_vcd, r.tx_ena, pn + ".r.tx_ena");

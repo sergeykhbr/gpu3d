@@ -19,6 +19,7 @@
 #include "../../../rtl/internal/ambalib/types_amba.h"
 #include "../../../rtl/internal/ambalib/types_pnp.h"
 #include "../../../rtl/internal/ambalib/types_dma.h"
+#include "target_cfg.h"
 #include "../../../rtl/sim/io/ids_tech.h"
 #include "../../../rtl/sim/pll/SysPLL_tech.h"
 #include "../../../rtl/internal/misclib/apb_prci.h"

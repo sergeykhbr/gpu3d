@@ -96,10 +96,10 @@ void IntMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.a2_dbg, pn + ".r.a2_dbg");
         sc_trace(o_vcd, r.reference_mul, pn + ".r.reference_mul");
         for (int i = 0; i < 16; i++) {
-            sc_trace(o_vcd, r.lvl1[i], pn + ".r.lvl1[i]");
+            sc_trace(o_vcd, r.lvl1[i], pn + ".r.lvl1(i)");
         }
         for (int i = 0; i < 4; i++) {
-            sc_trace(o_vcd, r.lvl3[i], pn + ".r.lvl3[i]");
+            sc_trace(o_vcd, r.lvl3[i], pn + ".r.lvl3(i)");
         }
     }
 

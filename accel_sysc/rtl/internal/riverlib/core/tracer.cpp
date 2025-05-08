@@ -208,27 +208,27 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_m_wdata, i_m_wdata.name());
         sc_trace(o_vcd, i_reg_ignored, i_reg_ignored.name());
         for (int i = 0; i < TRACE_TBL_SZ; i++) {
-            sc_trace(o_vcd, r.trace_tbl[i].exec_cnt, pn + ".r.trace_tbl[i].exec_cnt");
-            sc_trace(o_vcd, r.trace_tbl[i].pc, pn + ".r.trace_tbl[i].pc");
-            sc_trace(o_vcd, r.trace_tbl[i].instr, pn + ".r.trace_tbl[i].instr");
-            sc_trace(o_vcd, r.trace_tbl[i].regactioncnt, pn + ".r.trace_tbl[i].regactioncnt");
-            sc_trace(o_vcd, r.trace_tbl[i].memactioncnt, pn + ".r.trace_tbl[i].memactioncnt");
+            sc_trace(o_vcd, r.trace_tbl[i].exec_cnt, pn + ".r.trace_tbl(i).exec_cnt");
+            sc_trace(o_vcd, r.trace_tbl[i].pc, pn + ".r.trace_tbl(i).pc");
+            sc_trace(o_vcd, r.trace_tbl[i].instr, pn + ".r.trace_tbl(i).instr");
+            sc_trace(o_vcd, r.trace_tbl[i].regactioncnt, pn + ".r.trace_tbl(i).regactioncnt");
+            sc_trace(o_vcd, r.trace_tbl[i].memactioncnt, pn + ".r.trace_tbl(i).memactioncnt");
             for (int j = 0; j < TRACE_TBL_SZ; j++) {
-                sc_trace(o_vcd, r.trace_tbl[i].regaction[j].waddr, pn + ".r.trace_tbl[i].regaction[j].waddr");
-                sc_trace(o_vcd, r.trace_tbl[i].regaction[j].wres, pn + ".r.trace_tbl[i].regaction[j].wres");
+                sc_trace(o_vcd, r.trace_tbl[i].regaction[j].waddr, pn + ".r.trace_tbl(i).regaction(j).waddr");
+                sc_trace(o_vcd, r.trace_tbl[i].regaction[j].wres, pn + ".r.trace_tbl(i).regaction(j).wres");
             }
             for (int j = 0; j < TRACE_TBL_SZ; j++) {
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].store, pn + ".r.trace_tbl[i].memaction[j].store");
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].size, pn + ".r.trace_tbl[i].memaction[j].size");
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].mask, pn + ".r.trace_tbl[i].memaction[j].mask");
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].memaddr, pn + ".r.trace_tbl[i].memaction[j].memaddr");
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].data, pn + ".r.trace_tbl[i].memaction[j].data");
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].regaddr, pn + ".r.trace_tbl[i].memaction[j].regaddr");
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].complete, pn + ".r.trace_tbl[i].memaction[j].complete");
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].sc_release, pn + ".r.trace_tbl[i].memaction[j].sc_release");
-                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].ignored, pn + ".r.trace_tbl[i].memaction[j].ignored");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].store, pn + ".r.trace_tbl(i).memaction(j).store");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].size, pn + ".r.trace_tbl(i).memaction(j).size");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].mask, pn + ".r.trace_tbl(i).memaction(j).mask");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].memaddr, pn + ".r.trace_tbl(i).memaction(j).memaddr");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].data, pn + ".r.trace_tbl(i).memaction(j).data");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].regaddr, pn + ".r.trace_tbl(i).memaction(j).regaddr");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].complete, pn + ".r.trace_tbl(i).memaction(j).complete");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].sc_release, pn + ".r.trace_tbl(i).memaction(j).sc_release");
+                sc_trace(o_vcd, r.trace_tbl[i].memaction[j].ignored, pn + ".r.trace_tbl(i).memaction(j).ignored");
             }
-            sc_trace(o_vcd, r.trace_tbl[i].completed, pn + ".r.trace_tbl[i].completed");
+            sc_trace(o_vcd, r.trace_tbl[i].completed, pn + ".r.trace_tbl(i).completed");
         }
         sc_trace(o_vcd, r.tr_wcnt, pn + ".r.tr_wcnt");
         sc_trace(o_vcd, r.tr_rcnt, pn + ".r.tr_rcnt");

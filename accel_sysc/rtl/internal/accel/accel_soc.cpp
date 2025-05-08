@@ -468,7 +468,6 @@ void accel_soc::comb() {
     o_jtag_vref = 1;
 
     // Nullify emty AXI-slots:
-    aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
     acpo = axi4_master_out_none;
 
     // PRCI:

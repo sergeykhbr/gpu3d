@@ -27,12 +27,10 @@ namespace debugger {
 // 
 // Total number of CPU limited by config CFG_TOTAL_CPU_MAX
 static const int CFG_BUS0_XMST_GROUP0 = 0;
-// DMA master interface generic index.
-static const int CFG_BUS0_XMST_DMA = 1;
 // PCIE DMA master interface.
-static const int CFG_BUS0_XMST_PCIE = 2;
+static const int CFG_BUS0_XMST_PCIE = 1;
 // Total Number of master devices on system bus.
-static const int CFG_BUS0_XMST_TOTAL = 3;
+static const int CFG_BUS0_XMST_TOTAL = 2;
 // Necessary bus width to store index + 1.
 static const int CFG_BUS0_XMST_LOG2_TOTAL = 2;              // $clog2(CFG_BUS0_XMST_TOTAL + 1)
 

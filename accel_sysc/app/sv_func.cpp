@@ -27,7 +27,7 @@ void SV_readmemh(const char *filename, sc_uint<32> *mem) {
     char buf;
     int cnt = 0;
     int addr = 0;
-    snprintf(tpath, sizeof(tpath), CMAKE_CURRENT_SOURCE_DIR"/prj/impl/asic_sim/%s", filename);
+    snprintf(tpath, sizeof(tpath), CMAKE_CURRENT_SOURCE_DIR"/prj/impl/%s", filename);
     f = fopen(tpath, "rb");
 
     if (!f) {
