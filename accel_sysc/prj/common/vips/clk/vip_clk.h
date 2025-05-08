@@ -25,7 +25,6 @@ SC_MODULE(vip_clk) {
 
     void comb();
 
-
     vip_clk(sc_module_name name,
             double period);
 
@@ -33,6 +32,7 @@ SC_MODULE(vip_clk) {
 
  private:
     double period_;
+
 };
 
 }  // namespace debugger
