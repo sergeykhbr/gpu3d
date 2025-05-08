@@ -44,8 +44,6 @@ SC_MODULE(apb_prci) {
     void comb();
     void rhegisters();
 
-    SC_HAS_PROCESS(apb_prci);
-
     apb_prci(sc_module_name name,
              bool async_reset);
     virtual ~apb_prci();

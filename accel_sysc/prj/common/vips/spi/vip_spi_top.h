@@ -34,8 +34,6 @@ SC_MODULE(vip_spi_top) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_spi_top);
-
     vip_spi_top(sc_module_name name,
                 bool async_reset,
                 int instnum,

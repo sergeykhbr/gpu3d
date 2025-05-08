@@ -74,8 +74,6 @@ SC_MODULE(DCacheLru) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DCacheLru);
-
     DCacheLru(sc_module_name name,
               bool async_reset,
               bool coherence_ena);

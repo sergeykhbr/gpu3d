@@ -30,8 +30,6 @@ SC_MODULE(rom_inferred_2x32) {
 
     void registers();
 
-    SC_HAS_PROCESS(rom_inferred_2x32);
-
     rom_inferred_2x32(sc_module_name name,
                       std::string filename);
 

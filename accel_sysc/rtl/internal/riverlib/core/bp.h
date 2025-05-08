@@ -43,8 +43,6 @@ SC_MODULE(BranchPredictor) {
 
     void comb();
 
-    SC_HAS_PROCESS(BranchPredictor);
-
     BranchPredictor(sc_module_name name,
                     bool async_reset);
     virtual ~BranchPredictor();

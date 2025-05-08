@@ -33,8 +33,6 @@ SC_MODULE(cdc_axi_sync_tech) {
 
     void comb();
 
-    SC_HAS_PROCESS(cdc_axi_sync_tech);
-
     cdc_axi_sync_tech(sc_module_name name);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

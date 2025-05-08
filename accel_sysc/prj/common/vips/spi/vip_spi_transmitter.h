@@ -39,8 +39,6 @@ SC_MODULE(vip_spi_transmitter) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_spi_transmitter);
-
     vip_spi_transmitter(sc_module_name name,
                         bool async_reset,
                         int scaler);

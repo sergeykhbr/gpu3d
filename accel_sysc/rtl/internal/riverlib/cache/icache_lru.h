@@ -57,8 +57,6 @@ SC_MODULE(ICacheLru) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(ICacheLru);
-
     ICacheLru(sc_module_name name,
               bool async_reset);
     virtual ~ICacheLru();

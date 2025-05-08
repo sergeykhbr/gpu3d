@@ -59,8 +59,6 @@ SC_MODULE(vip_sdcard_cmdio) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_sdcard_cmdio);
-
     vip_sdcard_cmdio(sc_module_name name,
                      bool async_reset);
     virtual ~vip_sdcard_cmdio();

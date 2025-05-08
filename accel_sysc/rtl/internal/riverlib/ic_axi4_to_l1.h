@@ -36,8 +36,6 @@ SC_MODULE(ic_axi4_to_l1) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(ic_axi4_to_l1);
-
     ic_axi4_to_l1(sc_module_name name,
                   bool async_reset);
 

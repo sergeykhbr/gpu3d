@@ -37,8 +37,6 @@ SC_MODULE(IntMul) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(IntMul);
-
     IntMul(sc_module_name name,
            bool async_reset);
 

@@ -35,8 +35,6 @@ SC_MODULE(ram_dp_fifo_tech) {
     void wr();
     void rd();
 
-    SC_HAS_PROCESS(ram_dp_fifo_tech);
-
     ram_dp_fifo_tech(sc_module_name name);
 
 

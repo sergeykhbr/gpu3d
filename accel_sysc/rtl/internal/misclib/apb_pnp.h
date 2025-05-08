@@ -38,8 +38,6 @@ SC_MODULE(apb_pnp) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(apb_pnp);
-
     apb_pnp(sc_module_name name,
             bool async_reset,
             sc_uint<32> hwid,

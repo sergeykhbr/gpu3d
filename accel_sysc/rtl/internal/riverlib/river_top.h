@@ -71,8 +71,6 @@ SC_MODULE(RiverTop) {
 
     void comb();
 
-    SC_HAS_PROCESS(RiverTop);
-
     RiverTop(sc_module_name name,
              bool async_reset,
              uint32_t hartid,

@@ -44,8 +44,6 @@ SC_MODULE(L2Destination) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(L2Destination);
-
     L2Destination(sc_module_name name,
                   bool async_reset);
 

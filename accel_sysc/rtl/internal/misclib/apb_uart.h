@@ -39,8 +39,6 @@ SC_MODULE(apb_uart) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(apb_uart);
-
     apb_uart(sc_module_name name,
              bool async_reset,
              int sim_speedup_rate);

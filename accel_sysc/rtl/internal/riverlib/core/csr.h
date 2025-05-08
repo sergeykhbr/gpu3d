@@ -78,8 +78,6 @@ SC_MODULE(CsrRegs) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(CsrRegs);
-
     CsrRegs(sc_module_name name,
             bool async_reset,
             uint32_t hartid);

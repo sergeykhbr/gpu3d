@@ -56,8 +56,6 @@ SC_MODULE(DecoderRvc) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DecoderRvc);
-
     DecoderRvc(sc_module_name name,
                bool async_reset);
 

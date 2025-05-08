@@ -39,8 +39,6 @@ SC_MODULE(clint) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(clint);
-
     clint(sc_module_name name,
           bool async_reset);
     virtual ~clint();

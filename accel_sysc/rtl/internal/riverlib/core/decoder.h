@@ -59,8 +59,6 @@ SC_MODULE(InstrDecoder) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(InstrDecoder);
-
     InstrDecoder(sc_module_name name,
                  bool async_reset,
                  bool fpu_ena);

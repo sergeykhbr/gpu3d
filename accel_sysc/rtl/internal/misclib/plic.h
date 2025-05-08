@@ -39,8 +39,6 @@ SC_MODULE(plic) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(plic);
-
     plic(sc_module_name name,
          bool async_reset);
     virtual ~plic();

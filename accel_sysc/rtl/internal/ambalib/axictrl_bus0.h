@@ -37,8 +37,6 @@ SC_MODULE(axictrl_bus0) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(axictrl_bus0);
-
     axictrl_bus0(sc_module_name name,
                  bool async_reset);
     virtual ~axictrl_bus0();

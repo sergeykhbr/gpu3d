@@ -32,8 +32,6 @@ SC_MODULE(AluLogic) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(AluLogic);
-
     AluLogic(sc_module_name name,
              bool async_reset);
 

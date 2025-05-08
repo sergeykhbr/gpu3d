@@ -37,8 +37,6 @@ SC_MODULE(Queue) {
     void registers();
     void rxegisters();
 
-    SC_HAS_PROCESS(Queue);
-
     Queue(sc_module_name name,
           bool async_reset);
 

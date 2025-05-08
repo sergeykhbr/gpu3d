@@ -28,8 +28,6 @@ SC_MODULE(iobuf_tech) {
 
     void comb();
 
-    SC_HAS_PROCESS(iobuf_tech);
-
     iobuf_tech(sc_module_name name);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

@@ -37,8 +37,6 @@ SC_MODULE(axi_rom) {
 
     void comb();
 
-    SC_HAS_PROCESS(axi_rom);
-
     axi_rom(sc_module_name name,
             bool async_reset,
             std::string filename);

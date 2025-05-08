@@ -38,8 +38,6 @@ SC_MODULE(DoubleDiv) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DoubleDiv);
-
     DoubleDiv(sc_module_name name,
               bool async_reset);
     virtual ~DoubleDiv();

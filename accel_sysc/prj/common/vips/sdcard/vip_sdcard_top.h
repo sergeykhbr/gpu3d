@@ -34,8 +34,6 @@ SC_MODULE(vip_sdcard_top) {
 
     void comb();
 
-    SC_HAS_PROCESS(vip_sdcard_top);
-
     vip_sdcard_top(sc_module_name name,
                    bool async_reset);
     virtual ~vip_sdcard_top();

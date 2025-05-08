@@ -91,8 +91,6 @@ SC_MODULE(CacheTop) {
 
     void comb();
 
-    SC_HAS_PROCESS(CacheTop);
-
     CacheTop(sc_module_name name,
              bool async_reset,
              bool coherence_ena);

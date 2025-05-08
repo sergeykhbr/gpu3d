@@ -71,8 +71,6 @@ SC_MODULE(MemAccess) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(MemAccess);
-
     MemAccess(sc_module_name name,
               bool async_reset);
     virtual ~MemAccess();

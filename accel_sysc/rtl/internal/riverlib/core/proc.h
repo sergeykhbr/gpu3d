@@ -92,8 +92,6 @@ SC_MODULE(Processor) {
 
     void comb();
 
-    SC_HAS_PROCESS(Processor);
-
     Processor(sc_module_name name,
               bool async_reset,
               uint32_t hartid,

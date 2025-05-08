@@ -35,8 +35,6 @@ SC_MODULE(vip_uart_top) {
     void fileout();
     void registers();
 
-    SC_HAS_PROCESS(vip_uart_top);
-
     vip_uart_top(sc_module_name name,
                  bool async_reset,
                  int instnum,

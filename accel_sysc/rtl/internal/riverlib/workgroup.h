@@ -62,8 +62,6 @@ SC_MODULE(Workgroup) {
 
     void comb();
 
-    SC_HAS_PROCESS(Workgroup);
-
     Workgroup(sc_module_name name,
               bool async_reset,
               uint32_t cpu_num,

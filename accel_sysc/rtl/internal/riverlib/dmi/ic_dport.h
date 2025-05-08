@@ -48,8 +48,6 @@ SC_MODULE(ic_dport) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(ic_dport);
-
     ic_dport(sc_module_name name,
              bool async_reset);
 

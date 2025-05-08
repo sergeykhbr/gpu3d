@@ -40,8 +40,6 @@ SC_MODULE(jtagcdc) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(jtagcdc);
-
     jtagcdc(sc_module_name name,
             bool async_reset);
 

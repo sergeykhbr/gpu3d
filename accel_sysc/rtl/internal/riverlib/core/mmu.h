@@ -68,8 +68,6 @@ SC_MODULE(Mmu) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(Mmu);
-
     Mmu(sc_module_name name,
         bool async_reset);
     virtual ~Mmu();

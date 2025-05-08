@@ -77,8 +77,6 @@ SC_MODULE(DbgPort) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DbgPort);
-
     DbgPort(sc_module_name name,
             bool async_reset);
     virtual ~DbgPort();

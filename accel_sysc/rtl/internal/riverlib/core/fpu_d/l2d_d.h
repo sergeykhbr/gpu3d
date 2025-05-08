@@ -34,8 +34,6 @@ SC_MODULE(Long2Double) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(Long2Double);
-
     Long2Double(sc_module_name name,
                 bool async_reset);
 

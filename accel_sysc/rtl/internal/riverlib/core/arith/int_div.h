@@ -37,8 +37,6 @@ SC_MODULE(IntDiv) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(IntDiv);
-
     IntDiv(sc_module_name name,
            bool async_reset);
     virtual ~IntDiv();

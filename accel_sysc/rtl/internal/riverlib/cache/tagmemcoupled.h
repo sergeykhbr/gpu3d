@@ -47,8 +47,6 @@ SC_MODULE(TagMemCoupled) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(TagMemCoupled);
-
     TagMemCoupled(sc_module_name name,
                   bool async_reset);
     virtual ~TagMemCoupled();

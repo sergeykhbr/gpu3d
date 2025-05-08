@@ -76,8 +76,6 @@ SC_MODULE(RegIntBank) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(RegIntBank);
-
     RegIntBank(sc_module_name name,
                bool async_reset);
 

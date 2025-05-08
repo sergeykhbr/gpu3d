@@ -31,8 +31,6 @@ SC_MODULE(vip_sdcard_crc7) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_sdcard_crc7);
-
     vip_sdcard_crc7(sc_module_name name,
                     bool async_reset);
 

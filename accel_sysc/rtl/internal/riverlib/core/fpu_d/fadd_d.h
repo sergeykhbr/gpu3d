@@ -42,8 +42,6 @@ SC_MODULE(DoubleAdd) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DoubleAdd);
-
     DoubleAdd(sc_module_name name,
               bool async_reset);
 

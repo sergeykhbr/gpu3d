@@ -35,8 +35,6 @@ SC_MODULE(imul53) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(imul53);
-
     imul53(sc_module_name name,
            bool async_reset);
     virtual ~imul53();

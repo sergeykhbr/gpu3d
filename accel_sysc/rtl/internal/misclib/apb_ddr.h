@@ -40,8 +40,6 @@ SC_MODULE(apb_ddr) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(apb_ddr);
-
     apb_ddr(sc_module_name name,
             bool async_reset);
     virtual ~apb_ddr();

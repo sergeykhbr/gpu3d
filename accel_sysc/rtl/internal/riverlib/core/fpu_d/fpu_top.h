@@ -44,8 +44,6 @@ SC_MODULE(FpuTop) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(FpuTop);
-
     FpuTop(sc_module_name name,
            bool async_reset);
     virtual ~FpuTop();

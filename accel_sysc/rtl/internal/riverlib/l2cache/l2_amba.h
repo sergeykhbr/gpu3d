@@ -45,8 +45,6 @@ SC_MODULE(L2Amba) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(L2Amba);
-
     L2Amba(sc_module_name name,
            bool async_reset);
 

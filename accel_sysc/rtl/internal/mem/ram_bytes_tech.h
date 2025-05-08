@@ -34,8 +34,6 @@ SC_MODULE(ram_bytes_tech) {
 
     void comb();
 
-    SC_HAS_PROCESS(ram_bytes_tech);
-
     ram_bytes_tech(sc_module_name name);
     virtual ~ram_bytes_tech();
 

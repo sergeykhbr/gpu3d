@@ -44,8 +44,6 @@ SC_MODULE(pcie_dma) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(pcie_dma);
-
     pcie_dma(sc_module_name name,
              bool async_reset);
     virtual ~pcie_dma();

@@ -35,8 +35,6 @@ SC_MODULE(L2Dummy) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(L2Dummy);
-
     L2Dummy(sc_module_name name,
             bool async_reset);
 

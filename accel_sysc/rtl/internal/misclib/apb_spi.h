@@ -43,8 +43,6 @@ SC_MODULE(apb_spi) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(apb_spi);
-
     apb_spi(sc_module_name name,
             bool async_reset);
     virtual ~apb_spi();

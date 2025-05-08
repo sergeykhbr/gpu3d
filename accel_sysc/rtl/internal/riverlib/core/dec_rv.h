@@ -56,8 +56,6 @@ SC_MODULE(DecoderRv) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DecoderRv);
-
     DecoderRv(sc_module_name name,
               bool async_reset,
               bool fpu_ena);

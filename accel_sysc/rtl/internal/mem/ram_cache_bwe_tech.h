@@ -33,8 +33,6 @@ SC_MODULE(ram_cache_bwe_tech) {
 
     void comb();
 
-    SC_HAS_PROCESS(ram_cache_bwe_tech);
-
     ram_cache_bwe_tech(sc_module_name name);
     virtual ~ram_cache_bwe_tech();
 

@@ -41,8 +41,6 @@ SC_MODULE(RiverAmba) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(RiverAmba);
-
     RiverAmba(sc_module_name name,
               bool async_reset,
               uint32_t hartid,

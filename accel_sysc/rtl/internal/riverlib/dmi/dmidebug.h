@@ -63,8 +63,6 @@ SC_MODULE(dmidebug) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(dmidebug);
-
     dmidebug(sc_module_name name,
              bool async_reset);
     virtual ~dmidebug();

@@ -39,8 +39,6 @@ SC_MODULE(PMP) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(PMP);
-
     PMP(sc_module_name name,
         bool async_reset);
 

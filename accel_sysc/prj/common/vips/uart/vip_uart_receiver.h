@@ -31,8 +31,6 @@ SC_MODULE(vip_uart_receiver) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_uart_receiver);
-
     vip_uart_receiver(sc_module_name name,
                       bool async_reset,
                       int scaler);

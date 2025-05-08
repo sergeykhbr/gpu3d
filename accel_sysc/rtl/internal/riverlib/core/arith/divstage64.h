@@ -28,8 +28,6 @@ SC_MODULE(divstage64) {
 
     void comb();
 
-    SC_HAS_PROCESS(divstage64);
-
     divstage64(sc_module_name name);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

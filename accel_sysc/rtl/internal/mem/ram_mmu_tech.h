@@ -32,8 +32,6 @@ SC_MODULE(ram_mmu_tech) {
 
     void registers();
 
-    SC_HAS_PROCESS(ram_mmu_tech);
-
     ram_mmu_tech(sc_module_name name);
 
 

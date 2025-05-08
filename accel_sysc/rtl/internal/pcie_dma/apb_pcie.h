@@ -39,8 +39,6 @@ SC_MODULE(apb_pcie) {
     void registers();
     void rxegisters();
 
-    SC_HAS_PROCESS(apb_pcie);
-
     apb_pcie(sc_module_name name,
              bool async_reset);
     virtual ~apb_pcie();

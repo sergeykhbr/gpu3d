@@ -36,8 +36,6 @@ SC_MODULE(DoubleMul) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DoubleMul);
-
     DoubleMul(sc_module_name name,
               bool async_reset);
     virtual ~DoubleMul();

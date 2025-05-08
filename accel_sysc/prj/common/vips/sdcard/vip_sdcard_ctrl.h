@@ -50,8 +50,6 @@ SC_MODULE(vip_sdcard_ctrl) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_sdcard_ctrl);
-
     vip_sdcard_ctrl(sc_module_name name,
                     bool async_reset,
                     int CFG_SDCARD_POWERUP_DONE_DELAY,

@@ -32,8 +32,6 @@ SC_MODULE(rom_tech) {
 
     void comb();
 
-    SC_HAS_PROCESS(rom_tech);
-
     rom_tech(sc_module_name name,
              std::string filename);
     virtual ~rom_tech();

@@ -58,8 +58,6 @@ SC_MODULE(ic_csr_m2_s1) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(ic_csr_m2_s1);
-
     ic_csr_m2_s1(sc_module_name name,
                  bool async_reset);
 

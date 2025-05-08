@@ -59,8 +59,6 @@ SC_MODULE(L2CacheLru) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(L2CacheLru);
-
     L2CacheLru(sc_module_name name,
                bool async_reset);
     virtual ~L2CacheLru();

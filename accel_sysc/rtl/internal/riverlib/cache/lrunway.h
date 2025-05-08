@@ -36,8 +36,6 @@ SC_MODULE(lrunway) {
     void comb();
     void rxegisters();
 
-    SC_HAS_PROCESS(lrunway);
-
     lrunway(sc_module_name name);
 
 

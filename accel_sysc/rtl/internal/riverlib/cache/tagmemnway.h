@@ -52,8 +52,6 @@ SC_MODULE(TagMemNWay) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(TagMemNWay);
-
     TagMemNWay(sc_module_name name,
                bool async_reset);
     virtual ~TagMemNWay();

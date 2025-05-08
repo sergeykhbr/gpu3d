@@ -39,8 +39,6 @@ SC_MODULE(cdc_afifo) {
     void registers();
     void r2egisters();
 
-    SC_HAS_PROCESS(cdc_afifo);
-
     cdc_afifo(sc_module_name name);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

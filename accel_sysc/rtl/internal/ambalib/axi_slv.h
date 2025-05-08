@@ -44,8 +44,6 @@ SC_MODULE(axi_slv) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(axi_slv);
-
     axi_slv(sc_module_name name,
             bool async_reset,
             uint32_t vid,

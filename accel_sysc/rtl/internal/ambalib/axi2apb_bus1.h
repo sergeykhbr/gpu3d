@@ -38,8 +38,6 @@ SC_MODULE(axi2apb_bus1) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(axi2apb_bus1);
-
     axi2apb_bus1(sc_module_name name,
                  bool async_reset);
     virtual ~axi2apb_bus1();

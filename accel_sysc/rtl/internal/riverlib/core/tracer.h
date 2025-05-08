@@ -50,8 +50,6 @@ SC_MODULE(Tracer) {
     void traceout();
     void registers();
 
-    SC_HAS_PROCESS(Tracer);
-
     Tracer(sc_module_name name,
            bool async_reset,
            uint32_t hartid,

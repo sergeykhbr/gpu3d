@@ -31,8 +31,6 @@ SC_MODULE(vip_uart_transmitter) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_uart_transmitter);
-
     vip_uart_transmitter(sc_module_name name,
                          bool async_reset,
                          int scaler);

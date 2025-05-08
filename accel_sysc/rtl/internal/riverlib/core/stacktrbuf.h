@@ -32,8 +32,6 @@ SC_MODULE(StackTraceBuffer) {
     void comb();
     void rxegisters();
 
-    SC_HAS_PROCESS(StackTraceBuffer);
-
     StackTraceBuffer(sc_module_name name);
 
 

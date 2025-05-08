@@ -36,8 +36,6 @@ SC_MODULE(axi_sram) {
 
     void comb();
 
-    SC_HAS_PROCESS(axi_sram);
-
     axi_sram(sc_module_name name,
              bool async_reset);
     virtual ~axi_sram();

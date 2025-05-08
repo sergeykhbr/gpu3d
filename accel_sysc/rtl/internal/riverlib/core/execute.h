@@ -116,8 +116,6 @@ SC_MODULE(InstrExecute) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(InstrExecute);
-
     InstrExecute(sc_module_name name,
                  bool async_reset,
                  bool fpu_ena);

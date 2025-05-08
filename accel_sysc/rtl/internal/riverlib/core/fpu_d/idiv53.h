@@ -36,8 +36,6 @@ SC_MODULE(idiv53) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(idiv53);
-
     idiv53(sc_module_name name,
            bool async_reset);
     virtual ~idiv53();

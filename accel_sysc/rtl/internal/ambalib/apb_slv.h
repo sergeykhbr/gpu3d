@@ -40,8 +40,6 @@ SC_MODULE(apb_slv) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(apb_slv);
-
     apb_slv(sc_module_name name,
             bool async_reset,
             uint32_t vid,

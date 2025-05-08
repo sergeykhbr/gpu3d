@@ -32,8 +32,6 @@ SC_MODULE(DummyCpu) {
 
     void comb();
 
-    SC_HAS_PROCESS(DummyCpu);
-
     DummyCpu(sc_module_name name);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

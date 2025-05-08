@@ -40,8 +40,6 @@ SC_MODULE(apb_gpio) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(apb_gpio);
-
     apb_gpio(sc_module_name name,
              bool async_reset);
     virtual ~apb_gpio();

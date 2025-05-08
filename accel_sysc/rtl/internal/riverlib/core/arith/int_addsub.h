@@ -32,8 +32,6 @@ SC_MODULE(IntAddSub) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(IntAddSub);
-
     IntAddSub(sc_module_name name,
               bool async_reset);
 

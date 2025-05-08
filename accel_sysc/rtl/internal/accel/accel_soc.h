@@ -85,8 +85,6 @@ SC_MODULE(accel_soc) {
 
     void comb();
 
-    SC_HAS_PROCESS(accel_soc);
-
     accel_soc(sc_module_name name,
               bool async_reset,
               int sim_uart_speedup_rate);

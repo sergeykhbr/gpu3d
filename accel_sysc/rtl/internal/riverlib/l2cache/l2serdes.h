@@ -34,8 +34,6 @@ SC_MODULE(L2SerDes) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(L2SerDes);
-
     L2SerDes(sc_module_name name,
              bool async_reset);
 
