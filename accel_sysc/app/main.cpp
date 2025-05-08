@@ -28,10 +28,10 @@ int sc_main(int argc, char *argv[]) {
 
     sc_start(100, SC_NS);
     std::cout << "@" << sc_time_stamp()
-              << ": Simulation started successfully. Continue for 1 ms..."
+              << ": Simulation started successfully. Continue for 10 ms..."
               << std::endl;
 
-    sc_start(1, SC_MS);
+    sc_start(10, SC_MS);
 
     if (vcd_) {
         sc_close_vcd_trace_file(vcd_);

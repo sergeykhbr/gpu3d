@@ -27,7 +27,7 @@ asic_top_tb::asic_top_tb(sc_module_name name)
     tt = 0;
 
     clk0 = new vip_clk("clk0",
-                        5.0);
+                        25.0);
     clk0->o_clk(w_sclk_p);
 
     uart1 = new vip_uart_top("uart1",
