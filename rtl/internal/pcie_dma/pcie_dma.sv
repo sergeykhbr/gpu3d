@@ -42,6 +42,8 @@ import types_amba_pkg::*;
 import pcie_cfg_pkg::*;
 import pcie_dma_pkg::*;
 
+logic w_pcie_dmai_valid;
+logic w_pcie_dmai_ready;
 logic [REQ_FIFO_WIDTH-1:0] wb_reqfifo_payload_i;
 logic [REQ_FIFO_WIDTH-1:0] wb_reqfifo_payload_o;
 logic w_reqfifo_full;
@@ -62,7 +64,7 @@ cdc_afifo #(
 ) reqfifo (
     .i_nrst(i_nrst),
     .i_wclk(i_pcie_phy_clk),
-    .i_wr(i_pcie_dmai.valid),
+    .i_wr(w_pcie_dmai_valid),
     .i_wdata(wb_reqfifo_payload_i),
     .o_wfull(w_reqfifo_full),
     .i_rclk(i_clk),
@@ -81,7 +83,7 @@ cdc_afifo #(
     .i_wdata(wb_respfifo_payload_i),
     .o_wfull(w_respfifo_full),
     .i_rclk(i_pcie_phy_clk),
-    .i_rd(i_pcie_dmai.ready),
+    .i_rd(w_pcie_dmai_ready),
     .o_rdata(wb_respfifo_payload_o),
     .o_rempty(w_respfifo_empty)
 );
@@ -91,6 +93,8 @@ begin: comb_proc
     pcie_dma_registers v;
     dev_config_type vb_xmst_cfg;
     axi4_master_out_type vb_xmsto;
+    pcie_dma64_out_type vb_pcie_dmao;
+    pcie_dma64_in_type vb_dbg_pcie_dmai;
     logic [XSIZE_TOTAL-1:0] vb_xbytes;                      // result of function call XSize2XBytes(xsize)
     logic v_req_ready;
     logic [63:0] vb_req_addr;
@@ -107,6 +111,8 @@ begin: comb_proc
     v = r;
     vb_xmst_cfg = dev_config_none;
     vb_xmsto = axi4_master_out_none;
+    vb_pcie_dmao = pcie_dma64_out_none;
+    vb_dbg_pcie_dmai = pcie_dma64_in_none;
     vb_xbytes = 8'd0;
     v_req_ready = 1'b0;
     vb_req_addr = 64'd0;
@@ -120,14 +126,6 @@ begin: comb_proc
     vb_resp_strob = 8'd0;
     v_resp_last = 1'b0;
 
-    v_req_ready = 1'b0;
-    vb_req_addr = 64'd0;
-    v_resp_valid = 1'b0;
-    vb_resp_data = 64'd0;
-    vb_resp_strob = 8'd0;
-    v_resp_last = 1'b0;
-    v_single_tlp = 1'b0;
-    vb_xmsto = axi4_master_out_none;
 
     if (r.dw0[9: 0] == 10'd1) begin
         // DW0[9:0] = Length number of DW (4-bytes) for 32/64 bars
@@ -455,27 +453,28 @@ begin: comb_proc
     wb_respfifo_payload_i = {v_resp_last,
             vb_resp_strob,
             vb_resp_data};
-    o_pcie_dmao.last = wb_respfifo_payload_o[72];
-    o_pcie_dmao.strob = wb_respfifo_payload_o[71: 64];
-    o_pcie_dmao.data = wb_respfifo_payload_o[63: 0];
-    o_pcie_dmao.ready = (~w_reqfifo_full);
-    o_pcie_dmao.valid = (~w_respfifo_empty);
+    vb_pcie_dmao.last = wb_respfifo_payload_o[72];
+    vb_pcie_dmao.strob = wb_respfifo_payload_o[71: 64];
+    vb_pcie_dmao.data = wb_respfifo_payload_o[63: 0];
+    vb_pcie_dmao.ready = (~w_reqfifo_full);
+    vb_pcie_dmao.valid = (~w_respfifo_empty);
+    o_pcie_dmao = vb_pcie_dmao;
     w_respfifo_wr = v_resp_valid;
     w_reqfifo_rd = v_req_ready;
     o_xmst_cfg = vb_xmst_cfg;
     o_xmsto = vb_xmsto;
     // Debug signals
-    o_dbg_pcie_dmai.valid = (~w_reqfifo_empty);
-    o_dbg_pcie_dmai.data = vb_req_data;
-    o_dbg_pcie_dmai.strob = vb_req_strob;
-    o_dbg_pcie_dmai.last = v_req_last;
-    o_dbg_pcie_dmai.ready = 1'b0;
-    o_dbg_pcie_dmai.bar_hit = 7'd0;
-    o_dbg_pcie_dmai.ecrc_err = 1'b0;
-    o_dbg_pcie_dmai.err_fwd = 1'b0;
+    vb_dbg_pcie_dmai.valid = (~w_reqfifo_empty);
+    vb_dbg_pcie_dmai.data = vb_req_data;
+    vb_dbg_pcie_dmai.strob = vb_req_strob;
+    vb_dbg_pcie_dmai.last = v_req_last;
+    o_dbg_pcie_dmai = vb_dbg_pcie_dmai;
 
     rin = v;
 end: comb_proc
+
+assign w_pcie_dmai_valid = i_pcie_dmai.valid;
+assign w_pcie_dmai_ready = i_pcie_dmai.ready;
 
 generate
     if (async_reset) begin: async_r_en

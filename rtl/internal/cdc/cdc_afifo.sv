@@ -18,7 +18,7 @@
 
 module cdc_afifo #(
     parameter int abits = 3,                                // fifo log2(depth)
-    parameter int dbits = 32                                // payload width
+    parameter int dbits = 65                                // payload width
 )
 (
     input logic i_nrst,                                     // reset active LOW

@@ -23,21 +23,10 @@ module vip_clk #(
     output logic o_clk
 );
 
-import vip_clk_pkg::*;
 
-logic pll;
-
-initial begin
-    pll = 0;
-end
 always begin
-    #(0.5 * 1000000000 * period) pll = ~pll;
+    #((0.5 * period)) o_clk = 1'b0;
+    #((0.5 * period)) o_clk = 1'b1;
 end
-
-
-always_comb
-begin: comb_proc
-    o_clk = pll;
-end: comb_proc
 
 endmodule: vip_clk

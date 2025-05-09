@@ -59,7 +59,6 @@ ${COMMON_HOME}/unisims/GTXE2_CHANNEL.v
 ${COMMON_HOME}/unisims/sip/pcie_2_1_002.v
 ${COMMON_HOME}/unisims/sip/gtxe2_channel_002.v
 ${COMMON_HOME}/unisims/xpm_cdc.sv
-${VIPS_HOME}/clk/vip_clk_pkg.sv
 ${VIPS_HOME}/clk/vip_clk.sv
 ${VIPS_HOME}/clk/sys_clk_gen.v
 ${VIPS_HOME}/clk/sys_clk_gen_ds.v
