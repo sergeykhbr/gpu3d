@@ -361,7 +361,7 @@ void pcie_dma::comb() {
         }
         break;
     case STATE_R:
-        vb_xmsto.r_ready = (~w_reqfifo_full.read());
+        vb_xmsto.r_ready = (~w_respfifo_full.read());
         v_resp_valid = i_xmsti.read().r_valid;
         vb_resp_strob = 0xFF;
         v_resp_last = (~r.xlen.read().or_reduce());

@@ -294,7 +294,7 @@ begin: comb_proc
         end
     end
     STATE_R: begin
-        vb_xmsto.r_ready = (~w_reqfifo_full);
+        vb_xmsto.r_ready = (~w_respfifo_full);
         v_resp_valid = i_xmsti.r_valid;
         vb_resp_strob = 8'hFF;
         v_resp_last = (~(|r.xlen));
