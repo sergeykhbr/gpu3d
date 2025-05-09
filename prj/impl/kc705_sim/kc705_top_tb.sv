@@ -55,6 +55,7 @@ module kc705_top_tb;
     //! UART1 signals:
     logic i_uart1_rd;
     logic o_uart1_td;
+    logic w_uart1_loopback_ena;
     // ddr3
     wire o_ddr3_reset_n;
     wire [0:0] o_ddr3_ck_n;
@@ -110,6 +111,8 @@ module kc705_top_tb;
   assign i_sclk_n = ~clk;
   assign i_pcie_clk_p = pcie_clk_100mhz;
   assign i_pcie_clk_n = ~pcie_clk_100mhz;
+
+  assign w_uart1_loopback_ena = 1'b0;
 
   // always_latch begin
 
@@ -186,14 +189,15 @@ module kc705_top_tb;
   glbl glbl();
 
   vip_uart_top #(
-    .async_reset(0),
+    .async_reset(1),
     .instnum(0),
     .baudrate(115200 * (2**SIM_UART_SPEED_UP_RATE)),
     .scaler(8)
   ) UART0 (
     .i_nrst(sys_rst_n),
     .i_rx(o_uart1_td),
-    .o_tx(i_uart1_rd)
+    .o_tx(i_uart1_rd),
+    .i_loopback_ena(w_uart1_loopback_ena)
   );
 
 

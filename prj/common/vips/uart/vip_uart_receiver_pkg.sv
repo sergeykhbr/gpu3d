@@ -42,5 +42,4 @@ const vip_uart_receiver_registers vip_uart_receiver_r_reset = '{
     '0,                                 // scratch
     1'b0                                // rx_err
 };
-
 endpackage: vip_uart_receiver_pkg

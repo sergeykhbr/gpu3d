@@ -16,14 +16,13 @@
 package vip_uart_top_pkg;
 
 
-localparam bit [7:0] EOF_0x0D = 8'h0d;
+localparam bit [7:0] EOF_0x0D = 8'h0D;
 
 typedef struct {
     logic [1:0] initdone;
 } vip_uart_top_registers;
 
 const vip_uart_top_registers vip_uart_top_r_reset = '{
-    '0                                  // initdone
+    2'd0                                // initdone
 };
-
 endpackage: vip_uart_top_pkg

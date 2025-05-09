@@ -40,5 +40,4 @@ const vip_uart_transmitter_registers vip_uart_transmitter_r_reset = '{
     '0,                                 // bitpos
     1'b0                                // overflow
 };
-
 endpackage: vip_uart_transmitter_pkg

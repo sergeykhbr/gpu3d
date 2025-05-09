@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module vip_uart_receiver #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter int scaler = 8
 )
 (
@@ -34,7 +34,9 @@ import vip_uart_receiver_pkg::*;
 localparam int scaler_max = ((2 * scaler) - 1);
 localparam int scaler_mid = scaler;
 
-vip_uart_receiver_registers r, rin;
+vip_uart_receiver_registers r;
+vip_uart_receiver_registers rin;
+
 
 always_comb
 begin: comb_proc
@@ -42,10 +44,9 @@ begin: comb_proc
     logic v_rx_pos;
     logic v_rx_neg;
 
-    v_rx_pos = 0;
-    v_rx_neg = 0;
-
     v = r;
+    v_rx_pos = 1'b0;
+    v_rx_neg = 1'b0;
 
     v.rx = i_rx;
     v_rx_pos = ((~r.rx) && i_rx);
@@ -66,17 +67,17 @@ begin: comb_proc
 
         if ((r.sample == scaler_max) || (v_rx_pos == 1'b1)) begin
             v.state = data;
-            v.bitpos = '0;
-            v.sample = '0;
-            v.scratch = '0;
+            v.bitpos = 4'd0;
+            v.sample = 32'd0;
+            v.scratch = 8'd0;
             v.rx_err = 1'b0;
         end
     end
     data: begin
         if ((r.sample == scaler_max)
                 || ((r.sample > scaler_mid) && ((v_rx_neg == 1'b1) || (v_rx_pos == 1'b1)))) begin
-            v.sample = '0;
-            if (r.bitpos == 8'h08) begin
+            v.sample = 32'd0;
+            if (r.bitpos == 8'd8) begin
                 v.state = stopbit;
             end
         end else begin
@@ -98,8 +99,8 @@ begin: comb_proc
             end
         end
         if (r.sample == scaler_max) begin
-            v.state = dummy;
-            v.sample = '0;
+            v.state = startbit;                             // dummy bit disabled
+            v.sample = 32'd0;
         end else begin
             v.sample = (r.sample + 1);
         end
@@ -109,7 +110,7 @@ begin: comb_proc
         // even if rx=0 on real device:
         if (r.sample >= scaler_mid) begin
             v.state = startbit;
-            v.sample = '0;
+            v.sample = 32'd0;
         end else begin
             v.sample = (r.sample + 1);
         end
@@ -119,7 +120,7 @@ begin: comb_proc
     end
     endcase
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = vip_uart_receiver_r_reset;
     end
 
@@ -130,25 +131,24 @@ begin: comb_proc
 end: comb_proc
 
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= vip_uart_receiver_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
+    end: async_r_en
+    else begin: async_r_dis
 
-    end: async_rst_gen
-    else begin: no_rst_gen
-
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: vip_uart_receiver
