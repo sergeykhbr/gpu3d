@@ -252,7 +252,8 @@ apb_gpio #(
 );
 
 // See reference: pg054-7series-pcie.pdf
-pcie_dma #(
+//pcie_dma #(
+pcie_app #(
     .async_reset(async_reset)
 ) pcidma0 (
     .i_nrst(i_pcie_nrst),
