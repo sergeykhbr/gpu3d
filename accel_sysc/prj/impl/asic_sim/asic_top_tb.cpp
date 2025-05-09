@@ -31,7 +31,7 @@ asic_top_tb::asic_top_tb(sc_module_name name)
     clk0->o_clk(w_sclk_p);
 
     uart1 = new vip_uart_top("uart1",
-                              0,
+                              1,
                               0,
                               sim_uart_baudrate,
                               8,

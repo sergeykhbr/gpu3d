@@ -16,6 +16,8 @@
 #pragma once
 
 #include <systemc.h>
+#include "cdc_dp_mem.h"
+#include "cdc_afifo_gray.h"
 #include "api_core.h"
 
 namespace debugger {
@@ -35,54 +37,33 @@ SC_MODULE(cdc_afifo) {
     sc_out<bool> o_rempty;                                  // fifo is empty it rclk domain
 
     void comb();
-    void mreg();
-    void registers();
-    void r2egisters();
+    void proc_wff();
+    void proc_rff();
 
     cdc_afifo(sc_module_name name);
+    virtual ~cdc_afifo();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    static const int DEPTH = (1 << abits);
+    sc_signal<bool> w_wr_ena;
+    sc_signal<sc_uint<abits>> wb_wgray_addr;
+    sc_signal<sc_uint<(abits + 1)>> wgray;
+    sc_uint<(abits + 1)> q1_wgray;
+    sc_signal<sc_uint<(abits + 1)>> q2_wgray;
+    sc_signal<bool> w_wgray_full;
+    sc_signal<bool> w_wgray_empty_unused;
+    sc_signal<bool> w_rd_ena;
+    sc_signal<sc_uint<abits>> wb_rgray_addr;
+    sc_signal<sc_uint<(abits + 1)>> rgray;
+    sc_uint<(abits + 1)> q1_rgray;
+    sc_signal<sc_uint<(abits + 1)>> q2_rgray;
+    sc_signal<bool> w_rgray_full_unused;
+    sc_signal<bool> w_rgray_empty;
 
-    struct cdc_afifo_registers {
-        sc_signal<sc_uint<(abits + 1)>> wgray;
-        sc_signal<sc_uint<(abits + 1)>> wbin;
-        sc_signal<sc_uint<(abits + 1)>> wq2_rgray;
-        sc_signal<sc_uint<(abits + 1)>> wq1_rgray;
-        sc_signal<bool> wfull;
-    };
-
-    void cdc_afifo_r_reset(cdc_afifo_registers& iv) {
-        iv.wgray = 0;
-        iv.wbin = 0;
-        iv.wq2_rgray = 0;
-        iv.wq1_rgray = 0;
-        iv.wfull = 0;
-    }
-
-    struct cdc_afifo_r2egisters {
-        sc_signal<sc_uint<(abits + 1)>> rgray;
-        sc_signal<sc_uint<(abits + 1)>> rbin;
-        sc_signal<sc_uint<(abits + 1)>> rq2_wgray;
-        sc_signal<sc_uint<(abits + 1)>> rq1_wgray;
-        sc_signal<bool> rempty;
-    };
-
-    void cdc_afifo_r2_reset(cdc_afifo_r2egisters& iv) {
-        iv.rgray = 0;
-        iv.rbin = 0;
-        iv.rq2_wgray = 0;
-        iv.rq1_wgray = 0;
-        iv.rempty = 1;
-    }
-
-    sc_biguint<dbits> mem[DEPTH];
-    cdc_afifo_registers v;
-    cdc_afifo_registers r;
-    cdc_afifo_r2egisters v2;
-    cdc_afifo_r2egisters r2;
+    cdc_dp_mem<abits, dbits> *mem0;
+    cdc_afifo_gray<abits> *wgray0;
+    cdc_afifo_gray<abits> *rgray0;
 
 };
 
@@ -99,6 +80,39 @@ cdc_afifo<abits, dbits>::cdc_afifo(sc_module_name name)
     o_rdata("o_rdata"),
     o_rempty("o_rempty") {
 
+    mem0 = 0;
+    wgray0 = 0;
+    rgray0 = 0;
+
+    wgray0 = new cdc_afifo_gray<abits>("wgray0");
+    wgray0->i_nrst(i_nrst);
+    wgray0->i_clk(i_wclk);
+    wgray0->i_ena(w_wr_ena);
+    wgray0->i_q2_gray(q2_rgray);
+    wgray0->o_addr(wb_wgray_addr);
+    wgray0->o_gray(wgray);
+    wgray0->o_empty(w_wgray_empty_unused);
+    wgray0->o_full(w_wgray_full);
+
+    rgray0 = new cdc_afifo_gray<abits>("rgray0");
+    rgray0->i_nrst(i_nrst);
+    rgray0->i_clk(i_rclk);
+    rgray0->i_ena(w_rd_ena);
+    rgray0->i_q2_gray(q2_wgray);
+    rgray0->o_addr(wb_rgray_addr);
+    rgray0->o_gray(rgray);
+    rgray0->o_empty(w_rgray_empty);
+    rgray0->o_full(w_rgray_full_unused);
+
+    mem0 = new cdc_dp_mem<abits,
+                          dbits>("mem0");
+    mem0->i_wclk(i_wclk);
+    mem0->i_wena(w_wr_ena);
+    mem0->i_addr(wb_wgray_addr);
+    mem0->i_wdata(i_wdata);
+    mem0->i_rclk(i_rclk);
+    mem0->i_raddr(wb_rgray_addr);
+    mem0->o_rdata(o_rdata);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -107,32 +121,43 @@ cdc_afifo<abits, dbits>::cdc_afifo(sc_module_name name)
     sensitive << i_wdata;
     sensitive << i_rclk;
     sensitive << i_rd;
-    sensitive << r.wgray;
-    sensitive << r.wbin;
-    sensitive << r.wq2_rgray;
-    sensitive << r.wq1_rgray;
-    sensitive << r.wfull;
-    sensitive << r2.rgray;
-    sensitive << r2.rbin;
-    sensitive << r2.rq2_wgray;
-    sensitive << r2.rq1_wgray;
-    sensitive << r2.rempty;
+    sensitive << w_wr_ena;
+    sensitive << wb_wgray_addr;
+    sensitive << wgray;
+    sensitive << q2_wgray;
+    sensitive << w_wgray_full;
+    sensitive << w_wgray_empty_unused;
+    sensitive << w_rd_ena;
+    sensitive << wb_rgray_addr;
+    sensitive << rgray;
+    sensitive << q2_rgray;
+    sensitive << w_rgray_full_unused;
+    sensitive << w_rgray_empty;
 
-    SC_METHOD(mreg);
-    sensitive << i_wclk.pos();
-
-    SC_METHOD(registers);
+    SC_METHOD(proc_wff);
     sensitive << i_nrst;
     sensitive << i_wclk.pos();
 
-    SC_METHOD(r2egisters);
+    SC_METHOD(proc_rff);
     sensitive << i_nrst;
     sensitive << i_rclk.pos();
 }
 
 template<int abits, int dbits>
+cdc_afifo<abits, dbits>::~cdc_afifo() {
+    if (mem0) {
+        delete mem0;
+    }
+    if (wgray0) {
+        delete wgray0;
+    }
+    if (rgray0) {
+        delete rgray0;
+    }
+}
+
+template<int abits, int dbits>
 void cdc_afifo<abits, dbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
-    std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_wclk, i_wclk.name());
         sc_trace(o_vcd, i_wr, i_wr.name());
@@ -142,106 +167,41 @@ void cdc_afifo<abits, dbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o
         sc_trace(o_vcd, i_rd, i_rd.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
         sc_trace(o_vcd, o_rempty, o_rempty.name());
-        sc_trace(o_vcd, r.wgray, pn + ".r.wgray");
-        sc_trace(o_vcd, r.wbin, pn + ".r.wbin");
-        sc_trace(o_vcd, r.wq2_rgray, pn + ".r.wq2_rgray");
-        sc_trace(o_vcd, r.wq1_rgray, pn + ".r.wq1_rgray");
-        sc_trace(o_vcd, r.wfull, pn + ".r.wfull");
-        sc_trace(o_vcd, r2.rgray, pn + ".r2.rgray");
-        sc_trace(o_vcd, r2.rbin, pn + ".r2.rbin");
-        sc_trace(o_vcd, r2.rq2_wgray, pn + ".r2.rq2_wgray");
-        sc_trace(o_vcd, r2.rq1_wgray, pn + ".r2.rq1_wgray");
-        sc_trace(o_vcd, r2.rempty, pn + ".r2.rempty");
     }
 
+    if (wgray0) {
+        wgray0->generateVCD(i_vcd, o_vcd);
+    }
+    if (rgray0) {
+        rgray0->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 template<int abits, int dbits>
 void cdc_afifo<abits, dbits>::comb() {
-    sc_uint<abits> vb_waddr;
-    sc_uint<abits> vb_raddr;
-    bool v_wfull_next;
-    bool v_rempty_next;
-    sc_uint<(abits + 1)> vb_wgraynext;
-    sc_uint<(abits + 1)> vb_wbinnext;
-    sc_uint<(abits + 1)> vb_rgraynext;
-    sc_uint<(abits + 1)> vb_rbinnext;
-
-    v2 = r2;
-    v = r;
-    vb_waddr = 0;
-    vb_raddr = 0;
-    v_wfull_next = 0;
-    v_rempty_next = 0;
-    vb_wgraynext = 0;
-    vb_wbinnext = 0;
-    vb_rgraynext = 0;
-    vb_rbinnext = 0;
-
-    // Cross the Gray pointer to write clock domain:
-    v.wq1_rgray = r2.rgray.read();
-    v.wq2_rgray = r.wq1_rgray.read();
-
-    // Next write address and Gray write pointer
-    vb_wbinnext = (r.wbin.read() + (0, (i_wr.read() && (!r.wfull.read()))));
-    vb_wgraynext = ((vb_wbinnext >> 1) ^ vb_wbinnext);
-    vb_waddr = r.wbin.read()((abits - 1), 0);
-    v.wgray = vb_wgraynext;
-    v.wbin = vb_wbinnext;
-
-    if (vb_wgraynext == ((~r.wq2_rgray.read()(abits, (abits - 1))), r.wq2_rgray.read()((abits - 2), 0))) {
-        v_wfull_next = 1;
-    }
-    v.wfull = v_wfull_next;
-
-    // Write Gray pointer into read clock domain
-    v2.rq1_wgray = r.wgray.read();
-    v2.rq2_wgray = r2.rq1_wgray.read();
-    vb_rbinnext = (r2.rbin.read() + (0, (i_rd.read() && (!r2.rempty.read()))));
-    vb_rgraynext = ((vb_rbinnext >> 1) ^ vb_rbinnext);
-    v2.rgray = vb_rgraynext;
-    v2.rbin = vb_rbinnext;
-    vb_raddr = r2.rbin.read()((abits - 1), 0);
-
-    if (vb_rgraynext == r2.rq2_wgray.read()) {
-        v_rempty_next = 1;
-    }
-    v2.rempty = v_rempty_next;
-
-    if (i_nrst.read() == 0) {
-        cdc_afifo_r_reset(v);
-    }
-    if (i_nrst.read() == 0) {
-        cdc_afifo_r2_reset(v2);
-    }
-
-    o_wfull = r.wfull.read();
-    o_rempty = r2.rempty.read();
-    o_rdata = mem[vb_raddr.to_int()];
+    w_wr_ena = (i_wr.read() & (~w_wgray_full.read()));
+    w_rd_ena = (i_rd.read() & (~w_rgray_empty.read()));
 }
 
 template<int abits, int dbits>
-void cdc_afifo<abits, dbits>::mreg() {
-    if ((i_wr.read() && (!r.wfull.read())) == 1) {
-        mem[r.wbin.read()((abits - 1), 0).to_int()] = i_wdata.read();
-    }
-}
-
-template<int abits, int dbits>
-void cdc_afifo<abits, dbits>::registers() {
+void cdc_afifo<abits, dbits>::proc_wff() {
     if (i_nrst.read() == 0) {
-        cdc_afifo_r_reset(r);
+        q1_wgray = 0;
+        q2_wgray = 0;
     } else {
-        r = v;
+        q1_wgray = wgray.read();
+        q2_wgray = q1_wgray;
     }
 }
 
 template<int abits, int dbits>
-void cdc_afifo<abits, dbits>::r2egisters() {
+void cdc_afifo<abits, dbits>::proc_rff() {
     if (i_nrst.read() == 0) {
-        cdc_afifo_r2_reset(r2);
+        q1_rgray = 0;
+        q2_rgray = 0;
     } else {
-        r2 = v2;
+        q1_rgray = rgray.read();
+        q2_rgray = q1_rgray;
     }
 }
 

@@ -21,32 +21,32 @@
 namespace debugger {
 
 template<int abits = 6,
-         int dbits = 8>
-SC_MODULE(ram_dp_fifo_tech) {
+         int dbits = 65>
+SC_MODULE(cdc_dp_mem) {
  public:
     sc_in<bool> i_wclk;                                     // Write clock
     sc_in<bool> i_wena;
-    sc_in<bool> i_addr;
-    sc_in<sc_uint<dbits>> i_wdata;
+    sc_in<sc_uint<abits>> i_addr;                           // write address
+    sc_in<sc_biguint<dbits>> i_wdata;
     sc_in<bool> i_rclk;                                     // Read clock
-    sc_in<bool> i_raddr;
-    sc_out<sc_uint<dbits>> o_rdata;
+    sc_in<sc_uint<abits>> i_raddr;                          // read address
+    sc_out<sc_biguint<dbits>> o_rdata;
 
-    void wr();
-    void rd();
+    void wproc();
+    void rproc();
 
-    ram_dp_fifo_tech(sc_module_name name);
+    cdc_dp_mem(sc_module_name name);
 
 
  private:
     static const int DEPTH = (1 << abits);
 
-    sc_uint<dbits> mem[DEPTH];
+    sc_biguint<dbits> mem[DEPTH];
 
 };
 
 template<int abits, int dbits>
-ram_dp_fifo_tech<abits, dbits>::ram_dp_fifo_tech(sc_module_name name)
+cdc_dp_mem<abits, dbits>::cdc_dp_mem(sc_module_name name)
     : sc_module(name),
     i_wclk("i_wclk"),
     i_wena("i_wena"),
@@ -57,22 +57,27 @@ ram_dp_fifo_tech<abits, dbits>::ram_dp_fifo_tech(sc_module_name name)
     o_rdata("o_rdata") {
 
 
-    SC_METHOD(wr);
+    SC_METHOD(wproc);
     sensitive << i_wclk.pos();
 
-    SC_METHOD(rd);
-    sensitive << i_rclk.pos();
+    SC_METHOD(rproc);
+    sensitive << i_wclk;
+    sensitive << i_wena;
+    sensitive << i_addr;
+    sensitive << i_wdata;
+    sensitive << i_rclk;
+    sensitive << i_raddr;
 }
 
 template<int abits, int dbits>
-void ram_dp_fifo_tech<abits, dbits>::wr() {
+void cdc_dp_mem<abits, dbits>::wproc() {
     if (i_wena.read() == 1) {
         mem[i_addr.read().to_int()] = i_wdata.read();
     }
 }
 
 template<int abits, int dbits>
-void ram_dp_fifo_tech<abits, dbits>::rd() {
+void cdc_dp_mem<abits, dbits>::rproc() {
     o_rdata = mem[i_raddr.read().to_int()];
 }
 
