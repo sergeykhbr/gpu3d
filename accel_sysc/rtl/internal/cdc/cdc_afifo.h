@@ -181,6 +181,8 @@ template<int abits, int dbits>
 void cdc_afifo<abits, dbits>::comb() {
     w_wr_ena = (i_wr.read() & (~w_wgray_full.read()));
     w_rd_ena = (i_rd.read() & (~w_rgray_empty.read()));
+    o_wfull = w_wgray_full.read();
+    o_rempty = w_rgray_empty.read();
 }
 
 template<int abits, int dbits>

@@ -88,6 +88,8 @@ cdc_dp_mem #(
 
 assign w_wr_ena = (i_wr & (~w_wgray_full));
 assign w_rd_ena = (i_rd & (~w_rgray_empty));
+assign o_wfull = w_wgray_full;
+assign o_rempty = w_rgray_empty;
 
 
 always_ff @(posedge i_wclk, negedge i_nrst) begin: proc_wff_proc
