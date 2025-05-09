@@ -32,135 +32,83 @@ module cdc_afifo #(
     output logic o_rempty                                   // fifo is empty it rclk domain
 );
 
-localparam int DEPTH = (2**abits);
+logic w_wr_ena;
+logic [abits-1:0] wb_wgray_addr;
+logic [(abits + 1)-1:0] wgray;
+logic [(abits + 1)-1:0] q1_wgray;
+logic [(abits + 1)-1:0] q2_wgray;
+logic w_wgray_full;
+logic w_wgray_empty_unused;
+logic w_rd_ena;
+logic [abits-1:0] wb_rgray_addr;
+logic [(abits + 1)-1:0] rgray;
+logic [(abits + 1)-1:0] q1_rgray;
+logic [(abits + 1)-1:0] q2_rgray;
+logic w_rgray_full_unused;
+logic w_rgray_empty;
 
-typedef struct {
-    logic [(abits + 1)-1:0] wgray;
-    logic [(abits + 1)-1:0] wbin;
-    logic [(abits + 1)-1:0] wq2_rgray;
-    logic [(abits + 1)-1:0] wq1_rgray;
-    logic wfull;
-} cdc_afifo_registers;
+cdc_afifo_gray #(
+    .abits(abits)
+) wgray0 (
+    .i_nrst(i_nrst),
+    .i_clk(i_wclk),
+    .i_ena(w_wr_ena),
+    .i_q2_gray(q2_rgray),
+    .o_addr(wb_wgray_addr),
+    .o_gray(wgray),
+    .o_empty(w_wgray_empty_unused),
+    .o_full(w_wgray_full)
+);
 
-const cdc_afifo_registers cdc_afifo_r_reset = '{
-    4'd0,                               // wgray
-    4'd0,                               // wbin
-    4'd0,                               // wq2_rgray
-    4'd0,                               // wq1_rgray
-    1'b0                                // wfull
-};
-typedef struct {
-    logic [(abits + 1)-1:0] rgray;
-    logic [(abits + 1)-1:0] rbin;
-    logic [(abits + 1)-1:0] rq2_wgray;
-    logic [(abits + 1)-1:0] rq1_wgray;
-    logic rempty;
-} cdc_afifo_r2egisters;
+cdc_afifo_gray #(
+    .abits(abits)
+) rgray0 (
+    .i_nrst(i_nrst),
+    .i_clk(i_rclk),
+    .i_ena(w_rd_ena),
+    .i_q2_gray(q2_wgray),
+    .o_addr(wb_rgray_addr),
+    .o_gray(rgray),
+    .o_empty(w_rgray_empty),
+    .o_full(w_rgray_full_unused)
+);
 
-const cdc_afifo_r2egisters cdc_afifo_r2_reset = '{
-    4'd0,                               // rgray
-    4'd0,                               // rbin
-    4'd0,                               // rq2_wgray
-    4'd0,                               // rq1_wgray
-    1'b1                                // rempty
-};
-logic [dbits-1:0] mem[0: DEPTH - 1];
-cdc_afifo_registers r;
-cdc_afifo_registers rin;
-cdc_afifo_r2egisters r2;
-cdc_afifo_r2egisters r2in;
+cdc_dp_mem #(
+    .abits(abits),
+    .dbits(dbits)
+) mem0 (
+    .i_wclk(i_wclk),
+    .i_wena(w_wr_ena),
+    .i_addr(wb_wgray_addr),
+    .i_wdata(i_wdata),
+    .i_rclk(i_rclk),
+    .i_raddr(wb_rgray_addr),
+    .o_rdata(o_rdata)
+);
+
+assign w_wr_ena = (i_wr & (~w_wgray_full));
+assign w_rd_ena = (i_rd & (~w_rgray_empty));
 
 
-always_comb
-begin: comb_proc
-    cdc_afifo_r2egisters v2;
-    cdc_afifo_registers v;
-    logic [abits-1:0] vb_waddr;
-    logic [abits-1:0] vb_raddr;
-    logic v_wfull_next;
-    logic v_rempty_next;
-    logic [(abits + 1)-1:0] vb_wgraynext;
-    logic [(abits + 1)-1:0] vb_wbinnext;
-    logic [(abits + 1)-1:0] vb_rgraynext;
-    logic [(abits + 1)-1:0] vb_rbinnext;
-
-    v2 = r2;
-    v = r;
-    vb_waddr = 3'd0;
-    vb_raddr = 3'd0;
-    v_wfull_next = 1'b0;
-    v_rempty_next = 1'b0;
-    vb_wgraynext = 4'd0;
-    vb_wbinnext = 4'd0;
-    vb_rgraynext = 4'd0;
-    vb_rbinnext = 4'd0;
-
-    // Cross the Gray pointer to write clock domain:
-    v.wq1_rgray = r2.rgray;
-    v.wq2_rgray = r.wq1_rgray;
-
-    // Next write address and Gray write pointer
-    vb_wbinnext = (r.wbin + {3'd0, (i_wr && (~r.wfull))});
-    vb_wgraynext = ({'0, vb_wbinnext[(abits + 1) - 1: 1]} ^ vb_wbinnext);
-    vb_waddr = r.wbin[(abits - 1): 0];
-    v.wgray = vb_wgraynext;
-    v.wbin = vb_wbinnext;
-
-    if (vb_wgraynext == {(~r.wq2_rgray[abits: (abits - 1)]), r.wq2_rgray[(abits - 2): 0]}) begin
-        v_wfull_next = 1'b1;
-    end
-    v.wfull = v_wfull_next;
-
-    // Write Gray pointer into read clock domain
-    v2.rq1_wgray = r.wgray;
-    v2.rq2_wgray = r2.rq1_wgray;
-    vb_rbinnext = (r2.rbin + {3'd0, (i_rd && (~r2.rempty))});
-    vb_rgraynext = ({'0, vb_rbinnext[(abits + 1) - 1: 1]} ^ vb_rbinnext);
-    v2.rgray = vb_rgraynext;
-    v2.rbin = vb_rbinnext;
-    vb_raddr = r2.rbin[(abits - 1): 0];
-
-    if (vb_rgraynext == r2.rq2_wgray) begin
-        v_rempty_next = 1'b1;
-    end
-    v2.rempty = v_rempty_next;
-
+always_ff @(posedge i_wclk, negedge i_nrst) begin: proc_wff_proc
     if (i_nrst == 1'b0) begin
-        v = cdc_afifo_r_reset;
-    end
-    if (i_nrst == 1'b0) begin
-        v2 = cdc_afifo_r2_reset;
-    end
-
-    o_wfull = r.wfull;
-    o_rempty = r2.rempty;
-    o_rdata = mem[int'(vb_raddr)];
-
-    rin = v;
-    r2in = v2;
-end: comb_proc
-
-
-always_ff @(posedge i_wclk) begin: mreg_proc
-    if ((i_wr && (~r.wfull)) == 1'b1) begin
-        mem[int'(r.wbin[(abits - 1): 0])] <= i_wdata;
-    end
-end: mreg_proc
-
-always_ff @(posedge i_wclk, negedge i_nrst) begin
-    if (i_nrst == 1'b0) begin
-        r <= cdc_afifo_r_reset;
+        q1_wgray <= '0;
+        q2_wgray <= '0;
     end else begin
-        r <= rin;
+        q1_wgray <= wgray;
+        q2_wgray <= q1_wgray;
     end
-end
+end: proc_wff_proc
 
-always_ff @(posedge i_rclk, negedge i_nrst) begin
+
+always_ff @(posedge i_rclk, negedge i_nrst) begin: proc_rff_proc
     if (i_nrst == 1'b0) begin
-        r2 <= cdc_afifo_r2_reset;
+        q1_rgray <= '0;
+        q2_rgray <= '0;
     end else begin
-        r2 <= r2in;
+        q1_rgray <= rgray;
+        q2_rgray <= q1_rgray;
     end
-end
+end: proc_rff_proc
 
 endmodule: cdc_afifo
