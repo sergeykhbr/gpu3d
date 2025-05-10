@@ -40,10 +40,10 @@ logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
+logic [3:0] req_cnt;
+logic [63:0] req_data_arr[0: 16 - 1];
 apb_pcie_registers r;
 apb_pcie_registers rin;
-apb_pcie_rxegisters rx;
-apb_pcie_rxegisters rxin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -67,21 +67,11 @@ apb_slv #(
 
 always_comb
 begin: comb_proc
-    apb_pcie_rxegisters vx;
     apb_pcie_registers v;
     logic [31:0] vb_rdata;
 
-    for (int i = 0; i < 16; i++) begin
-        vx.req_data_arr[i] = rx.req_data_arr[i];
-    end
     v = r;
     vb_rdata = '0;
-
-
-    if (i_dbg_pcie_dmai.valid == 1'b1) begin
-        v.req_cnt = (r.req_cnt + 1);
-        vx.req_data_arr[int'(r.req_cnt)] = i_dbg_pcie_dmai.data;
-    end
 
     v.resp_err = 1'b0;
     // Registers access:
@@ -93,13 +83,13 @@ begin: comb_proc
         vb_rdata[15: 0] = i_pcie_completer_id;
     end else if (wb_req_addr[11: 2] == 10'd2) begin
         // 0x08: request counter
-        vb_rdata[3: 0] = r.req_cnt;
+        vb_rdata[3: 0] = req_cnt;
     end else if (wb_req_addr[11: 7] == 5'd1) begin
         // 0x040..0x04F: debug buffer
         if (wb_req_addr[2] == 1'b0) begin
-            vb_rdata = rx.req_data_arr[int'(wb_req_addr[6: 3])][31: 0];
+            vb_rdata = req_data_arr[int'(wb_req_addr[6: 3])][31: 0];
         end else begin
-            vb_rdata = rx.req_data_arr[int'(wb_req_addr[6: 3])][63: 32];
+            vb_rdata = req_data_arr[int'(wb_req_addr[6: 3])][63: 32];
         end
     end
 
@@ -111,10 +101,15 @@ begin: comb_proc
     end
 
     rin = v;
-    for (int i = 0; i < 16; i++) begin
-        rxin.req_data_arr[i] = vx.req_data_arr[i];
-    end
 end: comb_proc
+
+
+always_ff @(posedge i_clk) begin: reqff_proc
+    if (i_dbg_pcie_dmai.valid == 1'b1) begin
+        req_data_arr[int'(req_cnt)] <= i_dbg_pcie_dmai.data;
+        req_cnt <= (req_cnt + 1);
+    end
+end: reqff_proc
 
 generate
     if (async_reset) begin: async_r_en
@@ -136,11 +131,5 @@ generate
 
     end: async_r_dis
 endgenerate
-
-always_ff @(posedge i_clk) begin
-    for (int i = 0; i < 16; i++) begin
-        rx.req_data_arr[i] <= rxin.req_data_arr[i];
-    end
-end
 
 endmodule: apb_pcie

@@ -66,8 +66,8 @@ module PIO_EP #(
   parameter KEEP_WIDTH = C_DATA_WIDTH / 8,              // TSTRB width
   parameter TCQ        = 1
 ) (
-
-  input                         clk,
+  input i_clk,
+  input                         user_clk,
   input                         rst_n,
 
   // AXIS TX
@@ -119,6 +119,59 @@ module PIO_EP #(
     wire  [12:0]      req_addr;
 
 
+wire [C_DATA_WIDTH-1:0] _m_axis_rx_tdata;
+wire [KEEP_WIDTH-1:0]  _m_axis_rx_tkeep;
+wire _m_axis_rx_tlast;
+wire _m_axis_rx_tvalid;
+wire [21:0] _m_axis_rx_tuser;
+wire w_reqfifo_full;
+wire w_reqfifo_empty;
+
+cdc_afifo #(
+    .abits(4),
+    .dbits(C_DATA_WIDTH + KEEP_WIDTH + 1 + 22) //64 + 8 + 1 + 22
+) reqfifo (
+    .i_nrst(rst_n),
+    .i_wclk(user_clk),
+    .i_wr(m_axis_rx_tvalid),
+    .i_wdata({m_axis_rx_tuser, m_axis_rx_tlast, m_axis_rx_tkeep, m_axis_rx_tdata}),
+    .o_wfull(w_reqfifo_full),
+    .i_rclk(i_clk),
+    .i_rd(_m_axis_rx_tready),
+    .o_rdata({_m_axis_rx_tuser, _m_axis_rx_tlast, _m_axis_rx_tkeep, _m_axis_rx_tdata}),
+    .o_rempty(w_reqfifo_empty)
+);
+assign m_axis_rx_tready = ~w_reqfifo_full;
+assign _m_axis_rx_tvalid = ~w_reqfifo_empty;
+
+
+wire _s_axis_tx_tready;
+wire [C_DATA_WIDTH-1:0] _s_axis_tx_tdata;
+wire [KEEP_WIDTH-1:0] _s_axis_tx_tkeep;
+wire _s_axis_tx_tlast;
+wire _s_axis_tx_tvalid;
+wire _tx_src_dsc;
+wire w_respfifo_full;
+wire w_respfifo_empty;
+
+cdc_afifo #(
+    .abits(4),
+    .dbits(C_DATA_WIDTH + KEEP_WIDTH + 1 + 1) //64 + 8 + 1 + 1
+) respfifo (
+    .i_nrst(rst_n),
+    .i_wclk(i_clk),
+    .i_wr(_s_axis_tx_tvalid),
+    .i_wdata({_tx_src_dsc, _s_axis_tx_tlast, _s_axis_tx_tkeep, _s_axis_tx_tdata}),
+    .o_wfull(w_respfifo_full),
+
+    .i_rclk(user_clk),
+    .i_rd(s_axis_tx_tready),
+    .o_rdata({tx_src_dsc, s_axis_tx_tlast, s_axis_tx_tkeep, s_axis_tx_tdata}),
+    .o_rempty(w_respfifo_empty)
+);
+assign s_axis_tx_tvalid = ~w_respfifo_empty;
+assign _s_axis_tx_tready = ~w_respfifo_full;
+
     //
     // ENDPOINT MEMORY : 8KB memory aperture implemented in FPGA BlockRAM(*)
     //
@@ -127,7 +180,7 @@ module PIO_EP #(
        .TCQ( TCQ )
        ) EP_MEM_inst (
       
-      .clk(clk),               // I
+      .clk(i_clk),               // I
       .rst_n(rst_n),           // I
       
       // Read Port
@@ -138,11 +191,11 @@ module PIO_EP #(
       
       // Write Port
       
-      .wr_addr(wr_addr),     // I [10:0]
-      .wr_be(wr_be),         // I [7:0]
-      .wr_data(wr_data),     // I [31:0]
-      .wr_en(wr_en),         // I
-      .wr_busy(wr_busy)      // O
+      .wr_addr(_wr_addr),     // I [10:0]
+      .wr_be(_wr_be),         // I [7:0]
+      .wr_data(_wr_data),     // I [31:0]
+      .wr_en(_wr_en),         // I
+      .wr_busy(_wr_busy)      // O
       
       );
 
@@ -157,16 +210,16 @@ module PIO_EP #(
 
   ) EP_RX_inst (
 
-    .clk(clk),                              // I
+    .clk(i_clk),                              // I
     .rst_n(rst_n),                          // I
 
     // AXIS RX
-    .m_axis_rx_tdata( m_axis_rx_tdata ),    // I
-    .m_axis_rx_tkeep( m_axis_rx_tkeep ),    // I
-    .m_axis_rx_tlast( m_axis_rx_tlast ),    // I
-    .m_axis_rx_tvalid( m_axis_rx_tvalid ),  // I
-    .m_axis_rx_tready( m_axis_rx_tready ),  // O
-    .m_axis_rx_tuser ( m_axis_rx_tuser ),   // I
+    .m_axis_rx_tdata( _m_axis_rx_tdata ),    // I
+    .m_axis_rx_tkeep( _m_axis_rx_tkeep ),    // I
+    .m_axis_rx_tlast( _m_axis_rx_tlast ),    // I
+    .m_axis_rx_tvalid( _m_axis_rx_tvalid ),  // I
+    .m_axis_rx_tready( _m_axis_rx_tready ),  // O
+    .m_axis_rx_tuser ( _m_axis_rx_tuser ),   // I
 
     // Handshake with Tx engine
     .req_compl(req_compl_int),              // O
@@ -202,16 +255,16 @@ module PIO_EP #(
     .TCQ( TCQ )
   )EP_TX_inst(
 
-    .clk(clk),                                  // I
+    .clk(i_clk),                                  // I
     .rst_n(rst_n),                              // I
 
     // AXIS Tx
-    .s_axis_tx_tready( s_axis_tx_tready ),      // I
-    .s_axis_tx_tdata( s_axis_tx_tdata ),        // O
-    .s_axis_tx_tkeep( s_axis_tx_tkeep ),        // O
-    .s_axis_tx_tlast( s_axis_tx_tlast ),        // O
-    .s_axis_tx_tvalid( s_axis_tx_tvalid ),      // O
-    .tx_src_dsc( tx_src_dsc ),                  // O
+    .s_axis_tx_tready( _s_axis_tx_tready ),      // I
+    .s_axis_tx_tdata( _s_axis_tx_tdata ),        // O
+    .s_axis_tx_tkeep( _s_axis_tx_tkeep ),        // O
+    .s_axis_tx_tlast( _s_axis_tx_tlast ),        // O
+    .s_axis_tx_tvalid( _s_axis_tx_tvalid ),      // O
+    .tx_src_dsc( _tx_src_dsc ),                  // O
 
     // Handshake with Rx engine
     .req_compl(req_compl_int),                // I

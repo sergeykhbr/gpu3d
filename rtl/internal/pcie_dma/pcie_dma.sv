@@ -464,7 +464,7 @@ begin: comb_proc
     o_xmst_cfg = vb_xmst_cfg;
     o_xmsto = vb_xmsto;
     // Debug signals
-    vb_dbg_pcie_dmai.valid = (~w_reqfifo_empty);
+    vb_dbg_pcie_dmai.valid = ((~w_reqfifo_empty) & v_req_ready);
     vb_dbg_pcie_dmai.data = vb_req_data;
     vb_dbg_pcie_dmai.strob = vb_req_strob;
     vb_dbg_pcie_dmai.last = v_req_last;

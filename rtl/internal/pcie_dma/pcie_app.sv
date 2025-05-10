@@ -145,6 +145,7 @@ import pcie_dma_pkg::*;
 
   ) PIO (
 
+    .i_clk( i_clk ),
     .user_clk ( i_pcie_phy_clk ), //user_clk ),                         // I
     .user_reset ( ~i_nrst ), //user_reset ),                     // I
     .user_lnk_up ( i_nrst ), //i_user_lnk_up ),                   // I
