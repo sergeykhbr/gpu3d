@@ -1,0 +1,16 @@
+# Remove re-build and install new khbr_accel driver:
+
+      $ cd driver
+      $ sudo modprobe -r khbr_accel 
+      $ make clean
+      $ make
+      $ sudo make install
+      $ sudo modprobe khbr_accel
+
+# Build and run test application
+
+      $ cd userapp
+      $ cmake -S . -B ./build
+      $ cd build
+      $ make
+      $ sudo ./khbr_userapp

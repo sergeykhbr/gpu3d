@@ -93,6 +93,8 @@ static ssize_t khbr_write(struct file *f,
     }
 
     // Copy user framebuffer to device memory (BAR0)
+    printk("copy_from_user: off=%d, len=%d\n",
+          (int)*off, (int)len);
     if (copy_from_user(g_accel->bar0 + *off, buf, len)) {
         return -EFAULT;
     }

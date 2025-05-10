@@ -27,66 +27,102 @@
 
 int main(int argc, char *argv[])
 {
-    FrameBufferType *fb;
     char wbuf[16];
     char rbuf[16];
-    int fd = open("/dev/khbr_accel", O_RDWR);
+    int fdev = open("/dev/khbr_accel", O_RDWR);
+    FrameBufferType *fbuf;
     int sz;
+    int errcnt;
+    int TotalCnt = 100000;
 
-    if (!fd) {
+    if (!fdev) {
         printf("Cannot open device /dev/khbr_accel\n");
         return -1;
     }
 
+    errcnt = 0;
+    printf("Start PCIE read/write torture %d tests.\n", TotalCnt);
+    for (int i = 0; i < TotalCnt; i++) {
+        lseek(fdev, 0, SEEK_SET);
+        ((uint32_t *)wbuf)[0] = 0xcafef00d + i;
+        ((uint32_t *)wbuf)[1] = 0xdeadbeef + i;
+        ((uint64_t *)wbuf)[1] = 0xaaaabbbbccccddddull + i;
+        sz = write(fdev, &wbuf[0], 4);
+        if (sz != 4) {
+            fprintf(stderr, "write[0] failed %s(%d)\n", strerror(errno), errno);
+            break;
+        }
 
-    ((uint32_t *)wbuf)[0] = 0xcafef00d;
-    ((uint32_t *)wbuf)[1] = 0xdeadbeef;
-    ((uint64_t *)wbuf)[1] = 0xaaaabbbbccccddddull;
-    write(fd, &wbuf[0], 4);
-    write(fd, &wbuf[4], 4);
-    write(fd, &wbuf[8], 8);
+        sz = write(fdev, &wbuf[4], 12);
+        if (sz != 12) {
+            fprintf(stderr, "write[4] failed %s(%d)\n", strerror(errno), errno);
+            break;
+        }
 
-    sz = read(fd, &rbuf[0], 4);
-    if (sz != 4) {
-        fprintf(stderr, "read failed %s(%d)\n", strerror(errno), errno);
+        lseek(fdev, 0, SEEK_SET);
+        sz = read(fdev, &rbuf[0], 4);
+        if (sz != 4) {
+            fprintf(stderr, "read[0] failed %s(%d)\n", strerror(errno), errno);
+            break;
+        } else if (((uint32_t *)rbuf)[0] != (0xcafef00d + i)) {
+            printf("error read() rbuf[0]=%08x\n", ((uint32_t *)rbuf)[0]);
+            errcnt++;
+        }
+
+        sz = read(fdev, &rbuf[4], 12);
+        if (sz != 12) {
+            fprintf(stderr, "read[4] failed %s(%d)\n", strerror(errno), errno);
+            break;
+        } else if (((uint32_t *)rbuf)[1] != (0xdeadbeef + i)) {
+            printf("error read() rbuf[1]=%08x\n", ((uint32_t *)rbuf)[1]);
+            errcnt++;
+        }
+
+        if (((uint64_t *)rbuf)[1] != (0xaaaabbbbccccddddull + i)) {
+            printf("error read() rbuf[3]=%08x\n", ((uint32_t *)rbuf)[2]);
+            printf("error read() rbuf[4]=%08x\n", ((uint32_t *)rbuf)[3]);
+            errcnt++;
+        }
+
+        if ((i % (TotalCnt / 10)) == (TotalCnt / 10 - 1)) {
+            printf("%i testes passed. Error: %d\n", i + 1, errcnt);
+        }
     }
-    sz = read(fd, &rbuf[4], 4);
-    sz = read(fd, &rbuf[8], 8);
-    printf("read() rbuf[0]=%08x\n", ((uint32_t *)rbuf)[0]);
-    printf("read() rbuf[1]=%08x\n", ((uint32_t *)rbuf)[1]);
-    printf("read() rbuf[3]=%08x\n", ((uint32_t *)rbuf)[2]);
-    printf("read() rbuf[4]=%08x\n", ((uint32_t *)rbuf)[3]);
 
-    fb = (FrameBufferType *)mmap(NULL,                     // addr
-                                 1024,  // length
+
+#if 1
+    printf("Start PCIE mmap tests.\n");
+    fbuf = (FrameBufferType *)mmap(NULL,                     // addr
+                                 FRAME_BUFFER_SIZE,  // length
                                  PROT_READ | PROT_WRITE,   // prot
                                  MAP_SHARED,               // flags
-                                 fd,                       // fd
+                                 fdev,                     // fd
                                  0);                       // offset
-    if (fb == MAP_FAILED) {
-        printf("Failed mmap(): %d\n", fb);
-        close(fd);
+    if (fbuf == MAP_FAILED) {
+        printf("Failed mmap(): %d\n", fbuf);
+        close(fdev);
         return -1;
+    } else {
+        printf("mmap() success\n");
     }
 
     /**
       Basic read/write tests.
      */
-
-    fb->ui64[0] = 0xddccbbaa44332211ull;
-    fb->ui64[1] = 0x123456789abcdef0ull;
-    if (fb->ui32[0] != 0x44332211) {
-        printf("Wrong fb->ui32[0]=%08x\n", fb->ui32[0]);
+    fbuf->ui64[0] = 0xddccbbaa44332211ull;
+    fbuf->ui64[1] = 0x123456789abcdef0ull;
+    if (fbuf->ui32[0] != 0x44332211) {
+        printf("Wrong fb->ui32[0]=%08x\n", fbuf->ui32[0]);
     }
-    if (fb->ui32[1] != 0xddccbbaa) {
-        printf("Wrong fb->ui32[1]=%08x\n", fb->ui32[1]);
+    if (fbuf->ui32[1] != 0xddccbbaa) {
+        printf("Wrong fb->ui32[1]=%08x\n", fbuf->ui32[1]);
     }
-    if (fb->ui64[1] != 0x123456789abcdef0ull) {
-        printf("Wrong fb->ui64[1]=%016llx\n", fb->ui64[1]);
+    if (fbuf->ui64[1] != 0x123456789abcdef0ull) {
+        printf("Wrong fb->ui64[1]=%016llx\n", fbuf->ui64[1]);
     }
     printf("mmap() tests finished\n");
-    munmap(fb, sizeof(FrameBufferType));
-
-    close(fd);
+    munmap(fbuf, FRAME_BUFFER_SIZE);
+#endif
+    close(fdev);
     return 0;
 }
