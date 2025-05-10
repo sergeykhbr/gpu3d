@@ -15,6 +15,7 @@
 //!
 
 module kc705_top #(
+    parameter logic async_reset     = target_cfg_pkg::CFG_ASYNC_RESET,
     parameter SYSCLK_TYPE           = "NO_BUFFER",
     parameter SIM_BYPASS_INIT_CAL   = "OFF",
     parameter SIMULATION            = "FALSE",
@@ -69,7 +70,6 @@ module kc705_top #(
   import types_amba_pkg::*;
   import types_pnp_pkg::*;
   import types_dma_pkg::*;
-  import kc705_top_pkg::*;
 
   logic             ib_rst;
   logic             ib_clk_tcxo;

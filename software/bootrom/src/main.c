@@ -61,7 +61,7 @@ void setup_1sec_irq() {
 void debug_output() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     pcictrl_map *pcictrl = (pcictrl_map *)ADDR_BUS1_APB_PCICTRL;
-    printf_uart("%lld: req_cnt=%d\r\n", ++pnp->fwdbg3, pcictrl->req_cnt);
+    printf_uart("[%s %s] %lld: req_cnt=%d\r\n", __DATE__, __TIME__, ++pnp->fwdbg3, pcictrl->req_cnt);
     for (int i = 0; i < 16; i++) {
         printf_uart("%2d: %08x.%08x\r\n", i, pcictrl->req_data[2*i+1], pcictrl->req_data[2*i]);
     }
