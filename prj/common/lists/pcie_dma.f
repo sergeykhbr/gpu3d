@@ -10,4 +10,4 @@ ${RTL_HOME}/internal/pcie_dma/PIO_TX_ENGINE.v
 ${RTL_HOME}/internal/pcie_dma/PIO_TO_CTRL.v
 ${RTL_HOME}/internal/pcie_dma/PIO_EP.v
 ${RTL_HOME}/internal/pcie_dma/PIO.v
-${RTL_HOME}/internal/pcie_dma/pcie_app.v
+${RTL_HOME}/internal/pcie_dma/pcie_app.sv

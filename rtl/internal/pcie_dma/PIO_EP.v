@@ -191,11 +191,11 @@ assign _s_axis_tx_tready = ~w_respfifo_full;
       
       // Write Port
       
-      .wr_addr(_wr_addr),     // I [10:0]
-      .wr_be(_wr_be),         // I [7:0]
-      .wr_data(_wr_data),     // I [31:0]
-      .wr_en(_wr_en),         // I
-      .wr_busy(_wr_busy)      // O
+      .wr_addr(wr_addr),     // I [10:0]
+      .wr_be(wr_be),         // I [7:0]
+      .wr_data(wr_data),     // I [31:0]
+      .wr_en(wr_en),         // I
+      .wr_busy(wr_busy)      // O
       
       );
 
