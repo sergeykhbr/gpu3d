@@ -98,13 +98,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/pcie_dma/PIO.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../../rtl/internal/pcie_dma/PIO_EP.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -120,13 +113,6 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../rtl/internal/pcie_dma/PIO_RX_ENGINE.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../rtl/internal/pcie_dma/PIO_TO_CTRL.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -2010,6 +1996,13 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../rtl/internal/pcie_dma/pcie_app.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../rtl/internal/pcie_dma/pcie_io.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

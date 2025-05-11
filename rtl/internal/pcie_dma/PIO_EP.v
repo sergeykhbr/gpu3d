@@ -128,7 +128,7 @@ module PIO_EP #(
        ) EP_MEM_inst (
       
       .clk(i_clk),               // I
-      .rst_n(i_rst),           // I
+      .rst_n(i_nrst),           // I
       
       // Read Port
       
