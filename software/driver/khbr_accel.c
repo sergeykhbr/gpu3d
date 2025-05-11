@@ -23,7 +23,7 @@
 
 #define DRV_NAME "khbr_accel"
 #define BAR_INDEX 0
-#define FRAMEBUFFER_SIZE (1920 * 1080 * 4) // Assume 1080p RGBA
+#define FRAMEBUFFER_SIZE (1024*1024 * 2)//(1920 * 1080 * 4) // Assume 1080p RGBA
 
 
 /**
@@ -93,8 +93,6 @@ static ssize_t khbr_write(struct file *f,
     }
 
     // Copy user framebuffer to device memory (BAR0)
-    printk("copy_from_user: off=%d, len=%d\n",
-          (int)*off, (int)len);
     if (copy_from_user(g_accel->bar0 + *off, buf, len)) {
         return -EFAULT;
     }
@@ -149,6 +147,8 @@ static int khbr_mmap(struct file *filp, struct vm_area_struct *vma)
     unsigned long phys_addr;
     size_t size = vma->vm_end - vma->vm_start;
 
+    printk("khbr_mmap: requested=%d KB\n", (int)(size / 1024));
+
     if (!g_accel || !g_accel->bar0) {
         return -ENODEV;
     }
@@ -159,6 +159,10 @@ static int khbr_mmap(struct file *filp, struct vm_area_struct *vma)
 
     // BAR0 physical address
     phys_addr = pci_resource_start(g_accel->pdev, BAR_INDEX);
+    printk("khbr_mmap: phys_addr=%lx KB\n", phys_addr);
+
+    vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+    vma->vm_flags |= VM_IO | VM_DONTEXPAND | VM_DONTDUMP;
 
     // Remap BAR0 into userspace
     return remap_pfn_range(vma,

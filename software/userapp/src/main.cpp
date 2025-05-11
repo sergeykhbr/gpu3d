@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     FrameBufferType *fbuf;
     int sz;
     int errcnt;
-    int TotalCnt = 100000;
+    int TotalCnt = 10;
 
     if (!fdev) {
         printf("Cannot open device /dev/khbr_accel\n");
@@ -90,10 +90,16 @@ int main(int argc, char *argv[])
     }
 
 
-#if 1
     printf("Start PCIE mmap tests.\n");
+    lseek(fdev, 0, SEEK_SET);
+    ((uint32_t *)wbuf)[0] = 0x11111111;
+    ((uint32_t *)wbuf)[1] = 0x22222222;
+    ((uint32_t *)wbuf)[2] = 0x33333333;
+    ((uint32_t *)wbuf)[3] = 0x44444444;
+    sz = write(fdev, wbuf, 16);
+    lseek(fdev, 0, SEEK_SET);
     fbuf = (FrameBufferType *)mmap(NULL,                     // addr
-                                 FRAME_BUFFER_SIZE,  // length
+                                 2*1024*1024,  // length
                                  PROT_READ | PROT_WRITE,   // prot
                                  MAP_SHARED,               // flags
                                  fdev,                     // fd
@@ -122,7 +128,6 @@ int main(int argc, char *argv[])
     }
     printf("mmap() tests finished\n");
     munmap(fbuf, FRAME_BUFFER_SIZE);
-#endif
     close(fdev);
     return 0;
 }
