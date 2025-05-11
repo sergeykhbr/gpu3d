@@ -46,13 +46,13 @@ logic w_pcie_dmai_valid;
 logic w_pcie_dmai_ready;
 logic [REQ_FIFO_WIDTH-1:0] wb_reqfifo_payload_i;
 logic [REQ_FIFO_WIDTH-1:0] wb_reqfifo_payload_o;
-logic w_reqfifo_full;
-logic w_reqfifo_empty;
+logic w_reqfifo_wready;
+logic w_reqfifo_rvalid;
 logic w_reqfifo_rd;
 logic [RESP_FIFO_WIDTH-1:0] wb_respfifo_payload_i;
 logic [RESP_FIFO_WIDTH-1:0] wb_respfifo_payload_o;
-logic w_respfifo_full;
-logic w_respfifo_empty;
+logic w_respfifo_wready;
+logic w_respfifo_rvalid;
 logic w_respfifo_wr;
 pcie_dma_registers r;
 pcie_dma_registers rin;
@@ -66,11 +66,11 @@ cdc_afifo #(
     .i_wclk(i_pcie_phy_clk),
     .i_wr(w_pcie_dmai_valid),
     .i_wdata(wb_reqfifo_payload_i),
-    .o_wfull(w_reqfifo_full),
+    .o_wready(w_reqfifo_wready),
     .i_rclk(i_clk),
     .i_rd(w_reqfifo_rd),
     .o_rdata(wb_reqfifo_payload_o),
-    .o_rempty(w_reqfifo_empty)
+    .o_rvalid(w_reqfifo_rvalid)
 );
 // DMA (40 MHz) -> PCIE EP (200 MHz)
 cdc_afifo #(
@@ -81,11 +81,11 @@ cdc_afifo #(
     .i_wclk(i_clk),
     .i_wr(w_respfifo_wr),
     .i_wdata(wb_respfifo_payload_i),
-    .o_wfull(w_respfifo_full),
+    .o_wready(w_respfifo_wready),
     .i_rclk(i_pcie_phy_clk),
     .i_rd(w_pcie_dmai_ready),
     .o_rdata(wb_respfifo_payload_o),
-    .o_rempty(w_respfifo_empty)
+    .o_rvalid(w_respfifo_rvalid)
 );
 
 always_comb
@@ -173,7 +173,7 @@ begin: comb_proc
         v.req_rd_locked = 1'b0;
         v.resp_cpl = 7'd0;
         v.resp_with_payload = 1'b0;
-        if (w_reqfifo_empty == 1'b0) begin
+        if (w_reqfifo_rvalid == 1'b1) begin
             v.dw0 = vb_req_data[31: 0];
             v.dw1 = vb_req_data[63: 32];
             v.state = STATE_DW3DW4;
@@ -189,7 +189,7 @@ begin: comb_proc
         v.xlen = (r.dw0[7: 0] - 1);                         // warning: Actual size of Length is 10 bits. 0 is 1024 DWs (4096 Bytes)
         v.dw2 = vb_req_data[31: 0];
         v.dw3 = 32'd0;
-        if (w_reqfifo_empty == 1'b0) begin
+        if (w_reqfifo_rvalid == 1'b1) begin
             // fmt[0] = 1 when 4DW header is used
             if (r.dw0[29] == 1'b1) begin
                 v.dw3 = vb_req_data[63: 32];
@@ -294,7 +294,7 @@ begin: comb_proc
         end
     end
     STATE_R: begin
-        vb_xmsto.r_ready = (~w_respfifo_full);
+        vb_xmsto.r_ready = w_respfifo_wready;
         v_resp_valid = i_xmsti.r_valid;
         vb_resp_strob = 8'hFF;
         v_resp_last = (~(|r.xlen));
@@ -311,7 +311,7 @@ begin: comb_proc
             vb_resp_data = i_xmsti.r_data;
         end
 
-        if ((i_xmsti.r_valid == 1'b1) && (w_respfifo_full == 1'b0)) begin
+        if ((i_xmsti.r_valid == 1'b1) && (w_respfifo_wready == 1'b1)) begin
             // Burst support: 
             if (i_xmsti.r_resp != AXI_RESP_OKAY) begin
                 v.resp_status = TLP_STATUS_ABORTED;
@@ -362,11 +362,11 @@ begin: comb_proc
             end
         end else begin
             v_req_ready = i_xmsti.w_ready;
-            vb_xmsto.w_valid = (~w_reqfifo_empty);
+            vb_xmsto.w_valid = w_reqfifo_rvalid;
             vb_xmsto.w_strb = vb_req_strob;
             vb_xmsto.w_data = vb_req_data;
             vb_xmsto.w_last = (~(|r.xlen));
-            if ((w_reqfifo_empty == 1'b0) && (i_xmsti.w_ready == 1'b1)) begin
+            if ((w_reqfifo_rvalid == 1'b1) && (i_xmsti.w_ready == 1'b1)) begin
                 if (v_req_last == 1'b1) begin
                     v.state = STATE_B;
                 end
@@ -407,7 +407,7 @@ begin: comb_proc
         vb_resp_data[44] = 1'b0;                            // DW1[12] BCM
         vb_resp_data[47: 45] = r.resp_status;               // DW1[15:13] Status
         vb_resp_data[63: 48] = i_pcie_completer_id;         // DW1[31:16] Completer ID
-        if (w_respfifo_full == 1'b0) begin
+        if (w_respfifo_wready == 1'b1) begin
             v.state = STATE_RESP_DW2DW3;
         end
     end
@@ -420,7 +420,7 @@ begin: comb_proc
         vb_resp_data[15: 8] = r.dw1[15: 8];                 // DW2[15:8] Tag
         vb_resp_data[31: 16] = r.dw1[31: 16];               // DW2[31:16] Requester ID
         vb_resp_data[63: 32] = r.xrdata[31: 0];             // DW3[31:0] payload (ignored by strob 0F)
-        if (w_respfifo_full == 1'b0) begin
+        if (w_respfifo_wready == 1'b1) begin
             if (r.resp_status != TLP_STATUS_SUCCESS) begin
                 v_resp_last = 1'b1;
                 v.state = STATE_RST;
@@ -456,15 +456,15 @@ begin: comb_proc
     vb_pcie_dmao.last = wb_respfifo_payload_o[72];
     vb_pcie_dmao.strob = wb_respfifo_payload_o[71: 64];
     vb_pcie_dmao.data = wb_respfifo_payload_o[63: 0];
-    vb_pcie_dmao.ready = (~w_reqfifo_full);
-    vb_pcie_dmao.valid = (~w_respfifo_empty);
+    vb_pcie_dmao.ready = w_reqfifo_wready;
+    vb_pcie_dmao.valid = w_respfifo_rvalid;
     o_pcie_dmao = vb_pcie_dmao;
     w_respfifo_wr = v_resp_valid;
     w_reqfifo_rd = v_req_ready;
     o_xmst_cfg = vb_xmst_cfg;
     o_xmsto = vb_xmsto;
     // Debug signals
-    vb_dbg_pcie_dmai.valid = ((~w_reqfifo_empty) & v_req_ready);
+    vb_dbg_pcie_dmai.valid = (w_reqfifo_rvalid & v_req_ready);
     vb_dbg_pcie_dmai.data = vb_req_data;
     vb_dbg_pcie_dmai.strob = vb_req_strob;
     vb_dbg_pcie_dmai.last = v_req_last;

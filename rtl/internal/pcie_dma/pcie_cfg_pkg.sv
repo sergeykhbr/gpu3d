@@ -18,7 +18,7 @@ package pcie_cfg_pkg;
 
 // PCIE end-point config:
 localparam int CFG_PCIE_DATA_WIDTH = 64;
-localparam int CFG_PCIE_DMAFIFO_DEPTH = 2;                  // FIFO depth in PCIE DMA engine
+localparam int CFG_PCIE_DMAFIFO_DEPTH = 3;                  // FIFO depth in PCIE DMA engine
 // 
 // Completions packets {Fmt[1:0], Type[4:0]} for non-posted TLPs:
 localparam bit [6:0] PCIE_CPL_NODATA = 7'h0A;               // Completion without data (IOWr, CfgWr1, CfgWr2)

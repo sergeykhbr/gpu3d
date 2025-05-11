@@ -25,11 +25,11 @@ module cdc_afifo #(
     input logic i_wclk,                                     // clock write
     input logic i_wr,                                       // write enable strob
     input logic [dbits-1:0] i_wdata,                        // write data
-    output logic o_wfull,                                   // fifo is full in wclk domain
+    output logic o_wready,                                  // ready to accept (fifo is not full) in wclk domain
     input logic i_rclk,                                     // read clock
     input logic i_rd,                                       // read enable strob
     output logic [dbits-1:0] o_rdata,                       // fifo payload read
-    output logic o_rempty                                   // fifo is empty it rclk domain
+    output logic o_rvalid                                   // new valid data (fifo is not empty) in rclk domain
 );
 
 logic w_wr_ena;
@@ -88,8 +88,8 @@ cdc_dp_mem #(
 
 assign w_wr_ena = (i_wr & (~w_wgray_full));
 assign w_rd_ena = (i_rd & (~w_rgray_empty));
-assign o_wfull = w_wgray_full;
-assign o_rempty = w_rgray_empty;
+assign o_wready = (~w_wgray_full);
+assign o_rvalid = (~w_rgray_empty);
 
 
 always_ff @(posedge i_wclk, negedge i_nrst) begin: proc_wff_proc

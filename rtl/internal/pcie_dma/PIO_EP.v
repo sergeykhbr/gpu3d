@@ -66,30 +66,30 @@ module PIO_EP #(
   parameter KEEP_WIDTH = C_DATA_WIDTH / 8,              // TSTRB width
   parameter TCQ        = 1
 ) (
-  input i_clk,
-  input                         user_clk,
-  input                         rst_n,
+
+  input                         i_nrst,
+  input                         i_clk,
 
   // AXIS TX
-  input                         s_axis_tx_tready,
-  output  [C_DATA_WIDTH-1:0]    s_axis_tx_tdata,
-  output  [KEEP_WIDTH-1:0]      s_axis_tx_tkeep,
-  output                        s_axis_tx_tlast,
-  output                        s_axis_tx_tvalid,
-  output                        tx_src_dsc,
+  input                         i_s_axis_tx_tready,
+  output  [C_DATA_WIDTH-1:0]    o_s_axis_tx_tdata,
+  output  [KEEP_WIDTH-1:0]      o_s_axis_tx_tkeep,
+  output                        o_s_axis_tx_tlast,
+  output                        o_s_axis_tx_tvalid,
+  output                        o_tx_src_dsc,
 
   //AXIS RX
-  input   [C_DATA_WIDTH-1:0]    m_axis_rx_tdata,
-  input   [KEEP_WIDTH-1:0]      m_axis_rx_tkeep,
-  input                         m_axis_rx_tlast,
-  input                         m_axis_rx_tvalid,
-  output                        m_axis_rx_tready,
-  input   [21:0]                m_axis_rx_tuser,
+  input   [C_DATA_WIDTH-1:0]    i_m_axis_rx_tdata,
+  input   [KEEP_WIDTH-1:0]      i_m_axis_rx_tkeep,
+  input                         i_m_axis_rx_tlast,
+  input                         i_m_axis_rx_tvalid,
+  output                        o_m_axis_rx_tready,
+  input   [21:0]                i_m_axis_rx_tuser,
 
-  output                        req_compl,
-  output                        compl_done,
+  output                        o_req_compl,
+  output                        o_compl_done,
 
-  input   [15:0]                cfg_completer_id
+  input   [15:0]                i_cfg_completer_id
 );
 
     // Local wires
@@ -119,59 +119,6 @@ module PIO_EP #(
     wire  [12:0]      req_addr;
 
 
-wire [C_DATA_WIDTH-1:0] _m_axis_rx_tdata;
-wire [KEEP_WIDTH-1:0]  _m_axis_rx_tkeep;
-wire _m_axis_rx_tlast;
-wire _m_axis_rx_tvalid;
-wire [21:0] _m_axis_rx_tuser;
-wire w_reqfifo_full;
-wire w_reqfifo_empty;
-
-cdc_afifo #(
-    .abits(4),
-    .dbits(C_DATA_WIDTH + KEEP_WIDTH + 1 + 22) //64 + 8 + 1 + 22
-) reqfifo (
-    .i_nrst(rst_n),
-    .i_wclk(user_clk),
-    .i_wr(m_axis_rx_tvalid),
-    .i_wdata({m_axis_rx_tuser, m_axis_rx_tlast, m_axis_rx_tkeep, m_axis_rx_tdata}),
-    .o_wfull(w_reqfifo_full),
-    .i_rclk(i_clk),
-    .i_rd(_m_axis_rx_tready),
-    .o_rdata({_m_axis_rx_tuser, _m_axis_rx_tlast, _m_axis_rx_tkeep, _m_axis_rx_tdata}),
-    .o_rempty(w_reqfifo_empty)
-);
-assign m_axis_rx_tready = ~w_reqfifo_full;
-assign _m_axis_rx_tvalid = ~w_reqfifo_empty;
-
-
-wire _s_axis_tx_tready;
-wire [C_DATA_WIDTH-1:0] _s_axis_tx_tdata;
-wire [KEEP_WIDTH-1:0] _s_axis_tx_tkeep;
-wire _s_axis_tx_tlast;
-wire _s_axis_tx_tvalid;
-wire _tx_src_dsc;
-wire w_respfifo_full;
-wire w_respfifo_empty;
-
-cdc_afifo #(
-    .abits(4),
-    .dbits(C_DATA_WIDTH + KEEP_WIDTH + 1 + 1) //64 + 8 + 1 + 1
-) respfifo (
-    .i_nrst(rst_n),
-    .i_wclk(i_clk),
-    .i_wr(_s_axis_tx_tvalid),
-    .i_wdata({_tx_src_dsc, _s_axis_tx_tlast, _s_axis_tx_tkeep, _s_axis_tx_tdata}),
-    .o_wfull(w_respfifo_full),
-
-    .i_rclk(user_clk),
-    .i_rd(s_axis_tx_tready),
-    .o_rdata({tx_src_dsc, s_axis_tx_tlast, s_axis_tx_tkeep, s_axis_tx_tdata}),
-    .o_rempty(w_respfifo_empty)
-);
-assign s_axis_tx_tvalid = ~w_respfifo_empty;
-assign _s_axis_tx_tready = ~w_respfifo_full;
-
     //
     // ENDPOINT MEMORY : 8KB memory aperture implemented in FPGA BlockRAM(*)
     //
@@ -181,7 +128,7 @@ assign _s_axis_tx_tready = ~w_respfifo_full;
        ) EP_MEM_inst (
       
       .clk(i_clk),               // I
-      .rst_n(rst_n),           // I
+      .rst_n(i_rst),           // I
       
       // Read Port
       
@@ -211,15 +158,15 @@ assign _s_axis_tx_tready = ~w_respfifo_full;
   ) EP_RX_inst (
 
     .clk(i_clk),                              // I
-    .rst_n(rst_n),                          // I
+    .rst_n(i_nrst),                          // I
 
     // AXIS RX
-    .m_axis_rx_tdata( _m_axis_rx_tdata ),    // I
-    .m_axis_rx_tkeep( _m_axis_rx_tkeep ),    // I
-    .m_axis_rx_tlast( _m_axis_rx_tlast ),    // I
-    .m_axis_rx_tvalid( _m_axis_rx_tvalid ),  // I
-    .m_axis_rx_tready( _m_axis_rx_tready ),  // O
-    .m_axis_rx_tuser ( _m_axis_rx_tuser ),   // I
+    .m_axis_rx_tdata( i_m_axis_rx_tdata ),    // I
+    .m_axis_rx_tkeep( i_m_axis_rx_tkeep ),    // I
+    .m_axis_rx_tlast( i_m_axis_rx_tlast ),    // I
+    .m_axis_rx_tvalid( i_m_axis_rx_tvalid ),  // I
+    .m_axis_rx_tready( o_m_axis_rx_tready ),  // O
+    .m_axis_rx_tuser ( i_m_axis_rx_tuser ),   // I
 
     // Handshake with Tx engine
     .req_compl(req_compl_int),              // O
@@ -256,15 +203,15 @@ assign _s_axis_tx_tready = ~w_respfifo_full;
   )EP_TX_inst(
 
     .clk(i_clk),                                  // I
-    .rst_n(rst_n),                              // I
+    .rst_n(i_nrst),                              // I
 
     // AXIS Tx
-    .s_axis_tx_tready( _s_axis_tx_tready ),      // I
-    .s_axis_tx_tdata( _s_axis_tx_tdata ),        // O
-    .s_axis_tx_tkeep( _s_axis_tx_tkeep ),        // O
-    .s_axis_tx_tlast( _s_axis_tx_tlast ),        // O
-    .s_axis_tx_tvalid( _s_axis_tx_tvalid ),      // O
-    .tx_src_dsc( _tx_src_dsc ),                  // O
+    .s_axis_tx_tready( i_s_axis_tx_tready ),      // I
+    .s_axis_tx_tdata( o_s_axis_tx_tdata ),        // O
+    .s_axis_tx_tkeep( o_s_axis_tx_tkeep ),        // O
+    .s_axis_tx_tlast( o_s_axis_tx_tlast ),        // O
+    .s_axis_tx_tvalid( o_s_axis_tx_tvalid ),      // O
+    .tx_src_dsc( o_tx_src_dsc ),                  // O
 
     // Handshake with Rx engine
     .req_compl(req_compl_int),                // I
@@ -287,12 +234,12 @@ assign _s_axis_tx_tready = ~w_respfifo_full;
     .rd_be(rd_be),                            // O [3:0]
     .rd_data(rd_data),                        // I [31:0]
 
-    .completer_id(cfg_completer_id)           // I [15:0]
+    .completer_id(i_cfg_completer_id)           // I [15:0]
 
     );
 
-  assign req_compl  = req_compl_int;
-  assign compl_done = compl_done_int;
+  assign o_req_compl  = req_compl_int;
+  assign o_compl_done = compl_done_int;
 
 endmodule // PIO_EP
 
