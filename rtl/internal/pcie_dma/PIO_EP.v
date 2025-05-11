@@ -123,26 +123,24 @@ module PIO_EP #(
     // ENDPOINT MEMORY : 8KB memory aperture implemented in FPGA BlockRAM(*)
     //
 
-    PIO_EP_MEM_ACCESS  #(
-       .TCQ( TCQ )
-       ) EP_MEM_inst (
+    PIO_EP_MEM_ACCESS EP_MEM_inst (
       
-      .clk(i_clk),               // I
-      .rst_n(i_nrst),           // I
+      .i_clk(i_clk),               // I
+      .i_nrst(i_nrst),           // I
       
       // Read Port
       
-      .rd_addr(rd_addr),     // I [10:0]
-      .rd_be(rd_be),         // I [3:0]
-      .rd_data(rd_data),     // O [31:0]
+      .i_rd_addr(rd_addr),     // I [10:0]
+      .i_rd_be(rd_be),         // I [3:0]
+      .o_rd_data(rd_data),     // O [31:0]
       
       // Write Port
       
-      .wr_addr(wr_addr),     // I [10:0]
-      .wr_be(wr_be),         // I [7:0]
-      .wr_data(wr_data),     // I [31:0]
-      .wr_en(wr_en),         // I
-      .wr_busy(wr_busy)      // O
+      .i_wr_addr(wr_addr),     // I [10:0]
+      .i_wr_be(wr_be),         // I [7:0]
+      .i_wr_data(wr_data),     // I [31:0]
+      .i_wr_en(wr_en),         // I
+      .o_wr_busy(wr_busy)      // O
       
       );
 
