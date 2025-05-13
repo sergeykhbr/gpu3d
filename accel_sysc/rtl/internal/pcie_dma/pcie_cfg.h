@@ -21,7 +21,7 @@ namespace debugger {
 
 // PCIE end-point config:
 static const int CFG_PCIE_DATA_WIDTH = 64;
-static const int CFG_PCIE_DMAFIFO_DEPTH = 2;                // FIFO depth in PCIE DMA engine
+static const int CFG_PCIE_DMAFIFO_DEPTH = 3;                // FIFO depth in PCIE DMA engine
 // 
 // Completions packets {Fmt[1:0], Type[4:0]} for non-posted TLPs:
 static const uint8_t PCIE_CPL_NODATA = 0x0A;                // Completion without data (IOWr, CfgWr1, CfgWr2)

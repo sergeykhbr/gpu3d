@@ -30,11 +30,11 @@ SC_MODULE(cdc_afifo) {
     sc_in<bool> i_wclk;                                     // clock write
     sc_in<bool> i_wr;                                       // write enable strob
     sc_in<sc_biguint<dbits>> i_wdata;                       // write data
-    sc_out<bool> o_wfull;                                   // fifo is full in wclk domain
+    sc_out<bool> o_wready;                                  // ready to accept (fifo is not full) in wclk domain
     sc_in<bool> i_rclk;                                     // read clock
     sc_in<bool> i_rd;                                       // read enable strob
     sc_out<sc_biguint<dbits>> o_rdata;                      // fifo payload read
-    sc_out<bool> o_rempty;                                  // fifo is empty it rclk domain
+    sc_out<bool> o_rvalid;                                  // new valid data (fifo is not empty) in rclk domain
 
     void comb();
     void proc_wff();
@@ -74,11 +74,11 @@ cdc_afifo<abits, dbits>::cdc_afifo(sc_module_name name)
     i_wclk("i_wclk"),
     i_wr("i_wr"),
     i_wdata("i_wdata"),
-    o_wfull("o_wfull"),
+    o_wready("o_wready"),
     i_rclk("i_rclk"),
     i_rd("i_rd"),
     o_rdata("o_rdata"),
-    o_rempty("o_rempty") {
+    o_rvalid("o_rvalid") {
 
     mem0 = 0;
     wgray0 = 0;
@@ -162,11 +162,11 @@ void cdc_afifo<abits, dbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o
         sc_trace(o_vcd, i_wclk, i_wclk.name());
         sc_trace(o_vcd, i_wr, i_wr.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
-        sc_trace(o_vcd, o_wfull, o_wfull.name());
+        sc_trace(o_vcd, o_wready, o_wready.name());
         sc_trace(o_vcd, i_rclk, i_rclk.name());
         sc_trace(o_vcd, i_rd, i_rd.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
-        sc_trace(o_vcd, o_rempty, o_rempty.name());
+        sc_trace(o_vcd, o_rvalid, o_rvalid.name());
     }
 
     if (wgray0) {
@@ -181,8 +181,8 @@ template<int abits, int dbits>
 void cdc_afifo<abits, dbits>::comb() {
     w_wr_ena = (i_wr.read() & (~w_wgray_full.read()));
     w_rd_ena = (i_rd.read() & (~w_rgray_empty.read()));
-    o_wfull = w_wgray_full.read();
-    o_rempty = w_rgray_empty.read();
+    o_wready = (~w_wgray_full.read());
+    o_rvalid = (~w_rgray_empty.read());
 }
 
 template<int abits, int dbits>

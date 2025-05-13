@@ -36,8 +36,8 @@ SC_MODULE(apb_pcie) {
     sc_in<pcie_dma64_in_type> i_dbg_pcie_dmai;              // Debugging request from async fifo
 
     void comb();
+    void reqff();
     void registers();
-    void rxegisters();
 
     apb_pcie(sc_module_name name,
              bool async_reset);
@@ -52,28 +52,22 @@ SC_MODULE(apb_pcie) {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
-        sc_signal<sc_uint<4>> req_cnt;
     };
 
     void apb_pcie_r_reset(apb_pcie_registers& iv) {
         iv.resp_valid = 0;
         iv.resp_rdata = 0;
         iv.resp_err = 0;
-        iv.req_cnt = 0;
     }
-
-    struct apb_pcie_rxegisters {
-        sc_signal<sc_uint<64>> req_data_arr[16];
-    };
 
     sc_signal<bool> w_req_valid;
     sc_signal<sc_uint<32>> wb_req_addr;
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<32>> wb_req_wdata;
+    sc_uint<4> req_cnt;
+    sc_uint<64> req_data_arr[16];
     apb_pcie_registers v;
     apb_pcie_registers r;
-    apb_pcie_rxegisters vx;
-    apb_pcie_rxegisters rx;
 
     apb_slv *pslv0;
 

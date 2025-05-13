@@ -16,7 +16,7 @@
 
 `timescale 1ns/10ps
 
-module PIO_EP_MEM_ACCESS(
+module pcie_io_ep_mem_access(
     input logic i_nrst,
     input logic i_clk,                                      // System bus clock
     // Read Port
@@ -25,7 +25,7 @@ module PIO_EP_MEM_ACCESS(
     output logic [31:0] o_rd_data,
     // Write Port
     input logic [10:0] i_wr_addr,
-    input logic [7:0] i_wr_be,
+    input logic [3:0] i_wr_be,
     input logic [31:0] i_wr_data,
     input logic i_wr_en,
     output logic o_wr_busy
@@ -41,7 +41,7 @@ ram_bytes_tech #(
     .i_clk(i_clk),
     .i_addr(wb_addr),
     .i_wena(i_wr_en),
-    .i_wstrb(i_wr_be[3:0]),
+    .i_wstrb(i_wr_be),
     .i_wdata(i_wr_data),
     .o_rdata(o_rd_data)
 );
@@ -66,4 +66,4 @@ always_ff @(posedge i_clk) begin: reqff_proc
     end
 end: reqff_proc
 
-endmodule: PIO_EP_MEM_ACCESS
+endmodule: pcie_io_ep_mem_access

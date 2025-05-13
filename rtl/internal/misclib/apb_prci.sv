@@ -46,8 +46,15 @@ logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
-apb_prci_rhegisters rh;
-apb_prci_rhegisters rhin;
+logic r_sys_rst;
+logic r_sys_nrst;
+logic r_dbg_nrst;
+logic [1:0] rb_pcie_nrst;
+logic r_sys_locked;
+logic [1:0] rb_ddr_locked;
+logic [1:0] rb_pcie_lnk_up;
+apb_prci_registers r;
+apb_prci_registers rin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -55,7 +62,7 @@ apb_slv #(
     .did(OPTIMITECH_PRCI)
 ) pslv0 (
     .i_clk(i_clk),
-    .i_nrst(rh.sys_nrst),
+    .i_nrst(r_sys_nrst),
     .i_mapinfo(i_mapinfo),
     .o_cfg(o_cfg),
     .i_apbi(i_apbi),
@@ -64,37 +71,30 @@ apb_slv #(
     .o_req_addr(wb_req_addr),
     .o_req_write(w_req_write),
     .o_req_wdata(wb_req_wdata),
-    .i_resp_valid(rh.resp_valid),
-    .i_resp_rdata(rh.resp_rdata),
-    .i_resp_err(rh.resp_err)
+    .i_resp_valid(r.resp_valid),
+    .i_resp_rdata(r.resp_rdata),
+    .i_resp_err(r.resp_err)
 );
 
 always_comb
 begin: comb_proc
-    apb_prci_rhegisters vh;
+    apb_prci_registers v;
     logic [31:0] vb_rdata;
 
-    vh = rh;
+    v = r;
     vb_rdata = '0;
 
-    vh.sys_locked = i_sys_locked;
-    vh.ddr_locked = i_ddr_locked;
-    vh.pcie_lnk_up = i_pcie_phy_lnk_up;
-    vh.sys_rst = (i_pwrreset || (~i_sys_locked) || i_dmireset);
-    vh.sys_nrst = (~(i_pwrreset || (~i_sys_locked) || i_dmireset));
-    vh.dbg_nrst = (~(i_pwrreset || (~i_sys_locked)));
-    vh.pcie_nrst = (~(i_pwrreset || (~i_sys_locked) || (~rh.pcie_lnk_up) || i_pcie_phy_rst));
 
     // Registers access:
     case (wb_req_addr[11: 2])
     10'd0: begin                                            // 0x00: pll statuses
-        vb_rdata[0] = rh.sys_locked;
-        vb_rdata[1] = rh.ddr_locked;
-        vb_rdata[2] = rh.pcie_lnk_up;
+        vb_rdata[0] = r_sys_locked;
+        vb_rdata[1] = rb_ddr_locked[1];
+        vb_rdata[2] = rb_pcie_lnk_up[1];
     end
     10'd1: begin                                            // 0x04: reset status
-        vb_rdata[0] = rh.sys_nrst;
-        vb_rdata[1] = rh.dbg_nrst;
+        vb_rdata[0] = r_sys_nrst;
+        vb_rdata[1] = r_dbg_nrst;
         if (w_req_valid == 1'b1) begin
             if (w_req_write == 1'b1) begin
                 // todo:
@@ -105,41 +105,62 @@ begin: comb_proc
     end
     endcase
 
-    vh.resp_valid = w_req_valid;
-    vh.resp_rdata = vb_rdata;
-    vh.resp_err = 1'b0;
+    v.resp_valid = w_req_valid;
+    v.resp_rdata = vb_rdata;
+    v.resp_err = 1'b0;
 
-    if ((~async_reset) && (i_pwrreset == 1'b1)) begin
-        vh = apb_prci_rh_reset;
+    if ((~async_reset) && (r_sys_nrst == 1'b0)) begin
+        v = apb_prci_r_reset;
     end
 
-    o_sys_rst = rh.sys_rst;
-    o_sys_nrst = rh.sys_nrst;
-    o_dbg_nrst = rh.dbg_nrst;
-    o_pcie_nrst = rh.pcie_nrst;
+    o_sys_rst = r_sys_rst;
+    o_sys_nrst = r_sys_nrst;
+    o_dbg_nrst = r_dbg_nrst;
+    o_pcie_nrst = rb_pcie_nrst[1];
 
-    rhin = vh;
+    rin = v;
 end: comb_proc
 
-generate
-    if (async_reset) begin: async_rh_en
 
-        always_ff @(posedge i_clk, posedge i_pwrreset) begin
-            if (i_pwrreset == 1'b1) begin
-                rh <= apb_prci_rh_reset;
+always_ff @(posedge i_clk, posedge i_pwrreset) begin: reqff_proc
+    if (i_pwrreset == 1'b1) begin
+        r_sys_locked <= 1'b0;
+        rb_ddr_locked <= '0;
+        rb_pcie_lnk_up <= '0;
+        r_sys_rst <= 1'b1;
+        r_sys_nrst <= 1'b0;
+        r_dbg_nrst <= 1'b0;
+        rb_pcie_nrst <= '0;
+    end else begin
+        r_sys_locked <= i_sys_locked;
+        rb_ddr_locked <= {rb_ddr_locked[0], i_ddr_locked};
+        rb_pcie_lnk_up <= {rb_pcie_lnk_up[0], i_pcie_phy_lnk_up};
+        r_sys_rst <= ((~i_sys_locked) || i_dmireset);
+        r_sys_nrst <= (i_sys_locked & (~i_dmireset));
+        r_dbg_nrst <= i_sys_locked;
+        rb_pcie_nrst <= {rb_pcie_nrst[0], (i_pcie_phy_lnk_up & (~i_pcie_phy_rst))};
+    end
+end: reqff_proc
+
+generate
+    if (async_reset) begin: async_r_en
+
+        always_ff @(posedge i_clk, negedge r_sys_nrst) begin
+            if (r_sys_nrst == 1'b0) begin
+                r <= apb_prci_r_reset;
             end else begin
-                rh <= rhin;
+                r <= rin;
             end
         end
 
-    end: async_rh_en
-    else begin: async_rh_dis
+    end: async_r_en
+    else begin: async_r_dis
 
         always_ff @(posedge i_clk) begin
-            rh <= rhin;
+            r <= rin;
         end
 
-    end: async_rh_dis
+    end: async_r_dis
 endgenerate
 
 endmodule: apb_prci

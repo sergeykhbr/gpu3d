@@ -214,8 +214,7 @@ accel_soc::accel_soc(sc_module_name name,
     gpio0->o_irq(wb_irq_gpio);
 
     // See reference: pg054-7series-pcie.pdf
-    pcidma0 = new pcie_dma("pcidma0",
-                            async_reset);
+    pcidma0 = new pcie_dma("pcidma0");
     pcidma0->i_nrst(i_pcie_nrst);
     pcidma0->i_clk(i_sys_clk);
     pcidma0->i_pcie_phy_clk(i_pcie_clk);

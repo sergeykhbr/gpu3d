@@ -21,6 +21,7 @@
 #include "../ambalib/types_amba.h"
 #include "pcie_cfg.h"
 #include "../cdc/cdc_afifo.h"
+#include "pcie_io_ep.h"
 
 namespace debugger {
 
@@ -42,42 +43,21 @@ SC_MODULE(pcie_dma) {
     sc_out<pcie_dma64_in_type> o_dbg_pcie_dmai;
 
     void comb();
-    void registers();
 
-    pcie_dma(sc_module_name name,
-             bool async_reset);
+    pcie_dma(sc_module_name name);
     virtual ~pcie_dma();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    bool async_reset_;
-
     // 
-    // fmt: indicates the size of the header
-    static const uint8_t TLP_FMT_3DW_NOPAYLOAD = 0;         // 3DW header without payload
-    static const uint8_t TLP_FMT_4DW_NOPAYLOAD = 1;         // 4DW header without payload
-    static const uint8_t TLP_FMT_3DW_PAYLOAD = 2;           // 3DW header with payload
-    static const uint8_t TLP_FMT_4DW_PAYLOAD = 3;           // 4DW header with payload
+    static const int C_DATA_WIDTH = 64;
+    static const int KEEP_WIDTH = (C_DATA_WIDTH / 8);
     // 
-    // TLP Completion Status
-    static const uint8_t TLP_STATUS_SUCCESS = 0;            // Successful completion
-    static const uint8_t TLP_STATUS_UNSUPPORTED = 1;        // Unsupported Request (UR)
-    static const uint8_t TLP_STATUS_ABORTED = 4;            // Completer Abort (CA)
-    // 
-    // State machine to parse TLP
-    static const uint8_t STATE_RST = 0x00;
-    static const uint8_t STATE_DW3DW4 = 1;
-    static const uint8_t STATE_AR = 2;
-    static const uint8_t STATE_R_SINGLE32 = 3;
-    static const uint8_t STATE_R = 4;
-    static const uint8_t STATE_AW = 5;
-    static const uint8_t STATE_W = 6;
-    static const uint8_t STATE_B = 7;
-    static const uint8_t STATE_RESP_DW0DW1 = 8;
-    static const uint8_t STATE_RESP_DW2DW3 = 9;
-    // 
-    static const int REQ_FIFO_WIDTH = (1  // last
+    static const int REQ_FIFO_WIDTH = (7  // bar_hit
+            + 1  // ecrc_err
+            + 1  // err_fwd
+            + 1  // last
             + 8  // strob
             + 64  // data
     );
@@ -86,67 +66,32 @@ SC_MODULE(pcie_dma) {
             + 64  // data
     );
 
-    struct pcie_dma_registers {
-        sc_signal<sc_uint<4>> state;
-        sc_signal<sc_uint<32>> dw0;
-        sc_signal<sc_uint<32>> dw1;
-        sc_signal<sc_uint<32>> dw2;
-        sc_signal<sc_uint<32>> dw3;
-        sc_signal<bool> req_rd_locked;                      // Read locked request
-        sc_signal<sc_uint<8>> xlen;                         // AXI Burst Len - 1
-        sc_signal<sc_uint<3>> xsize;                        // AXI Burst size: 0=1B, 1=2B, 2=4B, 3=8B,..
-        sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> xaddr;     // AXI request address
-        sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> xwstrb;
-        sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> xwdata;
-        sc_signal<bool> xwena;                              // AXI light: RW and W at the same time without burst
-        sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> xrdata;
-        sc_signal<sc_uint<2>> xerr;
-        sc_signal<bool> resp_with_payload;                  // TLP with payload
-        sc_signal<sc_uint<64>> resp_data;
-        sc_signal<sc_uint<3>> resp_status;
-        sc_signal<sc_uint<7>> resp_cpl;                     // Completion packet
-        sc_signal<sc_uint<12>> byte_cnt;                    // Byte counter to send in payload
-    };
-
-    void pcie_dma_r_reset(pcie_dma_registers& iv) {
-        iv.state = STATE_RST;
-        iv.dw0 = 0;
-        iv.dw1 = 0;
-        iv.dw2 = 0;
-        iv.dw3 = 0;
-        iv.req_rd_locked = 0;
-        iv.xlen = 0;
-        iv.xsize = 0;
-        iv.xaddr = 0;
-        iv.xwstrb = 0;
-        iv.xwdata = 0;
-        iv.xwena = 0;
-        iv.xrdata = 0;
-        iv.xerr = AXI_RESP_OKAY;
-        iv.resp_with_payload = 0;
-        iv.resp_data = 0;
-        iv.resp_status = TLP_STATUS_SUCCESS;
-        iv.resp_cpl = 0;
-        iv.byte_cnt = 0;
-    }
-
     sc_signal<bool> w_pcie_dmai_valid;
     sc_signal<bool> w_pcie_dmai_ready;
     sc_signal<sc_biguint<REQ_FIFO_WIDTH>> wb_reqfifo_payload_i;
     sc_signal<sc_biguint<REQ_FIFO_WIDTH>> wb_reqfifo_payload_o;
-    sc_signal<bool> w_reqfifo_full;
-    sc_signal<bool> w_reqfifo_empty;
+    sc_signal<bool> w_reqfifo_wready;
+    sc_signal<bool> w_reqfifo_rvalid;
     sc_signal<bool> w_reqfifo_rd;
     sc_signal<sc_biguint<RESP_FIFO_WIDTH>> wb_respfifo_payload_i;
     sc_signal<sc_biguint<RESP_FIFO_WIDTH>> wb_respfifo_payload_o;
-    sc_signal<bool> w_respfifo_full;
-    sc_signal<bool> w_respfifo_empty;
+    sc_signal<bool> w_respfifo_wready;
+    sc_signal<bool> w_respfifo_rvalid;
     sc_signal<bool> w_respfifo_wr;
-    pcie_dma_registers v;
-    pcie_dma_registers r;
+    sc_signal<sc_uint<9>> wb_m_axis_rx_tuser;
+    sc_signal<bool> w_m_axis_rx_tlast;
+    sc_signal<sc_uint<KEEP_WIDTH>> wb_m_axis_rx_tkeep;
+    sc_signal<sc_uint<C_DATA_WIDTH>> wb_m_axis_rx_tdata;
+    sc_signal<bool> w_s_axis_tx_tlast;
+    sc_signal<sc_uint<KEEP_WIDTH>> wb_s_axis_tx_tkeep;
+    sc_signal<sc_uint<C_DATA_WIDTH>> wb_s_axis_tx_tdata;
+    sc_signal<bool> w_tx_src_dsc;
+    sc_signal<bool> w_req_compl;
+    sc_signal<bool> w_compl_done;
 
     cdc_afifo<CFG_PCIE_DMAFIFO_DEPTH, REQ_FIFO_WIDTH> *reqfifo;
     cdc_afifo<CFG_PCIE_DMAFIFO_DEPTH, RESP_FIFO_WIDTH> *respfifo;
+    pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH> *PIO_EP_inst;
 
 };
 

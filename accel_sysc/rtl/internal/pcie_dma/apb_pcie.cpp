@@ -67,16 +67,12 @@ apb_pcie::apb_pcie(sc_module_name name,
     sensitive << r.resp_valid;
     sensitive << r.resp_rdata;
     sensitive << r.resp_err;
-    sensitive << r.req_cnt;
-    for (int i = 0; i < 16; i++) {
-        sensitive << rx.req_data_arr[i];
-    }
+
+    SC_METHOD(reqff);
+    sensitive << i_clk.pos();
 
     SC_METHOD(registers);
     sensitive << i_nrst;
-    sensitive << i_clk.pos();
-
-    SC_METHOD(rxegisters);
     sensitive << i_clk.pos();
 }
 
@@ -97,10 +93,6 @@ void apb_pcie::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
         sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
         sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
-        sc_trace(o_vcd, r.req_cnt, pn + ".r.req_cnt");
-        for (int i = 0; i < 16; i++) {
-            sc_trace(o_vcd, rx.req_data_arr[i], pn + ".rx.req_data_arr(i)");
-        }
     }
 
     if (pslv0) {
@@ -111,17 +103,8 @@ void apb_pcie::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void apb_pcie::comb() {
     sc_uint<32> vb_rdata;
 
-    for (int i = 0; i < 16; i++) {
-        vx.req_data_arr[i] = rx.req_data_arr[i].read();
-    }
     v = r;
     vb_rdata = 0;
-
-
-    if (i_dbg_pcie_dmai.read().valid == 1) {
-        v.req_cnt = (r.req_cnt.read() + 1);
-        vx.req_data_arr[r.req_cnt.read().to_int()] = i_dbg_pcie_dmai.read().data;
-    }
 
     v.resp_err = 0;
     // Registers access:
@@ -133,13 +116,13 @@ void apb_pcie::comb() {
         vb_rdata(15, 0) = i_pcie_completer_id.read();
     } else if (wb_req_addr.read()(11, 2) == 2) {
         // 0x08: request counter
-        vb_rdata(3, 0) = r.req_cnt.read();
+        vb_rdata(3, 0) = req_cnt;
     } else if (wb_req_addr.read()(11, 7) == 1) {
         // 0x040..0x04F: debug buffer
         if (wb_req_addr.read()[2] == 0) {
-            vb_rdata = rx.req_data_arr[wb_req_addr.read()(6, 3).to_int()].read()(31, 0);
+            vb_rdata = req_data_arr[wb_req_addr.read()(6, 3).to_int()](31, 0);
         } else {
-            vb_rdata = rx.req_data_arr[wb_req_addr.read()(6, 3).to_int()].read()(63, 32);
+            vb_rdata = req_data_arr[wb_req_addr.read()(6, 3).to_int()](63, 32);
         }
     }
 
@@ -151,17 +134,18 @@ void apb_pcie::comb() {
     }
 }
 
+void apb_pcie::reqff() {
+    if (i_dbg_pcie_dmai.read().valid == 1) {
+        req_data_arr[req_cnt.to_int()] = i_dbg_pcie_dmai.read().data;
+        req_cnt = (req_cnt + 1);
+    }
+}
+
 void apb_pcie::registers() {
     if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         apb_pcie_r_reset(r);
     } else {
         r = v;
-    }
-}
-
-void apb_pcie::rxegisters() {
-    for (int i = 0; i < 16; i++) {
-        rx.req_data_arr[i] = vx.req_data_arr[i].read();
     }
 }
 
