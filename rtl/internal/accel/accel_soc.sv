@@ -94,7 +94,11 @@ logic [SOC_GPIO0_WIDTH-1:0] wb_irq_gpio;
 logic w_irq_pnp;
 logic [SOC_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 logic [3:0] wb_pcie_dma_state;
-pcie_dma64_in_type wb_dbg_pcie_dmai;
+logic w_dbg_mem_valid;
+logic w_dbg_mem_wren;
+logic [12:0] wb_dbg_mem_addr;
+logic [7:0] wb_dbg_mem_wstrb;
+logic [31:0] wb_dbg_mem_data;
 
 axictrl_bus0 #(
     .async_reset(async_reset)
@@ -252,10 +256,7 @@ apb_gpio #(
 );
 
 // See reference: pg054-7series-pcie.pdf
-pcie_dma #(
-//pcie_app #(
-//    .async_reset(async_reset)
-) pcidma0 (
+pcie_dma pcidma0 (
     .i_nrst(i_pcie_nrst),
     .i_clk(i_sys_clk),
     .i_pcie_phy_clk(i_pcie_clk),
@@ -266,7 +267,11 @@ pcie_dma #(
     .o_xmst_cfg(dev_pnp[SOC_PNP_PCIE_DMA]),
     .i_xmsti(aximi[CFG_BUS0_XMST_PCIE]),
     .o_xmsto(aximo[CFG_BUS0_XMST_PCIE]),
-    .o_dbg_pcie_dmai(wb_dbg_pcie_dmai)
+    .o_dbg_mem_valid(w_dbg_mem_valid),
+    .o_dbg_mem_wren(w_dbg_mem_wren),
+    .o_dbg_mem_wstrb(wb_dbg_mem_wstrb),
+    .o_dbg_mem_addr(wb_dbg_mem_addr),
+    .o_dbg_mem_data(wb_dbg_mem_data)
 );
 
 apb_pcie #(
@@ -280,7 +285,11 @@ apb_pcie #(
     .o_apbo(apbo[CFG_BUS1_PSLV_PCIE]),
     .i_pcie_completer_id(i_pcie_completer_id),
     .i_dma_state(wb_pcie_dma_state),
-    .i_dbg_pcie_dmai(wb_dbg_pcie_dmai)
+    .i_dbg_mem_valid(w_dbg_mem_valid),
+    .i_dbg_mem_wren(w_dbg_mem_wren),
+    .i_dbg_mem_wstrb(wb_dbg_mem_wstrb),
+    .i_dbg_mem_addr(wb_dbg_mem_addr),
+    .i_dbg_mem_data(wb_dbg_mem_data)
 );
 
 apb_pnp #(

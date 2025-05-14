@@ -40,7 +40,13 @@ module pcie_io_ep #(
     // 
     output logic o_req_compl,
     output logic o_compl_done,
-    input logic [15:0] i_cfg_completer_id                   // Bus, Device, Function
+    input logic [15:0] i_cfg_completer_id,                  // Bus, Device, Function
+    // Memory access signals:
+    output logic o_mem_valid,
+    output logic o_mem_wren,
+    output logic [7:0] o_mem_wstrb,
+    output logic [12:0] o_mem_addr,
+    output logic [31:0] o_mem_data
 );
 
 logic [10:0] wb_rd_addr;
@@ -137,6 +143,34 @@ pcie_io_tx_engine #(
     .i_rd_data(wb_rd_data),
     .i_completer_id(i_cfg_completer_id)
 );
+
+always_comb
+begin: comb_proc
+    logic v_mem_valid;
+    logic v_mem_wren;
+    logic [12:0] vb_mem_addr;
+    logic [7:0] vb_mem_wstrb;
+    logic [31:0] vb_mem_data;
+
+    v_mem_valid = 1'b0;
+    v_mem_wren = 1'b0;
+    vb_mem_addr = '0;
+    vb_mem_wstrb = '0;
+    vb_mem_data = '0;
+
+    if (w_req_compl_int == 1'b1) begin
+        v_mem_valid = 1'b1;
+        v_mem_wren = w_wr_en;
+        vb_mem_wstrb = wb_wr_be;
+        vb_mem_addr = wb_req_addr;
+        vb_mem_data = wb_wr_data;
+    end
+    o_mem_valid = v_mem_valid;
+    o_mem_wren = v_mem_wren;
+    o_mem_wstrb = {4'd0, vb_mem_wstrb};
+    o_mem_addr = vb_mem_addr;
+    o_mem_data = vb_mem_data;
+end: comb_proc
 
 assign o_req_compl = w_req_compl_int;
 assign o_compl_done = w_compl_done_int;

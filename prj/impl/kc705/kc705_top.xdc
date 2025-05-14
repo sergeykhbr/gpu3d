@@ -175,16 +175,23 @@ set_false_path -through [get_pins -filter {REF_PIN_NAME=~CFGMSGRECEIVEDPMETO} -o
 set_false_path -through [get_pins -filter {REF_PIN_NAME=~CPLLLOCK} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
 set_false_path -through [get_pins -filter {REF_PIN_NAME=~QPLLLOCK} -of_objects [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ IO.gt.* }]]
 
+set_false_path -through prci0/r_sys_locked_reg
+set_false_path -through prci0/rb_pcie_nrst_reg[0]
+set_false_path -through prci0/rb_ddr_locked_reg[0]
+set_false_path -through prci0/rb_pcie_lnk_up_reg[0]
+set_false_path -through prci0/r_sys_rst_reg
+set_false_path -through prci0/r_sys_nrst_reg
+set_false_path -through prci0/r_dbg_nrst_reg
+
 ## Async req. FIFO (read clock 40 MHz):
 ## Async req. FIFO (write clock 62.5 MHz):
-set_max_delay -datapath_only 16.0 -from [get_pins {REF_PIN_NAME=soc0/pcidma0/reqfifo/wgray0/o_gray}] -to soc0/pcidma0/reqfifo/q1_wgray*
-set_max_delay -datapath_only 16.0 -from [get_pins {REF_PIN_NAME=soc0/pcidma0/reqfifo/rgray0/o_gray}] -to soc0/pcidma0/reqfifo/q1_rgray*
+set_max_delay -datapath_only 16.0 -from soc0/pcidma0/reqfifo/wgray0/gray* -to soc0/pcidma0/reqfifo/q1_wgray*
+set_max_delay -datapath_only 16.0 -from soc0/pcidma0/reqfifo/rgray0/gray* -to soc0/pcidma0/reqfifo/q1_rgray*
 
 ## Async resp. FIFO (read clock 62.5 MHz):
 ## Async resp. FIFO (write clock 40.0 MHz):
-set_max_delay -datapath_only 16.0 -from [get_pins {REF_PIN_NAME=soc0/pcidma0/respfifo/wgray0/o_gray}] -to soc0/pcidma0/respfifo/q1_wgray*
-set_max_delay -datapath_only 16.0 -from [get_pins {REF_PIN_NAME=soc0/pcidma0/respfifo/rgray0/o_gray}] -to soc0/pcidma0/respfifo/q1_rgray*
-
+set_max_delay -datapath_only 16.0 -from soc0/pcidma0/respfifo/wgray0/gray* -to soc0/pcidma0/respfifo/q1_wgray*
+set_max_delay -datapath_only 16.0 -from soc0/pcidma0/respfifo/rgray0/gray* -to soc0/pcidma0/respfifo/q1_rgray*
 
 ##################################################################################################
 ## Controller 0

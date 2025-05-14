@@ -86,7 +86,10 @@ module kc705_top #(
   logic             ib_jtag_tms; 
   logic             ib_jtag_tdi; 
   logic             ob_jtag_tdo; 
-  logic             ob_jtag_vref;   
+  logic             ob_jtag_vref;
+  // !UART
+  logic             ib_uart1_rd;
+  logic             ob_uart1_td;
 
   logic             w_sys_rst;
   logic             w_sys_nrst;

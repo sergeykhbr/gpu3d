@@ -41,6 +41,12 @@ localparam bit [2:0] CMD_STATE_REQUEST = 3'd2;
 localparam bit [2:0] CMD_STATE_RESPONSE = 3'd3;
 localparam bit [2:0] CMD_STATE_WAIT_HALTED = 3'd4;
 
+localparam int CDC_REG_WIDTH = (1  // w_tap_dmi_hardreset
+        + 7  // wb_tap_dmi_req_addr
+        + 32  // wb_tap_dmi_req_data
+        + 1  // w_tap_dmi_req_write
+);
+
 typedef struct {
     logic bus_jtag;
     logic [31:0] jtag_resp_data;

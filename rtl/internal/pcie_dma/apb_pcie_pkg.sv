@@ -17,7 +17,6 @@ package apb_pcie_pkg;
 
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
-import types_dma_pkg::*;
 
 typedef struct {
     logic resp_valid;

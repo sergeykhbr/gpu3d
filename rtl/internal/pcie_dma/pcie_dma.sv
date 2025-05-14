@@ -30,7 +30,11 @@ module pcie_dma(
     input types_amba_pkg::axi4_master_in_type i_xmsti,
     output types_amba_pkg::axi4_master_out_type o_xmsto,
     // Debug signals:
-    output types_dma_pkg::pcie_dma64_in_type o_dbg_pcie_dmai
+    output logic o_dbg_mem_valid,
+    output logic o_dbg_mem_wren,
+    output logic [7:0] o_dbg_mem_wstrb,
+    output logic [12:0] o_dbg_mem_addr,
+    output logic [31:0] o_dbg_mem_data
 );
 
 import types_dma_pkg::*;
@@ -113,22 +117,61 @@ pcie_io_ep #(
     .i_m_axis_rx_tuser(wb_m_axis_rx_tuser),
     .o_req_compl(w_req_compl),
     .o_compl_done(w_compl_done),
-    .i_cfg_completer_id(i_pcie_completer_id)
+    .i_cfg_completer_id(i_pcie_completer_id),
+    .o_mem_valid(o_dbg_mem_valid),
+    .o_mem_wren(o_dbg_mem_wren),
+    .o_mem_wstrb(o_dbg_mem_wstrb),
+    .o_mem_addr(o_dbg_mem_addr),
+    .o_mem_data(o_dbg_mem_data)
 );
 
-assign o_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
-assign o_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
-assign o_xmst_cfg.vid = VENDOR_OPTIMITECH;
-assign o_xmst_cfg.did = OPTIMITECH_PCIE_DMA;
-assign o_xmsto = axi4_master_out_none;
+always_comb
+begin: comb_proc
+    dev_config_type vb_xmst_cfg;
+    axi4_master_out_type vb_xmsto;
+    pcie_dma64_out_type vb_pcie_dmao;
+    logic [8:0] vb_m_axis_rx_tuser;
+    logic v_m_axis_rx_tlast;
+    logic [KEEP_WIDTH-1:0] vb_m_axis_rx_tkeep;
+    logic [C_DATA_WIDTH-1:0] vb_m_axis_rx_tdata;
 
-assign o_dma_state = '0;
-assign o_dbg_pcie_dmai = pcie_dma64_in_none;
+    vb_m_axis_rx_tuser = 9'd0;
+    v_m_axis_rx_tlast = 1'b0;
+    vb_m_axis_rx_tkeep = 8'd0;
+    vb_m_axis_rx_tdata = 64'd0;
+
+    vb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vb_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
+    vb_xmst_cfg.vid = VENDOR_OPTIMITECH;
+    vb_xmst_cfg.did = OPTIMITECH_PCIE_DMA;
+    o_xmst_cfg = vb_xmst_cfg;
+    o_xmsto = axi4_master_out_none;
+
+    o_dma_state = '0;
+
+    // PCIE PHY clock to system clock AFIFO:
+
+    // SystemC limitation, cannot assign directly to signal:
+    vb_m_axis_rx_tuser = wb_reqfifo_payload_o[81: 73];
+    v_m_axis_rx_tlast = wb_reqfifo_payload_o[72];
+    vb_m_axis_rx_tkeep = wb_reqfifo_payload_o[71: 64];
+    vb_m_axis_rx_tdata = wb_reqfifo_payload_o[63: 0];
+    wb_m_axis_rx_tuser = vb_m_axis_rx_tuser;
+    w_m_axis_rx_tlast = v_m_axis_rx_tlast;
+    wb_m_axis_rx_tkeep = vb_m_axis_rx_tkeep;
+    wb_m_axis_rx_tdata = vb_m_axis_rx_tdata;
+
+    vb_pcie_dmao.valid = w_respfifo_rvalid;
+    vb_pcie_dmao.ready = w_reqfifo_wready;
+    vb_pcie_dmao.last = wb_respfifo_payload_o[72];
+    vb_pcie_dmao.strob = wb_respfifo_payload_o[71: 64];
+    vb_pcie_dmao.data = wb_respfifo_payload_o[63: 0];
+    o_pcie_dmao = vb_pcie_dmao;
+end: comb_proc
+
 
 assign w_pcie_dmai_valid = i_pcie_dmai.valid;
 assign w_pcie_dmai_ready = i_pcie_dmai.ready;
-
-// PCIE PHY clock to system clock AFIFO:
 assign wb_reqfifo_payload_i = {i_pcie_dmai.bar_hit,
         i_pcie_dmai.ecrc_err,
         i_pcie_dmai.err_fwd,
@@ -136,20 +179,9 @@ assign wb_reqfifo_payload_i = {i_pcie_dmai.bar_hit,
         i_pcie_dmai.strob,
         i_pcie_dmai.data};
 
-assign wb_m_axis_rx_tuser = wb_reqfifo_payload_o[81: 73];
-assign w_m_axis_rx_tlast = wb_reqfifo_payload_o[72];
-assign wb_m_axis_rx_tkeep = wb_reqfifo_payload_o[71: 64];
-assign wb_m_axis_rx_tdata = wb_reqfifo_payload_o[63: 0];
-
 // System Clock to PCIE PHY clock AFIFO:
 assign wb_respfifo_payload_i = {w_s_axis_tx_tlast,
         wb_s_axis_tx_tkeep,
         wb_s_axis_tx_tdata};
-
-assign o_pcie_dmao.valid = w_respfifo_rvalid;
-assign o_pcie_dmao.ready = w_reqfifo_wready;
-assign o_pcie_dmao.last = wb_respfifo_payload_o[72];
-assign o_pcie_dmao.strob = wb_respfifo_payload_o[71: 64];
-assign o_pcie_dmao.data = wb_respfifo_payload_o[63: 0];
 
 endmodule: pcie_dma
