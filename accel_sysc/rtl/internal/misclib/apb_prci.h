@@ -42,7 +42,8 @@ SC_MODULE(apb_prci) {
     sc_out<apb_out_type> o_apbo;                            // APB Bridge to Slave interface
 
     void comb();
-    void rhegisters();
+    void reqff();
+    void registers();
 
     apb_prci(sc_module_name name,
              bool async_reset);
@@ -53,27 +54,13 @@ SC_MODULE(apb_prci) {
  private:
     bool async_reset_;
 
-    struct apb_prci_rhegisters {
-        sc_signal<bool> sys_rst;
-        sc_signal<bool> sys_nrst;
-        sc_signal<bool> dbg_nrst;
-        sc_signal<bool> pcie_nrst;
-        sc_signal<bool> sys_locked;
-        sc_signal<bool> ddr_locked;
-        sc_signal<bool> pcie_lnk_up;
+    struct apb_prci_registers {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
     };
 
-    void apb_prci_rh_reset(apb_prci_rhegisters& iv) {
-        iv.sys_rst = 0;
-        iv.sys_nrst = 0;
-        iv.dbg_nrst = 0;
-        iv.pcie_nrst = 0;
-        iv.sys_locked = 0;
-        iv.ddr_locked = 0;
-        iv.pcie_lnk_up = 0;
+    void apb_prci_r_reset(apb_prci_registers& iv) {
         iv.resp_valid = 0;
         iv.resp_rdata = 0;
         iv.resp_err = 0;
@@ -83,8 +70,15 @@ SC_MODULE(apb_prci) {
     sc_signal<sc_uint<32>> wb_req_addr;
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<32>> wb_req_wdata;
-    apb_prci_rhegisters vh;
-    apb_prci_rhegisters rh;
+    bool r_sys_rst;
+    sc_signal<bool> r_sys_nrst;
+    bool r_dbg_nrst;
+    sc_uint<2> rb_pcie_nrst;
+    bool r_sys_locked;
+    sc_uint<2> rb_ddr_locked;
+    sc_uint<2> rb_pcie_lnk_up;
+    apb_prci_registers v;
+    apb_prci_registers r;
 
     apb_slv *pslv0;
 

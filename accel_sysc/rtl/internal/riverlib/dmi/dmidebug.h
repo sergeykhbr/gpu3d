@@ -19,7 +19,7 @@
 #include "../../ambalib/types_amba.h"
 #include "../../ambalib/types_pnp.h"
 #include "../river_cfg.h"
-#include "jtagcdc.h"
+#include "../../cdc/cdc_afifo.h"
 #include "jtagtap.h"
 
 namespace debugger {
@@ -93,6 +93,12 @@ SC_MODULE(dmidebug) {
     static const uint8_t CMD_STATE_REQUEST = 2;
     static const uint8_t CMD_STATE_RESPONSE = 3;
     static const uint8_t CMD_STATE_WAIT_HALTED = 4;
+
+    static const int CDC_REG_WIDTH = (1  // w_tap_dmi_hardreset
+            + 7  // wb_tap_dmi_req_addr
+            + 32  // wb_tap_dmi_req_data
+            + 1  // w_tap_dmi_req_write
+    );
 
     struct dmidebug_registers {
         sc_signal<bool> bus_jtag;
@@ -187,17 +193,16 @@ SC_MODULE(dmidebug) {
     sc_signal<bool> w_tap_dmi_hardreset;
     sc_signal<bool> w_cdc_dmi_req_valid;
     sc_signal<bool> w_cdc_dmi_req_ready;
-    sc_signal<bool> w_cdc_dmi_req_write;
-    sc_signal<sc_uint<7>> wb_cdc_dmi_req_addr;
-    sc_signal<sc_uint<32>> wb_cdc_dmi_req_data;
-    sc_signal<bool> w_cdc_dmi_hardreset;
     sc_signal<sc_uint<32>> wb_jtag_dmi_resp_data;
     sc_signal<bool> w_jtag_dmi_busy;
     sc_signal<bool> w_jtag_dmi_error;
+    sc_signal<bool> w_reqfifo_wready_unused;
+    sc_signal<sc_biguint<CDC_REG_WIDTH>> wb_reqfifo_payload_i;
+    sc_signal<sc_biguint<CDC_REG_WIDTH>> wb_reqfifo_payload_o;
     dmidebug_registers v;
     dmidebug_registers r;
 
-    jtagcdc *cdc;
+    cdc_afifo<3, CDC_REG_WIDTH> *cdc;
     jtagtap<7, 5, CFG_DMI_TAP_ID> *tap;
 
 };

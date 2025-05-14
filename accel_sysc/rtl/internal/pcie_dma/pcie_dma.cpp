@@ -149,11 +149,23 @@ void pcie_dma::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void pcie_dma::comb() {
     dev_config_type vb_xmst_cfg;
+    axi4_master_out_type vb_xmsto;
+    pcie_dma64_out_type vb_pcie_dmao;
+    sc_uint<9> vb_m_axis_rx_tuser;
+    bool v_m_axis_rx_tlast;
+    sc_uint<KEEP_WIDTH> vb_m_axis_rx_tkeep;
+    sc_uint<C_DATA_WIDTH> vb_m_axis_rx_tdata;
+
+    vb_m_axis_rx_tuser = 0;
+    v_m_axis_rx_tlast = 0;
+    vb_m_axis_rx_tkeep = 0;
+    vb_m_axis_rx_tdata = 0;
+
     vb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     vb_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
     vb_xmst_cfg.vid = VENDOR_OPTIMITECH;
     vb_xmst_cfg.did = OPTIMITECH_PCIE_DMA;
-    vb_xmst_cfg = vb_xmst_cfg;
+    o_xmst_cfg = vb_xmst_cfg;
     o_xmsto = axi4_master_out_none;
 
     o_dma_state = 0;
@@ -170,13 +182,14 @@ void pcie_dma::comb() {
             i_pcie_dmai.read().strob,
             i_pcie_dmai.read().data);
 
-    sc_uint<9> vb_m_axis_rx_tuser = wb_reqfifo_payload_o.read()(81, 73);;
+    // SystemC limitation, cannot assign directly to signal:
+    vb_m_axis_rx_tuser = wb_reqfifo_payload_o.read()(81, 73);
+    v_m_axis_rx_tlast = wb_reqfifo_payload_o.read()[72];
+    vb_m_axis_rx_tkeep = wb_reqfifo_payload_o.read()(71, 64);
+    vb_m_axis_rx_tdata = wb_reqfifo_payload_o.read()(63, 0);
     wb_m_axis_rx_tuser = vb_m_axis_rx_tuser;
-    bool w_m_axis_rx_tlast = wb_reqfifo_payload_o.read()[72];;
-    w_m_axis_rx_tlast = w_m_axis_rx_tlast;
-    sc_uint<KEEP_WIDTH> vb_m_axis_rx_tkeep = wb_reqfifo_payload_o.read()(71, 64);
+    w_m_axis_rx_tlast = v_m_axis_rx_tlast;
     wb_m_axis_rx_tkeep = vb_m_axis_rx_tkeep;
-    sc_uint<C_DATA_WIDTH> vb_m_axis_rx_tdata = wb_reqfifo_payload_o.read()(63, 0);
     wb_m_axis_rx_tdata = vb_m_axis_rx_tdata;
 
     // System Clock to PCIE PHY clock AFIFO:
@@ -184,7 +197,6 @@ void pcie_dma::comb() {
             wb_s_axis_tx_tkeep.read(),
             wb_s_axis_tx_tdata.read());
 
-    pcie_dma64_out_type vb_pcie_dmao;
     vb_pcie_dmao.valid = w_respfifo_rvalid.read();
     vb_pcie_dmao.ready = w_reqfifo_wready.read();
     vb_pcie_dmao.last = wb_respfifo_payload_o.read()[72];

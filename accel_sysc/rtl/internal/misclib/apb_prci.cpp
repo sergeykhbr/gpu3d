@@ -47,7 +47,7 @@ apb_prci::apb_prci(sc_module_name name,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_PRCI);
     pslv0->i_clk(i_clk);
-    pslv0->i_nrst(rh.sys_nrst);
+    pslv0->i_nrst(r_sys_nrst);
     pslv0->i_mapinfo(i_mapinfo);
     pslv0->o_cfg(o_cfg);
     pslv0->i_apbi(i_apbi);
@@ -56,9 +56,9 @@ apb_prci::apb_prci(sc_module_name name,
     pslv0->o_req_addr(wb_req_addr);
     pslv0->o_req_write(w_req_write);
     pslv0->o_req_wdata(wb_req_wdata);
-    pslv0->i_resp_valid(rh.resp_valid);
-    pslv0->i_resp_rdata(rh.resp_rdata);
-    pslv0->i_resp_err(rh.resp_err);
+    pslv0->i_resp_valid(r.resp_valid);
+    pslv0->i_resp_rdata(r.resp_rdata);
+    pslv0->i_resp_err(r.resp_err);
 
     SC_METHOD(comb);
     sensitive << i_pwrreset;
@@ -74,19 +74,17 @@ apb_prci::apb_prci(sc_module_name name,
     sensitive << wb_req_addr;
     sensitive << w_req_write;
     sensitive << wb_req_wdata;
-    sensitive << rh.sys_rst;
-    sensitive << rh.sys_nrst;
-    sensitive << rh.dbg_nrst;
-    sensitive << rh.pcie_nrst;
-    sensitive << rh.sys_locked;
-    sensitive << rh.ddr_locked;
-    sensitive << rh.pcie_lnk_up;
-    sensitive << rh.resp_valid;
-    sensitive << rh.resp_rdata;
-    sensitive << rh.resp_err;
+    sensitive << r_sys_nrst;
+    sensitive << r.resp_valid;
+    sensitive << r.resp_rdata;
+    sensitive << r.resp_err;
 
-    SC_METHOD(rhegisters);
+    SC_METHOD(reqff);
     sensitive << i_pwrreset;
+    sensitive << i_clk.pos();
+
+    SC_METHOD(registers);
+    sensitive << r_sys_nrst;
     sensitive << i_clk.pos();
 }
 
@@ -112,16 +110,9 @@ void apb_prci::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pcie_nrst, o_pcie_nrst.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
-        sc_trace(o_vcd, rh.sys_rst, pn + ".rh.sys_rst");
-        sc_trace(o_vcd, rh.sys_nrst, pn + ".rh.sys_nrst");
-        sc_trace(o_vcd, rh.dbg_nrst, pn + ".rh.dbg_nrst");
-        sc_trace(o_vcd, rh.pcie_nrst, pn + ".rh.pcie_nrst");
-        sc_trace(o_vcd, rh.sys_locked, pn + ".rh.sys_locked");
-        sc_trace(o_vcd, rh.ddr_locked, pn + ".rh.ddr_locked");
-        sc_trace(o_vcd, rh.pcie_lnk_up, pn + ".rh.pcie_lnk_up");
-        sc_trace(o_vcd, rh.resp_valid, pn + ".rh.resp_valid");
-        sc_trace(o_vcd, rh.resp_rdata, pn + ".rh.resp_rdata");
-        sc_trace(o_vcd, rh.resp_err, pn + ".rh.resp_err");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
+        sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
+        sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
     }
 
     if (pslv0) {
@@ -132,27 +123,20 @@ void apb_prci::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void apb_prci::comb() {
     sc_uint<32> vb_rdata;
 
-    vh = rh;
+    v = r;
     vb_rdata = 0;
 
-    vh.sys_locked = i_sys_locked.read();
-    vh.ddr_locked = i_ddr_locked.read();
-    vh.pcie_lnk_up = i_pcie_phy_lnk_up.read();
-    vh.sys_rst = (i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read());
-    vh.sys_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read()));
-    vh.dbg_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read())));
-    vh.pcie_nrst = (~(i_pwrreset.read() || (!i_sys_locked.read()) || (!rh.pcie_lnk_up.read()) || i_pcie_phy_rst.read()));
 
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
     case 0:                                                 // 0x00: pll statuses
-        vb_rdata[0] = rh.sys_locked.read();
-        vb_rdata[1] = rh.ddr_locked.read();
-        vb_rdata[2] = rh.pcie_lnk_up.read();
+        vb_rdata[0] = r_sys_locked;
+        vb_rdata[1] = rb_ddr_locked[1];
+        vb_rdata[2] = rb_pcie_lnk_up[1];
         break;
     case 1:                                                 // 0x04: reset status
-        vb_rdata[0] = rh.sys_nrst.read();
-        vb_rdata[1] = rh.dbg_nrst.read();
+        vb_rdata[0] = r_sys_nrst.read();
+        vb_rdata[1] = r_dbg_nrst;
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
                 // todo:
@@ -163,25 +147,45 @@ void apb_prci::comb() {
         break;
     }
 
-    vh.resp_valid = w_req_valid.read();
-    vh.resp_rdata = vb_rdata;
-    vh.resp_err = 0;
+    v.resp_valid = w_req_valid.read();
+    v.resp_rdata = vb_rdata;
+    v.resp_err = 0;
 
-    if ((~async_reset_) && (i_pwrreset.read() == 1)) {
-        apb_prci_rh_reset(vh);
+    if ((~async_reset_) && (r_sys_nrst.read() == 0)) {
+        apb_prci_r_reset(v);
     }
 
-    o_sys_rst = rh.sys_rst.read();
-    o_sys_nrst = rh.sys_nrst.read();
-    o_dbg_nrst = rh.dbg_nrst.read();
-    o_pcie_nrst = rh.pcie_nrst.read();
+    o_sys_rst = r_sys_rst;
+    o_sys_nrst = r_sys_nrst.read();
+    o_dbg_nrst = r_dbg_nrst;
+    o_pcie_nrst = rb_pcie_nrst[1];
 }
 
-void apb_prci::rhegisters() {
-    if ((async_reset_ == 1) && (i_pwrreset.read() == 1)) {
-        apb_prci_rh_reset(rh);
+void apb_prci::reqff() {
+    if (i_pwrreset.read() == 1) {
+        r_sys_locked = 0;
+        rb_ddr_locked = 0;
+        rb_pcie_lnk_up = 0;
+        r_sys_rst = 1;
+        r_sys_nrst = 0;
+        r_dbg_nrst = 0;
+        rb_pcie_nrst = 0;
     } else {
-        rh = vh;
+        r_sys_locked = i_sys_locked.read();
+        rb_ddr_locked = (rb_ddr_locked[0], i_ddr_locked.read());
+        rb_pcie_lnk_up = (rb_pcie_lnk_up[0], i_pcie_phy_lnk_up.read());
+        r_sys_rst = ((!i_sys_locked.read()) || i_dmireset.read());
+        r_sys_nrst = (i_sys_locked.read() & (~i_dmireset.read()));
+        r_dbg_nrst = i_sys_locked.read();
+        rb_pcie_nrst = (rb_pcie_nrst[0], (i_pcie_phy_lnk_up.read() & (~i_pcie_phy_rst.read())));
+    }
+}
+
+void apb_prci::registers() {
+    if ((async_reset_ == 1) && (r_sys_nrst.read() == 0)) {
+        apb_prci_r_reset(r);
+    } else {
+        r = v;
     }
 }
 

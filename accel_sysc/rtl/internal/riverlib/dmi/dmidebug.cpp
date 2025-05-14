@@ -74,21 +74,17 @@ dmidebug::dmidebug(sc_module_name name,
     tap->i_dmi_error(w_jtag_dmi_error);
     tap->o_dmi_hardreset(w_tap_dmi_hardreset);
 
-    cdc = new jtagcdc("cdc",
-                       async_reset);
-    cdc->i_clk(i_clk);
+    cdc = new cdc_afifo<3,
+                        CDC_REG_WIDTH>("cdc");
     cdc->i_nrst(i_nrst);
-    cdc->i_dmi_req_valid(w_tap_dmi_req_valid);
-    cdc->i_dmi_req_write(w_tap_dmi_req_write);
-    cdc->i_dmi_req_addr(wb_tap_dmi_req_addr);
-    cdc->i_dmi_req_data(wb_tap_dmi_req_data);
-    cdc->i_dmi_hardreset(w_tap_dmi_hardreset);
-    cdc->i_dmi_req_ready(w_cdc_dmi_req_ready);
-    cdc->o_dmi_req_valid(w_cdc_dmi_req_valid);
-    cdc->o_dmi_req_write(w_cdc_dmi_req_write);
-    cdc->o_dmi_req_addr(wb_cdc_dmi_req_addr);
-    cdc->o_dmi_req_data(wb_cdc_dmi_req_data);
-    cdc->o_dmi_hardreset(w_cdc_dmi_hardreset);
+    cdc->i_wclk(i_tck);
+    cdc->i_wr(w_tap_dmi_req_valid);
+    cdc->i_wdata(wb_reqfifo_payload_i);
+    cdc->o_wready(w_reqfifo_wready_unused);
+    cdc->i_rclk(i_clk);
+    cdc->i_rd(w_cdc_dmi_req_ready);
+    cdc->o_rdata(wb_reqfifo_payload_o);
+    cdc->o_rvalid(w_cdc_dmi_req_valid);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -111,13 +107,12 @@ dmidebug::dmidebug(sc_module_name name,
     sensitive << w_tap_dmi_hardreset;
     sensitive << w_cdc_dmi_req_valid;
     sensitive << w_cdc_dmi_req_ready;
-    sensitive << w_cdc_dmi_req_write;
-    sensitive << wb_cdc_dmi_req_addr;
-    sensitive << wb_cdc_dmi_req_data;
-    sensitive << w_cdc_dmi_hardreset;
     sensitive << wb_jtag_dmi_resp_data;
     sensitive << w_jtag_dmi_busy;
     sensitive << w_jtag_dmi_error;
+    sensitive << w_reqfifo_wready_unused;
+    sensitive << wb_reqfifo_payload_i;
+    sensitive << wb_reqfifo_payload_o;
     sensitive << r.bus_jtag;
     sensitive << r.jtag_resp_data;
     sensitive << r.prdata;
@@ -262,6 +257,10 @@ void dmidebug::comb() {
     int hsel;
     bool v_cmd_busy;
     bool v_cdc_dmi_req_ready;
+    bool v_cdc_dmi_req_write;
+    sc_uint<7> vb_cdc_dmi_req_addr;
+    sc_uint<32> vb_cdc_dmi_req_data;
+    bool v_cdc_dmi_hardreset;
     sc_uint<64> vb_arg1;
     sc_uint<32> t_command;
     sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)> t_progbuf;
@@ -277,6 +276,10 @@ void dmidebug::comb() {
     hsel = 0;
     v_cmd_busy = 0;
     v_cdc_dmi_req_ready = 0;
+    v_cdc_dmi_req_write = 0;
+    vb_cdc_dmi_req_addr = 0;
+    vb_cdc_dmi_req_data = 0;
+    v_cdc_dmi_hardreset = 0;
     vb_arg1 = 0;
     t_command = 0;
     t_progbuf = 0;
@@ -288,6 +291,11 @@ void dmidebug::comb() {
     vcfg.addr_end = i_mapinfo.read().addr_end;
     vcfg.vid = VENDOR_OPTIMITECH;
     vcfg.did = OPTIMITECH_RIVER_DMI;
+
+    v_cdc_dmi_hardreset = wb_reqfifo_payload_o.read()[40];
+    vb_cdc_dmi_req_addr = wb_reqfifo_payload_o.read()(39, 33);
+    vb_cdc_dmi_req_data = wb_reqfifo_payload_o.read()(32, 1);
+    v_cdc_dmi_req_write = wb_reqfifo_payload_o.read()[0];
 
     vb_hartselnext = r.wdata.read()(((16 + CFG_LOG2_CPU_MAX) - 1), 16);
     hsel = r.hartsel.read().to_int();
@@ -311,10 +319,10 @@ void dmidebug::comb() {
             v_cdc_dmi_req_ready = 1;
             v.bus_jtag = 1;
             v.dmstate = DM_STATE_ACCESS;
-            v.regidx = wb_cdc_dmi_req_addr.read();
-            v.wdata = wb_cdc_dmi_req_data.read();
-            v.regwr = w_cdc_dmi_req_write.read();
-            v.regrd = (~w_cdc_dmi_req_write.read());
+            v.regidx = vb_cdc_dmi_req_addr;
+            v.wdata = vb_cdc_dmi_req_data;
+            v.regwr = v_cdc_dmi_req_write;
+            v.regrd = (~v_cdc_dmi_req_write);
         } else if (((i_apbi.read().pselx == 1) && (i_apbi.read().pwrite == 0))
                     || ((i_apbi.read().pselx == 1) && (i_apbi.read().penable == 1) && (i_apbi.read().pwrite == 1))) {
             v.bus_jtag = 0;
@@ -671,7 +679,7 @@ void dmidebug::comb() {
     vb_req_type[DPortReq_MemVirtual] = r.aamvirtual.read();
     vb_req_type[DPortReq_Progexec] = r.cmd_progexec.read();
 
-    if (((~async_reset_) && (i_nrst.read() == 0)) || (w_cdc_dmi_hardreset.read() == 1)) {
+    if (((~async_reset_) && (i_nrst.read() == 0)) || (v_cdc_dmi_hardreset == 1)) {
         dmidebug_r_reset(v);
     }
 
@@ -698,6 +706,11 @@ void dmidebug::comb() {
 
     o_cfg = vcfg;
     o_apbo = vapbo;
+
+    wb_reqfifo_payload_i = (w_tap_dmi_hardreset.read(),
+            wb_tap_dmi_req_addr.read(),
+            wb_tap_dmi_req_data.read(),
+            w_tap_dmi_req_write.read());
 }
 
 void dmidebug::registers() {
