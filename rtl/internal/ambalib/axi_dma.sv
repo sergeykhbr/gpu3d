@@ -150,7 +150,8 @@ begin: comb_proc
             end
             // debug interface:
             v.dbg_payload = {1'b1,
-                    i_req_mem_addr[12: 0],
+                    i_req_mem_addr[10: 0],
+                    2'h0,
                     i_req_mem_bytes,
                     i_req_mem_strob,
                     i_req_mem_data[31: 0]};
@@ -295,6 +296,8 @@ begin: comb_proc
     vmsto.b_ready = r.b_ready;
 
     o_msto = vmsto;
+    o_dbg_valid = r.dbg_valid;
+    o_dbg_payload = r.dbg_payload;
 
     rin = v;
 end: comb_proc
