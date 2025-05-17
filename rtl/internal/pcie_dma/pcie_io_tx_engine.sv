@@ -44,9 +44,12 @@ module pcie_io_tx_engine #(
     input logic [7:0] i_req_tag,
     input logic [7:0] i_req_be,
     input logic [12:0] i_req_addr,
+    input logic [9:0] i_req_bytes,
     // 
     input logic i_dma_resp_valid,
+    input logic i_dma_resp_last,
     input logic i_dma_resp_fault,                           // Error on memory access
+    input logic [12:0] i_dma_resp_addr,
     input logic [63:0] i_dma_resp_data,
     output logic o_dma_resp_ready,                          // Ready to accept response
     input logic [15:0] i_completer_id
@@ -91,51 +94,26 @@ pcie_io_tx_engine_registers rin;
 always_comb
 begin: comb_proc
     pcie_io_tx_engine_registers v;
-    logic [1:0] vb_add_be20;
-    logic [1:0] vb_add_be21;
-    logic [11:0] vb_byte_count;
     logic [6:0] vb_lower_addr;
     logic [C_DATA_WIDTH-1:0] vb_s_axis_tx_tdata;
 
     v = r;
-    vb_add_be20 = '0;
-    vb_add_be21 = '0;
-    vb_byte_count = '0;
     vb_lower_addr = '0;
     vb_s_axis_tx_tdata = '0;
 
-    // Calculate byte count based on byte enable
-    vb_add_be20 = ({1'b0, r.rd_be[3]} + {1'b0, r.rd_be[2]});
-    vb_add_be21 = ({1'b0, r.rd_be[1]} + {1'b0, r.rd_be[0]});
-    vb_byte_count = ({2'd0, vb_add_be20} + {2'd0, vb_add_be21});
-
     // The completer field 'lower address' DWORD[2][6:0]:
-
     // For completions other than for memory reads, this value is set to 0.
-
     // For memory reads it is the lower byte address of the first byte in
-
     // the returned data (or partial data). This is set for the first
-
     // (or only) completion and will be 0 in the lower 7 bits from then on,
-
     // as the completions, if split, must be naturally aligned to a read
-
     // completion boundary (RCB), which is usually 128 bytes
-
     // (though 64 bytes in root complex).
-
     if (r.req_compl_wd_q == 1'b0) begin
         // Request without payload
         vb_lower_addr = 7'd0;
-    end else if (r.rd_be[0] == 1'b1) begin
-        vb_lower_addr = 7'd0;
-    end else if (r.rd_be[1] == 1'b1) begin
-        vb_lower_addr = {r.req_addr[6: 2], 2'd1};
-    end else if (r.rd_be[2] == 1'b1) begin
-        vb_lower_addr = {r.req_addr[6: 2], 2'd2};
-    end else if (r.rd_be[3] == 1'b1) begin
-        vb_lower_addr = {r.req_addr[6: 2], 2'd3};
+    end else begin
+        vb_lower_addr = r.req_addr[6: 0];
     end
 
     case (r.state)
@@ -147,11 +125,7 @@ begin: comb_proc
         v.compl_done = 1'b0;
         if ((i_req_compl == 1'b1) && (i_dma_resp_valid == 1'b1)) begin
             v.req_addr = i_req_addr;
-            if (r.req_addr[2] == 1'b1) begin
-                v.rd_data = i_dma_resp_data[63: 32];
-            end else begin
-                v.rd_data = i_dma_resp_data[31: 0];
-            end
+            v.rd_data = i_dma_resp_data[31: 0];
             v.rd_be = i_req_be;
             v.req_compl_wd_q = i_req_compl_wd;
             v.state = PIO_TX_CPLD_QW1_FIRST;
@@ -164,7 +138,7 @@ begin: comb_proc
             vb_s_axis_tx_tdata[63: 48] = i_completer_id;
             vb_s_axis_tx_tdata[47: 45] = 3'd0;
             vb_s_axis_tx_tdata[44] = 1'b0;
-            vb_s_axis_tx_tdata[43: 32] = vb_byte_count;
+            vb_s_axis_tx_tdata[43: 32] = i_req_bytes;
             vb_s_axis_tx_tdata[31] = 1'b0;
             if (r.req_compl_wd_q == 1'b1) begin
                 vb_s_axis_tx_tdata[30: 24] = PIO_CPLD_FMT_TYPE;

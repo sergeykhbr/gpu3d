@@ -41,16 +41,17 @@ module pcie_io_ep #(
     // Memory access signals:
     input logic i_req_mem_ready,                            // Ready to accept next memory request
     output logic o_req_mem_valid,                           // Request data is valid to accept
-    output logic o_req_mem_64,                              // 0=32-bits; 1=64-bits
     output logic o_req_mem_write,                           // 0=read; 1=write operation
     output logic [9:0] o_req_mem_bytes,                     // 0=1024 B; 4=DWORD; 8=QWORD; ...
     output logic [12:0] o_req_mem_addr,                     // Address to read/write
     output logic [7:0] o_req_mem_strob,                     // Byte enabling write strob
     output logic [63:0] o_req_mem_data,                     // Data to write
     output logic o_req_mem_last,                            // Last data payload in a sequence
-    input logic [63:0] i_resp_mem_data,                     // Read data value
     input logic i_resp_mem_valid,                           // Read/Write data is valid. All write transaction with valid response.
+    input logic i_resp_mem_last,                            // Last response in sequence
     input logic i_resp_mem_fault,                           // Error on memory access
+    input logic [12:0] i_resp_mem_addr,                     // Read address value
+    input logic [63:0] i_resp_mem_data,                     // Read data value
     output logic o_resp_mem_ready                           // Ready to accept response
 );
 
@@ -66,6 +67,7 @@ logic [15:0] wb_req_rid;
 logic [7:0] wb_req_tag;
 logic [7:0] wb_req_be;
 logic [12:0] wb_req_addr;
+logic [9:0] wb_req_bytes;
 
 pcie_io_rx_engine #(
     .C_DATA_WIDTH(C_DATA_WIDTH),
@@ -93,9 +95,8 @@ pcie_io_rx_engine #(
     .o_req_addr(wb_req_addr),
     .i_req_mem_ready(i_req_mem_ready),
     .o_req_mem_valid(o_req_mem_valid),
-    .o_req_mem_64(o_req_mem_64),
     .o_req_mem_write(o_req_mem_write),
-    .o_req_mem_bytes(o_req_mem_bytes),
+    .o_req_mem_bytes(wb_req_bytes),
     .o_req_mem_addr(o_req_mem_addr),
     .o_req_mem_strob(o_req_mem_strob),
     .o_req_mem_data(o_req_mem_data),
@@ -127,8 +128,11 @@ pcie_io_tx_engine #(
     .i_req_tag(wb_req_tag),
     .i_req_be(wb_req_be),
     .i_req_addr(wb_req_addr),
+    .i_req_bytes(wb_req_bytes),
     .i_dma_resp_valid(i_resp_mem_valid),
+    .i_dma_resp_last(i_resp_mem_last),
     .i_dma_resp_fault(i_resp_mem_fault),
+    .i_dma_resp_addr(i_resp_mem_addr),
     .i_dma_resp_data(i_resp_mem_data),
     .o_dma_resp_ready(o_resp_mem_ready),
     .i_completer_id(i_cfg_completer_id)
@@ -149,5 +153,7 @@ begin: comb_proc
     vb_mem_data = '0;
 
 end: comb_proc
+
+assign o_req_mem_bytes = wb_req_bytes;
 
 endmodule: pcie_io_ep

@@ -41,6 +41,8 @@ typedef struct {
     logic req_last;
     logic req_ready;
     logic resp_valid;
+    logic resp_last;
+    logic [CFG_SYSBUS_ADDR_BITS-1:0] resp_addr;
     logic [CFG_SYSBUS_DATA_BITS-1:0] resp_data;
     logic resp_error;
     logic [CFG_SYSBUS_USER_BITS-1:0] user_count;
@@ -61,6 +63,8 @@ const axi_dma_registers axi_dma_r_reset = '{
     1'b0,                               // req_last
     1'b1,                               // req_ready
     '0,                                 // resp_valid
+    '0,                                 // resp_last
+    '0,                                 // resp_addr
     '0,                                 // resp_data
     1'b0,                               // resp_error
     '0                                  // user_count

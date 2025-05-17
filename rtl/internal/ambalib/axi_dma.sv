@@ -26,16 +26,17 @@ module axi_dma #(
     input logic i_clk,                                      // CPU clock
     output logic o_req_mem_ready,                           // Ready to accept next data
     input logic i_req_mem_valid,                            // Request data is ready to accept
-    input logic i_req_mem_64,                               // 0=32-bits; 1=64-bits
     input logic i_req_mem_write,                            // 0=read; 1=write operation
     input logic [9:0] i_req_mem_bytes,                      // 0=1024 B; 4=DWORD; 8=QWORD; ...
     input logic [abits-1:0] i_req_mem_addr,                 // Address to read/write
     input logic [7:0] i_req_mem_strob,                      // Byte enabling write strob
     input logic [63:0] i_req_mem_data,                      // Data to write
     input logic i_req_mem_last,                             // Last data payload in a sequence
-    output logic [63:0] o_resp_mem_data,                    // Read data value
     output logic o_resp_mem_valid,                          // Read/Write data is valid. All write transaction with valid response.
+    output logic o_resp_mem_last,                           // Last response in a sequence.
     output logic o_resp_mem_fault,                          // Error on memory access
+    output logic [abits-1:0] o_resp_mem_addr,               // Read address value
+    output logic [63:0] o_resp_mem_data,                    // Read data value
     input logic i_resp_mem_ready,                           // Ready to accept response
     input types_amba_pkg::axi4_master_in_type i_msti,       // AXI master input
     output types_amba_pkg::axi4_master_out_type o_msto      // AXI master output
@@ -53,35 +54,83 @@ begin: comb_proc
     axi_dma_registers v;
     logic [9:0] vb_req_mem_bytes_m1;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] vb_req_addr_inc;
+    logic [CFG_SYSBUS_DATA_BITS-1:0] vb_r_data_swap;
     axi4_master_out_type vmsto;
 
     v = r;
     vb_req_mem_bytes_m1 = '0;
     vb_req_addr_inc = '0;
+    vb_r_data_swap = '0;
     vmsto = axi4_master_out_none;
 
     vb_req_mem_bytes_m1 = (i_req_mem_bytes - 1);
     vb_req_addr_inc = r.req_addr;
-    if (i_req_mem_64 == 1'b1) begin
-        vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h008);
-    end else begin
+
+    // Byte swapping:
+    if (r.req_size == 3'd0) begin
+        vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h001);
+        if (r.req_addr[2: 0] == 3'd0) begin
+            vb_r_data_swap[31: 0] = {i_msti.r_data[7: 0], i_msti.r_data[7: 0], i_msti.r_data[7: 0], i_msti.r_data[7: 0]};
+        end else if (r.req_addr[2: 0] == 3'd1) begin
+            vb_r_data_swap[31: 0] = {i_msti.r_data[15: 8], i_msti.r_data[15: 8], i_msti.r_data[15: 8], i_msti.r_data[15: 8]};
+        end else if (r.req_addr[2: 0] == 3'd2) begin
+            vb_r_data_swap[31: 0] = {i_msti.r_data[23: 16], i_msti.r_data[23: 16], i_msti.r_data[23: 16], i_msti.r_data[23: 16]};
+        end else if (r.req_addr[2: 0] == 3'd3) begin
+            vb_r_data_swap[31: 0] = {i_msti.r_data[31: 24], i_msti.r_data[31: 24], i_msti.r_data[31: 24], i_msti.r_data[31: 24]};
+        end else if (r.req_addr[2: 0] == 3'd4) begin
+            vb_r_data_swap[31: 0] = {i_msti.r_data[39: 32], i_msti.r_data[39: 32], i_msti.r_data[39: 32], i_msti.r_data[39: 32]};
+        end else if (r.req_addr[2: 0] == 3'd5) begin
+            vb_r_data_swap[31: 0] = {i_msti.r_data[47: 40], i_msti.r_data[47: 40], i_msti.r_data[47: 40], i_msti.r_data[47: 40]};
+        end else if (r.req_addr[2: 0] == 3'd6) begin
+            vb_r_data_swap[31: 0] = {i_msti.r_data[55: 48], i_msti.r_data[55: 48], i_msti.r_data[55: 48], i_msti.r_data[55: 48]};
+        end else begin
+            vb_r_data_swap[31: 0] = {i_msti.r_data[63: 56], i_msti.r_data[63: 56], i_msti.r_data[63: 56], i_msti.r_data[63: 56]};
+        end
+        vb_r_data_swap[63: 32] = vb_r_data_swap[31: 0];
+    end else if (r.req_size == 3'd1) begin
+        vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h002);
+        if (r.req_addr[2: 1] == 2'd0) begin
+            vb_r_data_swap = {i_msti.r_data[15: 0], i_msti.r_data[15: 0], i_msti.r_data[15: 0], i_msti.r_data[15: 0]};
+        end else if (r.req_addr[2: 1] == 2'd1) begin
+            vb_r_data_swap = {i_msti.r_data[31: 16], i_msti.r_data[31: 16], i_msti.r_data[31: 16], i_msti.r_data[31: 16]};
+        end else if (r.req_addr[2: 1] == 2'd2) begin
+            vb_r_data_swap = {i_msti.r_data[47: 32], i_msti.r_data[47: 32], i_msti.r_data[47: 32], i_msti.r_data[47: 32]};
+        end else begin
+            vb_r_data_swap = {i_msti.r_data[63: 48], i_msti.r_data[63: 48], i_msti.r_data[63: 48], i_msti.r_data[63: 48]};
+        end
+    end else if (r.req_size == 3'd2) begin
         vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h004);
+        if (r.req_addr[2] == 1'b0) begin
+            vb_r_data_swap = {i_msti.r_data[31: 0], i_msti.r_data[31: 0]};
+        end else begin
+            vb_r_data_swap = {i_msti.r_data[63: 32], i_msti.r_data[63: 32]};
+        end
+    end else begin
+        vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h008);
+        vb_r_data_swap = i_msti.r_data;
     end
 
     case (r.state)
     state_idle: begin
         v.req_ready = 1'b1;
         v.resp_valid = 1'b0;
+        v.resp_last = 1'b0;
         if (i_req_mem_valid == 1'b1) begin
             v.req_ready = 1'b0;
             v.req_addr = (48'h000008000000 | {'0, i_req_mem_addr});
             v.req_last = i_req_mem_last;
-            if (i_req_mem_64 == 1'b1) begin
-                v.req_size = 3'd6;
-                v.req_len = {1'b0, vb_req_mem_bytes_m1[9: 3]};
+            if (i_req_mem_bytes == 10'd1) begin
+                v.req_size = 3'd0;
+                v.req_len = 8'd0;
+            end else if (i_req_mem_bytes == 10'd2) begin
+                v.req_size = 3'd1;
+                v.req_len = 8'd0;
+            end else if (i_req_mem_bytes == 10'd4) begin
+                v.req_size = 3'd2;
+                v.req_len = 8'd0;
             end else begin
-                v.req_size = 3'd5;
-                v.req_len = vb_req_mem_bytes_m1[9: 2];
+                v.req_size = 3'd3;
+                v.req_len = {1'b0, vb_req_mem_bytes_m1[9: 3]};
             end
             if (i_req_mem_write == 1'b0) begin
                 v.ar_valid = 1'b1;
@@ -99,6 +148,7 @@ begin: comb_proc
     end
     state_ar: begin
         if (i_msti.ar_ready == 1'b1) begin
+            v.resp_addr = r.req_addr;
             v.ar_valid = 1'b0;
             v.r_ready = 1'b1;
             v.state = state_r;
@@ -107,8 +157,9 @@ begin: comb_proc
     state_r: begin
         if (i_msti.r_valid == 1'b1) begin
             v.resp_valid = 1'b1;
-            v.resp_data = i_msti.r_data;
-            v.req_last = i_msti.r_last;
+            v.resp_addr = r.req_addr;
+            v.resp_data = vb_r_data_swap;
+            v.resp_last = i_msti.r_last;
             v.resp_error = i_msti.r_resp[1];
             v.req_addr = vb_req_addr_inc;
 
@@ -122,8 +173,8 @@ begin: comb_proc
         if (i_resp_mem_ready == 1'b1) begin
             v.resp_valid = 1'b0;
 
-            if (r.req_last == 1'b1) begin
-                v.req_last = 1'b0;
+            if (r.resp_last == 1'b1) begin
+                v.resp_last = 1'b0;
                 v.user_count = (r.user_count + 1);
                 v.req_ready = 1'b1;
                 v.state = state_idle;
@@ -138,6 +189,7 @@ begin: comb_proc
         if (i_msti.aw_ready == 1'b1) begin
             v.aw_valid = 1'b0;
             v.state = state_w;
+            v.resp_addr = r.req_addr;
 
             if (r.w_valid && (i_msti.w_ready == 1'b1)) begin
                 // AXI Lite accepted
@@ -192,6 +244,7 @@ begin: comb_proc
             v.user_count = (r.user_count + 1);
             v.resp_error = i_msti.b_resp[1];
             v.resp_valid = 1'b1;
+            v.resp_last = 1'b1;
         end
     end
     endcase
@@ -200,10 +253,12 @@ begin: comb_proc
         v = axi_dma_r_reset;
     end
 
-    o_req_mem_ready = r.req_ready;
     o_resp_mem_valid = r.resp_valid;
-    o_resp_mem_data = r.resp_data;
+    o_resp_mem_last = r.resp_last;
     o_resp_mem_fault = r.resp_error;
+    o_resp_mem_addr = r.resp_addr;
+    o_resp_mem_data = r.resp_data;
+    o_req_mem_ready = r.req_ready;
 
     vmsto.ar_valid = r.ar_valid;
     vmsto.ar_bits.addr = r.req_addr;
