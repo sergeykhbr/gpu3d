@@ -45,11 +45,16 @@ module pcie_io_rx_engine #(
     output logic [7:0] o_req_be,                            // Memory Read Byte Enables
     output logic [12:0] o_req_addr,                         // Memory Read Address
     // 
-    output logic [10:0] o_wr_addr,                          // Memory Write Address
-    output logic [3:0] o_wr_be,                             // Memory Write Byte Enable
-    output logic [31:0] o_wr_data,                          // Memory Write Data
-    output logic o_wr_en,                                   // Memory Write Enable
-    input logic i_wr_busy                                   // Memory Write Busy
+    input logic i_req_mem_ready,                            // Ready to accept next memory request
+    output logic o_req_mem_valid,                           // Request data is valid to accept
+    output logic o_req_mem_64,                              // 0=32-bits; 1=64-bits
+    output logic o_req_mem_write,                           // 0=read; 1=write operation
+    output logic [9:0] o_req_mem_bytes,                     // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    output logic [12:0] o_req_mem_addr,                     // Address to read/write
+    output logic [7:0] o_req_mem_strob,                     // Byte enabling write strob
+    output logic [63:0] o_req_mem_data,                     // Data to write
+    output logic o_req_mem_last,                            // Last data payload in a sequence
+    input logic i_resp_mem_valid                            // Read/Write data is valid. All write transaction with valid response.
 );
 
 
@@ -66,14 +71,17 @@ localparam bit [7:0] PIO_RX_MEM_WR32_DW1DW2 = 8'h02;
 localparam bit [7:0] PIO_RX_MEM_RD64_DW1DW2 = 8'h04;
 localparam bit [7:0] PIO_RX_MEM_WR64_DW1DW2 = 8'h08;
 localparam bit [7:0] PIO_RX_MEM_WR64_DW3 = 8'h10;
-localparam bit [7:0] PIO_RX_WAIT_STATE = 8'h20;
-localparam bit [7:0] PIO_RX_IO_WR_DW1DW2 = 8'h40;
-localparam bit [7:0] PIO_RX_IO_MEM_WR_WAIT_STATE = 8'h80;
+localparam bit [7:0] PIO_RX_IO_WR_DW1DW2 = 8'h20;
+localparam bit [7:0] PIO_RX_WAIT_DMA_RESP = 8'h40;
+localparam bit [7:0] PIO_RX_WAIT_TX_COMPLETION = 8'h80;
+// TLP Response Types:
+localparam bit [1:0] TLP_NON_POSTED = 2'd0;                 // No response at all
+localparam bit [1:0] TLP_POSTED = 2'd3;                     // Response with data payload
+localparam bit [1:0] TLP_COMPLETION = 2'd1;                 // Response without payload
 
 typedef struct {
     logic m_axis_rx_tready;
-    logic req_compl;
-    logic req_compl_wd;
+    logic req_valid;
     logic [2:0] req_tc;
     logic req_td;
     logic req_ep;
@@ -85,17 +93,16 @@ typedef struct {
     logic [12:0] req_addr;
     logic [10:0] wr_addr;
     logic [7:0] wr_be;
-    logic [31:0] wr_data;
     logic wr_en;
+    logic [63:0] wr_data;
     logic [7:0] state;
     logic [7:0] tlp_type;
-    logic in_packet_q;
+    logic [1:0] tlp_resp;
 } pcie_io_rx_engine_registers;
 
 const pcie_io_rx_engine_registers pcie_io_rx_engine_r_reset = '{
     1'b0,                               // m_axis_rx_tready
-    1'b0,                               // req_compl
-    1'b1,                               // req_compl_wd
+    1'b0,                               // req_valid
     3'd0,                               // req_tc
     1'b0,                               // req_td
     1'b0,                               // req_ep
@@ -107,13 +114,12 @@ const pcie_io_rx_engine_registers pcie_io_rx_engine_r_reset = '{
     13'd0,                              // req_addr
     11'd0,                              // wr_addr
     8'd0,                               // wr_be
-    32'd0,                              // wr_data
     1'b0,                               // wr_en
+    64'd0,                              // wr_data
     PIO_RX_RST_STATE,                   // state
     8'd0,                               // tlp_type
-    1'b0                                // in_packet_q
+    TLP_NON_POSTED                      // tlp_resp
 };
-logic w_sop;
 pcie_io_rx_engine_registers r;
 pcie_io_rx_engine_registers rin;
 
@@ -126,14 +132,6 @@ begin: comb_proc
     v = r;
     vb_region_select = '0;
 
-    // Generate a signal that indicates if we are currently receiving a packet.
-    // This value is one clock cycle delayed from what is actually on the AXIS
-    // data bus.
-    if ((i_m_axis_rx_tvalid == 1'b1) && (r.m_axis_rx_tready == 1'b1) && (i_m_axis_rx_tlast == 1'b1)) begin
-        v.in_packet_q = 1'b0;
-    end else if ((w_sop == 1'b1) && (r.m_axis_rx_tready == 1'b1)) begin
-        v.in_packet_q = 1'b1;
-    end
 
     if (i_m_axis_rx_tuser[8: 2] == 7'h01) begin             // Select Mem32 region
         vb_region_select = 2'h1;
@@ -144,20 +142,18 @@ begin: comb_proc
     end
 
     v.wr_en = 1'b0;
-    v.req_compl = 1'b0;
 
     case (r.state)
     PIO_RX_RST_STATE: begin
         v.m_axis_rx_tready = 1'b1;
-        v.req_compl_wd = 1'b1;
+        v.tlp_resp = 2'd0;
 
-        if (w_sop == 1'b1) begin
+        if (i_m_axis_rx_tvalid == 1'b1) begin
+            v.tlp_type = i_m_axis_rx_tdata[31: 24];
+            v.req_len = i_m_axis_rx_tdata[9: 0];
+
             case (i_m_axis_rx_tdata[30: 24])
             PIO_RX_MEM_RD32_FMT_TYPE: begin
-                v.tlp_type = i_m_axis_rx_tdata[31: 24];
-                v.req_len = i_m_axis_rx_tdata[9: 0];
-                v.m_axis_rx_tready = 1'b0;
-
                 if (i_m_axis_rx_tdata[9: 0] == 10'd1) begin
                     v.req_tc = i_m_axis_rx_tdata[22: 20];
                     v.req_td = i_m_axis_rx_tdata[15];
@@ -174,10 +170,6 @@ begin: comb_proc
             end
 
             PIO_RX_MEM_WR32_FMT_TYPE: begin
-                v.tlp_type = i_m_axis_rx_tdata[31: 24];
-                v.req_len = i_m_axis_rx_tdata[9: 0];
-                v.m_axis_rx_tready = 1'b0;
-
                 if (i_m_axis_rx_tdata[9: 0] == 10'd1) begin
                     v.wr_be = i_m_axis_rx_tdata[39: 32];
                     v.state = PIO_RX_MEM_WR32_DW1DW2;
@@ -187,10 +179,6 @@ begin: comb_proc
             end
 
             PIO_RX_MEM_RD64_FMT_TYPE: begin
-                v.tlp_type = i_m_axis_rx_tdata[31: 24];
-                v.req_len = i_m_axis_rx_tdata[9: 0];
-                v.m_axis_rx_tready = 1'b0;
-
                 if (i_m_axis_rx_tdata[9: 0] == 10'd1) begin
                     v.req_tc = i_m_axis_rx_tdata[22: 20];
                     v.req_td = i_m_axis_rx_tdata[15];
@@ -207,9 +195,6 @@ begin: comb_proc
             end
 
             PIO_RX_MEM_WR64_FMT_TYPE: begin
-                v.tlp_type = i_m_axis_rx_tdata[31: 24];
-                v.req_len = i_m_axis_rx_tdata[9: 0];
-
                 if (i_m_axis_rx_tdata[9: 0] == 10'd1) begin
                     v.wr_be = i_m_axis_rx_tdata[39: 32];
                     v.state = PIO_RX_MEM_WR64_DW1DW2;
@@ -219,10 +204,6 @@ begin: comb_proc
             end
 
             PIO_RX_IO_RD32_FMT_TYPE: begin
-                v.tlp_type = i_m_axis_rx_tdata[31: 24];
-                v.req_len = i_m_axis_rx_tdata[9: 0];
-                v.m_axis_rx_tready = 1'b0;
-
                 if (i_m_axis_rx_tdata[9: 0] == 10'd1) begin
                     v.req_tc = i_m_axis_rx_tdata[22: 20];
                     v.req_td = i_m_axis_rx_tdata[15];
@@ -239,10 +220,6 @@ begin: comb_proc
             end
 
             PIO_RX_IO_WR32_FMT_TYPE: begin
-                v.tlp_type = i_m_axis_rx_tdata[31: 24];
-                v.req_len = i_m_axis_rx_tdata[9: 0];
-                v.m_axis_rx_tready = 1'b0;
-
                 if (i_m_axis_rx_tdata[9: 0] == 10'd1) begin
                     v.req_tc = i_m_axis_rx_tdata[22: 20];
                     v.req_td = i_m_axis_rx_tdata[15];
@@ -271,10 +248,10 @@ begin: comb_proc
     PIO_RX_MEM_RD32_DW1DW2: begin
         if (i_m_axis_rx_tvalid == 1'b1) begin
             v.m_axis_rx_tready = 1'b0;
+            v.req_valid = 1'b1;
             v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2], 2'd0};
-            v.req_compl = 1'b1;
-            v.req_compl_wd = 1'b1;
-            v.state = PIO_RX_WAIT_STATE;
+            v.tlp_resp = TLP_POSTED;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         end else begin
             v.state = PIO_RX_MEM_RD32_DW1DW2;
         end
@@ -282,11 +259,17 @@ begin: comb_proc
 
     PIO_RX_MEM_WR32_DW1DW2: begin
         if (i_m_axis_rx_tvalid == 1'b1) begin
-            v.wr_data = i_m_axis_rx_tdata[63: 32];
-            v.wr_en = 1'b1;
             v.m_axis_rx_tready = 1'b0;
+            v.req_valid = 1'b1;
+            v.wr_en = 1'b1;
             v.wr_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2]};
-            v.state = PIO_RX_WAIT_STATE;
+            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2], 2'd0};
+            v.wr_data = {i_m_axis_rx_tdata[63: 32], i_m_axis_rx_tdata[63: 32]};
+            if (i_m_axis_rx_tdata[2] == 1'b1) begin
+                v.wr_be = {r.wr_be[3: 0], r.wr_be[7: 4]};
+            end
+            v.tlp_resp = TLP_NON_POSTED;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         end else begin
             v.state = PIO_RX_MEM_WR32_DW1DW2;
         end
@@ -294,11 +277,11 @@ begin: comb_proc
 
     PIO_RX_MEM_RD64_DW1DW2: begin
         if (i_m_axis_rx_tvalid == 1'b1) begin
-            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[42: 34], 2'd0};
-            v.req_compl = 1'b1;
-            v.req_compl_wd = 1'b1;
             v.m_axis_rx_tready = 1'b0;
-            v.state = PIO_RX_WAIT_STATE;
+            v.req_valid = 1'b1;
+            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[42: 34], 2'd0};
+            v.tlp_resp = TLP_POSTED;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         end else begin
             v.state = PIO_RX_MEM_RD64_DW1DW2;
         end
@@ -306,8 +289,11 @@ begin: comb_proc
 
     PIO_RX_MEM_WR64_DW1DW2: begin
         if (i_m_axis_rx_tvalid == 1'b1) begin
-            v.m_axis_rx_tready = 1'b0;
             v.wr_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[42: 34]};
+            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[42: 34], 2'd0};
+            if (i_m_axis_rx_tdata[34] == 1'b1) begin
+                v.wr_be = {r.wr_be[3: 0], r.wr_be[7: 4]};
+            end
             v.state = PIO_RX_MEM_WR64_DW3;
         end else begin
             v.state = PIO_RX_MEM_WR64_DW1DW2;
@@ -316,10 +302,12 @@ begin: comb_proc
 
     PIO_RX_MEM_WR64_DW3: begin
         if (i_m_axis_rx_tvalid == 1'b1) begin
-            v.wr_data = i_m_axis_rx_tdata[31: 0];
-            v.wr_en = 1'b1;
             v.m_axis_rx_tready = 1'b0;
-            v.state = PIO_RX_WAIT_STATE;
+            v.req_valid = 1'b1;
+            v.wr_en = 1'b1;
+            v.wr_data = {i_m_axis_rx_tdata[31: 0], i_m_axis_rx_tdata[31: 0]};
+            v.tlp_resp = TLP_NON_POSTED;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         end else begin
             v.state = PIO_RX_MEM_WR64_DW3;
         end
@@ -327,41 +315,43 @@ begin: comb_proc
 
     PIO_RX_IO_WR_DW1DW2: begin
         if (i_m_axis_rx_tvalid == 1'b1) begin
-            v.wr_data = i_m_axis_rx_tdata[63: 32];
-            v.wr_en = 1'b1;
             v.m_axis_rx_tready = 1'b0;
+            v.req_valid = 1'b1;
+            v.wr_en = 1'b1;
             v.wr_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2]};
-            v.req_compl = 1'b1;
-            v.req_compl_wd = 1'b0;
-            v.state = PIO_RX_WAIT_STATE;
+            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2], 2'd0};
+            v.wr_data = {i_m_axis_rx_tdata[63: 32], i_m_axis_rx_tdata[63: 32]};
+            if (i_m_axis_rx_tdata[2] == 1'b1) begin
+                v.wr_be = {r.wr_be[3: 0], r.wr_be[7: 4]};
+            end
+            v.tlp_resp = TLP_COMPLETION;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         end else begin
             v.state = PIO_RX_IO_WR_DW1DW2;
         end
     end
 
-    PIO_RX_WAIT_STATE: begin
+    PIO_RX_WAIT_DMA_RESP: begin
+        if (i_req_mem_ready == 1'b1) begin
+            v.req_valid = 1'b0;
+        end
+        if (i_resp_mem_valid == 1'b1) begin
+            if ((|r.tlp_resp) == 1'b1) begin
+                v.tlp_resp = 2'd0;
+                v.state = PIO_RX_WAIT_TX_COMPLETION;
+            end else begin
+                v.m_axis_rx_tready = 1'b1;
+                v.state = PIO_RX_RST_STATE;
+            end
+        end
+    end
+
+    PIO_RX_WAIT_TX_COMPLETION: begin
         v.wr_en = 1'b0;
-        v.req_compl = 1'b0;
-        if ((r.tlp_type == PIO_RX_MEM_WR32_FMT_TYPE) && (i_wr_busy == 1'b0)) begin
+        v.req_len = 10'd0;
+        if (i_compl_done == 1'b1) begin
             v.m_axis_rx_tready = 1'b1;
             v.state = PIO_RX_RST_STATE;
-        end else if ((r.tlp_type == PIO_RX_IO_WR32_FMT_TYPE) && (i_wr_busy == 1'b0)) begin
-            v.m_axis_rx_tready = 1'b1;
-            v.state = PIO_RX_RST_STATE;
-        end else if ((r.tlp_type == PIO_RX_MEM_WR64_FMT_TYPE) && (i_wr_busy == 1'b0)) begin
-            v.m_axis_rx_tready = 1'b1;
-            v.state = PIO_RX_RST_STATE;
-        end else if ((r.tlp_type == PIO_RX_MEM_RD32_FMT_TYPE) && (i_compl_done == 1'b1)) begin
-            v.m_axis_rx_tready = 1'b1;
-            v.state = PIO_RX_RST_STATE;
-        end else if ((r.tlp_type == PIO_RX_IO_RD32_FMT_TYPE) && (i_compl_done == 1'b1)) begin
-            v.m_axis_rx_tready = 1'b1;
-            v.state = PIO_RX_RST_STATE;
-        end else if ((r.tlp_type == PIO_RX_MEM_RD64_FMT_TYPE) && (i_compl_done == 1'b1)) begin
-            v.m_axis_rx_tready = 1'b1;
-            v.state = PIO_RX_RST_STATE;
-        end else begin
-            v.state = PIO_RX_WAIT_STATE;
         end
     end
 
@@ -374,11 +364,9 @@ begin: comb_proc
 end: comb_proc
 
 
-assign w_sop = ((~r.in_packet_q) && i_m_axis_rx_tvalid);
-
 assign o_m_axis_rx_tready = r.m_axis_rx_tready;
-assign o_req_compl = r.req_compl;
-assign o_req_compl_wd = r.req_compl_wd;
+assign o_req_compl = r.tlp_resp[0];
+assign o_req_compl_wd = r.tlp_resp[1];
 assign o_req_tc = r.req_tc;
 assign o_req_td = r.req_td;
 assign o_req_ep = r.req_ep;
@@ -388,10 +376,15 @@ assign o_req_rid = r.req_rid;
 assign o_req_tag = r.req_tag;
 assign o_req_be = r.req_be;
 assign o_req_addr = r.req_addr;
-assign o_wr_addr = r.wr_addr;
-assign o_wr_be = r.wr_be[3: 0];
-assign o_wr_data = r.wr_data;
-assign o_wr_en = r.wr_en;
+
+assign o_req_mem_valid = r.req_valid;
+assign o_req_mem_64 = 1'b0;
+assign o_req_mem_write = r.wr_en;
+assign o_req_mem_bytes = {r.req_len, 2'd0};
+assign o_req_mem_addr = r.req_addr;
+assign o_req_mem_strob = r.wr_be;
+assign o_req_mem_data = r.wr_data;
+assign o_req_mem_last = 1'b1;
 
 always_ff @(posedge i_clk, negedge i_nrst) begin
     if (i_nrst == 1'b0) begin

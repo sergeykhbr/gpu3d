@@ -45,9 +45,10 @@ module pcie_io_tx_engine #(
     input logic [7:0] i_req_be,
     input logic [12:0] i_req_addr,
     // 
-    output logic [10:0] o_rd_addr,
-    output logic [3:0] o_rd_be,
-    input logic [31:0] i_rd_data,
+    input logic i_dma_resp_valid,
+    input logic i_dma_resp_fault,                           // Error on memory access
+    input logic [63:0] i_dma_resp_data,
+    output logic o_dma_resp_ready,                          // Ready to accept response
     input logic [15:0] i_completer_id
 );
 
@@ -56,7 +57,6 @@ localparam bit [6:0] PIO_CPLD_FMT_TYPE = 7'h4A;
 localparam bit [6:0] PIO_CPL_FMT_TYPE = 7'h0A;
 localparam bit [1:0] PIO_TX_RST_STATE = 2'h0;
 localparam bit [1:0] PIO_TX_CPLD_QW1_FIRST = 2'h1;
-localparam bit [1:0] PIO_TX_CPLD_QW1_TEMP = 2'h2;
 localparam bit [1:0] PIO_TX_CPLD_QW1 = 2'h3;
 
 typedef struct {
@@ -65,10 +65,10 @@ typedef struct {
     logic s_axis_tx_tlast;
     logic s_axis_tx_tvalid;
     logic compl_done;
+    logic [12:0] req_addr;
     logic [3:0] rd_be;
-    logic req_compl_q;
+    logic [30:0] rd_data;
     logic req_compl_wd_q;
-    logic compl_busy_i;
     logic [1:0] state;
 } pcie_io_tx_engine_registers;
 
@@ -78,13 +78,12 @@ const pcie_io_tx_engine_registers pcie_io_tx_engine_r_reset = '{
     1'b0,                               // s_axis_tx_tlast
     1'b0,                               // s_axis_tx_tvalid
     1'b0,                               // compl_done
+    '0,                                 // req_addr
     '0,                                 // rd_be
-    1'b0,                               // req_compl_q
+    '0,                                 // rd_data
     1'b1,                               // req_compl_wd_q
-    1'b0,                               // compl_busy_i
     PIO_TX_RST_STATE                    // state
 };
-logic w_compl_wd;
 pcie_io_tx_engine_registers r;
 pcie_io_tx_engine_registers rin;
 
@@ -105,51 +104,57 @@ begin: comb_proc
     vb_lower_addr = '0;
     vb_s_axis_tx_tdata = '0;
 
-    v.rd_be = i_req_be;
     // Calculate byte count based on byte enable
     vb_add_be20 = ({1'b0, r.rd_be[3]} + {1'b0, r.rd_be[2]});
     vb_add_be21 = ({1'b0, r.rd_be[1]} + {1'b0, r.rd_be[0]});
     vb_byte_count = ({2'd0, vb_add_be20} + {2'd0, vb_add_be21});
 
-    v.req_compl_q = i_req_compl;
-    v.req_compl_wd_q = i_req_compl_wd;
+    // The completer field 'lower address' DWORD[2][6:0]:
 
-    if (w_compl_wd == 1'b0) begin
+    // For completions other than for memory reads, this value is set to 0.
+
+    // For memory reads it is the lower byte address of the first byte in
+
+    // the returned data (or partial data). This is set for the first
+
+    // (or only) completion and will be 0 in the lower 7 bits from then on,
+
+    // as the completions, if split, must be naturally aligned to a read
+
+    // completion boundary (RCB), which is usually 128 bytes
+
+    // (though 64 bytes in root complex).
+
+    if (r.req_compl_wd_q == 1'b0) begin
         // Request without payload
         vb_lower_addr = 7'd0;
     end else if (r.rd_be[0] == 1'b1) begin
         vb_lower_addr = 7'd0;
     end else if (r.rd_be[1] == 1'b1) begin
-        vb_lower_addr = {i_req_addr[6: 2], 2'd1};
+        vb_lower_addr = {r.req_addr[6: 2], 2'd1};
     end else if (r.rd_be[2] == 1'b1) begin
-        vb_lower_addr = {i_req_addr[6: 2], 2'd2};
+        vb_lower_addr = {r.req_addr[6: 2], 2'd2};
     end else if (r.rd_be[3] == 1'b1) begin
-        vb_lower_addr = {i_req_addr[6: 2], 2'd3};
+        vb_lower_addr = {r.req_addr[6: 2], 2'd3};
     end
 
-    v.compl_done = 1'b0;
-    if (r.req_compl_q == 1'b1) begin
-        v.compl_busy_i = 1'b1;
-    end
     case (r.state)
     PIO_TX_RST_STATE: begin
-        if (r.compl_busy_i == 1'b1) begin
-            v.s_axis_tx_tdata = 64'd0;
-            v.s_axis_tx_tkeep = 8'hFF;
-            v.s_axis_tx_tlast = 1'b0;
-            v.s_axis_tx_tvalid = 1'b0;
-            if (i_s_axis_tx_tready == 1'b1) begin
-                v.state = PIO_TX_CPLD_QW1_FIRST;
+        v.s_axis_tx_tvalid = 1'b0;
+        v.s_axis_tx_tkeep = 8'hFF;
+        v.s_axis_tx_tdata = 64'd0;
+        v.s_axis_tx_tlast = 1'b0;
+        v.compl_done = 1'b0;
+        if ((i_req_compl == 1'b1) && (i_dma_resp_valid == 1'b1)) begin
+            v.req_addr = i_req_addr;
+            if (r.req_addr[2] == 1'b1) begin
+                v.rd_data = i_dma_resp_data[63: 32];
             end else begin
-                v.state = PIO_TX_RST_STATE;
+                v.rd_data = i_dma_resp_data[31: 0];
             end
-        end else begin
-            v.s_axis_tx_tlast = 1'b0;
-            v.s_axis_tx_tvalid = 1'b0;
-            v.s_axis_tx_tdata = 64'd0;
-            v.s_axis_tx_tkeep = 8'hFF;
-            v.compl_done = 1'b0;
-            v.state = PIO_TX_RST_STATE;
+            v.rd_be = i_req_be;
+            v.req_compl_wd_q = i_req_compl_wd;
+            v.state = PIO_TX_CPLD_QW1_FIRST;
         end
     end
 
@@ -176,15 +181,11 @@ begin: comb_proc
             vb_s_axis_tx_tdata[9: 0] = i_req_len;
             v.s_axis_tx_tdata = vb_s_axis_tx_tdata;
             v.s_axis_tx_tkeep = 8'hFF;
-            v.state = PIO_TX_CPLD_QW1_TEMP;
+            v.state = PIO_TX_CPLD_QW1;
+            v.s_axis_tx_tvalid = 1'b1;
         end else begin
             v.state = PIO_TX_RST_STATE;
         end
-    end
-
-    PIO_TX_CPLD_QW1_TEMP: begin
-        v.s_axis_tx_tvalid = 1'b1;
-        v.state = PIO_TX_CPLD_QW1;
     end
 
     PIO_TX_CPLD_QW1: begin
@@ -192,7 +193,7 @@ begin: comb_proc
             v.s_axis_tx_tlast = 1'b1;
             v.s_axis_tx_tvalid = 1'b1;
             // Swap DWORDS for AXI
-            vb_s_axis_tx_tdata[63: 32] = i_rd_data;
+            vb_s_axis_tx_tdata[63: 32] = r.rd_data;
             vb_s_axis_tx_tdata[31: 16] = i_req_rid;
             vb_s_axis_tx_tdata[15: 8] = i_req_tag;
             vb_s_axis_tx_tdata[7] = 1'b0;
@@ -206,7 +207,6 @@ begin: comb_proc
                 v.s_axis_tx_tkeep = 8'h0F;
             end
             v.compl_done = 1'b1;
-            v.compl_busy_i = 1'b0;
             v.state = PIO_TX_RST_STATE;
         end else begin
             v.state = PIO_TX_CPLD_QW1;
@@ -222,19 +222,15 @@ begin: comb_proc
 end: comb_proc
 
 
-assign w_compl_wd = r.req_compl_wd_q;
 assign o_s_axis_tx_tdata = r.s_axis_tx_tdata;
 assign o_s_axis_tx_tkeep = r.s_axis_tx_tkeep;
 assign o_s_axis_tx_tlast = r.s_axis_tx_tlast;
 assign o_s_axis_tx_tvalid = r.s_axis_tx_tvalid;
+assign o_dma_resp_ready = 1'b1;
 assign o_compl_done = r.compl_done;
-assign o_rd_be = r.rd_be;
 
 // Unused discontinue
 assign o_tx_src_dsc = 1'b0;
-
-// Present address and byte enable to memory module
-assign o_rd_addr = i_req_addr[12: 2];
 
 always_ff @(posedge i_clk, negedge i_nrst) begin
     if (i_nrst == 1'b0) begin

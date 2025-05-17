@@ -1,11 +1,8 @@
 ${RTL_HOME}/internal/pcie_dma/pcie_cfg_pkg.sv
 ${RTL_HOME}/internal/pcie_dma/apb_pcie_pkg.sv
 ${RTL_HOME}/internal/pcie_dma/apb_pcie.sv
+${RTL_HOME}/internal/pcie_dma/pcie_io_rx_engine.sv
+${RTL_HOME}/internal/pcie_dma/pcie_io_tx_engine.sv
+${RTL_HOME}/internal/pcie_dma/pcie_io_ep.sv
 ${RTL_HOME}/internal/pcie_dma/pcie_dma_pkg.sv
 ${RTL_HOME}/internal/pcie_dma/pcie_dma.sv
-${RTL_HOME}/internal/pcie_dma/PIO_EP_MEM_ACCESS.sv
-${RTL_HOME}/internal/pcie_dma/PIO_RX_ENGINE.v
-${RTL_HOME}/internal/pcie_dma/PIO_TX_ENGINE.v
-${RTL_HOME}/internal/pcie_dma/PIO_EP.v
-${RTL_HOME}/internal/pcie_dma/pcie_io.sv
-${RTL_HOME}/internal/pcie_dma/pcie_app.sv

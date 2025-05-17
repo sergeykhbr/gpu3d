@@ -37,26 +37,23 @@ module pcie_io_ep #(
     input logic i_m_axis_rx_tvalid,
     output logic o_m_axis_rx_tready,
     input logic [8:0] i_m_axis_rx_tuser,
-    // 
-    output logic o_req_compl,
-    output logic o_compl_done,
     input logic [15:0] i_cfg_completer_id,                  // Bus, Device, Function
     // Memory access signals:
-    output logic o_mem_valid,
-    output logic o_mem_wren,
-    output logic [7:0] o_mem_wstrb,
-    output logic [12:0] o_mem_addr,
-    output logic [31:0] o_mem_data
+    input logic i_req_mem_ready,                            // Ready to accept next memory request
+    output logic o_req_mem_valid,                           // Request data is valid to accept
+    output logic o_req_mem_64,                              // 0=32-bits; 1=64-bits
+    output logic o_req_mem_write,                           // 0=read; 1=write operation
+    output logic [9:0] o_req_mem_bytes,                     // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    output logic [12:0] o_req_mem_addr,                     // Address to read/write
+    output logic [7:0] o_req_mem_strob,                     // Byte enabling write strob
+    output logic [63:0] o_req_mem_data,                     // Data to write
+    output logic o_req_mem_last,                            // Last data payload in a sequence
+    input logic [63:0] i_resp_mem_data,                     // Read data value
+    input logic i_resp_mem_valid,                           // Read/Write data is valid. All write transaction with valid response.
+    input logic i_resp_mem_fault,                           // Error on memory access
+    output logic o_resp_mem_ready                           // Ready to accept response
 );
 
-logic [10:0] wb_rd_addr;
-logic [3:0] wb_rd_be;
-logic [31:0] wb_rd_data;
-logic [10:0] wb_wr_addr;
-logic [3:0] wb_wr_be;
-logic [31:0] wb_wr_data;
-logic w_wr_en;
-logic w_wr_busy;
 logic w_req_compl_int;
 logic w_req_compl_wd;
 logic w_compl_done_int;
@@ -69,19 +66,6 @@ logic [15:0] wb_req_rid;
 logic [7:0] wb_req_tag;
 logic [7:0] wb_req_be;
 logic [12:0] wb_req_addr;
-
-PIO_EP_MEM_ACCESS EP_MEM_inst (
-    .rst_n(i_nrst),
-    .clk(i_clk),
-    .rd_addr(wb_rd_addr),
-    .rd_be(wb_rd_be),
-    .rd_data(wb_rd_data),
-    .wr_addr(wb_wr_addr),
-    .wr_be(wb_wr_be),
-    .wr_data(wb_wr_data),
-    .wr_en(w_wr_en),
-    .wr_busy(w_wr_busy)
-);
 
 pcie_io_rx_engine #(
     .C_DATA_WIDTH(C_DATA_WIDTH),
@@ -107,11 +91,16 @@ pcie_io_rx_engine #(
     .o_req_tag(wb_req_tag),
     .o_req_be(wb_req_be),
     .o_req_addr(wb_req_addr),
-    .o_wr_addr(wb_wr_addr),
-    .o_wr_be(wb_wr_be),
-    .o_wr_data(wb_wr_data),
-    .o_wr_en(w_wr_en),
-    .i_wr_busy(w_wr_busy)
+    .i_req_mem_ready(i_req_mem_ready),
+    .o_req_mem_valid(o_req_mem_valid),
+    .o_req_mem_64(o_req_mem_64),
+    .o_req_mem_write(o_req_mem_write),
+    .o_req_mem_bytes(o_req_mem_bytes),
+    .o_req_mem_addr(o_req_mem_addr),
+    .o_req_mem_strob(o_req_mem_strob),
+    .o_req_mem_data(o_req_mem_data),
+    .o_req_mem_last(o_req_mem_last),
+    .i_resp_mem_valid(i_resp_mem_valid)
 );
 
 pcie_io_tx_engine #(
@@ -138,9 +127,10 @@ pcie_io_tx_engine #(
     .i_req_tag(wb_req_tag),
     .i_req_be(wb_req_be),
     .i_req_addr(wb_req_addr),
-    .o_rd_addr(wb_rd_addr),
-    .o_rd_be(wb_rd_be),
-    .i_rd_data(wb_rd_data),
+    .i_dma_resp_valid(i_resp_mem_valid),
+    .i_dma_resp_fault(i_resp_mem_fault),
+    .i_dma_resp_data(i_resp_mem_data),
+    .o_dma_resp_ready(o_resp_mem_ready),
     .i_completer_id(i_cfg_completer_id)
 );
 
@@ -158,21 +148,6 @@ begin: comb_proc
     vb_mem_wstrb = '0;
     vb_mem_data = '0;
 
-    if (w_req_compl_int == 1'b1) begin
-        v_mem_valid = 1'b1;
-        v_mem_wren = w_wr_en;
-        vb_mem_wstrb = wb_wr_be;
-        vb_mem_addr = wb_req_addr;
-        vb_mem_data = wb_wr_data;
-    end
-    o_mem_valid = v_mem_valid;
-    o_mem_wren = v_mem_wren;
-    o_mem_wstrb = {4'd0, vb_mem_wstrb};
-    o_mem_addr = vb_mem_addr;
-    o_mem_data = vb_mem_data;
 end: comb_proc
-
-assign o_req_compl = w_req_compl_int;
-assign o_compl_done = w_compl_done_int;
 
 endmodule: pcie_io_ep
