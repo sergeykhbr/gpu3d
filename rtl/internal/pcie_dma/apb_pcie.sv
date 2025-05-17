@@ -28,11 +28,8 @@ module apb_pcie #(
     output types_amba_pkg::apb_out_type o_apbo,             // APB output interface
     input logic [15:0] i_pcie_completer_id,                 // Bus, Device, Function
     input logic [3:0] i_dma_state,                          // DMA engine brief state
-    input logic i_dbg_mem_valid,
-    input logic i_dbg_mem_wren,
-    input logic [7:0] i_dbg_mem_wstrb,
-    input logic [12:0] i_dbg_mem_addr,
-    input logic [31:0] i_dbg_mem_data
+    input logic i_dbg_valid,
+    input logic [63:0] i_dbg_payload
 );
 
 import types_amba_pkg::*;
@@ -108,8 +105,8 @@ end: comb_proc
 
 
 always_ff @(posedge i_clk) begin: reqff_proc
-    if (i_dbg_mem_valid == 1'b1) begin
-        req_data_arr[int'(req_cnt[3: 0])] <= {i_dbg_mem_wren, 18'd0, i_dbg_mem_addr, i_dbg_mem_data};
+    if (i_dbg_valid == 1'b1) begin
+        req_data_arr[int'(req_cnt[3: 0])] <= i_dbg_payload;
         req_cnt <= (req_cnt + 1);
     end
 end: reqff_proc

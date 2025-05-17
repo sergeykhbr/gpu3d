@@ -46,6 +46,8 @@ typedef struct {
     logic [CFG_SYSBUS_DATA_BITS-1:0] resp_data;
     logic resp_error;
     logic [CFG_SYSBUS_USER_BITS-1:0] user_count;
+    logic dbg_valid;
+    logic [63:0] dbg_payload;
 } axi_dma_registers;
 
 const axi_dma_registers axi_dma_r_reset = '{
@@ -67,6 +69,8 @@ const axi_dma_registers axi_dma_r_reset = '{
     '0,                                 // resp_addr
     '0,                                 // resp_data
     1'b0,                               // resp_error
-    '0                                  // user_count
+    '0,                                 // user_count
+    1'b0,                               // dbg_valid
+    '0                                  // dbg_payload
 };
 endpackage: axi_dma_pkg

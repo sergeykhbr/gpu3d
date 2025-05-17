@@ -39,7 +39,9 @@ module axi_dma #(
     output logic [63:0] o_resp_mem_data,                    // Read data value
     input logic i_resp_mem_ready,                           // Ready to accept response
     input types_amba_pkg::axi4_master_in_type i_msti,       // AXI master input
-    output types_amba_pkg::axi4_master_out_type o_msto      // AXI master output
+    output types_amba_pkg::axi4_master_out_type o_msto,     // AXI master output
+    output logic o_dbg_valid,
+    output logic [63:0] o_dbg_payload
 );
 
 import types_amba_pkg::*;
@@ -110,6 +112,7 @@ begin: comb_proc
         vb_r_data_swap = i_msti.r_data;
     end
 
+    v.dbg_valid = 1'b0;
     case (r.state)
     state_idle: begin
         v.req_ready = 1'b1;
@@ -143,7 +146,14 @@ begin: comb_proc
                 v.req_wdata = i_req_mem_data;
                 v.req_wstrb = i_req_mem_strob;
                 v.state = state_aw;
+                v.dbg_valid = 1'b1;
             end
+            // debug interface:
+            v.dbg_payload = {1'b1,
+                    i_req_mem_addr[12: 0],
+                    i_req_mem_bytes,
+                    i_req_mem_strob,
+                    i_req_mem_data[31: 0]};
         end
     end
     state_ar: begin
@@ -172,6 +182,9 @@ begin: comb_proc
     state_r_wait_accept: begin
         if (i_resp_mem_ready == 1'b1) begin
             v.resp_valid = 1'b0;
+            // debug interface:
+            v.dbg_valid = 1'b1;
+            v.dbg_payload = {1'b0, r.dbg_payload[62: 32], r.resp_data[31: 0]};
 
             if (r.resp_last == 1'b1) begin
                 v.resp_last = 1'b0;

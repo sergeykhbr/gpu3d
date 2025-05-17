@@ -33,11 +33,8 @@ module pcie_dma #(
     input types_amba_pkg::axi4_master_in_type i_xmsti,
     output types_amba_pkg::axi4_master_out_type o_xmsto,
     // Debug signals:
-    output logic o_dbg_mem_valid,
-    output logic o_dbg_mem_wren,
-    output logic [7:0] o_dbg_mem_wstrb,
-    output logic [12:0] o_dbg_mem_addr,
-    output logic [31:0] o_dbg_mem_data
+    output logic o_dbg_valid,
+    output logic [63:0] o_dbg_payload
 );
 
 import types_dma_pkg::*;
@@ -171,7 +168,9 @@ axi_dma #(
     .o_resp_mem_data(wb_resp_mem_data),
     .i_resp_mem_ready(w_resp_mem_ready),
     .i_msti(i_xmsti),
-    .o_msto(o_xmsto)
+    .o_msto(o_xmsto),
+    .o_dbg_valid(o_dbg_valid),
+    .o_dbg_payload(o_dbg_payload)
 );
 
 always_comb
@@ -234,10 +233,5 @@ assign wb_respfifo_payload_i = {w_s_axis_tx_tlast,
 
 assign wb_req_mem_addr_full = {'0, wb_req_mem_addr};
 assign wb_resp_mem_addr = wb_resp_mem_addr_full[12: 0];
-assign o_dbg_mem_valid = w_req_mem_valid;
-assign o_dbg_mem_wren = w_req_mem_write;
-assign o_dbg_mem_wstrb = wb_req_mem_strob;
-assign o_dbg_mem_addr = wb_req_mem_addr;
-assign o_dbg_mem_data = wb_req_mem_data[31: 0];
 
 endmodule: pcie_dma
