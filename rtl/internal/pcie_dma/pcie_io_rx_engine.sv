@@ -124,21 +124,6 @@ const pcie_io_rx_engine_registers pcie_io_rx_engine_r_reset = '{
 pcie_io_rx_engine_registers r;
 pcie_io_rx_engine_registers rin;
 
-function logic [63:0] SwapEndianess32(input logic [63:0] dword);
-logic [63:0] ret;
-begin
-    ret[31: 0] = {dword[7: 0],
-            dword[15: 8],
-            dword[23: 16],
-            dword[31: 24]};
-    ret[63: 32] = {dword[39: 32],
-            dword[47: 40],
-            dword[55: 48],
-            dword[63: 56]};
-    return ret;
-end
-endfunction: SwapEndianess32
-
 
 always_comb
 begin: comb_proc
@@ -147,7 +132,6 @@ begin: comb_proc
     logic [1:0] vb_add_be20;
     logic [1:0] vb_add_be21;
     logic [9:0] vb_req_bytes;
-    logic [63:0] vb_swapped;
     logic [1:0] vb_region_select;
 
     v = r;
@@ -155,7 +139,6 @@ begin: comb_proc
     vb_add_be20 = '0;
     vb_add_be21 = '0;
     vb_req_bytes = '0;
-    vb_swapped = '0;
     vb_region_select = '0;
 
 
@@ -166,9 +149,6 @@ begin: comb_proc
     end else if (i_m_axis_rx_tuser[8: 2] == 7'h40) begin    // Select EROM region
         vb_region_select = 2'h3;
     end
-
-    // Correct PCIe endieness:
-    vb_swapped = SwapEndianess32(i_m_axis_rx_tdata);
 
     if (r.req_be[0] == 1'b1) begin
         vb_req_addr_1_0 = 2'd0;
@@ -271,8 +251,6 @@ begin: comb_proc
             v.req_bytes = vb_req_bytes;
             v.tlp_resp = TLP_POSTED;
             v.state = PIO_RX_WAIT_DMA_RESP;
-        end else begin
-            v.state = PIO_RX_MEM_RD32_DW1DW2;
         end
     end
 
@@ -284,7 +262,7 @@ begin: comb_proc
             v.wr_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2]};
             v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2], vb_req_addr_1_0};
             v.req_bytes = vb_req_bytes;
-            v.wr_data = {vb_swapped[63: 32], vb_swapped[63: 32]};
+            v.wr_data = {i_m_axis_rx_tdata[63: 32], i_m_axis_rx_tdata[63: 32]};
             if (i_m_axis_rx_tdata[2] == 1'b1) begin
                 v.wr_strob = {r.req_be[3: 0], r.req_be[7: 4]};
             end else begin
@@ -292,8 +270,6 @@ begin: comb_proc
             end
             v.tlp_resp = TLP_NON_POSTED;
             v.state = PIO_RX_WAIT_DMA_RESP;
-        end else begin
-            v.state = PIO_RX_MEM_WR32_DW1DW2;
         end
     end
 
@@ -305,8 +281,6 @@ begin: comb_proc
             v.req_bytes = vb_req_bytes;
             v.tlp_resp = TLP_POSTED;
             v.state = PIO_RX_WAIT_DMA_RESP;
-        end else begin
-            v.state = PIO_RX_MEM_RD64_DW1DW2;
         end
     end
 
@@ -321,8 +295,6 @@ begin: comb_proc
                 v.wr_strob = r.req_be;
             end
             v.state = PIO_RX_MEM_WR64_DW3;
-        end else begin
-            v.state = PIO_RX_MEM_WR64_DW1DW2;
         end
     end
 
@@ -331,11 +303,9 @@ begin: comb_proc
             v.m_axis_rx_tready = 1'b0;
             v.req_valid = 1'b1;
             v.wr_en = 1'b1;
-            v.wr_data = {vb_swapped[31: 0], vb_swapped[31: 0]};
+            v.wr_data = {i_m_axis_rx_tdata[31: 0], i_m_axis_rx_tdata[31: 0]};
             v.tlp_resp = TLP_NON_POSTED;
             v.state = PIO_RX_WAIT_DMA_RESP;
-        end else begin
-            v.state = PIO_RX_MEM_WR64_DW3;
         end
     end
 
@@ -347,7 +317,7 @@ begin: comb_proc
             v.wr_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2]};
             v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2], vb_req_addr_1_0};
             v.req_bytes = vb_req_bytes;
-            v.wr_data = {vb_swapped[63: 32], vb_swapped[63: 32]};
+            v.wr_data = {i_m_axis_rx_tdata[63: 32], i_m_axis_rx_tdata[63: 32]};
             if (i_m_axis_rx_tdata[2] == 1'b1) begin
                 v.wr_strob = {r.req_be[3: 0], r.req_be[7: 4]};
             end else begin
@@ -355,8 +325,6 @@ begin: comb_proc
             end
             v.tlp_resp = TLP_COMPLETION;
             v.state = PIO_RX_WAIT_DMA_RESP;
-        end else begin
-            v.state = PIO_RX_IO_WR_DW1DW2;
         end
     end
 

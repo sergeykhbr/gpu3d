@@ -70,7 +70,7 @@ typedef struct {
     logic compl_done;
     logic [12:0] req_addr;
     logic [3:0] rd_be;
-    logic [30:0] rd_data;
+    logic [31:0] rd_data;
     logic req_compl_wd_q;
     logic [1:0] state;
 } pcie_io_tx_engine_registers;

@@ -68,6 +68,23 @@ logic [7:0] wb_req_tag;
 logic [7:0] wb_req_be;
 logic [12:0] wb_req_addr;
 logic [9:0] wb_req_bytes;
+logic [C_DATA_WIDTH-1:0] wb_req_mem_data;
+logic [C_DATA_WIDTH-1:0] wb_resp_mem_data;
+
+function logic [63:0] SwapEndianess32(input logic [63:0] dword);
+logic [63:0] ret;
+begin
+    ret[31: 0] = {dword[7: 0],
+            dword[15: 8],
+            dword[23: 16],
+            dword[31: 24]};
+    ret[63: 32] = {dword[39: 32],
+            dword[47: 40],
+            dword[55: 48],
+            dword[63: 56]};
+    return ret;
+end
+endfunction: SwapEndianess32
 
 pcie_io_rx_engine #(
     .C_DATA_WIDTH(C_DATA_WIDTH),
@@ -99,7 +116,7 @@ pcie_io_rx_engine #(
     .o_req_mem_bytes(wb_req_bytes),
     .o_req_mem_addr(o_req_mem_addr),
     .o_req_mem_strob(o_req_mem_strob),
-    .o_req_mem_data(o_req_mem_data),
+    .o_req_mem_data(wb_req_mem_data),
     .o_req_mem_last(o_req_mem_last),
     .i_resp_mem_valid(i_resp_mem_valid)
 );
@@ -133,7 +150,7 @@ pcie_io_tx_engine #(
     .i_dma_resp_last(i_resp_mem_last),
     .i_dma_resp_fault(i_resp_mem_fault),
     .i_dma_resp_addr(i_resp_mem_addr),
-    .i_dma_resp_data(i_resp_mem_data),
+    .i_dma_resp_data(wb_resp_mem_data),
     .o_dma_resp_ready(o_resp_mem_ready),
     .i_completer_id(i_cfg_completer_id)
 );
@@ -152,6 +169,10 @@ begin: comb_proc
     vb_mem_wstrb = '0;
     vb_mem_data = '0;
 
+
+    // Correct PCIe endieness:
+    o_req_mem_data = SwapEndianess32(wb_req_mem_data);
+    wb_resp_mem_data = SwapEndianess32(i_resp_mem_data);
 end: comb_proc
 
 assign o_req_mem_bytes = wb_req_bytes;
