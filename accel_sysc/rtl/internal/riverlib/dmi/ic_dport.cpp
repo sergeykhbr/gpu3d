@@ -165,7 +165,7 @@ void ic_dport::comb() {
         vb_hartsel = i_hartsel.read();
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         ic_dport_r_reset(v);
     }
 

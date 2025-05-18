@@ -154,7 +154,7 @@ void sfifo<dbits, log2_depth>::comb() {
         }
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         sfifo_r_reset(v);
     }
 

@@ -154,7 +154,7 @@ void Queue<abits, dbits>::comb() {
         nempty = 1;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         Queue_r_reset(v);
     }
 

@@ -214,7 +214,8 @@ accel_soc::accel_soc(sc_module_name name,
     gpio0->o_irq(wb_irq_gpio);
 
     // See reference: pg054-7series-pcie.pdf
-    pcidma0 = new pcie_dma("pcidma0");
+    pcidma0 = new pcie_dma("pcidma0",
+                            async_reset);
     pcidma0->i_nrst(i_pcie_nrst);
     pcidma0->i_clk(i_sys_clk);
     pcidma0->i_pcie_phy_clk(i_pcie_clk);
@@ -225,7 +226,8 @@ accel_soc::accel_soc(sc_module_name name,
     pcidma0->o_xmst_cfg(dev_pnp[SOC_PNP_PCIE_DMA]);
     pcidma0->i_xmsti(aximi[CFG_BUS0_XMST_PCIE]);
     pcidma0->o_xmsto(aximo[CFG_BUS0_XMST_PCIE]);
-    pcidma0->o_dbg_pcie_dmai(wb_dbg_pcie_dmai);
+    pcidma0->o_dbg_valid(w_dbg_valid);
+    pcidma0->o_dbg_payload(w_dbg_payload);
 
     ppcie0 = new apb_pcie("ppcie0",
                            async_reset);
@@ -237,7 +239,8 @@ accel_soc::accel_soc(sc_module_name name,
     ppcie0->o_apbo(apbo[CFG_BUS1_PSLV_PCIE]);
     ppcie0->i_pcie_completer_id(i_pcie_completer_id);
     ppcie0->i_dma_state(wb_pcie_dma_state);
-    ppcie0->i_dbg_pcie_dmai(wb_dbg_pcie_dmai);
+    ppcie0->i_dbg_valid(w_dbg_valid);
+    ppcie0->i_dbg_payload(w_dbg_payload);
 
     pnp0 = new apb_pnp<SOC_PNP_TOTAL>("pnp0",
                                       async_reset,
@@ -316,7 +319,8 @@ accel_soc::accel_soc(sc_module_name name,
     sensitive << w_irq_pnp;
     sensitive << wb_ext_irqs;
     sensitive << wb_pcie_dma_state;
-    sensitive << wb_dbg_pcie_dmai;
+    sensitive << w_dbg_valid;
+    sensitive << w_dbg_payload;
 }
 
 accel_soc::~accel_soc() {

@@ -312,7 +312,7 @@ void idiv53::comb() {
     wb_muxind_i = vb_muxind;
     v.bits = vb_bits;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         idiv53_r_reset(v);
     }
 

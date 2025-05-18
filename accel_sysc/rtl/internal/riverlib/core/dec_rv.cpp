@@ -1076,7 +1076,7 @@ void DecoderRv::comb() {
     v.imm = vb_imm;
     v.progbuf_ena = i_progbuf_ena.read();
 
-    if (((~async_reset_) && (i_nrst.read() == 0)) || (i_flush_pipeline.read() == 1)) {
+    if (((!async_reset_) && (i_nrst.read() == 0)) || (i_flush_pipeline.read() == 1)) {
         DecoderRv_r_reset(v);
     }
 

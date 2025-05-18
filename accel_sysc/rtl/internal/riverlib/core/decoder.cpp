@@ -357,7 +357,7 @@ void InstrDecoder::comb() {
         wb_f_instr[i] = i_f_instr.read()((16 * i) + 32 - 1, (16 * i));
     }
 
-    if (((~async_reset_) && (i_nrst.read() == 0)) || (i_flush_pipeline.read() == 1)) {
+    if (((!async_reset_) && (i_nrst.read() == 0)) || (i_flush_pipeline.read() == 1)) {
         InstrDecoder_r_reset(v);
     }
 

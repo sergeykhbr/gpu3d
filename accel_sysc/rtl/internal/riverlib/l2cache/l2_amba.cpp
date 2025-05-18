@@ -159,7 +159,7 @@ void L2Amba::comb() {
         }
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         L2Amba_r_reset(v);
     }
 

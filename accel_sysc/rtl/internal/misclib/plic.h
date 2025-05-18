@@ -408,7 +408,7 @@ void plic<ctxmax, irqmax>::comb() {
         v.ctx[n].irq_prio = vb_ctx_irq_prio[n];
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         plic_r_reset(v);
     }
 

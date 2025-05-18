@@ -615,7 +615,7 @@ void MemAccess::comb() {
         v_idle = 1;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         MemAccess_r_reset(v);
     }
 

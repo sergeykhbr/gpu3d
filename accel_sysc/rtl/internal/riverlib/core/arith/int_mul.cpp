@@ -293,7 +293,7 @@ void IntMul::comb() {
         wb_res = r.result.read()(127, 64);
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         IntMul_r_reset(v);
     }
 

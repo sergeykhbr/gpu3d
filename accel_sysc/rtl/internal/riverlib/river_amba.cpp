@@ -489,7 +489,7 @@ void RiverAmba::comb() {
         v_cr_valid = 1;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         RiverAmba_r_reset(v);
     }
 

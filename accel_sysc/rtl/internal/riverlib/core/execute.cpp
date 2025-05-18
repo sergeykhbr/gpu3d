@@ -1504,7 +1504,7 @@ void InstrExecute::comb() {
         v.memop_debug = 0;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         InstrExecute_r_reset(v);
     }
 

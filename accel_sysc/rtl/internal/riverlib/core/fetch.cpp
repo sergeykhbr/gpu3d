@@ -186,7 +186,7 @@ void InstrFetch::comb() {
         v.instr_page_fault_x = 0;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         InstrFetch_r_reset(v);
     }
 

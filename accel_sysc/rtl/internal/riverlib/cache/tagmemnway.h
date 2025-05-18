@@ -344,7 +344,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
         }
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         TagMemNWay_r_reset(v);
     }
 

@@ -141,7 +141,7 @@ void BpBTB::comb() {
         }
     }
 
-    if (((~async_reset_) && (i_nrst.read() == 0)) || i_flush_pipeline.read()) {
+    if (((!async_reset_) && (i_nrst.read() == 0)) || i_flush_pipeline.read()) {
         BpBTB_r_reset(v);
     }
 

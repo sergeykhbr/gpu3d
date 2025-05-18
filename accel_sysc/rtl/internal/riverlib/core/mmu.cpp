@@ -675,7 +675,7 @@ void Mmu::comb() {
         v.tlb_flush_adr = 0;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         Mmu_r_reset(v);
     }
 

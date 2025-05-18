@@ -153,7 +153,7 @@ void apb_ddr::comb() {
     v.resp_valid = w_req_valid.read();
     v.resp_rdata = vb_rdata;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         apb_ddr_r_reset(v);
     }
 }

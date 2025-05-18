@@ -308,7 +308,7 @@ void dmidebug::comb() {
     if ((r.haltreq.read() & i_halted.read()[hsel]) == 1) {
         v.haltreq = 0;
     }
-    if ((r.resumereq.read() & (~i_halted.read()[hsel])) == 1) {
+    if ((r.resumereq.read() & (!i_halted.read()[hsel])) == 1) {
         v.resumereq = 0;
         v.resumeack = 1;
     }
@@ -322,7 +322,7 @@ void dmidebug::comb() {
             v.regidx = vb_cdc_dmi_req_addr;
             v.wdata = vb_cdc_dmi_req_data;
             v.regwr = v_cdc_dmi_req_write;
-            v.regrd = (~v_cdc_dmi_req_write);
+            v.regrd = (!v_cdc_dmi_req_write);
         } else if (((i_apbi.read().pselx == 1) && (i_apbi.read().pwrite == 0))
                     || ((i_apbi.read().pselx == 1) && (i_apbi.read().penable == 1) && (i_apbi.read().pwrite == 1))) {
             v.bus_jtag = 0;
@@ -679,7 +679,7 @@ void dmidebug::comb() {
     vb_req_type[DPortReq_MemVirtual] = r.aamvirtual.read();
     vb_req_type[DPortReq_Progexec] = r.cmd_progexec.read();
 
-    if (((~async_reset_) && (i_nrst.read() == 0)) || (v_cdc_dmi_hardreset == 1)) {
+    if (((!async_reset_) && (i_nrst.read() == 0)) || (v_cdc_dmi_hardreset == 1)) {
         dmidebug_r_reset(v);
     }
 

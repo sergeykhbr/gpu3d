@@ -243,7 +243,7 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
     v.index = vb_index;
     v.snoop_tagaddr = vb_snoop_tagaddr;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         TagMem_r_reset(v);
     }
 

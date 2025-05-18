@@ -243,7 +243,7 @@ void clint<cpu_total>::comb() {
     }
     v.rdata = vrdata;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         clint_r_reset(v);
     }
 

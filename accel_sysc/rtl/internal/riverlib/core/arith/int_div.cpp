@@ -284,7 +284,7 @@ void IntDiv::comb() {
     wb_divisor0_i = (r.divisor_i.read() << 4);
     wb_divisor1_i = (0, r.divisor_i.read());
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         IntDiv_r_reset(v);
     }
 

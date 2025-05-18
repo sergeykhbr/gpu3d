@@ -141,7 +141,7 @@ void PMP::comb() {
         v.tbl[i_region.read().to_int()].flags = vb_flags;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         PMP_r_reset(v);
     }
 

@@ -570,7 +570,7 @@ void apb_uart<log2_fifosz>::comb() {
         vb_rdata[31] = v_tx_fifo_full;
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
-                v_tx_fifo_we = ((~v_tx_fifo_full) & (~r.tx_amo_guard.read()));
+                v_tx_fifo_we = ((!v_tx_fifo_full) & (!r.tx_amo_guard.read()));
             } else {
                 v.tx_amo_guard = v_tx_fifo_full;            // skip next write
             }
@@ -664,7 +664,7 @@ void apb_uart<log2_fifosz>::comb() {
     v.resp_rdata = vb_rdata;
     v.resp_err = 0;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         apb_uart_r_reset(v);
     }
 

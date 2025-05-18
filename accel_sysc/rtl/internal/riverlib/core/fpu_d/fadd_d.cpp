@@ -589,7 +589,7 @@ void DoubleAdd::comb() {
         v.min = 0;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         DoubleAdd_r_reset(v);
     }
 

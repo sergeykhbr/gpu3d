@@ -215,7 +215,7 @@ void imul53::comb() {
         }
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         imul53_r_reset(v);
     }
 

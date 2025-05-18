@@ -288,7 +288,7 @@ void axi_slv::comb() {
         break;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         axi_slv_r_reset(v);
     }
 

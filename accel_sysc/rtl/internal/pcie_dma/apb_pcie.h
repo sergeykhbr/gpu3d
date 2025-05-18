@@ -18,7 +18,6 @@
 #include <systemc.h>
 #include "../ambalib/types_amba.h"
 #include "../ambalib/types_pnp.h"
-#include "../ambalib/types_dma.h"
 #include "../ambalib/apb_slv.h"
 
 namespace debugger {
@@ -33,7 +32,8 @@ SC_MODULE(apb_pcie) {
     sc_out<apb_out_type> o_apbo;                            // APB output interface
     sc_in<sc_uint<16>> i_pcie_completer_id;                 // Bus, Device, Function
     sc_in<sc_uint<4>> i_dma_state;                          // DMA engine brief state
-    sc_in<pcie_dma64_in_type> i_dbg_pcie_dmai;              // Debugging request from async fifo
+    sc_in<bool> i_dbg_valid;
+    sc_in<sc_uint<64>> i_dbg_payload;
 
     void comb();
     void reqff();
@@ -64,7 +64,7 @@ SC_MODULE(apb_pcie) {
     sc_signal<sc_uint<32>> wb_req_addr;
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<32>> wb_req_wdata;
-    sc_uint<4> req_cnt;
+    sc_uint<31> req_cnt;
     sc_uint<64> req_data_arr[16];
     apb_pcie_registers v;
     apb_pcie_registers r;

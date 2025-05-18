@@ -179,10 +179,10 @@ void cdc_afifo<abits, dbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o
 
 template<int abits, int dbits>
 void cdc_afifo<abits, dbits>::comb() {
-    w_wr_ena = (i_wr.read() & (~w_wgray_full.read()));
-    w_rd_ena = (i_rd.read() & (~w_rgray_empty.read()));
-    o_wready = (~w_wgray_full.read());
-    o_rvalid = (~w_rgray_empty.read());
+    w_wr_ena = (i_wr.read() & (!w_wgray_full.read()));
+    w_rd_ena = (i_rd.read() & (!w_rgray_empty.read()));
+    o_wready = (!w_wgray_full.read());
+    o_rvalid = (!w_rgray_empty.read());
 }
 
 template<int abits, int dbits>

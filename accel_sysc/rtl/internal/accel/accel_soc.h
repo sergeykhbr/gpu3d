@@ -135,7 +135,8 @@ SC_MODULE(accel_soc) {
     sc_signal<bool> w_irq_pnp;
     sc_signal<sc_biguint<SOC_PLIC_IRQ_TOTAL>> wb_ext_irqs;
     sc_signal<sc_uint<4>> wb_pcie_dma_state;
-    sc_signal<pcie_dma64_in_type> wb_dbg_pcie_dmai;
+    sc_signal<bool> w_dbg_valid;
+    sc_signal<sc_uint<64>> w_dbg_payload;
 
     axictrl_bus0 *bus0;
     axi2apb_bus1 *bus1;

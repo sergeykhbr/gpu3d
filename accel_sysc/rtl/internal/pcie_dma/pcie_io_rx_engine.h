@@ -48,11 +48,15 @@ SC_MODULE(pcie_io_rx_engine) {
     sc_out<sc_uint<8>> o_req_be;                            // Memory Read Byte Enables
     sc_out<sc_uint<13>> o_req_addr;                         // Memory Read Address
     // 
-    sc_out<sc_uint<11>> o_wr_addr;                          // Memory Write Address
-    sc_out<sc_uint<4>> o_wr_be;                             // Memory Write Byte Enable
-    sc_out<sc_uint<32>> o_wr_data;                          // Memory Write Data
-    sc_out<bool> o_wr_en;                                   // Memory Write Enable
-    sc_in<bool> i_wr_busy;                                  // Memory Write Busy
+    sc_in<bool> i_req_mem_ready;                            // Ready to accept next memory request
+    sc_out<bool> o_req_mem_valid;                           // Request data is valid to accept
+    sc_out<bool> o_req_mem_write;                           // 0=read; 1=write operation
+    sc_out<sc_uint<10>> o_req_mem_bytes;                    // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    sc_out<sc_uint<13>> o_req_mem_addr;                     // Address to read/write
+    sc_out<sc_uint<8>> o_req_mem_strob;                     // Byte enabling write strob
+    sc_out<sc_uint<64>> o_req_mem_data;                     // Data to write
+    sc_out<bool> o_req_mem_last;                            // Last data payload in a sequence
+    sc_in<bool> i_resp_mem_valid;                           // Read/Write data is valid. All write transaction with valid response.
 
     void comb();
     void registers();
@@ -76,14 +80,17 @@ SC_MODULE(pcie_io_rx_engine) {
     static const uint8_t PIO_RX_MEM_RD64_DW1DW2 = 0x04;
     static const uint8_t PIO_RX_MEM_WR64_DW1DW2 = 0x08;
     static const uint8_t PIO_RX_MEM_WR64_DW3 = 0x10;
-    static const uint8_t PIO_RX_WAIT_STATE = 0x20;
-    static const uint8_t PIO_RX_IO_WR_DW1DW2 = 0x40;
-    static const uint8_t PIO_RX_IO_MEM_WR_WAIT_STATE = 0x80;
+    static const uint8_t PIO_RX_IO_WR_DW1DW2 = 0x20;
+    static const uint8_t PIO_RX_WAIT_DMA_RESP = 0x40;
+    static const uint8_t PIO_RX_WAIT_TX_COMPLETION = 0x80;
+    // TLP Response Types:
+    static const uint8_t TLP_NON_POSTED = 0;                // No response at all
+    static const uint8_t TLP_POSTED = 3;                    // Response with data payload
+    static const uint8_t TLP_COMPLETION = 1;                // Response without payload
 
     struct pcie_io_rx_engine_registers {
         sc_signal<bool> m_axis_rx_tready;
-        sc_signal<bool> req_compl;
-        sc_signal<bool> req_compl_wd;
+        sc_signal<bool> req_valid;
         sc_signal<sc_uint<3>> req_tc;
         sc_signal<bool> req_td;
         sc_signal<bool> req_ep;
@@ -92,20 +99,20 @@ SC_MODULE(pcie_io_rx_engine) {
         sc_signal<sc_uint<16>> req_rid;
         sc_signal<sc_uint<8>> req_tag;
         sc_signal<sc_uint<8>> req_be;
+        sc_signal<sc_uint<10>> req_bytes;
         sc_signal<sc_uint<13>> req_addr;
         sc_signal<sc_uint<11>> wr_addr;
-        sc_signal<sc_uint<8>> wr_be;
-        sc_signal<sc_uint<32>> wr_data;
         sc_signal<bool> wr_en;
+        sc_signal<sc_uint<64>> wr_data;
+        sc_signal<sc_uint<8>> wr_strob;
         sc_signal<sc_uint<8>> state;
         sc_signal<sc_uint<8>> tlp_type;
-        sc_signal<bool> in_packet_q;
+        sc_signal<sc_uint<2>> tlp_resp;
     };
 
     void pcie_io_rx_engine_r_reset(pcie_io_rx_engine_registers& iv) {
         iv.m_axis_rx_tready = 0;
-        iv.req_compl = 0;
-        iv.req_compl_wd = 1;
+        iv.req_valid = 0;
         iv.req_tc = 0;
         iv.req_td = 0;
         iv.req_ep = 0;
@@ -114,17 +121,17 @@ SC_MODULE(pcie_io_rx_engine) {
         iv.req_rid = 0;
         iv.req_tag = 0;
         iv.req_be = 0;
+        iv.req_bytes = 0;
         iv.req_addr = 0;
         iv.wr_addr = 0;
-        iv.wr_be = 0;
-        iv.wr_data = 0;
         iv.wr_en = 0;
+        iv.wr_data = 0;
+        iv.wr_strob = 0;
         iv.state = PIO_RX_RST_STATE;
         iv.tlp_type = 0;
-        iv.in_packet_q = 0;
+        iv.tlp_resp = TLP_NON_POSTED;
     }
 
-    bool w_sop;
     pcie_io_rx_engine_registers v;
     pcie_io_rx_engine_registers r;
 
@@ -153,11 +160,15 @@ pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_rx_engine(sc_module_name na
     o_req_tag("o_req_tag"),
     o_req_be("o_req_be"),
     o_req_addr("o_req_addr"),
-    o_wr_addr("o_wr_addr"),
-    o_wr_be("o_wr_be"),
-    o_wr_data("o_wr_data"),
-    o_wr_en("o_wr_en"),
-    i_wr_busy("i_wr_busy") {
+    i_req_mem_ready("i_req_mem_ready"),
+    o_req_mem_valid("o_req_mem_valid"),
+    o_req_mem_write("o_req_mem_write"),
+    o_req_mem_bytes("o_req_mem_bytes"),
+    o_req_mem_addr("o_req_mem_addr"),
+    o_req_mem_strob("o_req_mem_strob"),
+    o_req_mem_data("o_req_mem_data"),
+    o_req_mem_last("o_req_mem_last"),
+    i_resp_mem_valid("i_resp_mem_valid") {
 
 
     SC_METHOD(comb);
@@ -168,10 +179,10 @@ pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_rx_engine(sc_module_name na
     sensitive << i_m_axis_rx_tvalid;
     sensitive << i_m_axis_rx_tuser;
     sensitive << i_compl_done;
-    sensitive << i_wr_busy;
+    sensitive << i_req_mem_ready;
+    sensitive << i_resp_mem_valid;
     sensitive << r.m_axis_rx_tready;
-    sensitive << r.req_compl;
-    sensitive << r.req_compl_wd;
+    sensitive << r.req_valid;
     sensitive << r.req_tc;
     sensitive << r.req_td;
     sensitive << r.req_ep;
@@ -180,14 +191,15 @@ pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_rx_engine(sc_module_name na
     sensitive << r.req_rid;
     sensitive << r.req_tag;
     sensitive << r.req_be;
+    sensitive << r.req_bytes;
     sensitive << r.req_addr;
     sensitive << r.wr_addr;
-    sensitive << r.wr_be;
-    sensitive << r.wr_data;
     sensitive << r.wr_en;
+    sensitive << r.wr_data;
+    sensitive << r.wr_strob;
     sensitive << r.state;
     sensitive << r.tlp_type;
-    sensitive << r.in_packet_q;
+    sensitive << r.tlp_resp;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -216,14 +228,17 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::generateVCD(sc_trace_file *i_v
         sc_trace(o_vcd, o_req_tag, o_req_tag.name());
         sc_trace(o_vcd, o_req_be, o_req_be.name());
         sc_trace(o_vcd, o_req_addr, o_req_addr.name());
-        sc_trace(o_vcd, o_wr_addr, o_wr_addr.name());
-        sc_trace(o_vcd, o_wr_be, o_wr_be.name());
-        sc_trace(o_vcd, o_wr_data, o_wr_data.name());
-        sc_trace(o_vcd, o_wr_en, o_wr_en.name());
-        sc_trace(o_vcd, i_wr_busy, i_wr_busy.name());
+        sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
+        sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
+        sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
+        sc_trace(o_vcd, o_req_mem_bytes, o_req_mem_bytes.name());
+        sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
+        sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
+        sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
+        sc_trace(o_vcd, o_req_mem_last, o_req_mem_last.name());
+        sc_trace(o_vcd, i_resp_mem_valid, i_resp_mem_valid.name());
         sc_trace(o_vcd, r.m_axis_rx_tready, pn + ".r.m_axis_rx_tready");
-        sc_trace(o_vcd, r.req_compl, pn + ".r.req_compl");
-        sc_trace(o_vcd, r.req_compl_wd, pn + ".r.req_compl_wd");
+        sc_trace(o_vcd, r.req_valid, pn + ".r.req_valid");
         sc_trace(o_vcd, r.req_tc, pn + ".r.req_tc");
         sc_trace(o_vcd, r.req_td, pn + ".r.req_td");
         sc_trace(o_vcd, r.req_ep, pn + ".r.req_ep");
@@ -232,33 +247,34 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::generateVCD(sc_trace_file *i_v
         sc_trace(o_vcd, r.req_rid, pn + ".r.req_rid");
         sc_trace(o_vcd, r.req_tag, pn + ".r.req_tag");
         sc_trace(o_vcd, r.req_be, pn + ".r.req_be");
+        sc_trace(o_vcd, r.req_bytes, pn + ".r.req_bytes");
         sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
         sc_trace(o_vcd, r.wr_addr, pn + ".r.wr_addr");
-        sc_trace(o_vcd, r.wr_be, pn + ".r.wr_be");
-        sc_trace(o_vcd, r.wr_data, pn + ".r.wr_data");
         sc_trace(o_vcd, r.wr_en, pn + ".r.wr_en");
+        sc_trace(o_vcd, r.wr_data, pn + ".r.wr_data");
+        sc_trace(o_vcd, r.wr_strob, pn + ".r.wr_strob");
         sc_trace(o_vcd, r.state, pn + ".r.state");
         sc_trace(o_vcd, r.tlp_type, pn + ".r.tlp_type");
-        sc_trace(o_vcd, r.in_packet_q, pn + ".r.in_packet_q");
+        sc_trace(o_vcd, r.tlp_resp, pn + ".r.tlp_resp");
     }
 
 }
 
 template<int C_DATA_WIDTH, int KEEP_WIDTH>
 void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
+    sc_uint<2> vb_req_addr_1_0;
+    sc_uint<2> vb_add_be20;
+    sc_uint<2> vb_add_be21;
+    sc_uint<10> vb_req_bytes;
     sc_uint<2> vb_region_select;
 
     v = r;
+    vb_req_addr_1_0 = 0;
+    vb_add_be20 = 0;
+    vb_add_be21 = 0;
+    vb_req_bytes = 0;
     vb_region_select = 0;
 
-    // Generate a signal that indicates if we are currently receiving a packet.
-    // This value is one clock cycle delayed from what is actually on the AXIS
-    // data bus.
-    if ((i_m_axis_rx_tvalid.read() == 1) && (r.m_axis_rx_tready.read() == 1) && (i_m_axis_rx_tlast.read() == 1)) {
-        v.in_packet_q = 0;
-    } else if ((w_sop == 1) && (r.m_axis_rx_tready.read() == 1)) {
-        v.in_packet_q = 1;
-    }
 
     if (i_m_axis_rx_tuser.read()(8, 2) == 0x01) {           // Select Mem32 region
         vb_region_select = 0x1;
@@ -268,30 +284,44 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
         vb_region_select = 0x3;
     }
 
-    v.wr_en = 0;
-    v.req_compl = 0;
+    if (r.req_be.read()[0] == 1) {
+        vb_req_addr_1_0 = 0;
+    } else if (r.req_be.read()[1] == 1) {
+        vb_req_addr_1_0 = 1;
+    } else if (r.req_be.read()[2] == 1) {
+        vb_req_addr_1_0 = 2;
+    } else if (r.req_be.read()[3] == 1) {
+        vb_req_addr_1_0 = 3;
+    }
+
+    // Calculate byte count based on byte enable
+    vb_add_be20 = ((0, r.req_be.read()[3]) + (0, r.req_be.read()[2]));
+    vb_add_be21 = ((0, r.req_be.read()[1]) + (0, r.req_be.read()[0]));
+    if (r.req_len.read() == 1) {
+        vb_req_bytes = ((0, vb_add_be20) + (0, vb_add_be21));
+    } else {
+        vb_req_bytes = (r.req_len.read() << 2);
+    }
 
     switch (r.state.read()) {
     case PIO_RX_RST_STATE:
         v.m_axis_rx_tready = 1;
-        v.req_compl_wd = 1;
+        v.tlp_resp = 0;                                     // Connected to Tx, should be set only after full header received
 
-        if (w_sop == 1) {
+        if (i_m_axis_rx_tvalid.read() == 1) {
+            v.tlp_type = i_m_axis_rx_tdata.read()(31, 24);
+            v.req_tc = i_m_axis_rx_tdata.read()(22, 20);
+            v.req_td = i_m_axis_rx_tdata.read()[15];
+            v.req_ep = i_m_axis_rx_tdata.read()[14];
+            v.req_attr = i_m_axis_rx_tdata.read()(13, 12);
+            v.req_len = i_m_axis_rx_tdata.read()(9, 0);
+            v.req_rid = i_m_axis_rx_tdata.read()(63, 48);
+            v.req_tag = i_m_axis_rx_tdata.read()(47, 40);
+            v.req_be = i_m_axis_rx_tdata.read()(39, 32);
+
             switch (i_m_axis_rx_tdata.read()(30, 24)) {
             case PIO_RX_MEM_RD32_FMT_TYPE:
-                v.tlp_type = i_m_axis_rx_tdata.read()(31, 24);
-                v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                v.m_axis_rx_tready = 0;
-
                 if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
-                    v.req_tc = i_m_axis_rx_tdata.read()(22, 20);
-                    v.req_td = i_m_axis_rx_tdata.read()[15];
-                    v.req_ep = i_m_axis_rx_tdata.read()[14];
-                    v.req_attr = i_m_axis_rx_tdata.read()(13, 12);
-                    v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                    v.req_rid = i_m_axis_rx_tdata.read()(63, 48);
-                    v.req_tag = i_m_axis_rx_tdata.read()(47, 40);
-                    v.req_be = i_m_axis_rx_tdata.read()(39, 32);
                     v.state = PIO_RX_MEM_RD32_DW1DW2;
                 } else {
                     v.state = PIO_RX_RST_STATE;
@@ -299,12 +329,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
                 break;
 
             case PIO_RX_MEM_WR32_FMT_TYPE:
-                v.tlp_type = i_m_axis_rx_tdata.read()(31, 24);
-                v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                v.m_axis_rx_tready = 0;
-
                 if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
-                    v.wr_be = i_m_axis_rx_tdata.read()(39, 32);
                     v.state = PIO_RX_MEM_WR32_DW1DW2;
                 } else {
                     v.state = PIO_RX_RST_STATE;
@@ -312,19 +337,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
                 break;
 
             case PIO_RX_MEM_RD64_FMT_TYPE:
-                v.tlp_type = i_m_axis_rx_tdata.read()(31, 24);
-                v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                v.m_axis_rx_tready = 0;
-
                 if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
-                    v.req_tc = i_m_axis_rx_tdata.read()(22, 20);
-                    v.req_td = i_m_axis_rx_tdata.read()[15];
-                    v.req_ep = i_m_axis_rx_tdata.read()[14];
-                    v.req_attr = i_m_axis_rx_tdata.read()(13, 12);
-                    v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                    v.req_rid = i_m_axis_rx_tdata.read()(63, 48);
-                    v.req_tag = i_m_axis_rx_tdata.read()(47, 40);
-                    v.req_be = i_m_axis_rx_tdata.read()(39, 32);
                     v.state = PIO_RX_MEM_RD64_DW1DW2;
                 } else {
                     v.state = PIO_RX_RST_STATE;
@@ -332,11 +345,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
                 break;
 
             case PIO_RX_MEM_WR64_FMT_TYPE:
-                v.tlp_type = i_m_axis_rx_tdata.read()(31, 24);
-                v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-
                 if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
-                    v.wr_be = i_m_axis_rx_tdata.read()(39, 32);
                     v.state = PIO_RX_MEM_WR64_DW1DW2;
                 } else {
                     v.state = PIO_RX_RST_STATE;
@@ -344,19 +353,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
                 break;
 
             case PIO_RX_IO_RD32_FMT_TYPE:
-                v.tlp_type = i_m_axis_rx_tdata.read()(31, 24);
-                v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                v.m_axis_rx_tready = 0;
-
                 if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
-                    v.req_tc = i_m_axis_rx_tdata.read()(22, 20);
-                    v.req_td = i_m_axis_rx_tdata.read()[15];
-                    v.req_ep = i_m_axis_rx_tdata.read()[14];
-                    v.req_attr = i_m_axis_rx_tdata.read()(13, 12);
-                    v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                    v.req_rid = i_m_axis_rx_tdata.read()(63, 48);
-                    v.req_tag = i_m_axis_rx_tdata.read()(47, 40);
-                    v.req_be = i_m_axis_rx_tdata.read()(39, 32);
                     v.state = PIO_RX_MEM_RD32_DW1DW2;
                 } else {
                     v.state = PIO_RX_RST_STATE;
@@ -364,20 +361,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
                 break;
 
             case PIO_RX_IO_WR32_FMT_TYPE:
-                v.tlp_type = i_m_axis_rx_tdata.read()(31, 24);
-                v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                v.m_axis_rx_tready = 0;
-
                 if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
-                    v.req_tc = i_m_axis_rx_tdata.read()(22, 20);
-                    v.req_td = i_m_axis_rx_tdata.read()[15];
-                    v.req_ep = i_m_axis_rx_tdata.read()[14];
-                    v.req_attr = i_m_axis_rx_tdata.read()(13, 12);
-                    v.req_len = i_m_axis_rx_tdata.read()(9, 0);
-                    v.req_rid = i_m_axis_rx_tdata.read()(63, 48);
-                    v.req_tag = i_m_axis_rx_tdata.read()(47, 40);
-                    v.req_be = i_m_axis_rx_tdata.read()(39, 32);
-                    v.wr_be = i_m_axis_rx_tdata.read()(39, 32);
                     v.state = PIO_RX_IO_WR_DW1DW2;
                 } else {
                     v.state = PIO_RX_RST_STATE;
@@ -396,97 +380,115 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     case PIO_RX_MEM_RD32_DW1DW2:
         if (i_m_axis_rx_tvalid.read() == 1) {
             v.m_axis_rx_tready = 0;
-            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2), 0);
-            v.req_compl = 1;
-            v.req_compl_wd = 1;
-            v.state = PIO_RX_WAIT_STATE;
-        } else {
-            v.state = PIO_RX_MEM_RD32_DW1DW2;
+            v.req_valid = 1;
+            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2), vb_req_addr_1_0);
+            v.req_bytes = vb_req_bytes;
+            v.tlp_resp = TLP_POSTED;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         }
         break;
 
     case PIO_RX_MEM_WR32_DW1DW2:
         if (i_m_axis_rx_tvalid.read() == 1) {
-            v.wr_data = i_m_axis_rx_tdata.read()(63, 32);
-            v.wr_en = 1;
             v.m_axis_rx_tready = 0;
+            v.req_valid = 1;
+            v.wr_en = 1;
             v.wr_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2));
-            v.state = PIO_RX_WAIT_STATE;
-        } else {
-            v.state = PIO_RX_MEM_WR32_DW1DW2;
+            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2), vb_req_addr_1_0);
+            v.req_bytes = vb_req_bytes;
+            v.wr_data = (i_m_axis_rx_tdata.read()(63, 32), i_m_axis_rx_tdata.read()(63, 32));
+            if (i_m_axis_rx_tdata.read()[2] == 1) {
+                v.wr_strob = (r.req_be.read()(3, 0), r.req_be.read()(7, 4));
+            } else {
+                v.wr_strob = r.req_be.read();
+            }
+            v.tlp_resp = TLP_NON_POSTED;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         }
         break;
 
     case PIO_RX_MEM_RD64_DW1DW2:
         if (i_m_axis_rx_tvalid.read() == 1) {
-            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(42, 34), 0);
-            v.req_compl = 1;
-            v.req_compl_wd = 1;
             v.m_axis_rx_tready = 0;
-            v.state = PIO_RX_WAIT_STATE;
-        } else {
-            v.state = PIO_RX_MEM_RD64_DW1DW2;
+            v.req_valid = 1;
+            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(42, 34), vb_req_addr_1_0);
+            v.req_bytes = vb_req_bytes;
+            v.tlp_resp = TLP_POSTED;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         }
         break;
 
     case PIO_RX_MEM_WR64_DW1DW2:
         if (i_m_axis_rx_tvalid.read() == 1) {
-            v.m_axis_rx_tready = 0;
             v.wr_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(42, 34));
+            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(42, 34), vb_req_addr_1_0);
+            v.req_bytes = vb_req_bytes;
+            if (i_m_axis_rx_tdata.read()[34] == 1) {
+                v.wr_strob = (r.req_be.read()(3, 0), r.req_be.read()(7, 4));
+            } else {
+                v.wr_strob = r.req_be.read();
+            }
             v.state = PIO_RX_MEM_WR64_DW3;
-        } else {
-            v.state = PIO_RX_MEM_WR64_DW1DW2;
         }
         break;
 
     case PIO_RX_MEM_WR64_DW3:
         if (i_m_axis_rx_tvalid.read() == 1) {
-            v.wr_data = i_m_axis_rx_tdata.read()(31, 0);
-            v.wr_en = 1;
             v.m_axis_rx_tready = 0;
-            v.state = PIO_RX_WAIT_STATE;
-        } else {
-            v.state = PIO_RX_MEM_WR64_DW3;
+            v.req_valid = 1;
+            v.wr_en = 1;
+            v.wr_data = (i_m_axis_rx_tdata.read()(31, 0), i_m_axis_rx_tdata.read()(31, 0));
+            v.tlp_resp = TLP_NON_POSTED;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         }
         break;
 
     case PIO_RX_IO_WR_DW1DW2:
         if (i_m_axis_rx_tvalid.read() == 1) {
-            v.wr_data = i_m_axis_rx_tdata.read()(63, 32);
-            v.wr_en = 1;
             v.m_axis_rx_tready = 0;
+            v.req_valid = 1;
+            v.wr_en = 1;
             v.wr_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2));
-            v.req_compl = 1;
-            v.req_compl_wd = 0;
-            v.state = PIO_RX_WAIT_STATE;
-        } else {
-            v.state = PIO_RX_IO_WR_DW1DW2;
+            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2), vb_req_addr_1_0);
+            v.req_bytes = vb_req_bytes;
+            v.wr_data = (i_m_axis_rx_tdata.read()(63, 32), i_m_axis_rx_tdata.read()(63, 32));
+            if (i_m_axis_rx_tdata.read()[2] == 1) {
+                v.wr_strob = (r.req_be.read()(3, 0), r.req_be.read()(7, 4));
+            } else {
+                v.wr_strob = r.req_be.read();
+            }
+            v.tlp_resp = TLP_COMPLETION;
+            v.state = PIO_RX_WAIT_DMA_RESP;
         }
         break;
 
-    case PIO_RX_WAIT_STATE:
-        v.wr_en = 0;
-        v.req_compl = 0;
-        if ((r.tlp_type.read() == PIO_RX_MEM_WR32_FMT_TYPE) && (i_wr_busy.read() == 0)) {
+    case PIO_RX_WAIT_DMA_RESP:
+        if (i_req_mem_ready.read() == 1) {
+            v.req_valid = 0;
+        }
+        if (i_resp_mem_valid.read() == 1) {
+            if (r.tlp_resp.read().or_reduce() == 1) {
+                v.tlp_resp = 0;
+                v.state = PIO_RX_WAIT_TX_COMPLETION;
+            } else {
+                v.m_axis_rx_tready = 1;
+                v.wr_en = 0;
+                v.wr_strob = 0;
+                v.wr_data = 0;
+                v.req_len = 0;
+                v.state = PIO_RX_RST_STATE;
+            }
+        }
+        break;
+
+    case PIO_RX_WAIT_TX_COMPLETION:
+        if (i_compl_done.read() == 1) {
             v.m_axis_rx_tready = 1;
+            v.wr_en = 0;                                    // IO Write
+            v.wr_strob = 0;
+            v.wr_data = 0;
+            v.req_len = 0;
             v.state = PIO_RX_RST_STATE;
-        } else if ((r.tlp_type.read() == PIO_RX_IO_WR32_FMT_TYPE) && (i_wr_busy.read() == 0)) {
-            v.m_axis_rx_tready = 1;
-            v.state = PIO_RX_RST_STATE;
-        } else if ((r.tlp_type.read() == PIO_RX_MEM_WR64_FMT_TYPE) && (i_wr_busy.read() == 0)) {
-            v.m_axis_rx_tready = 1;
-            v.state = PIO_RX_RST_STATE;
-        } else if ((r.tlp_type.read() == PIO_RX_MEM_RD32_FMT_TYPE) && (i_compl_done.read() == 1)) {
-            v.m_axis_rx_tready = 1;
-            v.state = PIO_RX_RST_STATE;
-        } else if ((r.tlp_type.read() == PIO_RX_IO_RD32_FMT_TYPE) && (i_compl_done.read() == 1)) {
-            v.m_axis_rx_tready = 1;
-            v.state = PIO_RX_RST_STATE;
-        } else if ((r.tlp_type.read() == PIO_RX_MEM_RD64_FMT_TYPE) && (i_compl_done.read() == 1)) {
-            v.m_axis_rx_tready = 1;
-            v.state = PIO_RX_RST_STATE;
-        } else {
-            v.state = PIO_RX_WAIT_STATE;
         }
         break;
 
@@ -495,11 +497,9 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
         break;
     }
 
-    w_sop = ((!r.in_packet_q.read()) && i_m_axis_rx_tvalid.read());
-
     o_m_axis_rx_tready = r.m_axis_rx_tready.read();
-    o_req_compl = r.req_compl.read();
-    o_req_compl_wd = r.req_compl_wd.read();
+    o_req_compl = r.tlp_resp.read()[0];
+    o_req_compl_wd = r.tlp_resp.read()[1];
     o_req_tc = r.req_tc.read();
     o_req_td = r.req_td.read();
     o_req_ep = r.req_ep.read();
@@ -509,10 +509,14 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     o_req_tag = r.req_tag.read();
     o_req_be = r.req_be.read();
     o_req_addr = r.req_addr.read();
-    o_wr_addr = r.wr_addr.read();
-    o_wr_be = r.wr_be.read()(3, 0);
-    o_wr_data = r.wr_data.read();
-    o_wr_en = r.wr_en.read();
+
+    o_req_mem_valid = r.req_valid.read();
+    o_req_mem_write = r.wr_en.read();
+    o_req_mem_bytes = r.req_bytes.read();
+    o_req_mem_addr = r.req_addr.read();
+    o_req_mem_strob = r.wr_strob.read();
+    o_req_mem_data = r.wr_data.read();
+    o_req_mem_last = 1;
 }
 
 template<int C_DATA_WIDTH, int KEEP_WIDTH>

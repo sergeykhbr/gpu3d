@@ -226,7 +226,7 @@ void axi2apb_bus1::comb() {
     vapbi[iselidx].penable = r.penable.read();
     vapbi[iselidx].pprot = r.pprot.read();
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         axi2apb_bus1_r_reset(v);
     }
 

@@ -331,7 +331,7 @@ void FpuTop::comb() {
         v.result = wb_res_l2d.read();
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         FpuTop_r_reset(v);
     }
 

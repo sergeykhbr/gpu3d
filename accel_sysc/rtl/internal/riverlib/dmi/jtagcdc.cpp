@@ -116,7 +116,7 @@ void jtagcdc::comb() {
         v.req_accepted = 0;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         jtagcdc_r_reset(v);
     }
 

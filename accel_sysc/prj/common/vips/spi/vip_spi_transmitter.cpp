@@ -173,7 +173,7 @@ void vip_spi_transmitter::comb() {
         }
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_spi_transmitter_r_reset(v);
     }
 

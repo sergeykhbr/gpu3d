@@ -619,7 +619,7 @@ void apb_spi<log2_fifosz>::comb() {
     v.resp_rdata = vb_rdata;
     v.resp_err = 0;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         apb_spi_r_reset(v);
     }
 

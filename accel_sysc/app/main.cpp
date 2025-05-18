@@ -16,6 +16,7 @@
 
 #include <systemc.h>
 #include "../prj/impl/asic_sim/asic_top_tb.h"
+#include "../prj/tb/pcie_dma_tb.h"
 
 using namespace debugger;
 
@@ -23,7 +24,11 @@ int sc_main(int argc, char *argv[]) {
     sc_trace_file *vcd_ = sc_create_vcd_trace_file(CMAKE_BINARY_DIR"/accel");
     vcd_->set_time_unit(1, SC_PS);
 
+#if 1
+    pcie_dma_tb *tb = new pcie_dma_tb("tb");
+#else
     asic_top_tb *tb = new asic_top_tb("tb");
+#endif
     tb->generateVCD(0, vcd_);
 
     sc_start(100, SC_NS);
@@ -31,7 +36,7 @@ int sc_main(int argc, char *argv[]) {
               << ": Simulation started successfully. Continue for 10 ms..."
               << std::endl;
 
-    sc_start(10, SC_MS);
+    sc_start(1, SC_MS);
 
     if (vcd_) {
         sc_close_vcd_trace_file(vcd_);

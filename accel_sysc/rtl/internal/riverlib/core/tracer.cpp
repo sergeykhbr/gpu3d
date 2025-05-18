@@ -1438,7 +1438,7 @@ void Tracer::comb() {
     }
     v.tr_rcnt = rcnt_inc;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         Tracer_r_reset(v);
     }
 }

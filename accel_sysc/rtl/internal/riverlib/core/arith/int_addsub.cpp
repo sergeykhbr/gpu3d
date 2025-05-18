@@ -143,7 +143,7 @@ void IntAddSub::comb() {
 
     v.res = vb_res;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         IntAddSub_r_reset(v);
     }
 

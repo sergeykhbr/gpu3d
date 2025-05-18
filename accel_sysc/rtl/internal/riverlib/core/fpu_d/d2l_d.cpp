@@ -217,7 +217,7 @@ void Double2Long::comb() {
         v.busy = 0;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         Double2Long_r_reset(v);
     }
 

@@ -380,7 +380,7 @@ void DoubleDiv::comb() {
         v.busy = 0;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         DoubleDiv_r_reset(v);
     }
 

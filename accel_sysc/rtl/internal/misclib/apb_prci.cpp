@@ -151,7 +151,7 @@ void apb_prci::comb() {
     v.resp_rdata = vb_rdata;
     v.resp_err = 0;
 
-    if ((~async_reset_) && (r_sys_nrst.read() == 0)) {
+    if ((!async_reset_) && (r_sys_nrst.read() == 0)) {
         apb_prci_r_reset(v);
     }
 
@@ -175,9 +175,9 @@ void apb_prci::reqff() {
         rb_ddr_locked = (rb_ddr_locked[0], i_ddr_locked.read());
         rb_pcie_lnk_up = (rb_pcie_lnk_up[0], i_pcie_phy_lnk_up.read());
         r_sys_rst = ((!i_sys_locked.read()) || i_dmireset.read());
-        r_sys_nrst = (i_sys_locked.read() & (~i_dmireset.read()));
+        r_sys_nrst = (i_sys_locked.read() & (!i_dmireset.read()));
         r_dbg_nrst = i_sys_locked.read();
-        rb_pcie_nrst = (rb_pcie_nrst[0], (i_pcie_phy_lnk_up.read() & (~i_pcie_phy_rst.read())));
+        rb_pcie_nrst = (rb_pcie_nrst[0], (i_pcie_phy_lnk_up.read() & (!i_pcie_phy_rst.read())));
     }
 }
 

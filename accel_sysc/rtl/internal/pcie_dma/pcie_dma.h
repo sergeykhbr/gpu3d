@@ -22,6 +22,7 @@
 #include "pcie_cfg.h"
 #include "../cdc/cdc_afifo.h"
 #include "pcie_io_ep.h"
+#include "../ambalib/axi_dma.h"
 
 namespace debugger {
 
@@ -40,16 +41,20 @@ SC_MODULE(pcie_dma) {
     sc_in<axi4_master_in_type> i_xmsti;
     sc_out<axi4_master_out_type> o_xmsto;
     // Debug signals:
-    sc_out<pcie_dma64_in_type> o_dbg_pcie_dmai;
+    sc_out<bool> o_dbg_valid;
+    sc_out<sc_uint<64>> o_dbg_payload;
 
     void comb();
 
-    pcie_dma(sc_module_name name);
+    pcie_dma(sc_module_name name,
+             bool async_reset);
     virtual ~pcie_dma();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    bool async_reset_;
+
     // 
     static const int C_DATA_WIDTH = 64;
     static const int KEEP_WIDTH = (C_DATA_WIDTH / 8);
@@ -86,12 +91,25 @@ SC_MODULE(pcie_dma) {
     sc_signal<sc_uint<KEEP_WIDTH>> wb_s_axis_tx_tkeep;
     sc_signal<sc_uint<C_DATA_WIDTH>> wb_s_axis_tx_tdata;
     sc_signal<bool> w_tx_src_dsc;
-    sc_signal<bool> w_req_compl;
-    sc_signal<bool> w_compl_done;
+    sc_signal<bool> w_req_mem_ready;
+    sc_signal<bool> w_req_mem_valid;
+    sc_signal<bool> w_req_mem_write;                        // 0=read; 1=write operation
+    sc_signal<sc_uint<10>> wb_req_mem_bytes;                // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    sc_signal<sc_uint<13>> wb_req_mem_addr;
+    sc_signal<sc_uint<8>> wb_req_mem_strob;
+    sc_signal<sc_uint<64>> wb_req_mem_data;
+    sc_signal<bool> w_req_mem_last;
+    sc_signal<bool> w_resp_mem_valid;
+    sc_signal<bool> w_resp_mem_last;
+    sc_signal<bool> w_resp_mem_fault;
+    sc_signal<sc_uint<13>> wb_resp_mem_addr;
+    sc_signal<sc_uint<64>> wb_resp_mem_data;
+    sc_signal<bool> w_resp_mem_ready;
 
     cdc_afifo<CFG_PCIE_DMAFIFO_DEPTH, REQ_FIFO_WIDTH> *reqfifo;
     cdc_afifo<CFG_PCIE_DMAFIFO_DEPTH, RESP_FIFO_WIDTH> *respfifo;
     pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH> *PIO_EP_inst;
+    axi_dma<13> *xdma0;
 
 };
 

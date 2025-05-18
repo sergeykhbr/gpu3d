@@ -82,7 +82,7 @@ void vip_sdcard_crc7::comb() {
         v.crc7 = vb_crc7;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_sdcard_crc7_r_reset(v);
     }
 

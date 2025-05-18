@@ -30,7 +30,8 @@ apb_pcie::apb_pcie(sc_module_name name,
     o_apbo("o_apbo"),
     i_pcie_completer_id("i_pcie_completer_id"),
     i_dma_state("i_dma_state"),
-    i_dbg_pcie_dmai("i_dbg_pcie_dmai") {
+    i_dbg_valid("i_dbg_valid"),
+    i_dbg_payload("i_dbg_payload") {
 
     async_reset_ = async_reset;
     pslv0 = 0;
@@ -59,7 +60,8 @@ apb_pcie::apb_pcie(sc_module_name name,
     sensitive << i_apbi;
     sensitive << i_pcie_completer_id;
     sensitive << i_dma_state;
-    sensitive << i_dbg_pcie_dmai;
+    sensitive << i_dbg_valid;
+    sensitive << i_dbg_payload;
     sensitive << w_req_valid;
     sensitive << wb_req_addr;
     sensitive << w_req_write;
@@ -89,7 +91,8 @@ void apb_pcie::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, i_pcie_completer_id, i_pcie_completer_id.name());
         sc_trace(o_vcd, i_dma_state, i_dma_state.name());
-        sc_trace(o_vcd, i_dbg_pcie_dmai, i_dbg_pcie_dmai.name());
+        sc_trace(o_vcd, i_dbg_valid, i_dbg_valid.name());
+        sc_trace(o_vcd, i_dbg_payload, i_dbg_payload.name());
         sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
         sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
         sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
@@ -116,7 +119,7 @@ void apb_pcie::comb() {
         vb_rdata(15, 0) = i_pcie_completer_id.read();
     } else if (wb_req_addr.read()(11, 2) == 2) {
         // 0x08: request counter
-        vb_rdata(3, 0) = req_cnt;
+        vb_rdata = req_cnt;
     } else if (wb_req_addr.read()(11, 7) == 1) {
         // 0x040..0x04F: debug buffer
         if (wb_req_addr.read()[2] == 0) {
@@ -129,14 +132,14 @@ void apb_pcie::comb() {
     v.resp_valid = w_req_valid.read();
     v.resp_rdata = vb_rdata;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         apb_pcie_r_reset(v);
     }
 }
 
 void apb_pcie::reqff() {
-    if (i_dbg_pcie_dmai.read().valid == 1) {
-        req_data_arr[req_cnt.to_int()] = i_dbg_pcie_dmai.read().data;
+    if (i_dbg_valid.read() == 1) {
+        req_data_arr[req_cnt(3, 0).to_int()] = i_dbg_payload.read();
         req_cnt = (req_cnt + 1);
     }
 }

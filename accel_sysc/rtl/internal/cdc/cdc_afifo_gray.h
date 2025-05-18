@@ -42,10 +42,10 @@ SC_MODULE(cdc_afifo_gray) {
  private:
     sc_uint<(abits + 1)> wb_bin_next;
     sc_uint<(abits + 1)> wb_gray_next;
-    sc_uint<(abits + 1)> bin;
-    sc_uint<(abits + 1)> gray;
-    bool empty;
-    bool full;
+    sc_signal<sc_uint<(abits + 1)>> bin;
+    sc_signal<sc_uint<(abits + 1)>> gray;
+    sc_signal<bool> empty;
+    sc_signal<bool> full;
 
 };
 
@@ -66,6 +66,10 @@ cdc_afifo_gray<abits>::cdc_afifo_gray(sc_module_name name)
     sensitive << i_nrst;
     sensitive << i_ena;
     sensitive << i_q2_gray;
+    sensitive << bin;
+    sensitive << gray;
+    sensitive << empty;
+    sensitive << full;
 
     SC_METHOD(proc_ff);
     sensitive << i_nrst;
@@ -87,12 +91,12 @@ void cdc_afifo_gray<abits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
 
 template<int abits>
 void cdc_afifo_gray<abits>::proc_comb() {
-    wb_bin_next = (bin + (0, i_ena.read()));
+    wb_bin_next = (bin.read() + (0, i_ena.read()));
     wb_gray_next = ((wb_bin_next >> 1) ^ wb_bin_next);
-    o_addr = bin((abits - 1), 0);
-    o_gray = gray;
-    o_empty = empty;
-    o_full = full;
+    o_addr = bin.read()((abits - 1), 0);
+    o_gray = gray.read();
+    o_empty = empty.read();
+    o_full = full.read();
 }
 
 template<int abits>

@@ -160,7 +160,7 @@ void ic_csr_m2_s1::comb() {
         o_m0_resp_exception = 0;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         ic_csr_m2_s1_r_reset(v);
     }
 }

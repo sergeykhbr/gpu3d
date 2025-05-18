@@ -152,7 +152,7 @@ void vip_uart_receiver::comb() {
         break;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_uart_receiver_r_reset(v);
     }
 

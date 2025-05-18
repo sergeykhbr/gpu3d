@@ -66,7 +66,7 @@ void AluLogic::comb() {
         v.res = (i_a1.read() & i_a2.read());
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         AluLogic_r_reset(v);
     }
 

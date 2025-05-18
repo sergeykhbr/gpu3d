@@ -196,7 +196,7 @@ void RegIntBank::comb() {
         }
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         RegIntBank_r_reset(v);
     }
 

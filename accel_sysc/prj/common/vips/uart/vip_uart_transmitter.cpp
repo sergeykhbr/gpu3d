@@ -123,7 +123,7 @@ void vip_uart_transmitter::comb() {
         }
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_uart_transmitter_r_reset(v);
     }
 

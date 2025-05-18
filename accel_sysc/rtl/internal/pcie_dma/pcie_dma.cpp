@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-pcie_dma::pcie_dma(sc_module_name name)
+pcie_dma::pcie_dma(sc_module_name name,
+                   bool async_reset)
     : sc_module(name),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
@@ -31,11 +32,14 @@ pcie_dma::pcie_dma(sc_module_name name)
     o_xmst_cfg("o_xmst_cfg"),
     i_xmsti("i_xmsti"),
     o_xmsto("o_xmsto"),
-    o_dbg_pcie_dmai("o_dbg_pcie_dmai") {
+    o_dbg_valid("o_dbg_valid"),
+    o_dbg_payload("o_dbg_payload") {
 
+    async_reset_ = async_reset;
     reqfifo = 0;
     respfifo = 0;
     PIO_EP_inst = 0;
+    xdma0 = 0;
 
     // PCIE EP (200 MHz) -> DMA (40 MHz)
     reqfifo = new cdc_afifo<CFG_PCIE_DMAFIFO_DEPTH,
@@ -78,9 +82,45 @@ pcie_dma::pcie_dma(sc_module_name name)
     PIO_EP_inst->i_m_axis_rx_tvalid(w_reqfifo_rvalid);
     PIO_EP_inst->o_m_axis_rx_tready(w_reqfifo_rd);
     PIO_EP_inst->i_m_axis_rx_tuser(wb_m_axis_rx_tuser);
-    PIO_EP_inst->o_req_compl(w_req_compl);
-    PIO_EP_inst->o_compl_done(w_compl_done);
     PIO_EP_inst->i_cfg_completer_id(i_pcie_completer_id);
+    PIO_EP_inst->i_req_mem_ready(w_req_mem_ready);
+    PIO_EP_inst->o_req_mem_valid(w_req_mem_valid);
+    PIO_EP_inst->o_req_mem_write(w_req_mem_write);
+    PIO_EP_inst->o_req_mem_bytes(wb_req_mem_bytes);
+    PIO_EP_inst->o_req_mem_addr(wb_req_mem_addr);
+    PIO_EP_inst->o_req_mem_strob(wb_req_mem_strob);
+    PIO_EP_inst->o_req_mem_data(wb_req_mem_data);
+    PIO_EP_inst->o_req_mem_last(w_req_mem_last);
+    PIO_EP_inst->i_resp_mem_valid(w_resp_mem_valid);
+    PIO_EP_inst->i_resp_mem_last(w_resp_mem_last);
+    PIO_EP_inst->i_resp_mem_fault(w_resp_mem_fault);
+    PIO_EP_inst->i_resp_mem_addr(wb_resp_mem_addr);
+    PIO_EP_inst->i_resp_mem_data(wb_resp_mem_data);
+    PIO_EP_inst->o_resp_mem_ready(w_resp_mem_ready);
+
+    xdma0 = new axi_dma<13>("xdma0",
+                            async_reset,
+                            1);
+    xdma0->i_nrst(i_nrst);
+    xdma0->i_clk(i_clk);
+    xdma0->o_req_mem_ready(w_req_mem_ready);
+    xdma0->i_req_mem_valid(w_req_mem_valid);
+    xdma0->i_req_mem_write(w_req_mem_write);
+    xdma0->i_req_mem_bytes(wb_req_mem_bytes);
+    xdma0->i_req_mem_addr(wb_req_mem_addr);
+    xdma0->i_req_mem_strob(wb_req_mem_strob);
+    xdma0->i_req_mem_data(wb_req_mem_data);
+    xdma0->i_req_mem_last(w_req_mem_last);
+    xdma0->o_resp_mem_valid(w_resp_mem_valid);
+    xdma0->o_resp_mem_last(w_resp_mem_last);
+    xdma0->o_resp_mem_fault(w_resp_mem_fault);
+    xdma0->o_resp_mem_addr(wb_resp_mem_addr);
+    xdma0->o_resp_mem_data(wb_resp_mem_data);
+    xdma0->i_resp_mem_ready(w_resp_mem_ready);
+    xdma0->i_msti(i_xmsti);
+    xdma0->o_msto(o_xmsto);
+    xdma0->o_dbg_valid(o_dbg_valid);
+    xdma0->o_dbg_payload(o_dbg_payload);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -108,8 +148,20 @@ pcie_dma::pcie_dma(sc_module_name name)
     sensitive << wb_s_axis_tx_tkeep;
     sensitive << wb_s_axis_tx_tdata;
     sensitive << w_tx_src_dsc;
-    sensitive << w_req_compl;
-    sensitive << w_compl_done;
+    sensitive << w_req_mem_ready;
+    sensitive << w_req_mem_valid;
+    sensitive << w_req_mem_write;
+    sensitive << wb_req_mem_bytes;
+    sensitive << wb_req_mem_addr;
+    sensitive << wb_req_mem_strob;
+    sensitive << wb_req_mem_data;
+    sensitive << w_req_mem_last;
+    sensitive << w_resp_mem_valid;
+    sensitive << w_resp_mem_last;
+    sensitive << w_resp_mem_fault;
+    sensitive << wb_resp_mem_addr;
+    sensitive << wb_resp_mem_data;
+    sensitive << w_resp_mem_ready;
 }
 
 pcie_dma::~pcie_dma() {
@@ -122,6 +174,9 @@ pcie_dma::~pcie_dma() {
     if (PIO_EP_inst) {
         delete PIO_EP_inst;
     }
+    if (xdma0) {
+        delete xdma0;
+    }
 }
 
 void pcie_dma::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -133,7 +188,8 @@ void pcie_dma::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pcie_dmao, o_pcie_dmao.name());
         sc_trace(o_vcd, i_xmsti, i_xmsti.name());
         sc_trace(o_vcd, o_xmsto, o_xmsto.name());
-        sc_trace(o_vcd, o_dbg_pcie_dmai, o_dbg_pcie_dmai.name());
+        sc_trace(o_vcd, o_dbg_valid, o_dbg_valid.name());
+        sc_trace(o_vcd, o_dbg_payload, o_dbg_payload.name());
     }
 
     if (reqfifo) {
@@ -144,6 +200,9 @@ void pcie_dma::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (PIO_EP_inst) {
         PIO_EP_inst->generateVCD(i_vcd, o_vcd);
+    }
+    if (xdma0) {
+        xdma0->generateVCD(i_vcd, o_vcd);
     }
 }
 
@@ -166,10 +225,8 @@ void pcie_dma::comb() {
     vb_xmst_cfg.vid = VENDOR_OPTIMITECH;
     vb_xmst_cfg.did = OPTIMITECH_PCIE_DMA;
     o_xmst_cfg = vb_xmst_cfg;
-    o_xmsto = axi4_master_out_none;
 
     o_dma_state = 0;
-    o_dbg_pcie_dmai = pcie_dma64_in_none;
 
     w_pcie_dmai_valid = i_pcie_dmai.read().valid;
     w_pcie_dmai_ready = i_pcie_dmai.read().ready;

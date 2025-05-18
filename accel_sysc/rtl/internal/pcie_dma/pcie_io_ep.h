@@ -16,7 +16,6 @@
 #pragma once
 
 #include <systemc.h>
-#include "pcie_io_ep_mem_access.h"
 #include "pcie_io_rx_engine.h"
 #include "pcie_io_tx_engine.h"
 #include "api_core.h"
@@ -43,10 +42,22 @@ SC_MODULE(pcie_io_ep) {
     sc_in<bool> i_m_axis_rx_tvalid;
     sc_out<bool> o_m_axis_rx_tready;
     sc_in<sc_uint<9>> i_m_axis_rx_tuser;
-    // 
-    sc_out<bool> o_req_compl;
-    sc_out<bool> o_compl_done;
     sc_in<sc_uint<16>> i_cfg_completer_id;                  // Bus, Device, Function
+    // Memory access signals:
+    sc_in<bool> i_req_mem_ready;                            // Ready to accept next memory request
+    sc_out<bool> o_req_mem_valid;                           // Request data is valid to accept
+    sc_out<bool> o_req_mem_write;                           // 0=read; 1=write operation
+    sc_out<sc_uint<10>> o_req_mem_bytes;                    // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    sc_out<sc_uint<13>> o_req_mem_addr;                     // Address to read/write
+    sc_out<sc_uint<8>> o_req_mem_strob;                     // Byte enabling write strob
+    sc_out<sc_uint<64>> o_req_mem_data;                     // Data to write
+    sc_out<bool> o_req_mem_last;                            // Last data payload in a sequence
+    sc_in<bool> i_resp_mem_valid;                           // Read/Write data is valid. All write transaction with valid response.
+    sc_in<bool> i_resp_mem_last;                            // Last response in sequence
+    sc_in<bool> i_resp_mem_fault;                           // Error on memory access
+    sc_in<sc_uint<13>> i_resp_mem_addr;                     // Read address value
+    sc_in<sc_uint<64>> i_resp_mem_data;                     // Read data value
+    sc_out<bool> o_resp_mem_ready;                          // Ready to accept response
 
     void comb();
 
@@ -56,14 +67,8 @@ SC_MODULE(pcie_io_ep) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    sc_signal<sc_uint<11>> wb_rd_addr;
-    sc_signal<sc_uint<4>> wb_rd_be;
-    sc_signal<sc_uint<32>> wb_rd_data;
-    sc_signal<sc_uint<11>> wb_wr_addr;
-    sc_signal<sc_uint<4>> wb_wr_be;
-    sc_signal<sc_uint<32>> wb_wr_data;
-    sc_signal<bool> w_wr_en;
-    sc_signal<bool> w_wr_busy;
+    sc_uint<64> SwapEndianess32(sc_uint<64> dword);
+
     sc_signal<bool> w_req_compl_int;
     sc_signal<bool> w_req_compl_wd;
     sc_signal<bool> w_compl_done_int;
@@ -76,8 +81,10 @@ SC_MODULE(pcie_io_ep) {
     sc_signal<sc_uint<8>> wb_req_tag;
     sc_signal<sc_uint<8>> wb_req_be;
     sc_signal<sc_uint<13>> wb_req_addr;
+    sc_signal<sc_uint<10>> wb_req_bytes;
+    sc_signal<sc_uint<C_DATA_WIDTH>> wb_req_mem_data;
+    sc_signal<sc_uint<C_DATA_WIDTH>> wb_resp_mem_data;
 
-    pcie_io_ep_mem_access *EP_MEM_inst;
     pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH> *EP_RX_inst;
     pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH> *EP_TX_inst;
 
@@ -100,25 +107,24 @@ pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_ep(sc_module_name name)
     i_m_axis_rx_tvalid("i_m_axis_rx_tvalid"),
     o_m_axis_rx_tready("o_m_axis_rx_tready"),
     i_m_axis_rx_tuser("i_m_axis_rx_tuser"),
-    o_req_compl("o_req_compl"),
-    o_compl_done("o_compl_done"),
-    i_cfg_completer_id("i_cfg_completer_id") {
+    i_cfg_completer_id("i_cfg_completer_id"),
+    i_req_mem_ready("i_req_mem_ready"),
+    o_req_mem_valid("o_req_mem_valid"),
+    o_req_mem_write("o_req_mem_write"),
+    o_req_mem_bytes("o_req_mem_bytes"),
+    o_req_mem_addr("o_req_mem_addr"),
+    o_req_mem_strob("o_req_mem_strob"),
+    o_req_mem_data("o_req_mem_data"),
+    o_req_mem_last("o_req_mem_last"),
+    i_resp_mem_valid("i_resp_mem_valid"),
+    i_resp_mem_last("i_resp_mem_last"),
+    i_resp_mem_fault("i_resp_mem_fault"),
+    i_resp_mem_addr("i_resp_mem_addr"),
+    i_resp_mem_data("i_resp_mem_data"),
+    o_resp_mem_ready("o_resp_mem_ready") {
 
-    EP_MEM_inst = 0;
     EP_RX_inst = 0;
     EP_TX_inst = 0;
-
-    EP_MEM_inst = new pcie_io_ep_mem_access("EP_MEM_inst");
-    EP_MEM_inst->i_nrst(i_nrst);
-    EP_MEM_inst->i_clk(i_clk);
-    EP_MEM_inst->i_rd_addr(wb_rd_addr);
-    EP_MEM_inst->i_rd_be(wb_rd_be);
-    EP_MEM_inst->o_rd_data(wb_rd_data);
-    EP_MEM_inst->i_wr_addr(wb_wr_addr);
-    EP_MEM_inst->i_wr_be(wb_wr_be);
-    EP_MEM_inst->i_wr_data(wb_wr_data);
-    EP_MEM_inst->i_wr_en(w_wr_en);
-    EP_MEM_inst->o_wr_busy(w_wr_busy);
 
     EP_RX_inst = new pcie_io_rx_engine<C_DATA_WIDTH,
                                        KEEP_WIDTH>("EP_RX_inst");
@@ -142,11 +148,15 @@ pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_ep(sc_module_name name)
     EP_RX_inst->o_req_tag(wb_req_tag);
     EP_RX_inst->o_req_be(wb_req_be);
     EP_RX_inst->o_req_addr(wb_req_addr);
-    EP_RX_inst->o_wr_addr(wb_wr_addr);
-    EP_RX_inst->o_wr_be(wb_wr_be);
-    EP_RX_inst->o_wr_data(wb_wr_data);
-    EP_RX_inst->o_wr_en(w_wr_en);
-    EP_RX_inst->i_wr_busy(w_wr_busy);
+    EP_RX_inst->i_req_mem_ready(i_req_mem_ready);
+    EP_RX_inst->o_req_mem_valid(o_req_mem_valid);
+    EP_RX_inst->o_req_mem_write(o_req_mem_write);
+    EP_RX_inst->o_req_mem_bytes(wb_req_bytes);
+    EP_RX_inst->o_req_mem_addr(o_req_mem_addr);
+    EP_RX_inst->o_req_mem_strob(o_req_mem_strob);
+    EP_RX_inst->o_req_mem_data(wb_req_mem_data);
+    EP_RX_inst->o_req_mem_last(o_req_mem_last);
+    EP_RX_inst->i_resp_mem_valid(i_resp_mem_valid);
 
     EP_TX_inst = new pcie_io_tx_engine<C_DATA_WIDTH,
                                        KEEP_WIDTH>("EP_TX_inst");
@@ -170,9 +180,13 @@ pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_ep(sc_module_name name)
     EP_TX_inst->i_req_tag(wb_req_tag);
     EP_TX_inst->i_req_be(wb_req_be);
     EP_TX_inst->i_req_addr(wb_req_addr);
-    EP_TX_inst->o_rd_addr(wb_rd_addr);
-    EP_TX_inst->o_rd_be(wb_rd_be);
-    EP_TX_inst->i_rd_data(wb_rd_data);
+    EP_TX_inst->i_req_bytes(wb_req_bytes);
+    EP_TX_inst->i_dma_resp_valid(i_resp_mem_valid);
+    EP_TX_inst->i_dma_resp_last(i_resp_mem_last);
+    EP_TX_inst->i_dma_resp_fault(i_resp_mem_fault);
+    EP_TX_inst->i_dma_resp_addr(i_resp_mem_addr);
+    EP_TX_inst->i_dma_resp_data(wb_resp_mem_data);
+    EP_TX_inst->o_dma_resp_ready(o_resp_mem_ready);
     EP_TX_inst->i_completer_id(i_cfg_completer_id);
 
     SC_METHOD(comb);
@@ -184,14 +198,12 @@ pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_ep(sc_module_name name)
     sensitive << i_m_axis_rx_tvalid;
     sensitive << i_m_axis_rx_tuser;
     sensitive << i_cfg_completer_id;
-    sensitive << wb_rd_addr;
-    sensitive << wb_rd_be;
-    sensitive << wb_rd_data;
-    sensitive << wb_wr_addr;
-    sensitive << wb_wr_be;
-    sensitive << wb_wr_data;
-    sensitive << w_wr_en;
-    sensitive << w_wr_busy;
+    sensitive << i_req_mem_ready;
+    sensitive << i_resp_mem_valid;
+    sensitive << i_resp_mem_last;
+    sensitive << i_resp_mem_fault;
+    sensitive << i_resp_mem_addr;
+    sensitive << i_resp_mem_data;
     sensitive << w_req_compl_int;
     sensitive << w_req_compl_wd;
     sensitive << w_compl_done_int;
@@ -204,13 +216,13 @@ pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_ep(sc_module_name name)
     sensitive << wb_req_tag;
     sensitive << wb_req_be;
     sensitive << wb_req_addr;
+    sensitive << wb_req_bytes;
+    sensitive << wb_req_mem_data;
+    sensitive << wb_resp_mem_data;
 }
 
 template<int C_DATA_WIDTH, int KEEP_WIDTH>
 pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::~pcie_io_ep() {
-    if (EP_MEM_inst) {
-        delete EP_MEM_inst;
-    }
     if (EP_RX_inst) {
         delete EP_RX_inst;
     }
@@ -234,14 +246,23 @@ void pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::generateVCD(sc_trace_file *i_vcd, sc_
         sc_trace(o_vcd, i_m_axis_rx_tvalid, i_m_axis_rx_tvalid.name());
         sc_trace(o_vcd, o_m_axis_rx_tready, o_m_axis_rx_tready.name());
         sc_trace(o_vcd, i_m_axis_rx_tuser, i_m_axis_rx_tuser.name());
-        sc_trace(o_vcd, o_req_compl, o_req_compl.name());
-        sc_trace(o_vcd, o_compl_done, o_compl_done.name());
         sc_trace(o_vcd, i_cfg_completer_id, i_cfg_completer_id.name());
+        sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
+        sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
+        sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
+        sc_trace(o_vcd, o_req_mem_bytes, o_req_mem_bytes.name());
+        sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
+        sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
+        sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
+        sc_trace(o_vcd, o_req_mem_last, o_req_mem_last.name());
+        sc_trace(o_vcd, i_resp_mem_valid, i_resp_mem_valid.name());
+        sc_trace(o_vcd, i_resp_mem_last, i_resp_mem_last.name());
+        sc_trace(o_vcd, i_resp_mem_fault, i_resp_mem_fault.name());
+        sc_trace(o_vcd, i_resp_mem_addr, i_resp_mem_addr.name());
+        sc_trace(o_vcd, i_resp_mem_data, i_resp_mem_data.name());
+        sc_trace(o_vcd, o_resp_mem_ready, o_resp_mem_ready.name());
     }
 
-    if (EP_MEM_inst) {
-        EP_MEM_inst->generateVCD(i_vcd, o_vcd);
-    }
     if (EP_RX_inst) {
         EP_RX_inst->generateVCD(i_vcd, o_vcd);
     }
@@ -251,9 +272,39 @@ void pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::generateVCD(sc_trace_file *i_vcd, sc_
 }
 
 template<int C_DATA_WIDTH, int KEEP_WIDTH>
+sc_uint<64> pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::SwapEndianess32(sc_uint<64> dword) {
+    sc_uint<64> ret;
+
+    ret(31, 0) = (dword(7, 0),
+            dword(15, 8),
+            dword(23, 16),
+            dword(31, 24));
+    ret(63, 32) = (dword(39, 32),
+            dword(47, 40),
+            dword(55, 48),
+            dword(63, 56));
+    return ret;
+}
+
+template<int C_DATA_WIDTH, int KEEP_WIDTH>
 void pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
-    o_req_compl = w_req_compl_int.read();
-    o_compl_done = w_compl_done_int.read();
+    bool v_mem_valid;
+    bool v_mem_wren;
+    sc_uint<13> vb_mem_addr;
+    sc_uint<8> vb_mem_wstrb;
+    sc_uint<32> vb_mem_data;
+
+    v_mem_valid = 0;
+    v_mem_wren = 0;
+    vb_mem_addr = 0;
+    vb_mem_wstrb = 0;
+    vb_mem_data = 0;
+
+
+    // Correct PCIe endieness:
+    o_req_mem_data = SwapEndianess32(wb_req_mem_data.read());
+    wb_resp_mem_data = SwapEndianess32(i_resp_mem_data.read());
+    o_req_mem_bytes = wb_req_bytes.read();
 }
 
 }  // namespace debugger

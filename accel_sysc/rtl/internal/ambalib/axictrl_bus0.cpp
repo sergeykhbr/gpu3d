@@ -304,7 +304,7 @@ void axictrl_bus0::comb() {
     vmsti[i_b_midx].b_user = vslvo[i_b_sidx].b_user;
     vslvi[i_b_sidx].b_ready = vmsto[i_b_midx].b_ready;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         axictrl_bus0_r_reset(v);
     }
 

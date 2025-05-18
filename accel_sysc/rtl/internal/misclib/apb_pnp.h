@@ -324,7 +324,7 @@ void apb_pnp<cfg_slots>::comb() {
         vrdata = cfgmap[(wb_req_addr.read()(11, 2).to_int() - 16)];
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         apb_pnp_r_reset(v);
     }
 

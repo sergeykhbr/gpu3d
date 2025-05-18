@@ -229,7 +229,7 @@ void ic_axi4_to_l1::comb() {
     case WaitReadAccept:
         vb_xmsti.r_valid = 1;
         vb_xmsti.r_data = r.resp_data.read();
-        vb_xmsti.r_last = (~r.req_len.read().or_reduce());
+        vb_xmsti.r_last = (!r.req_len.read().or_reduce());
         vb_xmsti.r_id = r.req_id.read();
         vb_xmsti.r_user = r.req_user.read();
         if (i_xmsto.read().r_ready == 1) {

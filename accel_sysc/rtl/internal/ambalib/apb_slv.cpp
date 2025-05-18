@@ -140,7 +140,7 @@ void apb_slv::comb() {
         break;
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         apb_slv_r_reset(v);
     }
 

@@ -1255,7 +1255,7 @@ void CsrRegs::comb() {
         v.minstret_cnt = (r.minstret_cnt.read() + 1);
     }
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         CsrRegs_r_reset(v);
     }
 

@@ -155,7 +155,7 @@ void vip_uart_top::comb() {
     w_rx_rdy_clr = (!w_tx_full.read());
     v.initdone = ((r.initdone.read()[0] << 1) | 1);
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_uart_top_r_reset(v);
     }
 }

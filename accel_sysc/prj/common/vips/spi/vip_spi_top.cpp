@@ -190,7 +190,7 @@ void vip_spi_top::comb() {
     }
     v.resp_rdata = rdata;
 
-    if ((~async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_spi_top_r_reset(v);
     }
 
