@@ -121,7 +121,6 @@ begin: comb_proc
         if (i_req_mem_valid == 1'b1) begin
             v.req_ready = 1'b0;
             v.req_addr = (48'h000008000000 | {'0, i_req_mem_addr});
-            v.req_last = i_req_mem_last;
             if (i_req_mem_bytes == 10'd1) begin
                 v.req_size = 3'd0;
                 v.req_len = 8'd0;
@@ -140,11 +139,13 @@ begin: comb_proc
                 v.state = state_ar;
                 v.req_wdata = 64'd0;
                 v.req_wstrb = 8'd0;
+                v.req_last = 1'b0;
             end else begin
                 v.aw_valid = 1'b1;
                 v.w_valid = i_req_mem_last;                 // Try to use AXI Lite
                 v.req_wdata = i_req_mem_data;
                 v.req_wstrb = i_req_mem_strob;
+                v.req_last = i_req_mem_last;
                 v.state = state_aw;
                 v.dbg_valid = 1'b1;
             end
