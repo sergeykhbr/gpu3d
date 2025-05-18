@@ -67,7 +67,6 @@ logic w_req_mem_ready;
 logic w_req_mem_valid;
 logic w_req_mem_write;                                      // 0=read; 1=write operation
 logic [9:0] wb_req_mem_bytes;                               // 0=1024 B; 4=DWORD; 8=QWORD; ...
-logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_req_mem_addr_full;
 logic [12:0] wb_req_mem_addr;
 logic [7:0] wb_req_mem_strob;
 logic [63:0] wb_req_mem_data;
@@ -75,7 +74,6 @@ logic w_req_mem_last;
 logic w_resp_mem_valid;
 logic w_resp_mem_last;
 logic w_resp_mem_fault;
-logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_resp_mem_addr_full;
 logic [12:0] wb_resp_mem_addr;
 logic [63:0] wb_resp_mem_data;
 logic w_resp_mem_ready;
@@ -147,8 +145,8 @@ pcie_io_ep #(
 );
 
 axi_dma #(
-    .async_reset(async_reset),
     .abits(13),
+    .async_reset(async_reset),
     .userbits(1)
 ) xdma0 (
     .i_nrst(i_nrst),
@@ -157,14 +155,14 @@ axi_dma #(
     .i_req_mem_valid(w_req_mem_valid),
     .i_req_mem_write(w_req_mem_write),
     .i_req_mem_bytes(wb_req_mem_bytes),
-    .i_req_mem_addr(wb_req_mem_addr_full),
+    .i_req_mem_addr(wb_req_mem_addr),
     .i_req_mem_strob(wb_req_mem_strob),
     .i_req_mem_data(wb_req_mem_data),
     .i_req_mem_last(w_req_mem_last),
     .o_resp_mem_valid(w_resp_mem_valid),
     .o_resp_mem_last(w_resp_mem_last),
     .o_resp_mem_fault(w_resp_mem_fault),
-    .o_resp_mem_addr(wb_resp_mem_addr_full),
+    .o_resp_mem_addr(wb_resp_mem_addr),
     .o_resp_mem_data(wb_resp_mem_data),
     .i_resp_mem_ready(w_resp_mem_ready),
     .i_msti(i_xmsti),
@@ -230,8 +228,5 @@ assign wb_reqfifo_payload_i = {i_pcie_dmai.bar_hit,
 assign wb_respfifo_payload_i = {w_s_axis_tx_tlast,
         wb_s_axis_tx_tkeep,
         wb_s_axis_tx_tdata};
-
-assign wb_req_mem_addr_full = {'0, wb_req_mem_addr};
-assign wb_resp_mem_addr = wb_resp_mem_addr_full[12: 0];
 
 endmodule: pcie_dma

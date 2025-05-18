@@ -17,8 +17,8 @@
 `timescale 1ns/10ps
 
 module axi_dma #(
+    parameter int abits = 48,                               // adress bits used
     parameter logic async_reset = 1'b0,
-    parameter int abits = 48,
     parameter int userbits = 1
 )
 (
@@ -45,8 +45,62 @@ module axi_dma #(
 );
 
 import types_amba_pkg::*;
-import axi_dma_pkg::*;
+localparam bit [2:0] state_idle = 3'd0;
+localparam bit [2:0] state_ar = 3'd1;
+localparam bit [2:0] state_r = 3'd2;
+localparam bit [2:0] state_r_wait_accept = 3'd3;
+localparam bit [2:0] state_aw = 3'd4;
+localparam bit [2:0] state_w = 3'd5;
+localparam bit [2:0] state_w_wait_accept = 3'd6;
+localparam bit [2:0] state_b = 3'd7;
 
+typedef struct {
+    logic [2:0] state;
+    logic ar_valid;
+    logic aw_valid;
+    logic w_valid;
+    logic r_ready;
+    logic b_ready;
+    logic [CFG_SYSBUS_ADDR_BITS-1:0] req_addr;
+    logic [CFG_SYSBUS_DATA_BITS-1:0] req_wdata;
+    logic [CFG_SYSBUS_DATA_BYTES-1:0] req_wstrb;
+    logic [2:0] req_size;
+    logic [7:0] req_len;
+    logic req_last;
+    logic req_ready;
+    logic resp_valid;
+    logic resp_last;
+    logic [CFG_SYSBUS_ADDR_BITS-1:0] resp_addr;
+    logic [CFG_SYSBUS_DATA_BITS-1:0] resp_data;
+    logic resp_error;
+    logic [CFG_SYSBUS_USER_BITS-1:0] user_count;
+    logic dbg_valid;
+    logic [63:0] dbg_payload;
+} axi_dma_registers;
+
+const axi_dma_registers axi_dma_r_reset = '{
+    state_idle,                         // state
+    1'b0,                               // ar_valid
+    1'b0,                               // aw_valid
+    1'b0,                               // w_valid
+    1'b0,                               // r_ready
+    1'b0,                               // b_ready
+    '0,                                 // req_addr
+    '0,                                 // req_wdata
+    '0,                                 // req_wstrb
+    '0,                                 // req_size
+    '0,                                 // req_len
+    1'b0,                               // req_last
+    1'b1,                               // req_ready
+    '0,                                 // resp_valid
+    '0,                                 // resp_last
+    '0,                                 // resp_addr
+    '0,                                 // resp_data
+    1'b0,                               // resp_error
+    '0,                                 // user_count
+    1'b0,                               // dbg_valid
+    '0                                  // dbg_payload
+};
 axi_dma_registers r;
 axi_dma_registers rin;
 
