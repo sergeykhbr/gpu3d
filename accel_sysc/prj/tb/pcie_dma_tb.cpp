@@ -194,6 +194,7 @@ void pcie_dma_tb::test() {
 
     vb_dmai = pcie_dma64_in_none;
     switch (wb_clk_cnt) {
+        // Wr32 to address [0x0104] <= 0x44332211
     case 20:
         vb_dmai.valid = 1;
         vb_dmai.strob = 0xFF;
@@ -208,6 +209,7 @@ void pcie_dma_tb::test() {
         vb_dmai.data(31, 0) = 0x00000104;                   // Addr
         vb_dmai.data(63, 32) = 0x11223344;                  // Data[31:0]
         break;
+        // Rd32 from address [0x0104] => 
     case 40:
         vb_dmai.valid = 1;
         vb_dmai.strob = 0xFF;
@@ -220,6 +222,68 @@ void pcie_dma_tb::test() {
         vb_dmai.last = 1;
         vb_dmai.strob = 0x0F;
         vb_dmai.data(31, 0) = 0x00000104;                   // Addr
+        break;
+
+        // Write 1x64-bytes into 32-bits BAR
+    case 100:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 24) = 0x40;                        // Wr32
+        vb_dmai.data(9, 0) = 0x002;                         // Length
+        vb_dmai.data(39, 32) = 0xFF;                        // be
+        break;
+    case 101:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 0) = 0x00000108;                   // Addr
+        vb_dmai.data(63, 32) = 0x11223344;                  // Data[31:0]
+        break;
+    case 102:
+        vb_dmai.valid = 1;
+        vb_dmai.last = 1;
+        vb_dmai.strob = 0x0F;
+        vb_dmai.data(31, 0) = 0x55667788;                   // Data[63:32]
+        break;
+
+        // Write 2x64-bytes into 32-bits BAR
+    case 103:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 24) = 0x40;                        // Wr32
+        vb_dmai.data(9, 0) = 0x002;                         // Length
+        vb_dmai.data(39, 32) = 0xFF;                        // be
+        break;
+    case 104:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 0) = 0x00000108;                   // Addr
+        vb_dmai.data(63, 32) = 0x44332211;                  // Data[31:0]
+        break;
+    case 105:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data = 0xAABBCCDD88776655;
+        break;
+    case 106:
+        vb_dmai.valid = 1;
+        vb_dmai.last = 1;
+        vb_dmai.strob = 0x0F;
+        vb_dmai.data(31, 0) = 0xEEEEFFFF;                   // Data
+        break;
+
+        // Read 1x64-bytes into 32-bits BAR
+    case 130:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 24) = 0x00;                        // Rd32
+        vb_dmai.data(9, 0) = 0x002;                         // Length
+        vb_dmai.data(39, 32) = 0xFF;                        // be
+        break;
+    case 131:
+        vb_dmai.valid = 1;
+        vb_dmai.last = 1;
+        vb_dmai.strob = 0x0F;
+        vb_dmai.data(31, 0) = 0x00000108;                   // Addr
         break;
 
     default:

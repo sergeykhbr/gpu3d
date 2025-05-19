@@ -69,8 +69,9 @@ SC_MODULE(pcie_io_ep) {
  private:
     sc_uint<64> SwapEndianess32(sc_uint<64> dword);
 
-    sc_signal<bool> w_req_compl_int;
-    sc_signal<bool> w_req_compl_wd;
+    sc_signal<bool> w_tx_ena;
+    sc_signal<bool> w_tx_completion;
+    sc_signal<bool> w_tx_with_data;
     sc_signal<bool> w_compl_done_int;
     sc_signal<sc_uint<3>> wb_req_tc;
     sc_signal<bool> w_req_td;
@@ -136,8 +137,9 @@ pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_ep(sc_module_name name)
     EP_RX_inst->i_m_axis_rx_tvalid(i_m_axis_rx_tvalid);
     EP_RX_inst->o_m_axis_rx_tready(o_m_axis_rx_tready);
     EP_RX_inst->i_m_axis_rx_tuser(i_m_axis_rx_tuser);
-    EP_RX_inst->o_req_compl(w_req_compl_int);
-    EP_RX_inst->o_req_compl_wd(w_req_compl_wd);
+    EP_RX_inst->o_tx_ena(w_tx_ena);
+    EP_RX_inst->o_tx_completion(w_tx_completion);
+    EP_RX_inst->o_tx_with_data(w_tx_with_data);
     EP_RX_inst->i_compl_done(w_compl_done_int);
     EP_RX_inst->o_req_tc(wb_req_tc);
     EP_RX_inst->o_req_td(w_req_td);
@@ -168,8 +170,9 @@ pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_ep(sc_module_name name)
     EP_TX_inst->o_s_axis_tx_tlast(o_s_axis_tx_tlast);
     EP_TX_inst->o_s_axis_tx_tvalid(o_s_axis_tx_tvalid);
     EP_TX_inst->o_tx_src_dsc(o_tx_src_dsc);
-    EP_TX_inst->i_req_compl(w_req_compl_int);
-    EP_TX_inst->i_req_compl_wd(w_req_compl_wd);
+    EP_TX_inst->i_tx_ena(w_tx_ena);
+    EP_TX_inst->i_tx_completion(w_tx_completion);
+    EP_TX_inst->i_tx_with_data(w_tx_with_data);
     EP_TX_inst->o_compl_done(w_compl_done_int);
     EP_TX_inst->i_req_tc(wb_req_tc);
     EP_TX_inst->i_req_td(w_req_td);
@@ -204,8 +207,9 @@ pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_ep(sc_module_name name)
     sensitive << i_resp_mem_fault;
     sensitive << i_resp_mem_addr;
     sensitive << i_resp_mem_data;
-    sensitive << w_req_compl_int;
-    sensitive << w_req_compl_wd;
+    sensitive << w_tx_ena;
+    sensitive << w_tx_completion;
+    sensitive << w_tx_with_data;
     sensitive << w_compl_done_int;
     sensitive << wb_req_tc;
     sensitive << w_req_td;

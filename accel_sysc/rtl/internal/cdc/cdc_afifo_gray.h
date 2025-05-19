@@ -40,8 +40,8 @@ SC_MODULE(cdc_afifo_gray) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    sc_uint<(abits + 1)> wb_bin_next;
-    sc_uint<(abits + 1)> wb_gray_next;
+    sc_signal<sc_uint<(abits + 1)>> wb_bin_next;
+    sc_signal<sc_uint<(abits + 1)>> wb_gray_next;
     sc_signal<sc_uint<(abits + 1)>> bin;
     sc_signal<sc_uint<(abits + 1)>> gray;
     sc_signal<bool> empty;
@@ -66,6 +66,8 @@ cdc_afifo_gray<abits>::cdc_afifo_gray(sc_module_name name)
     sensitive << i_nrst;
     sensitive << i_ena;
     sensitive << i_q2_gray;
+    sensitive << wb_bin_next;
+    sensitive << wb_gray_next;
     sensitive << bin;
     sensitive << gray;
     sensitive << empty;
@@ -92,7 +94,7 @@ void cdc_afifo_gray<abits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
 template<int abits>
 void cdc_afifo_gray<abits>::proc_comb() {
     wb_bin_next = (bin.read() + (0, i_ena.read()));
-    wb_gray_next = ((wb_bin_next >> 1) ^ wb_bin_next);
+    wb_gray_next = ((wb_bin_next.read() >> 1) ^ wb_bin_next.read());
     o_addr = bin.read()((abits - 1), 0);
     o_gray = gray.read();
     o_empty = empty.read();
@@ -101,20 +103,25 @@ void cdc_afifo_gray<abits>::proc_comb() {
 
 template<int abits>
 void cdc_afifo_gray<abits>::proc_ff() {
+    sc_uint<(abits + 1)> vb_t1;
+
+    vb_t1 = i_q2_gray.read();
+
+    vb_t1(abits, (abits - 1)) = (~i_q2_gray.read()(abits, (abits - 1)));
     if (i_nrst.read() == 0) {
         bin = 0;
         gray = 0;
         empty = 1;
         full = 0;
     } else {
-        bin = wb_bin_next;
-        gray = wb_gray_next;
-        empty = (wb_gray_next == i_q2_gray.read());
+        bin = wb_bin_next.read();
+        gray = wb_gray_next.read();
+        empty = (wb_gray_next.read() == i_q2_gray.read());
         // Optimized version of 3 conditions:
         //     wb_gray_next[abits] != i_q2_ptr[abits]
         //     wb_gray_next[abits-1] != i_q2_ptr[abits-1]
         //     wb_gray_next[abits-2:0] == i_q2_ptr[abits-2:0]
-        full = (wb_gray_next == ((~i_q2_gray.read()(abits, (abits - 1))), i_q2_gray.read()((abits - 2), 0)));
+        full = (wb_gray_next.read() == vb_t1);
     }
 }
 
