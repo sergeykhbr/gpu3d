@@ -352,26 +352,22 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
                 break;
 
             case PIO_RX_MEM_RD64_FMT_TYPE:
-                if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
-                    v.state = PIO_RX_MEM_RD64_DW1DW2;
-                }
+                v.state = PIO_RX_MEM_RD64_DW1DW2;
                 break;
 
             case PIO_RX_MEM_WR64_FMT_TYPE:
                 v.state = PIO_RX_MEM_WR64_DW1DW2;
+                v.wr_en = 1;
                 break;
 
             case PIO_RX_IO_RD32_FMT_TYPE:
-                if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
-                    v.state = PIO_RX_MEM_RD32_DW1DW2;
-                }
+                v.state = PIO_RX_MEM_RD32_DW1DW2;
                 break;
 
             case PIO_RX_IO_WR32_FMT_TYPE:
                 if (i_m_axis_rx_tdata.read()(9, 0) == 1) {
                     v.state = PIO_RX_IO_WR_DW1DW2;
-                } else {
-                    v.state = PIO_RX_RST_STATE;
+                    v.wr_en = 1;
                 }
                 break;
 
