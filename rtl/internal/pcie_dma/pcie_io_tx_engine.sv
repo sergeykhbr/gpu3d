@@ -31,8 +31,9 @@ module pcie_io_tx_engine #(
     output logic o_s_axis_tx_tvalid,
     output logic o_tx_src_dsc,
     // 
-    input logic i_req_compl,
-    input logic i_req_compl_wd,
+    input logic i_tx_ena,                                   // wait request from xDMA
+    input logic i_tx_completion,                            // Send completion TLP on xDMA response
+    input logic i_tx_with_data,                             // Send TLP with payload on xDMA response
     output logic o_compl_done,
     // 
     input logic [2:0] i_req_tc,
@@ -55,24 +56,31 @@ module pcie_io_tx_engine #(
     input logic [15:0] i_completer_id
 );
 
-// 
+// TLP Format Type fields:
 localparam bit [6:0] PIO_CPLD_FMT_TYPE = 7'h4A;
 localparam bit [6:0] PIO_CPL_FMT_TYPE = 7'h0A;
-localparam bit [1:0] PIO_TX_RST_STATE = 2'h0;
-localparam bit [1:0] PIO_TX_CPLD_QW1_FIRST = 2'h1;
-localparam bit [1:0] PIO_TX_CPLD_QW1 = 2'h3;
+// State machine states:
+localparam bit [2:0] PIO_TX_RST_STATE = 3'h0;
+localparam bit [2:0] PIO_TX_WAIT_DMA_RESP = 3'h1;
+localparam bit [2:0] PIO_TX_CPLD_QW1 = 3'h2;
+localparam bit [2:0] PIO_TX_RD_BURST = 3'h4;
 
 typedef struct {
     logic [C_DATA_WIDTH-1:0] s_axis_tx_tdata;
     logic [KEEP_WIDTH-1:0] s_axis_tx_tkeep;
     logic s_axis_tx_tlast;
     logic s_axis_tx_tvalid;
-    logic compl_done;
+    logic dma_resp_ready;
+    logic req_with_data;
     logic [12:0] req_addr;
-    logic [3:0] rd_be;
-    logic [31:0] rd_data;
-    logic req_compl_wd_q;
-    logic [1:0] state;
+    logic [15:0] req_rid;
+    logic [7:0] req_tag;
+    logic [3:0] req_be;
+    logic [63:0] rd_data;
+    logic [12:0] rd_addr;
+    logic rd_last;
+    logic rd_burst;
+    logic [2:0] state;
 } pcie_io_tx_engine_registers;
 
 const pcie_io_tx_engine_registers pcie_io_tx_engine_r_reset = '{
@@ -80,11 +88,16 @@ const pcie_io_tx_engine_registers pcie_io_tx_engine_r_reset = '{
     '0,                                 // s_axis_tx_tkeep
     1'b0,                               // s_axis_tx_tlast
     1'b0,                               // s_axis_tx_tvalid
-    1'b0,                               // compl_done
+    1'b0,                               // dma_resp_ready
+    1'b0,                               // req_with_data
     '0,                                 // req_addr
-    '0,                                 // rd_be
+    '0,                                 // req_rid
+    '0,                                 // req_tag
+    '0,                                 // req_be
     '0,                                 // rd_data
-    1'b1,                               // req_compl_wd_q
+    '0,                                 // rd_addr
+    '0,                                 // rd_last
+    '0,                                 // rd_burst
     PIO_TX_RST_STATE                    // state
 };
 pcie_io_tx_engine_registers r;
@@ -109,38 +122,37 @@ begin: comb_proc
     // as the completions, if split, must be naturally aligned to a read
     // completion boundary (RCB), which is usually 128 bytes
     // (though 64 bytes in root complex).
-    if (r.req_compl_wd_q == 1'b0) begin
+    if (r.req_with_data == 1'b0) begin
         // Request without payload
         vb_lower_addr = 7'd0;
     end else begin
         vb_lower_addr = r.req_addr[6: 0];
     end
 
-    case (r.state)
-    PIO_TX_RST_STATE: begin
+    if (i_s_axis_tx_tready == 1'b1) begin
         v.s_axis_tx_tvalid = 1'b0;
-        v.s_axis_tx_tkeep = 8'hFF;
-        v.s_axis_tx_tdata = 64'd0;
         v.s_axis_tx_tlast = 1'b0;
-        v.compl_done = 1'b0;
-        if ((i_req_compl == 1'b1) && (i_dma_resp_valid == 1'b1)) begin
-            v.req_addr = i_req_addr;
-            v.rd_data = i_dma_resp_data[31: 0];
-            v.rd_be = i_req_be;
-            v.req_compl_wd_q = i_req_compl_wd;
-            v.state = PIO_TX_CPLD_QW1_FIRST;
-        end
+    end
+    if (i_dma_resp_valid == 1'b1) begin
+        v.dma_resp_ready = 1'b0;
     end
 
-    PIO_TX_CPLD_QW1_FIRST: begin
-        if (i_s_axis_tx_tready == 1'b1) begin
-            v.s_axis_tx_tlast = 1'b0;
+    case (r.state)
+    PIO_TX_RST_STATE: begin
+        v.s_axis_tx_tdata = 64'd0;
+        v.s_axis_tx_tkeep = 8'd0;
+        if (i_tx_ena == 1'b1) begin
+            v.req_addr = i_req_addr;
+            v.req_rid = i_req_rid;
+            v.req_tag = i_req_tag;
+            v.req_be = i_req_be;
+            v.req_with_data = i_tx_with_data;
             vb_s_axis_tx_tdata[63: 48] = i_completer_id;
             vb_s_axis_tx_tdata[47: 45] = 3'd0;
             vb_s_axis_tx_tdata[44] = 1'b0;
             vb_s_axis_tx_tdata[43: 32] = i_req_bytes;
             vb_s_axis_tx_tdata[31] = 1'b0;
-            if (r.req_compl_wd_q == 1'b1) begin
+            if (i_tx_with_data == 1'b1) begin
                 vb_s_axis_tx_tdata[30: 24] = PIO_CPLD_FMT_TYPE;
             end else begin
                 vb_s_axis_tx_tdata[30: 24] = PIO_CPL_FMT_TYPE;
@@ -155,35 +167,91 @@ begin: comb_proc
             vb_s_axis_tx_tdata[9: 0] = i_req_len;
             v.s_axis_tx_tdata = vb_s_axis_tx_tdata;
             v.s_axis_tx_tkeep = 8'hFF;
-            v.state = PIO_TX_CPLD_QW1;
-            v.s_axis_tx_tvalid = 1'b1;
-        end else begin
-            v.state = PIO_TX_RST_STATE;
+            if (i_tx_with_data == 1'b1) begin
+                // Send this TLP qword only on DMA response
+                if (i_req_bytes == 10'd4) begin
+                    v.dma_resp_ready = 1'b1;
+                    v.state = PIO_TX_WAIT_DMA_RESP;
+                end else begin
+                    // Send TLP header now, payload later
+                    v.s_axis_tx_tvalid = 1'b1;
+                    v.rd_burst = 1'b1;
+                    v.state = PIO_TX_CPLD_QW1;
+                end
+            end else if (i_tx_completion == 1'b1) begin
+                // Send completion now
+                v.s_axis_tx_tvalid = 1'b1;
+                v.rd_last = 1'b1;
+                v.state = PIO_TX_CPLD_QW1;
+            end else begin
+                // Wait handshake of write sequence:
+                v.dma_resp_ready = 1'b1;
+                v.state = PIO_TX_WAIT_DMA_RESP;
+            end
+        end
+    end
+
+    PIO_TX_WAIT_DMA_RESP: begin
+        if (i_dma_resp_valid == 1'b1) begin
+            if (r.req_with_data == 1'b1) begin
+                v.s_axis_tx_tvalid = 1'b1;                  // Transmit DW1DW2
+                v.rd_data = i_dma_resp_data;
+                v.rd_addr = i_dma_resp_addr;
+                v.rd_last = i_dma_resp_last;
+                v.state = PIO_TX_CPLD_QW1;
+            end else begin
+                // write payload handshaking. TODO: write memory fault.
+                v.state = PIO_TX_RST_STATE;
+            end
         end
     end
 
     PIO_TX_CPLD_QW1: begin
         if (i_s_axis_tx_tready == 1'b1) begin
-            v.s_axis_tx_tlast = 1'b1;
             v.s_axis_tx_tvalid = 1'b1;
+            v.s_axis_tx_tlast = r.rd_last;
             // Swap DWORDS for AXI
-            vb_s_axis_tx_tdata[63: 32] = r.rd_data;
-            vb_s_axis_tx_tdata[31: 16] = i_req_rid;
-            vb_s_axis_tx_tdata[15: 8] = i_req_tag;
+            if (r.req_addr[2] == 1'b1) begin
+                vb_s_axis_tx_tdata[63: 32] = r.rd_data[63: 32];
+            end else begin
+                vb_s_axis_tx_tdata[63: 32] = r.rd_data[31: 0];
+            end
+            vb_s_axis_tx_tdata[31: 16] = r.req_rid;
+            vb_s_axis_tx_tdata[15: 8] = r.req_tag;
             vb_s_axis_tx_tdata[7] = 1'b0;
             vb_s_axis_tx_tdata[6: 0] = vb_lower_addr;
             v.s_axis_tx_tdata = vb_s_axis_tx_tdata;
 
             // Mask data strob if data no need:
-            if (r.req_compl_wd_q == 1'b1) begin
-                v.s_axis_tx_tkeep = 8'hFF;
+            if ((r.req_with_data == 1'b1) && (r.rd_burst == 1'b0)) begin
+                v.s_axis_tx_tkeep = 8'hFF;                  // only 4-bytes reading (no burst)
             end else begin
                 v.s_axis_tx_tkeep = 8'h0F;
             end
-            v.compl_done = 1'b1;
-            v.state = PIO_TX_RST_STATE;
-        end else begin
-            v.state = PIO_TX_CPLD_QW1;
+            v.rd_last = 1'b0;
+            if (r.rd_burst == 1'b0) begin
+                v.req_with_data = 1'b0;
+                v.state = PIO_TX_RST_STATE;
+            end else begin
+                v.state = PIO_TX_RD_BURST;
+            end
+        end
+    end
+
+    PIO_TX_RD_BURST: begin
+        v.dma_resp_ready = i_s_axis_tx_tready;
+        if ((i_s_axis_tx_tready == 1'b1) && (i_dma_resp_valid == 1'b1) && (r.dma_resp_ready == 1'b1)) begin
+            v.s_axis_tx_tvalid = 1'b1;
+            v.s_axis_tx_tlast = i_dma_resp_last;
+            v.s_axis_tx_tdata = i_dma_resp_data;
+            v.s_axis_tx_tkeep = 8'hFF;
+            v.dma_resp_ready = (~i_dma_resp_last);
+            if (i_dma_resp_last == 1'b1) begin
+                v.dma_resp_ready = 1'b0;
+                v.req_with_data = 1'b0;
+                v.rd_burst = 1'b0;
+                v.state = PIO_TX_RST_STATE;
+            end
         end
     end
 
@@ -200,8 +268,8 @@ assign o_s_axis_tx_tdata = r.s_axis_tx_tdata;
 assign o_s_axis_tx_tkeep = r.s_axis_tx_tkeep;
 assign o_s_axis_tx_tlast = r.s_axis_tx_tlast;
 assign o_s_axis_tx_tvalid = r.s_axis_tx_tvalid;
-assign o_dma_resp_ready = 1'b1;
-assign o_compl_done = r.compl_done;
+assign o_dma_resp_ready = r.dma_resp_ready;
+assign o_compl_done = (i_dma_resp_valid & i_dma_resp_last & o_dma_resp_ready);
 
 // Unused discontinue
 assign o_tx_src_dsc = 1'b0;

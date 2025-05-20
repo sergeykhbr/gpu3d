@@ -55,8 +55,9 @@ module pcie_io_ep #(
     output logic o_resp_mem_ready                           // Ready to accept response
 );
 
-logic w_req_compl_int;
-logic w_req_compl_wd;
+logic w_tx_ena;
+logic w_tx_completion;
+logic w_tx_with_data;
 logic w_compl_done_int;
 logic [2:0] wb_req_tc;
 logic w_req_td;
@@ -98,8 +99,9 @@ pcie_io_rx_engine #(
     .i_m_axis_rx_tvalid(i_m_axis_rx_tvalid),
     .o_m_axis_rx_tready(o_m_axis_rx_tready),
     .i_m_axis_rx_tuser(i_m_axis_rx_tuser),
-    .o_req_compl(w_req_compl_int),
-    .o_req_compl_wd(w_req_compl_wd),
+    .o_tx_ena(w_tx_ena),
+    .o_tx_completion(w_tx_completion),
+    .o_tx_with_data(w_tx_with_data),
     .i_compl_done(w_compl_done_int),
     .o_req_tc(wb_req_tc),
     .o_req_td(w_req_td),
@@ -133,8 +135,9 @@ pcie_io_tx_engine #(
     .o_s_axis_tx_tlast(o_s_axis_tx_tlast),
     .o_s_axis_tx_tvalid(o_s_axis_tx_tvalid),
     .o_tx_src_dsc(o_tx_src_dsc),
-    .i_req_compl(w_req_compl_int),
-    .i_req_compl_wd(w_req_compl_wd),
+    .i_tx_ena(w_tx_ena),
+    .i_tx_completion(w_tx_completion),
+    .i_tx_with_data(w_tx_with_data),
     .o_compl_done(w_compl_done_int),
     .i_req_tc(wb_req_tc),
     .i_req_td(w_req_td),

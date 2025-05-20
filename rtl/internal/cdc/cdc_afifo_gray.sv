@@ -47,6 +47,11 @@ assign o_full = full;
 
 
 always_ff @(posedge i_clk, negedge i_nrst) begin: proc_ff_proc
+    logic [(abits + 1)-1:0] vb_t1;
+
+    vb_t1 = i_q2_gray;
+
+    vb_t1[abits: (abits - 1)] = (~i_q2_gray[abits: (abits - 1)]);
     if (i_nrst == 1'b0) begin
         bin <= '0;
         gray <= '0;
@@ -60,7 +65,7 @@ always_ff @(posedge i_clk, negedge i_nrst) begin: proc_ff_proc
         //     wb_gray_next[abits] != i_q2_ptr[abits]
         //     wb_gray_next[abits-1] != i_q2_ptr[abits-1]
         //     wb_gray_next[abits-2:0] == i_q2_ptr[abits-2:0]
-        full <= (wb_gray_next == {(~i_q2_gray[abits: (abits - 1)]), i_q2_gray[(abits - 2): 0]});
+        full <= (wb_gray_next == vb_t1);
     end
 end: proc_ff_proc
 
