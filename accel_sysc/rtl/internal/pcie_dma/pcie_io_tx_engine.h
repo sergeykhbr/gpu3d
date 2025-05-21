@@ -75,6 +75,7 @@ SC_MODULE(pcie_io_tx_engine) {
     static const uint8_t PIO_TX_WAIT_DMA_RESP = 0x1;
     static const uint8_t PIO_TX_CPLD_QW1 = 0x2;
     static const uint8_t PIO_TX_RD_BURST = 0x4;
+    static const uint8_t PIO_TX_RD_BURST_LAST = 0x8;
 
     struct pcie_io_tx_engine_registers {
         sc_signal<sc_uint<C_DATA_WIDTH>> s_axis_tx_tdata;
@@ -91,7 +92,8 @@ SC_MODULE(pcie_io_tx_engine) {
         sc_signal<sc_uint<13>> rd_addr;
         sc_signal<bool> rd_last;
         sc_signal<bool> rd_burst;
-        sc_signal<sc_uint<3>> state;
+        sc_signal<bool> rd_odd;
+        sc_signal<sc_uint<4>> state;
     };
 
     void pcie_io_tx_engine_r_reset(pcie_io_tx_engine_registers& iv) {
@@ -109,6 +111,7 @@ SC_MODULE(pcie_io_tx_engine) {
         iv.rd_addr = 0;
         iv.rd_last = 0;
         iv.rd_burst = 0;
+        iv.rd_odd = 0;
         iv.state = PIO_TX_RST_STATE;
     }
 
@@ -187,6 +190,7 @@ pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::pcie_io_tx_engine(sc_module_name na
     sensitive << r.rd_addr;
     sensitive << r.rd_last;
     sensitive << r.rd_burst;
+    sensitive << r.rd_odd;
     sensitive << r.state;
 
     SC_METHOD(reqff);
@@ -242,6 +246,7 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::generateVCD(sc_trace_file *i_v
         sc_trace(o_vcd, r.rd_addr, pn + ".r.rd_addr");
         sc_trace(o_vcd, r.rd_last, pn + ".r.rd_last");
         sc_trace(o_vcd, r.rd_burst, pn + ".r.rd_burst");
+        sc_trace(o_vcd, r.rd_odd, pn + ".r.rd_odd");
         sc_trace(o_vcd, r.state, pn + ".r.state");
     }
 
@@ -311,15 +316,10 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             v.s_axis_tx_tkeep = 0xFF;
             if (i_tx_with_data.read() == 1) {
                 // Send this TLP qword only on DMA response
-                if (i_req_bytes.read() == 4) {
-                    v.dma_resp_ready = 1;
-                    v.state = PIO_TX_WAIT_DMA_RESP;
-                } else {
-                    // Send TLP header now, payload later
-                    v.s_axis_tx_tvalid = 1;
-                    v.rd_burst = 1;
-                    v.state = PIO_TX_CPLD_QW1;
-                }
+                v.dma_resp_ready = 1;
+                v.state = PIO_TX_WAIT_DMA_RESP;
+                v.rd_burst = i_req_bytes.read()(9, 3).or_reduce();// Bytes count more than 4
+                v.rd_odd = i_req_bytes.read()[2];
             } else if (i_tx_completion.read() == 1) {
                 // Send completion now
                 v.s_axis_tx_tvalid = 1;
@@ -342,7 +342,7 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
                 v.rd_last = i_dma_resp_last.read();
                 v.state = PIO_TX_CPLD_QW1;
             } else {
-                // write payload handshaking. TODO: write memory fault.
+                // Wr32/Wr64 handshaking. TODO: write memory fault.
                 v.state = PIO_TX_RST_STATE;
             }
         }
@@ -351,7 +351,7 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     case PIO_TX_CPLD_QW1:
         if (i_s_axis_tx_tready.read() == 1) {
             v.s_axis_tx_tvalid = 1;
-            v.s_axis_tx_tlast = r.rd_last.read();
+            v.s_axis_tx_tlast = (r.rd_last.read() & (!r.rd_burst.read()));
             // Swap DWORDS for AXI
             if (r.req_addr.read()[2] == 1) {
                 vb_s_axis_tx_tdata(63, 32) = r.rd_data.read()(63, 32);
@@ -365,15 +365,17 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             v.s_axis_tx_tdata = vb_s_axis_tx_tdata;
 
             // Mask data strob if data no need:
-            if ((r.req_with_data.read() == 1) && (r.rd_burst.read() == 0)) {
+            if (r.req_with_data.read() == 1) {
                 v.s_axis_tx_tkeep = 0xFF;                   // only 4-bytes reading (no burst)
             } else {
                 v.s_axis_tx_tkeep = 0x0F;
             }
-            v.rd_last = 0;
             if (r.rd_burst.read() == 0) {
                 v.req_with_data = 0;
+                v.rd_last = 0;
                 v.state = PIO_TX_RST_STATE;
+            } else if (r.rd_last.read() == 1) {
+                v.state = PIO_TX_RD_BURST_LAST;
             } else {
                 v.state = PIO_TX_RD_BURST;
             }
@@ -384,16 +386,34 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
         v.dma_resp_ready = i_s_axis_tx_tready.read();
         if ((i_s_axis_tx_tready.read() == 1) && (i_dma_resp_valid.read() == 1) && (r.dma_resp_ready.read() == 1)) {
             v.s_axis_tx_tvalid = 1;
-            v.s_axis_tx_tlast = i_dma_resp_last.read();
-            v.s_axis_tx_tdata = i_dma_resp_data.read();
+            v.s_axis_tx_tlast = (i_dma_resp_last.read() & r.rd_odd.read());
+            v.s_axis_tx_tdata = (i_dma_resp_data.read()(31, 0), r.rd_data.read()(63, 32));
             v.s_axis_tx_tkeep = 0xFF;
             v.dma_resp_ready = (!i_dma_resp_last.read());
+            v.rd_data = i_dma_resp_data.read();
             if (i_dma_resp_last.read() == 1) {
-                v.dma_resp_ready = 0;
                 v.req_with_data = 0;
-                v.rd_burst = 0;
-                v.state = PIO_TX_RST_STATE;
+                if (r.rd_odd.read() == 0) {
+                    // 8-bytes aligned sequence
+                    v.state = PIO_TX_RD_BURST_LAST;
+                } else {
+                    // 4-bytes aligned sequence
+                    v.rd_odd = 0;
+                    v.state = PIO_TX_RST_STATE;
+                }
             }
+        }
+        break;
+
+    case PIO_TX_RD_BURST_LAST:
+        if (i_s_axis_tx_tready.read() == 1) {
+            v.rd_last = 0;
+            v.rd_burst = 0;
+            v.s_axis_tx_tvalid = 1;
+            v.s_axis_tx_tlast = 1;
+            v.s_axis_tx_tdata = (r.rd_data.read()(63, 32), r.rd_data.read()(63, 32));
+            v.s_axis_tx_tkeep = 0x0F;
+            v.state = PIO_TX_RST_STATE;
         }
         break;
 
@@ -407,7 +427,7 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     o_s_axis_tx_tlast = r.s_axis_tx_tlast.read();
     o_s_axis_tx_tvalid = r.s_axis_tx_tvalid.read();
     o_dma_resp_ready = r.dma_resp_ready.read();
-    o_compl_done = (i_dma_resp_valid.read() & i_dma_resp_last.read() & o_dma_resp_ready);
+    o_compl_done = (i_dma_resp_valid.read() & i_dma_resp_last.read() & r.dma_resp_ready.read());
 
     // Unused discontinue
     o_tx_src_dsc = 0;

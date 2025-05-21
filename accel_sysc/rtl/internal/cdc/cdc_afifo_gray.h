@@ -103,11 +103,6 @@ void cdc_afifo_gray<abits>::proc_comb() {
 
 template<int abits>
 void cdc_afifo_gray<abits>::proc_ff() {
-    sc_uint<(abits + 1)> vb_t1;
-
-    vb_t1 = i_q2_gray.read();
-
-    vb_t1(abits, (abits - 1)) = (~i_q2_gray.read()(abits, (abits - 1)));
     if (i_nrst.read() == 0) {
         bin = 0;
         gray = 0;
@@ -121,7 +116,9 @@ void cdc_afifo_gray<abits>::proc_ff() {
         //     wb_gray_next[abits] != i_q2_ptr[abits]
         //     wb_gray_next[abits-1] != i_q2_ptr[abits-1]
         //     wb_gray_next[abits-2:0] == i_q2_ptr[abits-2:0]
-        full = (wb_gray_next.read() == vb_t1);
+        full = ((wb_gray_next.read()[abits] ^ i_q2_gray.read()[abits])
+                & (wb_gray_next.read()[(abits - 1)] ^ i_q2_gray.read()[(abits - 1)])
+                & (wb_gray_next.read()((abits - 2), 0) == i_q2_gray.read()((abits - 2), 0)));
     }
 }
 

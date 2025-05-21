@@ -179,9 +179,7 @@ set_false_path -through prci0/r_sys_locked_reg
 set_false_path -through prci0/rb_pcie_nrst_reg[0]
 set_false_path -through prci0/rb_ddr_locked_reg[0]
 set_false_path -through prci0/rb_pcie_lnk_up_reg[0]
-set_false_path -through prci0/r_sys_rst_reg
 set_false_path -through prci0/r_sys_nrst_reg
-set_false_path -through prci0/r_dbg_nrst_reg
 
 ## Async req. FIFO (read clock 40 MHz):
 ## Async req. FIFO (write clock 62.5 MHz):

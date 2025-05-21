@@ -215,9 +215,51 @@ void pcie_dma_tb::test() {
         vb_dmai.strob = 0xFF;
         vb_dmai.data(31, 24) = 0x00;                        // Rd32
         vb_dmai.data(9, 0) = 0x001;                         // Length
-        vb_dmai.data(39, 32) = 0x0F;                        // be
+        vb_dmai.data(39, 32) = 0x01;                        // be
         break;
     case 41:
+        vb_dmai.valid = 1;
+        vb_dmai.last = 1;
+        vb_dmai.strob = 0x0F;
+        vb_dmai.data(31, 0) = 0x00000104;                   // Addr
+        break;
+        // Rd32 from address [0x0104] => 
+    case 42:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 24) = 0x00;                        // Rd32
+        vb_dmai.data(9, 0) = 0x001;                         // Length
+        vb_dmai.data(39, 32) = 0x02;                        // be
+        break;
+    case 43:
+        vb_dmai.valid = 1;
+        vb_dmai.last = 1;
+        vb_dmai.strob = 0x0F;
+        vb_dmai.data(31, 0) = 0x00000104;                   // Addr
+        break;
+        // Rd32 from address [0x0104] => 
+    case 44:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 24) = 0x00;                        // Rd32
+        vb_dmai.data(9, 0) = 0x001;                         // Length
+        vb_dmai.data(39, 32) = 0x04;                        // be
+        break;
+    case 45:
+        vb_dmai.valid = 1;
+        vb_dmai.last = 1;
+        vb_dmai.strob = 0x0F;
+        vb_dmai.data(31, 0) = 0x00000104;                   // Addr
+        break;
+        // Rd32 from address [0x0104] => 
+    case 46:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 24) = 0x00;                        // Rd32
+        vb_dmai.data(9, 0) = 0x001;                         // Length
+        vb_dmai.data(39, 32) = 0x08;                        // be
+        break;
+    case 47:
         vb_dmai.valid = 1;
         vb_dmai.last = 1;
         vb_dmai.strob = 0x0F;
@@ -349,6 +391,27 @@ void pcie_dma_tb::test() {
         vb_dmai.strob = 0xFF;
         vb_dmai.data(63, 32) = 0x00000124;                  // Addr[31:0]
         vb_dmai.data(31, 0) = 0x00000000;                   // Addr[63:32]
+        // Read 1x64-bits from 64-bits BAR
+    case 360:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(31, 24) = 0x20;                        // Rd64
+        vb_dmai.data(9, 0) = 0x001;                         // Length
+        vb_dmai.data(39, 32) = 0x0F;                        // be
+        break;
+    case 361:
+        vb_dmai.valid = 1;
+        vb_dmai.last = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data(63, 32) = 0x00000120;                  // Addr[31:0]
+        vb_dmai.data(31, 0) = 0x00000000;                   // Addr[63:32]
+        break;
+        // Test FIFO full flag
+    case 500:
+        vb_dmai.valid = 1;
+        vb_dmai.strob = 0xFF;
+        vb_dmai.data = 0xCCCCCCCCDDDDDDDD;
+        break;
 
     default:
         break;
@@ -364,9 +427,9 @@ void pcie_dma_tb::bus() {
         rd_addr = 0;
     } else {
         if ((w_slv_o_req_write.read() == 1) && (w_slv_o_req_valid.read() == 1)) {
-            mem[wb_slv_o_req_addr.read()(3, 0).to_int()] = wb_slv_o_req_wdata.read();
+            mem[wb_slv_o_req_addr.read()(5, 2).to_int()] = wb_slv_o_req_wdata.read();
         }
-        rd_addr = wb_slv_o_req_addr.read()(3, 0);
+        rd_addr = wb_slv_o_req_addr.read()(5, 2);
         rd_valid = w_slv_o_req_valid.read();
     }
     wb_slv_i_resp_rdata = mem[rd_addr(3, 0).to_int()];
