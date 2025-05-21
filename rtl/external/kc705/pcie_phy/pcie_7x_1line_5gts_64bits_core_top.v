@@ -84,12 +84,12 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   parameter         AER_CAP_ON = "FALSE",
   parameter         AER_CAP_PERMIT_ROOTERR_UPDATE = "FALSE",
 
-  parameter [31:0]  BAR0 = 32'hFFE00004,
-  parameter [31:0]  BAR1 = 32'hFFFFFFFF,
-  parameter [31:0]  BAR2 = 32'h00000000,
-  parameter [31:0]  BAR3 = 32'h00000000,
-  parameter [31:0]  BAR4 = 32'h00000000,
-  parameter [31:0]  BAR5 = 32'h00000000,
+  parameter [31:0]  BAR0 = 32'hFFE00000,    // 32-bits, 2MB
+  parameter [31:0]  BAR1 = 32'hC0000000,    // 32-bits, 1GB
+  parameter [31:0]  BAR2 = 32'h00000004,    // 64-bits, 4GB
+  parameter [31:0]  BAR3 = 32'hFFFFFFFF,    // BAR2/BAR3
+  parameter [31:0]  BAR4 = 32'h00000000,    // disabled
+  parameter [31:0]  BAR5 = 32'h00000000,    // disabled
 
   parameter         C_DATA_WIDTH = 64,
   parameter [31:0]  CARDBUS_CIS_POINTER = 32'h00000000,

@@ -193,6 +193,7 @@ void pcie_dma_tb::test() {
     }
 
     vb_dmai = pcie_dma64_in_none;
+    vb_dmai.bar_hit = 0x01;                                 // BAR0
     switch (wb_clk_cnt) {
         // Wr32 to address [0x0104] <= 0x44332211
     case 20:
@@ -223,7 +224,7 @@ void pcie_dma_tb::test() {
         vb_dmai.strob = 0x0F;
         vb_dmai.data(31, 0) = 0x00000104;                   // Addr
         break;
-        // Rd32 from address [0x0104] => 
+        // Rd32 from address [0x0105] => 
     case 42:
         vb_dmai.valid = 1;
         vb_dmai.strob = 0xFF;
@@ -237,7 +238,7 @@ void pcie_dma_tb::test() {
         vb_dmai.strob = 0x0F;
         vb_dmai.data(31, 0) = 0x00000104;                   // Addr
         break;
-        // Rd32 from address [0x0104] => 
+        // Rd32 from address [0x0106] => 
     case 44:
         vb_dmai.valid = 1;
         vb_dmai.strob = 0xFF;
@@ -251,7 +252,7 @@ void pcie_dma_tb::test() {
         vb_dmai.strob = 0x0F;
         vb_dmai.data(31, 0) = 0x00000104;                   // Addr
         break;
-        // Rd32 from address [0x0104] => 
+        // Rd32 from address [0x0107] => 
     case 46:
         vb_dmai.valid = 1;
         vb_dmai.strob = 0xFF;

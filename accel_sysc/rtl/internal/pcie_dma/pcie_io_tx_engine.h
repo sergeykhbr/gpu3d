@@ -16,6 +16,7 @@
 #pragma once
 
 #include <systemc.h>
+#include "pcie_cfg.h"
 #include "api_core.h"
 
 namespace debugger {
@@ -47,13 +48,13 @@ SC_MODULE(pcie_io_tx_engine) {
     sc_in<sc_uint<16>> i_req_rid;
     sc_in<sc_uint<8>> i_req_tag;
     sc_in<sc_uint<8>> i_req_be;
-    sc_in<sc_uint<13>> i_req_addr;
+    sc_in<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> i_req_addr;
     sc_in<sc_uint<10>> i_req_bytes;
     // 
     sc_in<bool> i_dma_resp_valid;
     sc_in<bool> i_dma_resp_last;
     sc_in<bool> i_dma_resp_fault;                           // Error on memory access
-    sc_in<sc_uint<13>> i_dma_resp_addr;
+    sc_in<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> i_dma_resp_addr;
     sc_in<sc_uint<64>> i_dma_resp_data;
     sc_out<bool> o_dma_resp_ready;                          // Ready to accept response
     sc_in<sc_uint<16>> i_completer_id;
@@ -84,12 +85,12 @@ SC_MODULE(pcie_io_tx_engine) {
         sc_signal<bool> s_axis_tx_tvalid;
         sc_signal<bool> dma_resp_ready;
         sc_signal<bool> req_with_data;
-        sc_signal<sc_uint<13>> req_addr;
+        sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<16>> req_rid;
         sc_signal<sc_uint<8>> req_tag;
         sc_signal<sc_uint<4>> req_be;
         sc_signal<sc_uint<64>> rd_data;
-        sc_signal<sc_uint<13>> rd_addr;
+        sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> rd_addr;
         sc_signal<bool> rd_last;
         sc_signal<bool> rd_burst;
         sc_signal<bool> rd_odd;
@@ -294,24 +295,24 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             v.req_tag = i_req_tag.read();
             v.req_be = i_req_be.read();
             v.req_with_data = i_tx_with_data.read();
-            vb_s_axis_tx_tdata(63, 48) = i_completer_id.read();
-            vb_s_axis_tx_tdata(47, 45) = 0;
-            vb_s_axis_tx_tdata[44] = 0;
-            vb_s_axis_tx_tdata(43, 32) = i_req_bytes.read();
-            vb_s_axis_tx_tdata[31] = 0;
+            vb_s_axis_tx_tdata(63, 48) = i_completer_id.read();// DW1[31:16] completer ID
+            vb_s_axis_tx_tdata(47, 45) = 0;                 // DW1[15:13] compl status
+            vb_s_axis_tx_tdata[44] = 0;                     // DW1[12] BCM (Byte Count Modified for PCI legacy support)
+            vb_s_axis_tx_tdata(43, 32) = i_req_bytes.read();// DW1[11:0] byte count
+            vb_s_axis_tx_tdata[31] = 0;                     // DW0[31] R
             if (i_tx_with_data.read() == 1) {
-                vb_s_axis_tx_tdata(30, 24) = PIO_CPLD_FMT_TYPE;
+                vb_s_axis_tx_tdata(30, 24) = PIO_CPLD_FMT_TYPE;// DW0[30:29] fmt; DW0[28:24] type
             } else {
-                vb_s_axis_tx_tdata(30, 24) = PIO_CPL_FMT_TYPE;
+                vb_s_axis_tx_tdata(30, 24) = PIO_CPL_FMT_TYPE;// DW0[30:29] fmt; DW0[28:24] type
             }
-            vb_s_axis_tx_tdata[23] = 0;
-            vb_s_axis_tx_tdata(22, 20) = i_req_tc.read();
-            vb_s_axis_tx_tdata(19, 16) = 0;
-            vb_s_axis_tx_tdata[15] = i_req_td.read();
-            vb_s_axis_tx_tdata[14] = i_req_ep.read();
-            vb_s_axis_tx_tdata(13, 12) = i_req_attr.read();
-            vb_s_axis_tx_tdata(11, 10) = 0;
-            vb_s_axis_tx_tdata(9, 0) = i_req_len.read();
+            vb_s_axis_tx_tdata[23] = 0;                     // DW0[23] R
+            vb_s_axis_tx_tdata(22, 20) = i_req_tc.read();   // DW0[22:20] TC
+            vb_s_axis_tx_tdata(19, 16) = 0;                 // DW0[19:16] R
+            vb_s_axis_tx_tdata[15] = i_req_td.read();       // DW0[15] TD
+            vb_s_axis_tx_tdata[14] = i_req_ep.read();       // DW0[14] EP
+            vb_s_axis_tx_tdata(13, 12) = i_req_attr.read(); // DW0[13:12] attr
+            vb_s_axis_tx_tdata(11, 10) = 0;                 // DW0[11:10] R
+            vb_s_axis_tx_tdata(9, 0) = i_req_len.read();    // DW0[9:0] length
             v.s_axis_tx_tdata = vb_s_axis_tx_tdata;
             v.s_axis_tx_tkeep = 0xFF;
             if (i_tx_with_data.read() == 1) {
@@ -358,10 +359,10 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             } else {
                 vb_s_axis_tx_tdata(63, 32) = r.rd_data.read()(31, 0);
             }
-            vb_s_axis_tx_tdata(31, 16) = r.req_rid.read();
-            vb_s_axis_tx_tdata(15, 8) = r.req_tag.read();
-            vb_s_axis_tx_tdata[7] = 0;
-            vb_s_axis_tx_tdata(6, 0) = vb_lower_addr;
+            vb_s_axis_tx_tdata(31, 16) = r.req_rid.read();  // DW2[31:16] Requester ID
+            vb_s_axis_tx_tdata(15, 8) = r.req_tag.read();   // DW2[15:8] tag
+            vb_s_axis_tx_tdata[7] = 0;                      // DW2[7] R
+            vb_s_axis_tx_tdata(6, 0) = vb_lower_addr;       // DW2[6:0] lower address
             v.s_axis_tx_tdata = vb_s_axis_tx_tdata;
 
             // Mask data strob if data no need:

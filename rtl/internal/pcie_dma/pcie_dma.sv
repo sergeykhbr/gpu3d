@@ -67,14 +67,14 @@ logic w_req_mem_ready;
 logic w_req_mem_valid;
 logic w_req_mem_write;                                      // 0=read; 1=write operation
 logic [9:0] wb_req_mem_bytes;                               // 0=1024 B; 4=DWORD; 8=QWORD; ...
-logic [12:0] wb_req_mem_addr;
+logic [CFG_PCIE_DMAADDR_WIDTH-1:0] wb_req_mem_addr;
 logic [7:0] wb_req_mem_strob;
 logic [63:0] wb_req_mem_data;
 logic w_req_mem_last;
 logic w_resp_mem_valid;
 logic w_resp_mem_last;
 logic w_resp_mem_fault;
-logic [12:0] wb_resp_mem_addr;
+logic [CFG_PCIE_DMAADDR_WIDTH-1:0] wb_resp_mem_addr;
 logic [63:0] wb_resp_mem_data;
 logic w_resp_mem_ready;
 
@@ -145,7 +145,7 @@ pcie_io_ep #(
 );
 
 axi_dma #(
-    .abits(13),
+    .abits(CFG_PCIE_DMAADDR_WIDTH),
     .async_reset(async_reset),
     .userbits(1)
 ) xdma0 (

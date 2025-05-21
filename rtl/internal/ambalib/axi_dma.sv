@@ -174,7 +174,7 @@ begin: comb_proc
         v.resp_last = 1'b0;
         if (i_req_mem_valid == 1'b1) begin
             v.req_ready = 1'b0;
-            v.req_addr = (48'h000008000000 | {'0, i_req_mem_addr});
+            v.req_addr = {'0, i_req_mem_addr};
             if (i_req_mem_bytes == 10'd1) begin
                 v.req_size = 3'd0;
                 v.req_len = 8'd0;

@@ -43,18 +43,19 @@ module pcie_io_ep #(
     output logic o_req_mem_valid,                           // Request data is valid to accept
     output logic o_req_mem_write,                           // 0=read; 1=write operation
     output logic [9:0] o_req_mem_bytes,                     // 0=1024 B; 4=DWORD; 8=QWORD; ...
-    output logic [12:0] o_req_mem_addr,                     // Address to read/write
+    output logic [pcie_cfg_pkg::CFG_PCIE_DMAADDR_WIDTH-1:0] o_req_mem_addr,// Address to read/write
     output logic [7:0] o_req_mem_strob,                     // Byte enabling write strob
     output logic [63:0] o_req_mem_data,                     // Data to write
     output logic o_req_mem_last,                            // Last data payload in a sequence
     input logic i_resp_mem_valid,                           // Read/Write data is valid. All write transaction with valid response.
     input logic i_resp_mem_last,                            // Last response in sequence
     input logic i_resp_mem_fault,                           // Error on memory access
-    input logic [12:0] i_resp_mem_addr,                     // Read address value
+    input logic [pcie_cfg_pkg::CFG_PCIE_DMAADDR_WIDTH-1:0] i_resp_mem_addr,// Read address value
     input logic [63:0] i_resp_mem_data,                     // Read data value
     output logic o_resp_mem_ready                           // Ready to accept response
 );
 
+import pcie_cfg_pkg::*;
 logic w_tx_ena;
 logic w_tx_completion;
 logic w_tx_with_data;
@@ -67,7 +68,7 @@ logic [9:0] wb_req_len;
 logic [15:0] wb_req_rid;
 logic [7:0] wb_req_tag;
 logic [7:0] wb_req_be;
-logic [12:0] wb_req_addr;
+logic [CFG_PCIE_DMAADDR_WIDTH-1:0] wb_req_addr;
 logic [9:0] wb_req_bytes;
 logic [C_DATA_WIDTH-1:0] wb_req_mem_data;
 logic [C_DATA_WIDTH-1:0] wb_resp_mem_data;

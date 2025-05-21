@@ -44,18 +44,19 @@ module pcie_io_tx_engine #(
     input logic [15:0] i_req_rid,
     input logic [7:0] i_req_tag,
     input logic [7:0] i_req_be,
-    input logic [12:0] i_req_addr,
+    input logic [pcie_cfg_pkg::CFG_PCIE_DMAADDR_WIDTH-1:0] i_req_addr,
     input logic [9:0] i_req_bytes,
     // 
     input logic i_dma_resp_valid,
     input logic i_dma_resp_last,
     input logic i_dma_resp_fault,                           // Error on memory access
-    input logic [12:0] i_dma_resp_addr,
+    input logic [pcie_cfg_pkg::CFG_PCIE_DMAADDR_WIDTH-1:0] i_dma_resp_addr,
     input logic [63:0] i_dma_resp_data,
     output logic o_dma_resp_ready,                          // Ready to accept response
     input logic [15:0] i_completer_id
 );
 
+import pcie_cfg_pkg::*;
 // TLP Format Type fields:
 localparam bit [6:0] PIO_CPLD_FMT_TYPE = 7'h4A;
 localparam bit [6:0] PIO_CPL_FMT_TYPE = 7'h0A;
@@ -73,12 +74,12 @@ typedef struct {
     logic s_axis_tx_tvalid;
     logic dma_resp_ready;
     logic req_with_data;
-    logic [12:0] req_addr;
+    logic [CFG_PCIE_DMAADDR_WIDTH-1:0] req_addr;
     logic [15:0] req_rid;
     logic [7:0] req_tag;
     logic [3:0] req_be;
     logic [63:0] rd_data;
-    logic [12:0] rd_addr;
+    logic [CFG_PCIE_DMAADDR_WIDTH-1:0] rd_addr;
     logic rd_last;
     logic rd_burst;
     logic rd_odd;
@@ -150,24 +151,24 @@ begin: comb_proc
             v.req_tag = i_req_tag;
             v.req_be = i_req_be;
             v.req_with_data = i_tx_with_data;
-            vb_s_axis_tx_tdata[63: 48] = i_completer_id;
-            vb_s_axis_tx_tdata[47: 45] = 3'd0;
-            vb_s_axis_tx_tdata[44] = 1'b0;
-            vb_s_axis_tx_tdata[43: 32] = i_req_bytes;
-            vb_s_axis_tx_tdata[31] = 1'b0;
+            vb_s_axis_tx_tdata[63: 48] = i_completer_id;    // DW1[31:16] completer ID
+            vb_s_axis_tx_tdata[47: 45] = 3'd0;              // DW1[15:13] compl status
+            vb_s_axis_tx_tdata[44] = 1'b0;                  // DW1[12] BCM (Byte Count Modified for PCI legacy support)
+            vb_s_axis_tx_tdata[43: 32] = i_req_bytes;       // DW1[11:0] byte count
+            vb_s_axis_tx_tdata[31] = 1'b0;                  // DW0[31] R
             if (i_tx_with_data == 1'b1) begin
-                vb_s_axis_tx_tdata[30: 24] = PIO_CPLD_FMT_TYPE;
+                vb_s_axis_tx_tdata[30: 24] = PIO_CPLD_FMT_TYPE;// DW0[30:29] fmt; DW0[28:24] type
             end else begin
-                vb_s_axis_tx_tdata[30: 24] = PIO_CPL_FMT_TYPE;
+                vb_s_axis_tx_tdata[30: 24] = PIO_CPL_FMT_TYPE;// DW0[30:29] fmt; DW0[28:24] type
             end
-            vb_s_axis_tx_tdata[23] = 1'b0;
-            vb_s_axis_tx_tdata[22: 20] = i_req_tc;
-            vb_s_axis_tx_tdata[19: 16] = 3'd0;
-            vb_s_axis_tx_tdata[15] = i_req_td;
-            vb_s_axis_tx_tdata[14] = i_req_ep;
-            vb_s_axis_tx_tdata[13: 12] = i_req_attr;
-            vb_s_axis_tx_tdata[11: 10] = 2'd0;
-            vb_s_axis_tx_tdata[9: 0] = i_req_len;
+            vb_s_axis_tx_tdata[23] = 1'b0;                  // DW0[23] R
+            vb_s_axis_tx_tdata[22: 20] = i_req_tc;          // DW0[22:20] TC
+            vb_s_axis_tx_tdata[19: 16] = 3'd0;              // DW0[19:16] R
+            vb_s_axis_tx_tdata[15] = i_req_td;              // DW0[15] TD
+            vb_s_axis_tx_tdata[14] = i_req_ep;              // DW0[14] EP
+            vb_s_axis_tx_tdata[13: 12] = i_req_attr;        // DW0[13:12] attr
+            vb_s_axis_tx_tdata[11: 10] = 2'd0;              // DW0[11:10] R
+            vb_s_axis_tx_tdata[9: 0] = i_req_len;           // DW0[9:0] length
             v.s_axis_tx_tdata = vb_s_axis_tx_tdata;
             v.s_axis_tx_tkeep = 8'hFF;
             if (i_tx_with_data == 1'b1) begin
@@ -214,10 +215,10 @@ begin: comb_proc
             end else begin
                 vb_s_axis_tx_tdata[63: 32] = r.rd_data[31: 0];
             end
-            vb_s_axis_tx_tdata[31: 16] = r.req_rid;
-            vb_s_axis_tx_tdata[15: 8] = r.req_tag;
-            vb_s_axis_tx_tdata[7] = 1'b0;
-            vb_s_axis_tx_tdata[6: 0] = vb_lower_addr;
+            vb_s_axis_tx_tdata[31: 16] = r.req_rid;         // DW2[31:16] Requester ID
+            vb_s_axis_tx_tdata[15: 8] = r.req_tag;          // DW2[15:8] tag
+            vb_s_axis_tx_tdata[7] = 1'b0;                   // DW2[7] R
+            vb_s_axis_tx_tdata[6: 0] = vb_lower_addr;       // DW2[6:0] lower address
             v.s_axis_tx_tdata = vb_s_axis_tx_tdata;
 
             // Mask data strob if data no need:

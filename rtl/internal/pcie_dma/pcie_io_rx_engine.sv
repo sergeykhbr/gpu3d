@@ -44,19 +44,20 @@ module pcie_io_rx_engine #(
     output logic [15:0] o_req_rid,                          // Memory Read Requestor ID
     output logic [7:0] o_req_tag,                           // Memory Read Tag
     output logic [7:0] o_req_be,                            // Memory Read Byte Enables
-    output logic [12:0] o_req_addr,                         // Memory Read Address
+    output logic [pcie_cfg_pkg::CFG_PCIE_DMAADDR_WIDTH-1:0] o_req_addr,// Memory Read Address
     // 
     input logic i_req_mem_ready,                            // Ready to accept next memory request
     output logic o_req_mem_valid,                           // Request data is valid to accept
     output logic o_req_mem_write,                           // 0=read; 1=write operation
     output logic [9:0] o_req_mem_bytes,                     // 0=1024 B; 4=DWORD; 8=QWORD; ...
-    output logic [12:0] o_req_mem_addr,                     // Address to read/write
+    output logic [pcie_cfg_pkg::CFG_PCIE_DMAADDR_WIDTH-1:0] o_req_mem_addr,// Address to read/write
     output logic [7:0] o_req_mem_strob,                     // Byte enabling write strob
     output logic [63:0] o_req_mem_data,                     // Data to write
     output logic o_req_mem_last,                            // Last data payload in a sequence
     input logic i_resp_mem_valid                            // Read/Write data is valid. All write transaction with valid response.
 );
 
+import pcie_cfg_pkg::*;
 
 localparam bit [6:0] PIO_RX_MEM_RD32_FMT_TYPE = 7'h00;
 localparam bit [6:0] PIO_RX_MEM_WR32_FMT_TYPE = 7'h40;
@@ -91,7 +92,7 @@ typedef struct {
     logic [7:0] req_tag;
     logic [7:0] req_be;
     logic [9:0] req_bytes;
-    logic [12:0] req_addr;
+    logic [CFG_PCIE_DMAADDR_WIDTH-1:0] req_addr;
     logic wr_en;
     logic [63:0] wr_data;
     logic [7:0] wr_strob;
@@ -115,7 +116,7 @@ const pcie_io_rx_engine_registers pcie_io_rx_engine_r_reset = '{
     8'd0,                               // req_tag
     8'd0,                               // req_be
     '0,                                 // req_bytes
-    13'd0,                              // req_addr
+    34'd0,                              // req_addr
     1'b0,                               // wr_en
     '0,                                 // wr_data
     '0,                                 // wr_strob
@@ -136,22 +137,26 @@ begin: comb_proc
     logic [1:0] vb_add_be20;
     logic [1:0] vb_add_be21;
     logic [9:0] vb_req_bytes;
-    logic [1:0] vb_region_select;
+    logic [CFG_PCIE_DMAADDR_WIDTH-1:0] vb_bar_offset;
+    logic [CFG_PCIE_DMAADDR_WIDTH-1:0] vb_addr_ldw;
+    logic [CFG_PCIE_DMAADDR_WIDTH-1:0] vb_addr_mdw;
 
     v = r;
     vb_req_addr_1_0 = '0;
     vb_add_be20 = '0;
     vb_add_be21 = '0;
     vb_req_bytes = '0;
-    vb_region_select = '0;
+    vb_bar_offset = '0;
+    vb_addr_ldw = '0;
+    vb_addr_mdw = '0;
 
 
-    if (i_m_axis_rx_tuser[8: 2] == 7'h01) begin             // Select Mem32 region
-        vb_region_select = 2'h1;
-    end else if (i_m_axis_rx_tuser[8: 2] == 7'h02) begin    // Select Mem64 region
-        vb_region_select = 2'h2;
-    end else if (i_m_axis_rx_tuser[8: 2] == 7'h40) begin    // Select EROM region
-        vb_region_select = 2'h3;
+    if (i_m_axis_rx_tuser[8: 2] == 7'h01) begin             // Select BAR0 region
+        vb_bar_offset = 34'h008000000;                      // BAR0, 32-bits, 2MB, SRAM
+    end else if (i_m_axis_rx_tuser[8: 2] == 7'h02) begin    // Select BAR1 region
+        vb_bar_offset = 34'h000000000;                      // BAR1, 32-bits, 1GB
+    end else if (i_m_axis_rx_tuser[8: 2] == 7'h04) begin    // Select BAR2 region
+        vb_bar_offset = 34'h080000000;                      // BAR2/BAR3 64-bits, 4GB to DDR
     end
 
     if (r.req_be[0] == 1'b1) begin
@@ -163,6 +168,11 @@ begin: comb_proc
     end else if (r.req_be[3] == 1'b1) begin
         vb_req_addr_1_0 = 2'd3;
     end
+    // Max implemented BAR is 4GB so take 32-bits of address
+    vb_addr_ldw = (vb_bar_offset + i_m_axis_rx_tdata[31: 0]);
+    vb_addr_ldw[1: 0] = vb_req_addr_1_0;
+    vb_addr_mdw = (vb_bar_offset + i_m_axis_rx_tdata[63: 32]);
+    vb_addr_mdw[1: 0] = vb_req_addr_1_0;
 
     // Calculate byte count based on byte enable
     vb_add_be20 = ({1'b0, r.req_be[3]} + {1'b0, r.req_be[2]});
@@ -244,7 +254,7 @@ begin: comb_proc
         if (i_m_axis_rx_tvalid == 1'b1) begin
             v.req_valid = 1'b1;
             v.req_last = i_m_axis_rx_tlast;
-            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2], vb_req_addr_1_0};
+            v.req_addr = vb_addr_ldw;
             v.req_bytes = vb_req_bytes;
             v.tlp_resp = TLP_POSTED;
             v.state = PIO_RX_WAIT_TX_COMPLETION;
@@ -254,7 +264,7 @@ begin: comb_proc
     PIO_RX_MEM_RD64_DW1DW2: begin
         if (i_m_axis_rx_tvalid == 1'b1) begin
             v.req_valid = 1'b1;
-            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[42: 34], vb_req_addr_1_0};
+            v.req_addr = vb_addr_mdw;
             v.req_bytes = vb_req_bytes;
             v.tlp_resp = TLP_POSTED;
             v.state = PIO_RX_WAIT_TX_COMPLETION;
@@ -265,7 +275,7 @@ begin: comb_proc
         if (i_m_axis_rx_tvalid == 1'b1) begin
             v.req_valid = i_m_axis_rx_tlast;
             v.req_last = i_m_axis_rx_tlast;
-            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2], vb_req_addr_1_0};
+            v.req_addr = vb_addr_ldw;
             v.req_bytes = vb_req_bytes;
             v.wr_data = {i_m_axis_rx_tdata[63: 32], i_m_axis_rx_tdata[63: 32]};
             v.wr_data_dw1 = i_m_axis_rx_tdata[63: 32];
@@ -291,7 +301,7 @@ begin: comb_proc
 
     PIO_RX_MEM_WR64_DW1DW2: begin
         if (i_m_axis_rx_tvalid == 1'b1) begin
-            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[42: 34], vb_req_addr_1_0};
+            v.req_addr = vb_addr_mdw;
             v.req_bytes = vb_req_bytes;
             if (i_m_axis_rx_tdata[34] == 1'b1) begin
                 v.wr_strob = {r.req_be[3: 0], r.req_be[7: 4]};
@@ -336,7 +346,7 @@ begin: comb_proc
         if (i_m_axis_rx_tvalid == 1'b1) begin
             v.req_valid = 1'b1;
             v.wr_en = 1'b1;
-            v.req_addr = {vb_region_select[1: 0], i_m_axis_rx_tdata[10: 2], vb_req_addr_1_0};
+            v.req_addr = vb_addr_ldw;
             v.req_bytes = vb_req_bytes;
             v.wr_data = {i_m_axis_rx_tdata[63: 32], i_m_axis_rx_tdata[63: 32]};
             if (i_m_axis_rx_tdata[2] == 1'b1) begin

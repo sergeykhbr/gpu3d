@@ -16,6 +16,7 @@
 #pragma once
 
 #include <systemc.h>
+#include "pcie_cfg.h"
 #include "api_core.h"
 
 namespace debugger {
@@ -47,13 +48,13 @@ SC_MODULE(pcie_io_rx_engine) {
     sc_out<sc_uint<16>> o_req_rid;                          // Memory Read Requestor ID
     sc_out<sc_uint<8>> o_req_tag;                           // Memory Read Tag
     sc_out<sc_uint<8>> o_req_be;                            // Memory Read Byte Enables
-    sc_out<sc_uint<13>> o_req_addr;                         // Memory Read Address
+    sc_out<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> o_req_addr;     // Memory Read Address
     // 
     sc_in<bool> i_req_mem_ready;                            // Ready to accept next memory request
     sc_out<bool> o_req_mem_valid;                           // Request data is valid to accept
     sc_out<bool> o_req_mem_write;                           // 0=read; 1=write operation
     sc_out<sc_uint<10>> o_req_mem_bytes;                    // 0=1024 B; 4=DWORD; 8=QWORD; ...
-    sc_out<sc_uint<13>> o_req_mem_addr;                     // Address to read/write
+    sc_out<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> o_req_mem_addr; // Address to read/write
     sc_out<sc_uint<8>> o_req_mem_strob;                     // Byte enabling write strob
     sc_out<sc_uint<64>> o_req_mem_data;                     // Data to write
     sc_out<bool> o_req_mem_last;                            // Last data payload in a sequence
@@ -101,7 +102,7 @@ SC_MODULE(pcie_io_rx_engine) {
         sc_signal<sc_uint<8>> req_tag;
         sc_signal<sc_uint<8>> req_be;
         sc_signal<sc_uint<10>> req_bytes;
-        sc_signal<sc_uint<13>> req_addr;
+        sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> req_addr;
         sc_signal<bool> wr_en;
         sc_signal<sc_uint<64>> wr_data;
         sc_signal<sc_uint<8>> wr_strob;
@@ -276,22 +277,26 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     sc_uint<2> vb_add_be20;
     sc_uint<2> vb_add_be21;
     sc_uint<10> vb_req_bytes;
-    sc_uint<2> vb_region_select;
+    sc_uint<CFG_PCIE_DMAADDR_WIDTH> vb_bar_offset;
+    sc_uint<CFG_PCIE_DMAADDR_WIDTH> vb_addr_ldw;
+    sc_uint<CFG_PCIE_DMAADDR_WIDTH> vb_addr_mdw;
 
     v = r;
     vb_req_addr_1_0 = 0;
     vb_add_be20 = 0;
     vb_add_be21 = 0;
     vb_req_bytes = 0;
-    vb_region_select = 0;
+    vb_bar_offset = 0;
+    vb_addr_ldw = 0;
+    vb_addr_mdw = 0;
 
 
-    if (i_m_axis_rx_tuser.read()(8, 2) == 0x01) {           // Select Mem32 region
-        vb_region_select = 0x1;
-    } else if (i_m_axis_rx_tuser.read()(8, 2) == 0x02) {    // Select Mem64 region
-        vb_region_select = 0x2;
-    } else if (i_m_axis_rx_tuser.read()(8, 2) == 0x40) {    // Select EROM region
-        vb_region_select = 0x3;
+    if (i_m_axis_rx_tuser.read()(8, 2) == 0x01) {           // Select BAR0 region
+        vb_bar_offset = 0x008000000;                        // BAR0, 32-bits, 2MB, SRAM
+    } else if (i_m_axis_rx_tuser.read()(8, 2) == 0x02) {    // Select BAR1 region
+        vb_bar_offset = 0x000000000;                        // BAR1, 32-bits, 1GB
+    } else if (i_m_axis_rx_tuser.read()(8, 2) == 0x04) {    // Select BAR2 region
+        vb_bar_offset = 0x080000000;                        // BAR2/BAR3 64-bits, 4GB to DDR
     }
 
     if (r.req_be.read()[0] == 1) {
@@ -303,6 +308,11 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     } else if (r.req_be.read()[3] == 1) {
         vb_req_addr_1_0 = 3;
     }
+    // Max implemented BAR is 4GB so take 32-bits of address
+    vb_addr_ldw = (vb_bar_offset + i_m_axis_rx_tdata.read()(31, 0));
+    vb_addr_ldw(1, 0) = vb_req_addr_1_0;
+    vb_addr_mdw = (vb_bar_offset + i_m_axis_rx_tdata.read()(63, 32));
+    vb_addr_mdw(1, 0) = vb_req_addr_1_0;
 
     // Calculate byte count based on byte enable
     vb_add_be20 = ((0, r.req_be.read()[3]) + (0, r.req_be.read()[2]));
@@ -384,7 +394,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
         if (i_m_axis_rx_tvalid.read() == 1) {
             v.req_valid = 1;
             v.req_last = i_m_axis_rx_tlast.read();
-            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2), vb_req_addr_1_0);
+            v.req_addr = vb_addr_ldw;
             v.req_bytes = vb_req_bytes;
             v.tlp_resp = TLP_POSTED;
             v.state = PIO_RX_WAIT_TX_COMPLETION;
@@ -394,7 +404,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     case PIO_RX_MEM_RD64_DW1DW2:
         if (i_m_axis_rx_tvalid.read() == 1) {
             v.req_valid = 1;
-            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(42, 34), vb_req_addr_1_0);
+            v.req_addr = vb_addr_mdw;
             v.req_bytes = vb_req_bytes;
             v.tlp_resp = TLP_POSTED;
             v.state = PIO_RX_WAIT_TX_COMPLETION;
@@ -405,7 +415,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
         if (i_m_axis_rx_tvalid.read() == 1) {
             v.req_valid = i_m_axis_rx_tlast.read();
             v.req_last = i_m_axis_rx_tlast.read();
-            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2), vb_req_addr_1_0);
+            v.req_addr = vb_addr_ldw;
             v.req_bytes = vb_req_bytes;
             v.wr_data = (i_m_axis_rx_tdata.read()(63, 32), i_m_axis_rx_tdata.read()(63, 32));
             v.wr_data_dw1 = i_m_axis_rx_tdata.read()(63, 32);
@@ -431,7 +441,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
 
     case PIO_RX_MEM_WR64_DW1DW2:
         if (i_m_axis_rx_tvalid.read() == 1) {
-            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(42, 34), vb_req_addr_1_0);
+            v.req_addr = vb_addr_mdw;
             v.req_bytes = vb_req_bytes;
             if (i_m_axis_rx_tdata.read()[34] == 1) {
                 v.wr_strob = (r.req_be.read()(3, 0), r.req_be.read()(7, 4));
@@ -476,7 +486,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
         if (i_m_axis_rx_tvalid.read() == 1) {
             v.req_valid = 1;
             v.wr_en = 1;
-            v.req_addr = (vb_region_select(1, 0), i_m_axis_rx_tdata.read()(10, 2), vb_req_addr_1_0);
+            v.req_addr = vb_addr_ldw;
             v.req_bytes = vb_req_bytes;
             v.wr_data = (i_m_axis_rx_tdata.read()(63, 32), i_m_axis_rx_tdata.read()(63, 32));
             if (i_m_axis_rx_tdata.read()[2] == 1) {

@@ -302,7 +302,7 @@ void axi_dma<abits>::comb() {
         v.resp_last = 0;
         if (i_req_mem_valid.read() == 1) {
             v.req_ready = 0;
-            v.req_addr = (0x000008000000 | (0, i_req_mem_addr.read()));
+            v.req_addr = (0, i_req_mem_addr.read());
             if (i_req_mem_bytes.read() == 1) {
                 v.req_size = 0;
                 v.req_len = 0;

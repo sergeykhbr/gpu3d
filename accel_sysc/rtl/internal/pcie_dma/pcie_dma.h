@@ -95,21 +95,21 @@ SC_MODULE(pcie_dma) {
     sc_signal<bool> w_req_mem_valid;
     sc_signal<bool> w_req_mem_write;                        // 0=read; 1=write operation
     sc_signal<sc_uint<10>> wb_req_mem_bytes;                // 0=1024 B; 4=DWORD; 8=QWORD; ...
-    sc_signal<sc_uint<13>> wb_req_mem_addr;
+    sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> wb_req_mem_addr;
     sc_signal<sc_uint<8>> wb_req_mem_strob;
     sc_signal<sc_uint<64>> wb_req_mem_data;
     sc_signal<bool> w_req_mem_last;
     sc_signal<bool> w_resp_mem_valid;
     sc_signal<bool> w_resp_mem_last;
     sc_signal<bool> w_resp_mem_fault;
-    sc_signal<sc_uint<13>> wb_resp_mem_addr;
+    sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> wb_resp_mem_addr;
     sc_signal<sc_uint<64>> wb_resp_mem_data;
     sc_signal<bool> w_resp_mem_ready;
 
     cdc_afifo<CFG_PCIE_DMAFIFO_DEPTH, REQ_FIFO_WIDTH> *reqfifo;
     cdc_afifo<CFG_PCIE_DMAFIFO_DEPTH, RESP_FIFO_WIDTH> *respfifo;
     pcie_io_ep<C_DATA_WIDTH, KEEP_WIDTH> *PIO_EP_inst;
-    axi_dma<13> *xdma0;
+    axi_dma<CFG_PCIE_DMAADDR_WIDTH> *xdma0;
 
 };
 

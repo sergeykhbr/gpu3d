@@ -16,6 +16,7 @@
 #pragma once
 
 #include <systemc.h>
+#include "pcie_cfg.h"
 #include "pcie_io_rx_engine.h"
 #include "pcie_io_tx_engine.h"
 #include "api_core.h"
@@ -48,14 +49,14 @@ SC_MODULE(pcie_io_ep) {
     sc_out<bool> o_req_mem_valid;                           // Request data is valid to accept
     sc_out<bool> o_req_mem_write;                           // 0=read; 1=write operation
     sc_out<sc_uint<10>> o_req_mem_bytes;                    // 0=1024 B; 4=DWORD; 8=QWORD; ...
-    sc_out<sc_uint<13>> o_req_mem_addr;                     // Address to read/write
+    sc_out<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> o_req_mem_addr; // Address to read/write
     sc_out<sc_uint<8>> o_req_mem_strob;                     // Byte enabling write strob
     sc_out<sc_uint<64>> o_req_mem_data;                     // Data to write
     sc_out<bool> o_req_mem_last;                            // Last data payload in a sequence
     sc_in<bool> i_resp_mem_valid;                           // Read/Write data is valid. All write transaction with valid response.
     sc_in<bool> i_resp_mem_last;                            // Last response in sequence
     sc_in<bool> i_resp_mem_fault;                           // Error on memory access
-    sc_in<sc_uint<13>> i_resp_mem_addr;                     // Read address value
+    sc_in<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> i_resp_mem_addr; // Read address value
     sc_in<sc_uint<64>> i_resp_mem_data;                     // Read data value
     sc_out<bool> o_resp_mem_ready;                          // Ready to accept response
 
@@ -81,7 +82,7 @@ SC_MODULE(pcie_io_ep) {
     sc_signal<sc_uint<16>> wb_req_rid;
     sc_signal<sc_uint<8>> wb_req_tag;
     sc_signal<sc_uint<8>> wb_req_be;
-    sc_signal<sc_uint<13>> wb_req_addr;
+    sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> wb_req_addr;
     sc_signal<sc_uint<10>> wb_req_bytes;
     sc_signal<sc_uint<C_DATA_WIDTH>> wb_req_mem_data;
     sc_signal<sc_uint<C_DATA_WIDTH>> wb_resp_mem_data;

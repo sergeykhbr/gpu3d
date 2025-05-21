@@ -98,9 +98,9 @@ pcie_dma::pcie_dma(sc_module_name name,
     PIO_EP_inst->i_resp_mem_data(wb_resp_mem_data);
     PIO_EP_inst->o_resp_mem_ready(w_resp_mem_ready);
 
-    xdma0 = new axi_dma<13>("xdma0",
-                            async_reset,
-                            1);
+    xdma0 = new axi_dma<CFG_PCIE_DMAADDR_WIDTH>("xdma0",
+                                                async_reset,
+                                                1);
     xdma0->i_nrst(i_nrst);
     xdma0->i_clk(i_clk);
     xdma0->o_req_mem_ready(w_req_mem_ready);
