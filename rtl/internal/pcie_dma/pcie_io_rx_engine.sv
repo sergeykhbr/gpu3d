@@ -151,11 +151,11 @@ begin: comb_proc
     vb_addr_mdw = '0;
 
 
-    if (i_m_axis_rx_tuser[8: 2] == 7'h01) begin             // Select BAR0 region
+    if (i_m_axis_rx_tuser[2] == 1'b1) begin                 // Select BAR0 region
         vb_bar_offset = 34'h008000000;                      // BAR0, 32-bits, 2MB, SRAM
-    end else if (i_m_axis_rx_tuser[8: 2] == 7'h02) begin    // Select BAR1 region
+    end else if (i_m_axis_rx_tuser[3] == 1'b1) begin        // Select BAR1 region
         vb_bar_offset = 34'h000000000;                      // BAR1, 32-bits, 1GB
-    end else if (i_m_axis_rx_tuser[8: 2] == 7'h04) begin    // Select BAR2 region
+    end else if (i_m_axis_rx_tuser[5: 4] == 2'h3) begin     // Select BAR2/BAR3
         vb_bar_offset = 34'h080000000;                      // BAR2/BAR3 64-bits, 4GB to DDR
     end
 

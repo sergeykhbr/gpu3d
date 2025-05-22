@@ -291,11 +291,11 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     vb_addr_mdw = 0;
 
 
-    if (i_m_axis_rx_tuser.read()(8, 2) == 0x01) {           // Select BAR0 region
+    if (i_m_axis_rx_tuser.read()[2] == 1) {                 // Select BAR0 region
         vb_bar_offset = 0x008000000;                        // BAR0, 32-bits, 2MB, SRAM
-    } else if (i_m_axis_rx_tuser.read()(8, 2) == 0x02) {    // Select BAR1 region
+    } else if (i_m_axis_rx_tuser.read()[3] == 1) {          // Select BAR1 region
         vb_bar_offset = 0x000000000;                        // BAR1, 32-bits, 1GB
-    } else if (i_m_axis_rx_tuser.read()(8, 2) == 0x04) {    // Select BAR2 region
+    } else if (i_m_axis_rx_tuser.read()(5, 4) == 0x3) {     // Select BAR2/BAR3
         vb_bar_offset = 0x080000000;                        // BAR2/BAR3 64-bits, 4GB to DDR
     }
 
