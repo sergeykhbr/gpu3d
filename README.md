@@ -1,10 +1,11 @@
 # gpu3d
 Learning GPU from scratch
 
-1. gpufunc - qt-application to understand basic GPU transformations
-2. rtl - System Verilog source code
-3. prj - Makefiles to build rtl for different targets: KC705 board, simulation
-4. examples - different application to emulate or interact with the FPGA board
+1. accel_func - qt-application to understand basic GPU transformations
+2. accel_sysc - Precise SystemC model that allows to simulate full soc design or a separate testbenches.
+3. rtl - System Verilog source code
+4. prj - Makefiles to build rtl for different targets: KC705 board, simulation
+5. examples - different application to emulate or interact with the FPGA board
 
 ## Hardware
 
@@ -50,6 +51,25 @@ and test application. 5.0GT/s passed.
   [IP-Facts](https://docs.xilinx.com/r/en-US/pg235-v-hdmi-tx-ss/IP-Facts)
 
 we'll cobble together something
+
+## Build precise SystemC model
+
+SystemC is provided as a submodule in the folder 'accel_sysc/systemc'.
+
+      $ cd accel_sysc
+      $ cmake -S . -B ./build
+      $ cd build                (ignore configuration errors and build SystemC libraries)
+      $ make
+      $ cd ..
+      $ cmake -S . -B ./build   (configure again with pre-built systemc libs)
+      $ cd build
+      $ make
+
+Check file 'accel_sysc/app/main.cpp' and select the desired simulation testbench and duration.
+Then re-built and run 'accel_sysc' application as usual executable file.
+
+If you know how to solve 'first configuration error', please share the knowledge.
+
 
 ## First step: Build SoC
 
