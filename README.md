@@ -1,5 +1,5 @@
 # gpu3d
-Learning GPU from scratch
+Learn and build GPU RTL from scratch
 
 1. accel_func - qt-application to understand basic GPU transformations
 2. accel_sysc - Precise SystemC model that allows to simulate full soc design or a separate testbenches.
