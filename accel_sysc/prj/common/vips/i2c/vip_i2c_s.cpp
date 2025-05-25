@@ -138,7 +138,7 @@ void vip_i2c_s::comb() {
     case STATE_RX_DATA:
         if (v_latch_data == 1) {
             if (r.bit_cnt.read().or_reduce() == 0) {
-                v.sda_dir = PIN_DIR_INPUT;
+                v.sda_dir = PIN_DIR_OUTPUT;
                 v.state = STATE_ACK_DATA;
             } else {
                 v.bit_cnt = (r.bit_cnt.read() - 1);

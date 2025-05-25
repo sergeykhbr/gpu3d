@@ -24,11 +24,28 @@ asic_top_tb::asic_top_tb(sc_module_name name)
 
     clk0 = 0;
     uart1 = 0;
+    iosda0 = 0;
+    i2c0 = 0;
     tt = 0;
 
     clk0 = new vip_clk("clk0",
                         25.0);
     clk0->o_clk(w_sclk_p);
+
+    iosda0 = new iobuf_tech("iosda0");
+    iosda0->io(w_i2c_sda);
+    iosda0->o(w_bufo_i2c0_sda);
+    iosda0->i(w_vipo_i2c0_sda);
+    iosda0->t(w_vipo_i2c0_sda_dir);
+
+    i2c0 = new vip_i2c_s("i2c0",
+                          0);
+    i2c0->i_clk(w_sclk_p);
+    i2c0->i_nrst(w_nrst);
+    i2c0->i_scl(w_i2c_scl);
+    i2c0->i_sda(w_bufo_i2c0_sda);
+    i2c0->o_sda(w_vipo_i2c0_sda);
+    i2c0->o_sda_dir(w_vipo_i2c0_sda_dir);
 
     uart1 = new vip_uart_top("uart1",
                               1,
@@ -70,6 +87,12 @@ asic_top_tb::~asic_top_tb() {
     if (uart1) {
         delete uart1;
     }
+    if (iosda0) {
+        delete iosda0;
+    }
+    if (i2c0) {
+        delete i2c0;
+    }
     if (tt) {
         delete tt;
     }
@@ -84,6 +107,12 @@ void asic_top_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (uart1) {
         uart1->generateVCD(i_vcd, o_vcd);
+    }
+    if (iosda0) {
+        iosda0->generateVCD(i_vcd, o_vcd);
+    }
+    if (i2c0) {
+        i2c0->generateVCD(i_vcd, o_vcd);
     }
     if (tt) {
         tt->generateVCD(i_vcd, o_vcd);

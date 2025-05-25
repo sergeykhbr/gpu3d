@@ -48,8 +48,8 @@ SC_MODULE(vip_i2c_s) {
     static const uint8_t STATE_TX_DATA = 0x20;
     static const uint8_t STATE_WAIT_ACK_DATA = 0x40;
 
-    static const bool PIN_DIR_INPUT = 0;
-    static const bool PIN_DIR_OUTPUT = 1;
+    static const bool PIN_DIR_INPUT = 1;
+    static const bool PIN_DIR_OUTPUT = 0;
 
     struct vip_i2c_s_registers {
         sc_signal<bool> sda;

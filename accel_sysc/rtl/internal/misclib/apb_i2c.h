@@ -59,8 +59,8 @@ SC_MODULE(apb_i2c) {
     static const uint8_t STATE_WAIT_ACK_DATA = 0x40;
     static const uint8_t STATE_STOP = 0x80;
 
-    static const bool PIN_DIR_INPUT = 0;
-    static const bool PIN_DIR_OUTPUT = 1;
+    static const bool PIN_DIR_INPUT = 1;
+    static const bool PIN_DIR_OUTPUT = 0;
 
     struct apb_i2c_registers {
         sc_signal<sc_uint<16>> scaler;

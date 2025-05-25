@@ -18,6 +18,8 @@
 #include <systemc.h>
 #include "../../common/vips/clk/vip_clk.h"
 #include "../../common/vips/uart/vip_uart_top.h"
+#include "../../../rtl/sim/io/iobuf_tech.h"
+#include "../../common/vips/i2c/vip_i2c_s.h"
 #include "../asic/asic_top.h"
 #include "sv_func.h"
 
@@ -53,10 +55,15 @@ SC_MODULE(asic_top_tb) {
     sc_signal<bool> w_uart1_loopback_ena;
     sc_signal<bool> w_i2c_scl;
     sc_signal<bool> w_i2c_sda;
+    sc_signal<bool> w_bufo_i2c0_sda;
+    sc_signal<bool> w_vipo_i2c0_sda;
+    sc_signal<bool> w_vipo_i2c0_sda_dir;
     sc_uint<32> wb_clk_cnt;
 
     vip_clk *clk0;
     vip_uart_top *uart1;
+    iobuf_tech *iosda0;
+    vip_i2c_s *i2c0;
     asic_top *tt;
 
 };
