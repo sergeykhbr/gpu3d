@@ -153,9 +153,6 @@ begin: comb_proc
 
     if (i_m_axis_rx_tuser[2] == 1'b1) begin                 // Select BAR0 region
         vb_bar_offset = 34'h008000000;                      // BAR0, 32-bits, 2MB, SRAM
-//    end else if (i_m_axis_rx_tuser[3] == 1'b1) begin        // Select BAR1 region
-//        vb_bar_offset = 34'h000000000;                      // BAR1, 32-bits, 1GB
-//    end else if (i_m_axis_rx_tuser[5: 4] == 2'h3) begin     // Select BAR2/BAR3
     end else begin
         vb_bar_offset = 34'h080000000;                      // BAR2/BAR3 64-bits, 4GB to DDR
     end
@@ -170,10 +167,12 @@ begin: comb_proc
         vb_req_addr_1_0 = 2'd3;
     end
     // Max implemented BAR is 4GB so take 32-bits of address
-    vb_addr_ldw = {vb_bar_offset[33:16], i_m_axis_rx_tdata[15: 2], vb_req_addr_1_0};
-    //vb_addr_ldw[1: 0] = vb_req_addr_1_0;
-    vb_addr_mdw = {vb_bar_offset[33:16], i_m_axis_rx_tdata[47: 34], vb_req_addr_1_0};
-    //vb_addr_mdw[1: 0] = vb_req_addr_1_0;
+    vb_addr_ldw = {vb_bar_offset[(CFG_PCIE_DMAADDR_WIDTH - 1): 16],
+            i_m_axis_rx_tdata[15: 2],
+            vb_req_addr_1_0};
+    vb_addr_mdw = {vb_bar_offset[(CFG_PCIE_DMAADDR_WIDTH - 1): 16],
+            i_m_axis_rx_tdata[47: 34],
+            vb_req_addr_1_0};
 
     // Calculate byte count based on byte enable
     vb_add_be20 = ({1'b0, r.req_be[3]} + {1'b0, r.req_be[2]});

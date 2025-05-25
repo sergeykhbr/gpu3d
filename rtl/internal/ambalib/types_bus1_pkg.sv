@@ -28,16 +28,18 @@ localparam int CFG_BUS1_PSLV_UART1 = 0;
 localparam int CFG_BUS1_PSLV_PRCI = 1;
 // @brief Worjgroup DMI interface.
 localparam int CFG_BUS1_PSLV_DMI = 2;
+// I2C master interface (for ADV7511 HDMI transmitter)
+localparam int CFG_BUS1_PSLV_I2C0 = 3;
 // Configuration index of the GPIO (General Purpose In/Out) module.
-localparam int CFG_BUS1_PSLV_GPIO = 3;
+localparam int CFG_BUS1_PSLV_GPIO = 4;
 // @brief DDR control register.
-localparam int CFG_BUS1_PSLV_DDR = 4;
+localparam int CFG_BUS1_PSLV_DDR = 5;
 // @brief PCIE endpoint controller
-localparam int CFG_BUS1_PSLV_PCIE = 5;
+localparam int CFG_BUS1_PSLV_PCIE = 6;
 // Configuration index of the Plug-n-Play module.
-localparam int CFG_BUS1_PSLV_PNP = 6;
+localparam int CFG_BUS1_PSLV_PNP = 7;
 // Total number of the APB slaves devices on Bus[1].
-localparam int CFG_BUS1_PSLV_TOTAL = 7;
+localparam int CFG_BUS1_PSLV_TOTAL = 8;
 // Necessary bus width to store index + 1.
 localparam int CFG_BUS1_PSLV_LOG2_TOTAL = 3;                // $clog2(CFG_BUS1_PSLV_TOTAL + 1)
 
@@ -59,6 +61,10 @@ const bus1_mapinfo_vector CFG_BUS1_MAP = '{
             64'h000000000001E000,       // addr_start
             64'h000000000001F000        // addr_end
         },// dmi 4KB. TODO: change base address
+        '{
+            64'h0000000000052000,       // addr_start
+            64'h0000000000053000        // addr_end
+        },// I2C master interface to ADV7511 HDMI transmitter
         '{
             64'h0000000000060000,       // addr_start
             64'h0000000000061000        // addr_end

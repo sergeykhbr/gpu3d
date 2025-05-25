@@ -38,6 +38,9 @@ module kc705_top #(
     //! UART1 signals:
     input                     i_uart1_rd,
     output                    o_uart1_td,
+    // I2C master inerface to HDMI transmitter:
+    output logic o_i2c0_scl,                                // I2C clock upto 400 kHz (default 100 kHz)
+    inout logic io_i2c0_sda,                                // I2C bi-directional data
     // DDR3 signals:
     output o_ddr3_reset_n,
     output [0:0] o_ddr3_ck_n,
@@ -88,8 +91,13 @@ module kc705_top #(
   logic             ob_jtag_tdo; 
   logic             ob_jtag_vref;
   // !UART
-  logic             ib_uart1_rd;
-  logic             ob_uart1_td;
+logic             ib_uart1_rd;
+logic             ob_uart1_td;
+// I2C
+logic ob_i2c0_scl;
+logic ob_i2c0_sda;
+logic ob_i2c0_sda_direction;
+logic ib_i2c0_sda;
 
   logic             w_sys_rst;
   logic             w_sys_nrst;
@@ -170,6 +178,18 @@ module kc705_top #(
     end
   endgenerate
 
+obuf_tech oi2c0scl (
+    .i(ob_i2c0_scl),
+    .o(o_i2c0_scl)
+);
+
+iobuf_tech ioi2c0sda (
+    .io(io_i2c0_sda),
+    .o(ib_i2c0_sda),
+    .i(ob_i2c0_sda),
+    .t(ob_i2c0_sda_direction)
+);
+
 
   ibuf_tech ijtck0(.o(ib_jtag_tck), .i(i_jtag_tck));  
   ibufg_tech ijtck1(.o(w_jtag_tck), .i(ib_jtag_tck));
@@ -242,6 +262,11 @@ module kc705_top #(
     //! UART1 signals:
     .i_uart1_rd(ib_uart1_rd),
     .o_uart1_td(ob_uart1_td),
+    //! I2C master
+    .o_i2c0_scl(ob_i2c0_scl),
+    .o_i2c0_sda(ob_i2c0_sda),
+    .o_i2c0_sda_dir(ob_i2c0_sda_direction),
+    .i_i2c0_sda(ib_i2c0_sda),
     // PRCI:
     .o_dmreset(w_dmreset),
     .o_prci_pmapinfo(prci_pmapinfo),

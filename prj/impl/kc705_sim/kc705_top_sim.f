@@ -68,6 +68,8 @@ ${VIPS_HOME}/uart/vip_uart_transmitter_pkg.sv
 ${VIPS_HOME}/uart/vip_uart_transmitter.sv
 ${VIPS_HOME}/uart/vip_uart_top_pkg.sv
 ${VIPS_HOME}/uart/vip_uart_top.sv
+${VIPS_HOME}/i2c/vip_i2c_s_pkg.sv
+${VIPS_HOME}/i2c/vip_i2c_s.sv
 ${VIPS_HOME}/ddr3/wiredly.v
 ${VIPS_HOME}/ddr3/ddr3_model.sv
 ${VIPS_HOME}/pcie_rootport/pcie_2_1_rport_7x.v

@@ -69,6 +69,8 @@ localparam bit [15:0] OPTIMITECH_SDCTRL_MEM = 16'h008B;
 localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008A;
 // PCIE end-point APB controller:
 localparam bit [15:0] OPTIMITECH_PCIE_CTRL = 16'h008C;
+// I2C master interface meant for ADV7511 HDMI transmitter
+localparam bit [15:0] OPTIMITECH_I2C = 16'h008D;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -96,9 +98,10 @@ localparam int SOC_PNP_PNP = 10;
 localparam int SOC_PNP_PBRIDGE0 = 11;
 localparam int SOC_PNP_DMI = 12;
 localparam int SOC_PNP_UART1 = 13;
-localparam int SOC_PNP_PCIE_DMA = 14;
-localparam int SOC_PNP_PCIE_APB = 15;
-localparam int SOC_PNP_TOTAL = 16;
+localparam int SOC_PNP_I2C = 14;
+localparam int SOC_PNP_PCIE_DMA = 15;
+localparam int SOC_PNP_PCIE_APB = 16;
+localparam int SOC_PNP_TOTAL = 17;
 
 // @brief   Plug-n-play descriptor structure for connected device.
 // @details Each device must generates this datatype output that

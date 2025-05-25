@@ -46,6 +46,13 @@ module kc705_top_tb;
     wire [11:0] io_gpio_in;
     reg [11:0] io_gpio_out;
     bit [11:0] io_gpio_dir;
+    // I2C
+    wire w_i2c_scl;
+    wire w_i2c_sda;
+    wire w_bufo_i2c0_sda;
+    wire w_vipo_i2c0_sda;
+    wire w_vipo_i2c0_sda_dir;
+    // JTAG
     logic i_jtag_trst;
     logic i_jtag_tck;
     logic i_jtag_tms;
@@ -158,6 +165,8 @@ module kc705_top_tb;
     //! UART1 signals:
     .i_uart1_rd(i_uart1_rd),
     .o_uart1_td(o_uart1_td),
+    .o_i2c0_scl(w_i2c_scl),
+    .io_i2c0_sda(w_i2c_sda),
     // DDR signals:
     .o_ddr3_reset_n(o_ddr3_reset_n),
     .o_ddr3_ck_n(o_ddr3_ck_n),
@@ -187,6 +196,26 @@ module kc705_top_tb;
 
   // Global signals for Xilinx unisim modules:
   glbl glbl();
+
+
+// I2C slave + IO buffer
+iobuf_tech iosda0 (
+    .io(w_i2c_sda),
+    .o(w_bufo_i2c0_sda),
+    .i(w_vipo_i2c0_sda),
+    .t(w_vipo_i2c0_sda_dir)
+);
+
+vip_i2c_s #(
+    .async_reset(1'b1)
+) i2c0 (
+    .i_clk(clk),
+    .i_nrst(sys_rst_n),
+    .i_scl(w_i2c_scl),
+    .i_sda(w_bufo_i2c0_sda),
+    .o_sda(w_vipo_i2c0_sda),
+    .o_sda_dir(w_vipo_i2c0_sda_dir)
+);
 
   vip_uart_top #(
     .async_reset(1),

@@ -40,6 +40,11 @@ module accel_soc #(
     // UART1 signals
     input logic i_uart1_rd,
     output logic o_uart1_td,
+    // I2C master interface for HDMI transmitter
+    output logic o_i2c0_scl,                                // Clock up to 400 KHz. Default 100 KHz
+    output logic o_i2c0_sda,                                // I2C output data
+    output logic o_i2c0_sda_dir,                            // output data tri-stte buffer control
+    input logic i_i2c0_sda,                                 // I2C input data
     // PLL and Reset interfaces:
     output logic o_dmreset,                                 // Debug reset request. Everything except DMI.
     output types_amba_pkg::mapinfo_type o_prci_pmapinfo,    // PRCI mapping information
@@ -96,6 +101,7 @@ logic [SOC_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 logic [3:0] wb_pcie_dma_state;
 logic w_dbg_valid;
 logic [63:0] w_dbg_payload;
+logic w_irq_i2c0;
 
 axictrl_bus0 #(
     .async_reset(async_reset)
@@ -252,6 +258,22 @@ apb_gpio #(
     .o_irq(wb_irq_gpio)
 );
 
+apb_i2c #(
+    .async_reset(async_reset)
+) i2c0 (
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
+    .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_I2C0]),
+    .o_cfg(dev_pnp[SOC_PNP_I2C]),
+    .i_apbi(apbi[CFG_BUS1_PSLV_I2C0]),
+    .o_apbo(apbo[CFG_BUS1_PSLV_I2C0]),
+    .o_scl(o_i2c0_scl),
+    .o_sda(o_i2c0_sda),
+    .o_sda_dir(o_i2c0_sda_dir),
+    .i_sda(i_i2c0_sda),
+    .o_irq(w_irq_i2c0)
+);
+
 // See reference: pg054-7series-pcie.pdf
 pcie_dma #(
     .async_reset(async_reset)
@@ -316,7 +338,8 @@ begin: comb_proc
     vb_ext_irqs[22: 0] = '0;
     vb_ext_irqs[((23 + SOC_GPIO0_WIDTH) - 1): 23] = wb_irq_gpio;// FU740: 16 bits, current 12-bits
     vb_ext_irqs[39] = w_irq_uart1;
-    vb_ext_irqs[69: 40] = '0;
+    vb_ext_irqs[40] = w_irq_i2c0;
+    vb_ext_irqs[69: 41] = '0;
     vb_ext_irqs[70] = w_irq_pnp;
     vb_ext_irqs[(SOC_PLIC_IRQ_TOTAL - 1): 71] = '0;
     wb_ext_irqs = vb_ext_irqs;
