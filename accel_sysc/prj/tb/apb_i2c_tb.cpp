@@ -23,11 +23,21 @@ apb_i2c_tb::apb_i2c_tb(sc_module_name name)
     : sc_module(name) {
 
     clk0 = 0;
+    hdmi = 0;
     tt = 0;
 
     clk0 = new vip_clk("clk0",
                         25.0);
     clk0->o_clk(i_clk);
+
+    hdmi = new vip_i2c_s("hdmi",
+                          0);
+    hdmi->i_clk(i_clk);
+    hdmi->i_nrst(i_nrst);
+    hdmi->i_scl(w_o_scl);
+    hdmi->i_sda(w_o_sda);
+    hdmi->o_sda(w_i_sda);
+    hdmi->o_sda_dir(w_hdmi_sda_dir);
 
     tt = new apb_i2c("tt",
                       0);
@@ -54,6 +64,7 @@ apb_i2c_tb::apb_i2c_tb(sc_module_name name)
     sensitive << w_o_sda_dir;
     sensitive << w_i_sda;
     sensitive << w_o_irq;
+    sensitive << w_hdmi_sda_dir;
 
     SC_METHOD(test);
     sensitive << i_clk.posedge_event();
@@ -62,6 +73,9 @@ apb_i2c_tb::apb_i2c_tb(sc_module_name name)
 apb_i2c_tb::~apb_i2c_tb() {
     if (clk0) {
         delete clk0;
+    }
+    if (hdmi) {
+        delete hdmi;
     }
     if (tt) {
         delete tt;
@@ -74,6 +88,9 @@ void apb_i2c_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
     if (clk0) {
         clk0->generateVCD(i_vcd, o_vcd);
+    }
+    if (hdmi) {
+        hdmi->generateVCD(i_vcd, o_vcd);
     }
     if (tt) {
         tt->generateVCD(i_vcd, o_vcd);
@@ -144,12 +161,20 @@ void apb_i2c_tb::test() {
         vb_pslvi.pwdata = 0x80020074;                       // [31]1=read, [19:16]byte_cnt,[6:0]addr
         vb_pslvi.pstrb = 0xF;
         break;
+    case 18000:                                             // Read payload through APB
+        vb_pslvi.paddr = 0x0000000C;
+        vb_pslvi.pprot = 0;
+        vb_pslvi.pselx = 1;
+        vb_pslvi.penable = 1;
+        vb_pslvi.pwrite = 0;
+        vb_pslvi.pwdata = 0;
+        vb_pslvi.pstrb = 0;
+        break;
 
     default:
         break;
     }
 
-    w_i_sda = 0;
     wb_i_apbi = vb_pslvi;
 }
 
