@@ -47,6 +47,7 @@ SC_MODULE(apb_i2c_tb) {
     sc_signal<bool> w_o_sda_dir;
     sc_signal<bool> w_i_sda;
     sc_signal<bool> w_o_irq;
+    sc_signal<bool> w_o_nreset;
     sc_signal<bool> w_hdmi_sda_dir;
     sc_uint<32> wb_clk_cnt;
 

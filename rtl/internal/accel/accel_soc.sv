@@ -45,6 +45,7 @@ module accel_soc #(
     output logic o_i2c0_sda,                                // I2C output data
     output logic o_i2c0_sda_dir,                            // output data tri-stte buffer control
     input logic i_i2c0_sda,                                 // I2C input data
+    output logic o_i2c0_nreset,                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
     // PLL and Reset interfaces:
     output logic o_dmreset,                                 // Debug reset request. Everything except DMI.
     output types_amba_pkg::mapinfo_type o_prci_pmapinfo,    // PRCI mapping information
@@ -271,7 +272,8 @@ apb_i2c #(
     .o_sda(o_i2c0_sda),
     .o_sda_dir(o_i2c0_sda_dir),
     .i_sda(i_i2c0_sda),
-    .o_irq(w_irq_i2c0)
+    .o_irq(w_irq_i2c0),
+    .o_nreset(o_i2c0_nreset)
 );
 
 // See reference: pg054-7series-pcie.pdf

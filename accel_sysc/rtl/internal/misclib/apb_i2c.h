@@ -35,6 +35,7 @@ SC_MODULE(apb_i2c) {
     sc_out<bool> o_sda_dir;                                 // Data to control tri-state buffer
     sc_in<bool> i_sda;                                      // Tri-state buffer output
     sc_out<bool> o_irq;                                     // Interrupt request
+    sc_out<bool> o_nreset;                                  // I2C slave reset. PCA9548 I2C mux must be de-asserted.
 
     void comb();
     void registers();
@@ -82,6 +83,7 @@ SC_MODULE(apb_i2c) {
         sc_signal<bool> err_ack_data;
         sc_signal<bool> irq;
         sc_signal<bool> ie;
+        sc_signal<bool> nreset;                             // Active LOW (by default), could be any
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
@@ -107,6 +109,7 @@ SC_MODULE(apb_i2c) {
         iv.err_ack_data = 0;
         iv.irq = 0;
         iv.ie = 0;
+        iv.nreset = 0;
         iv.resp_valid = 0;
         iv.resp_rdata = 0;
         iv.resp_err = 0;

@@ -55,6 +55,7 @@ SC_MODULE(asic_top_tb) {
     sc_signal<bool> w_uart1_loopback_ena;
     sc_signal<bool> w_i2c_scl;
     sc_signal<bool> w_i2c_sda;
+    sc_signal<bool> w_i2c_nreset;
     sc_signal<bool> w_bufo_i2c0_sda;
     sc_signal<bool> w_vipo_i2c0_sda;
     sc_signal<bool> w_vipo_i2c0_sda_dir;

@@ -51,6 +51,7 @@ SC_MODULE(asic_top) {
     // I2C master inerface to HDMI transmitter:
     sc_out<bool> o_i2c0_scl;                                // I2C clock upto 400 kHz (default 100 kHz)
     sc_inout<bool> io_i2c0_sda;                             // I2C bi-directional data
+    sc_out<bool> o_i2c0_nreset;                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
 
 
     asic_top(sc_module_name name,
@@ -72,6 +73,7 @@ SC_MODULE(asic_top) {
     sc_signal<bool> ob_i2c0_sda;
     sc_signal<bool> ob_i2c0_sda_direction;
     sc_signal<bool> ib_i2c0_sda;
+    sc_signal<bool> ob_i2c0_nreset;
     sc_signal<bool> w_sys_rst;
     sc_signal<bool> w_sys_nrst;
     sc_signal<bool> w_dbg_nrst;
@@ -105,6 +107,7 @@ SC_MODULE(asic_top) {
 
     ids_tech *iclk0;
     obuf_tech *oi2c0scl;
+    obuf_tech *oi2c0nreset;
     iobuf_tech *ioi2c0sda;
     SysPLL_tech *pll0;
     apb_prci *prci0;

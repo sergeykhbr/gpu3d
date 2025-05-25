@@ -52,6 +52,7 @@ apb_i2c_tb::apb_i2c_tb(sc_module_name name)
     tt->o_sda_dir(w_o_sda_dir);
     tt->i_sda(w_i_sda);
     tt->o_irq(w_o_irq);
+    tt->o_nreset(w_o_nreset);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -64,6 +65,7 @@ apb_i2c_tb::apb_i2c_tb(sc_module_name name)
     sensitive << w_o_sda_dir;
     sensitive << w_i_sda;
     sensitive << w_o_irq;
+    sensitive << w_o_nreset;
     sensitive << w_hdmi_sda_dir;
 
     SC_METHOD(test);
@@ -131,8 +133,17 @@ void apb_i2c_tb::test() {
         vb_pslvi.pwdata = 0x00320064;
         vb_pslvi.pstrb = 0xF;
         break;
+    case 30:                                                // De-assert nreset signal
+        vb_pslvi.paddr = 0x00000004;
+        vb_pslvi.pprot = 0;
+        vb_pslvi.pselx = 1;
+        vb_pslvi.penable = 1;
+        vb_pslvi.pwrite = 1;
+        vb_pslvi.pwdata = 0x00010000;                       // [16] set HIGH nreset
+        vb_pslvi.pstrb = 0xF;
+        break;
         // Write I2C payload
-    case 30:
+    case 40:
         vb_pslvi.paddr = 0x0000000C;
         vb_pslvi.pprot = 0;
         vb_pslvi.pselx = 1;
@@ -142,7 +153,7 @@ void apb_i2c_tb::test() {
         vb_pslvi.pstrb = 0xF;
         break;
         // Start write sequence
-    case 40:
+    case 50:
         vb_pslvi.paddr = 0x00000008;
         vb_pslvi.pprot = 0;
         vb_pslvi.pselx = 1;

@@ -32,7 +32,8 @@ apb_i2c::apb_i2c(sc_module_name name,
     o_sda("o_sda"),
     o_sda_dir("o_sda_dir"),
     i_sda("i_sda"),
-    o_irq("o_irq") {
+    o_irq("o_irq"),
+    o_nreset("o_nreset") {
 
     async_reset_ = async_reset;
     pslv0 = 0;
@@ -83,6 +84,7 @@ apb_i2c::apb_i2c(sc_module_name name,
     sensitive << r.err_ack_data;
     sensitive << r.irq;
     sensitive << r.ie;
+    sensitive << r.nreset;
     sensitive << r.resp_valid;
     sensitive << r.resp_rdata;
     sensitive << r.resp_err;
@@ -108,6 +110,7 @@ void apb_i2c::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_sda_dir, o_sda_dir.name());
         sc_trace(o_vcd, i_sda, i_sda.name());
         sc_trace(o_vcd, o_irq, o_irq.name());
+        sc_trace(o_vcd, o_nreset, o_nreset.name());
         sc_trace(o_vcd, r.scaler, pn + ".r.scaler");
         sc_trace(o_vcd, r.scaler_cnt, pn + ".r.scaler_cnt");
         sc_trace(o_vcd, r.setup_time, pn + ".r.setup_time");
@@ -127,6 +130,7 @@ void apb_i2c::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.err_ack_data, pn + ".r.err_ack_data");
         sc_trace(o_vcd, r.irq, pn + ".r.irq");
         sc_trace(o_vcd, r.ie, pn + ".r.ie");
+        sc_trace(o_vcd, r.nreset, pn + ".r.nreset");
         sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
         sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
         sc_trace(o_vcd, r.resp_err, pn + ".r.resp_err");
@@ -319,20 +323,27 @@ void apb_i2c::comb() {
             v.scaler_cnt = 0;
         }
         break;
-    case 0x001:                                             // 0x04: status
+    case 0x001:                                             // 0x04: control and status
         vb_rdata(7, 0) = r.state.read();                    // [7:0] state machine
         vb_rdata[8] = i_sda.read();                         // [8] input SDA data bit
         vb_rdata[9] = r.err_ack_header.read();
         vb_rdata[10] = r.err_ack_data.read();
-        vb_rdata[12] = r.ie.read();
-        vb_rdata[13] = r.irq.read();
+        vb_rdata[12] = r.ie.read();                         // [12] Interrupt enable bit: 1=enabled
+        vb_rdata[13] = r.irq.read();                        // [13] Interrupt pending bit. Clear on read.
+        vb_rdata[16] = r.nreset.read();                     // [16] 0=unchanged; 1=set HIGH nreset
+        vb_rdata[17] = r.nreset.read();                     // [17] 0=unchanged; 1=set LOW nreset
         if (w_req_valid.read() == 1) {
             v.irq = 0;                                      // Reset irq on read
             if (w_req_write.read() == 1) {
                 v.err_ack_header = 0;
                 v.err_ack_data = 0;
-                v.ie = vb_rdata[12];
-                v.irq = vb_rdata[13];
+                v.ie = wb_req_wdata.read()[12];
+                v.irq = wb_req_wdata.read()[13];
+                if (wb_req_wdata.read()[16] == 1) {
+                    v.nreset = 1;
+                } else if (wb_req_wdata.read()[17] == 1) {
+                    v.nreset = 0;
+                }
             }
         }
         break;
@@ -372,6 +383,7 @@ void apb_i2c::comb() {
     o_scl = r.level.read();
     o_sda = r.shiftreg.read()[18];
     o_sda_dir = r.sda_dir.read();
+    o_nreset = r.nreset.read();
 }
 
 void apb_i2c::registers() {

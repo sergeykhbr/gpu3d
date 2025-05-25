@@ -67,6 +67,7 @@ SC_MODULE(accel_soc) {
     sc_out<bool> o_i2c0_sda;                                // I2C output data
     sc_out<bool> o_i2c0_sda_dir;                            // output data tri-stte buffer control
     sc_in<bool> i_i2c0_sda;                                 // I2C input data
+    sc_out<bool> o_i2c0_nreset;                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
     // PLL and Reset interfaces:
     sc_out<bool> o_dmreset;                                 // Debug reset request. Everything except DMI.
     sc_out<mapinfo_type> o_prci_pmapinfo;                   // PRCI mapping information

@@ -43,6 +43,7 @@ accel_soc::accel_soc(sc_module_name name,
     o_i2c0_sda("o_i2c0_sda"),
     o_i2c0_sda_dir("o_i2c0_sda_dir"),
     i_i2c0_sda("i_i2c0_sda"),
+    o_i2c0_nreset("o_i2c0_nreset"),
     o_dmreset("o_dmreset"),
     o_prci_pmapinfo("o_prci_pmapinfo"),
     i_prci_pdevcfg("i_prci_pdevcfg"),
@@ -231,6 +232,7 @@ accel_soc::accel_soc(sc_module_name name,
     i2c0->o_sda_dir(o_i2c0_sda_dir);
     i2c0->i_sda(i_i2c0_sda);
     i2c0->o_irq(w_irq_i2c0);
+    i2c0->o_nreset(o_i2c0_nreset);
 
     // See reference: pg054-7series-pcie.pdf
     pcidma0 = new pcie_dma("pcidma0",
@@ -411,6 +413,7 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_i2c0_sda, o_i2c0_sda.name());
         sc_trace(o_vcd, o_i2c0_sda_dir, o_i2c0_sda_dir.name());
         sc_trace(o_vcd, i_i2c0_sda, i_i2c0_sda.name());
+        sc_trace(o_vcd, o_i2c0_nreset, o_i2c0_nreset.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
         sc_trace(o_vcd, o_prci_apbi, o_prci_apbi.name());
         sc_trace(o_vcd, i_prci_apbo, i_prci_apbo.name());

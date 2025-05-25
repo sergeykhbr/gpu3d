@@ -36,12 +36,14 @@ asic_top::asic_top(sc_module_name name,
     i_uart1_rd("i_uart1_rd"),
     o_uart1_td("o_uart1_td"),
     o_i2c0_scl("o_i2c0_scl"),
-    io_i2c0_sda("io_i2c0_sda") {
+    io_i2c0_sda("io_i2c0_sda"),
+    o_i2c0_nreset("o_i2c0_nreset") {
 
     async_reset_ = async_reset;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     iclk0 = 0;
     oi2c0scl = 0;
+    oi2c0nreset = 0;
     ioi2c0sda = 0;
     pll0 = 0;
     prci0 = 0;
@@ -55,6 +57,10 @@ asic_top::asic_top(sc_module_name name,
     oi2c0scl = new obuf_tech("oi2c0scl");
     oi2c0scl->i(ob_i2c0_scl);
     oi2c0scl->o(o_i2c0_scl);
+
+    oi2c0nreset = new obuf_tech("oi2c0nreset");
+    oi2c0nreset->i(ob_i2c0_nreset);
+    oi2c0nreset->o(o_i2c0_nreset);
 
     ioi2c0sda = new iobuf_tech("ioi2c0sda");
     ioi2c0sda->io(io_i2c0_sda);
@@ -112,6 +118,7 @@ asic_top::asic_top(sc_module_name name,
     soc0->o_i2c0_sda(ob_i2c0_sda);
     soc0->o_i2c0_sda_dir(ob_i2c0_sda_direction);
     soc0->i_i2c0_sda(ib_i2c0_sda);
+    soc0->o_i2c0_nreset(ob_i2c0_nreset);
     soc0->o_dmreset(w_dmreset);
     soc0->o_prci_pmapinfo(prci_pmapinfo);
     soc0->i_prci_pdevcfg(prci_dev_cfg);
@@ -138,6 +145,9 @@ asic_top::~asic_top() {
     }
     if (oi2c0scl) {
         delete oi2c0scl;
+    }
+    if (oi2c0nreset) {
+        delete oi2c0nreset;
     }
     if (ioi2c0sda) {
         delete ioi2c0sda;
@@ -169,6 +179,7 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
         sc_trace(o_vcd, o_i2c0_scl, o_i2c0_scl.name());
         sc_trace(o_vcd, io_i2c0_sda, io_i2c0_sda.name());
+        sc_trace(o_vcd, o_i2c0_nreset, o_i2c0_nreset.name());
     }
 
     if (iclk0) {
@@ -176,6 +187,9 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (oi2c0scl) {
         oi2c0scl->generateVCD(i_vcd, o_vcd);
+    }
+    if (oi2c0nreset) {
+        oi2c0nreset->generateVCD(i_vcd, o_vcd);
     }
     if (ioi2c0sda) {
         ioi2c0sda->generateVCD(i_vcd, o_vcd);

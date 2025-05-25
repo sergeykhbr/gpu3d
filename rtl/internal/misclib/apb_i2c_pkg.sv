@@ -52,6 +52,7 @@ typedef struct {
     logic err_ack_data;
     logic irq;
     logic ie;
+    logic nreset;                                           // Active LOW (by default), could be any
     logic resp_valid;
     logic [31:0] resp_rdata;
     logic resp_err;
@@ -77,6 +78,7 @@ const apb_i2c_registers apb_i2c_r_reset = '{
     1'b0,                               // err_ack_data
     1'b0,                               // irq
     1'b0,                               // ie
+    1'b0,                               // nreset
     1'b0,                               // resp_valid
     '0,                                 // resp_rdata
     1'b0                                // resp_err

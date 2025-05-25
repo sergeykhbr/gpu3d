@@ -49,6 +49,7 @@ module kc705_top_tb;
     // I2C
     wire w_i2c_scl;
     wire w_i2c_sda;
+    wire w_i2c_nreset;
     wire w_bufo_i2c0_sda;
     wire w_vipo_i2c0_sda;
     wire w_vipo_i2c0_sda_dir;
@@ -165,8 +166,10 @@ module kc705_top_tb;
     //! UART1 signals:
     .i_uart1_rd(i_uart1_rd),
     .o_uart1_td(o_uart1_td),
+    // I2C
     .o_i2c0_scl(w_i2c_scl),
     .io_i2c0_sda(w_i2c_sda),
+    .o_i2c0_nreset(w_i2c_nreset)
     // DDR signals:
     .o_ddr3_reset_n(o_ddr3_reset_n),
     .o_ddr3_ck_n(o_ddr3_ck_n),

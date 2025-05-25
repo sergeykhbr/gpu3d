@@ -41,6 +41,7 @@ module kc705_top #(
     // I2C master inerface to HDMI transmitter:
     output logic o_i2c0_scl,                                // I2C clock upto 400 kHz (default 100 kHz)
     inout logic io_i2c0_sda,                                // I2C bi-directional data
+    output logic o_i2c0_nreset,                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
     // DDR3 signals:
     output o_ddr3_reset_n,
     output [0:0] o_ddr3_ck_n,
@@ -98,6 +99,7 @@ logic ob_i2c0_scl;
 logic ob_i2c0_sda;
 logic ob_i2c0_sda_direction;
 logic ib_i2c0_sda;
+logic ob_i2c0_nreset;
 
   logic             w_sys_rst;
   logic             w_sys_nrst;
@@ -181,6 +183,11 @@ logic ib_i2c0_sda;
 obuf_tech oi2c0scl (
     .i(ob_i2c0_scl),
     .o(o_i2c0_scl)
+);
+
+obuf_tech oi2c0nreset (
+    .i(ob_i2c0_nreset),
+    .o(o_i2c0_nreset)
 );
 
 iobuf_tech ioi2c0sda (
@@ -267,6 +274,7 @@ iobuf_tech ioi2c0sda (
     .o_i2c0_sda(ob_i2c0_sda),
     .o_i2c0_sda_dir(ob_i2c0_sda_direction),
     .i_i2c0_sda(ib_i2c0_sda),
+    .o_i2c0_nreset(ob_i2c0_nreset),
     // PRCI:
     .o_dmreset(w_dmreset),
     .o_prci_pmapinfo(prci_pmapinfo),

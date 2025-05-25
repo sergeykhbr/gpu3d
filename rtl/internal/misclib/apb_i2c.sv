@@ -30,7 +30,8 @@ module apb_i2c #(
     output logic o_sda,                                     // Data output (tri-state buffer input)
     output logic o_sda_dir,                                 // Data to control tri-state buffer
     input logic i_sda,                                      // Tri-state buffer output
-    output logic o_irq                                      // Interrupt request
+    output logic o_irq,                                     // Interrupt request
+    output logic o_nreset                                   // I2C slave reset. PCA9548 I2C mux must be de-asserted.
 );
 
 import types_amba_pkg::*;
@@ -248,20 +249,27 @@ begin: comb_proc
             v.scaler_cnt = 16'd0;
         end
     end
-    10'h001: begin                                          // 0x04: status
+    10'h001: begin                                          // 0x04: control and status
         vb_rdata[7: 0] = r.state;                           // [7:0] state machine
         vb_rdata[8] = i_sda;                                // [8] input SDA data bit
         vb_rdata[9] = r.err_ack_header;
         vb_rdata[10] = r.err_ack_data;
-        vb_rdata[12] = r.ie;
-        vb_rdata[13] = r.irq;
+        vb_rdata[12] = r.ie;                                // [12] Interrupt enable bit: 1=enabled
+        vb_rdata[13] = r.irq;                               // [13] Interrupt pending bit. Clear on read.
+        vb_rdata[16] = r.nreset;                            // [16] 0=unchanged; 1=set HIGH nreset
+        vb_rdata[17] = r.nreset;                            // [17] 0=unchanged; 1=set LOW nreset
         if (w_req_valid == 1'b1) begin
             v.irq = 1'b0;                                   // Reset irq on read
             if (w_req_write == 1'b1) begin
                 v.err_ack_header = 1'b0;
                 v.err_ack_data = 1'b0;
-                v.ie = vb_rdata[12];
-                v.irq = vb_rdata[13];
+                v.ie = wb_req_wdata[12];
+                v.irq = wb_req_wdata[13];
+                if (wb_req_wdata[16] == 1'b1) begin
+                    v.nreset = 1'b1;
+                end else if (wb_req_wdata[17] == 1'b1) begin
+                    v.nreset = 1'b0;
+                end
             end
         end
     end
@@ -301,6 +309,7 @@ begin: comb_proc
     o_scl = r.level;
     o_sda = r.shiftreg[18];
     o_sda_dir = r.sda_dir;
+    o_nreset = r.nreset;
 
     rin = v;
 end: comb_proc
