@@ -21,6 +21,8 @@
 #include "../../../rtl/internal/ambalib/types_dma.h"
 #include "target_cfg.h"
 #include "../../../rtl/sim/io/ids_tech.h"
+#include "../../../rtl/sim/io/obuf_tech.h"
+#include "../../../rtl/sim/io/iobuf_tech.h"
 #include "../../../rtl/sim/pll/SysPLL_tech.h"
 #include "../../../rtl/internal/misclib/apb_prci.h"
 #include "../../../rtl/internal/accel/accel_soc.h"
@@ -46,6 +48,9 @@ SC_MODULE(asic_top) {
     // UART1 signals
     sc_in<bool> i_uart1_rd;
     sc_out<bool> o_uart1_td;
+    // I2C master inerface to HDMI transmitter:
+    sc_out<bool> o_i2c0_scl;                                // I2C clock upto 400 kHz (default 100 kHz)
+    sc_inout<bool> io_i2c0_sda;                             // I2C bi-directional data
 
 
     asic_top(sc_module_name name,
@@ -63,6 +68,10 @@ SC_MODULE(asic_top) {
     sc_signal<sc_uint<12>> ib_gpio_ipins;
     sc_signal<sc_uint<12>> ob_gpio_opins;
     sc_signal<sc_uint<12>> ob_gpio_direction;
+    sc_signal<bool> ob_i2c0_scl;
+    sc_signal<bool> ob_i2c0_sda;
+    sc_signal<bool> ob_i2c0_sda_direction;
+    sc_signal<bool> ib_i2c0_sda;
     sc_signal<bool> w_sys_rst;
     sc_signal<bool> w_sys_nrst;
     sc_signal<bool> w_dbg_nrst;
@@ -95,6 +104,8 @@ SC_MODULE(asic_top) {
     sc_signal<pcie_dma64_in_type> pcie_dmai;
 
     ids_tech *iclk0;
+    obuf_tech *oi2c0scl;
+    iobuf_tech *ioi2c0sda;
     SysPLL_tech *pll0;
     apb_prci *prci0;
     accel_soc *soc0;

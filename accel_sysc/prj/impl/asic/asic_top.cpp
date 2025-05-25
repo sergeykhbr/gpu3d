@@ -34,11 +34,15 @@ asic_top::asic_top(sc_module_name name,
     o_jtag_tdo("o_jtag_tdo"),
     o_jtag_vref("o_jtag_vref"),
     i_uart1_rd("i_uart1_rd"),
-    o_uart1_td("o_uart1_td") {
+    o_uart1_td("o_uart1_td"),
+    o_i2c0_scl("o_i2c0_scl"),
+    io_i2c0_sda("io_i2c0_sda") {
 
     async_reset_ = async_reset;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     iclk0 = 0;
+    oi2c0scl = 0;
+    ioi2c0sda = 0;
     pll0 = 0;
     prci0 = 0;
     soc0 = 0;
@@ -47,6 +51,16 @@ asic_top::asic_top(sc_module_name name,
     iclk0->i_clk_p(i_sclk_p);
     iclk0->i_clk_n(i_sclk_n);
     iclk0->o_clk(ib_clk_tcxo);
+
+    oi2c0scl = new obuf_tech("oi2c0scl");
+    oi2c0scl->i(ob_i2c0_scl);
+    oi2c0scl->o(o_i2c0_scl);
+
+    ioi2c0sda = new iobuf_tech("ioi2c0sda");
+    ioi2c0sda->io(io_i2c0_sda);
+    ioi2c0sda->o(ib_i2c0_sda);
+    ioi2c0sda->i(ob_i2c0_sda);
+    ioi2c0sda->t(ob_i2c0_sda_direction);
 
     pll0 = new SysPLL_tech("pll0");
     pll0->i_reset(i_rst);
@@ -94,6 +108,10 @@ asic_top::asic_top(sc_module_name name,
     soc0->o_jtag_vref(o_jtag_vref);
     soc0->i_uart1_rd(i_uart1_rd);
     soc0->o_uart1_td(o_uart1_td);
+    soc0->o_i2c0_scl(ob_i2c0_scl);
+    soc0->o_i2c0_sda(ob_i2c0_sda);
+    soc0->o_i2c0_sda_dir(ob_i2c0_sda_direction);
+    soc0->i_i2c0_sda(ib_i2c0_sda);
     soc0->o_dmreset(w_dmreset);
     soc0->o_prci_pmapinfo(prci_pmapinfo);
     soc0->i_prci_pdevcfg(prci_dev_cfg);
@@ -117,6 +135,12 @@ asic_top::asic_top(sc_module_name name,
 asic_top::~asic_top() {
     if (iclk0) {
         delete iclk0;
+    }
+    if (oi2c0scl) {
+        delete oi2c0scl;
+    }
+    if (ioi2c0sda) {
+        delete ioi2c0sda;
     }
     if (pll0) {
         delete pll0;
@@ -143,10 +167,18 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_jtag_vref, o_jtag_vref.name());
         sc_trace(o_vcd, i_uart1_rd, i_uart1_rd.name());
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
+        sc_trace(o_vcd, o_i2c0_scl, o_i2c0_scl.name());
+        sc_trace(o_vcd, io_i2c0_sda, io_i2c0_sda.name());
     }
 
     if (iclk0) {
         iclk0->generateVCD(i_vcd, o_vcd);
+    }
+    if (oi2c0scl) {
+        oi2c0scl->generateVCD(i_vcd, o_vcd);
+    }
+    if (ioi2c0sda) {
+        ioi2c0sda->generateVCD(i_vcd, o_vcd);
     }
     if (pll0) {
         pll0->generateVCD(i_vcd, o_vcd);

@@ -39,6 +39,10 @@ accel_soc::accel_soc(sc_module_name name,
     o_jtag_vref("o_jtag_vref"),
     i_uart1_rd("i_uart1_rd"),
     o_uart1_td("o_uart1_td"),
+    o_i2c0_scl("o_i2c0_scl"),
+    o_i2c0_sda("o_i2c0_sda"),
+    o_i2c0_sda_dir("o_i2c0_sda_dir"),
+    i_i2c0_sda("i_i2c0_sda"),
     o_dmreset("o_dmreset"),
     o_prci_pmapinfo("o_prci_pmapinfo"),
     i_prci_pdevcfg("i_prci_pdevcfg"),
@@ -77,6 +81,7 @@ accel_soc::accel_soc(sc_module_name name,
     plic0 = 0;
     uart1 = 0;
     gpio0 = 0;
+    i2c0 = 0;
     pcidma0 = 0;
     ppcie0 = 0;
     pnp0 = 0;
@@ -213,6 +218,20 @@ accel_soc::accel_soc(sc_module_name name,
     gpio0->o_gpio(o_gpio);
     gpio0->o_irq(wb_irq_gpio);
 
+    i2c0 = new apb_i2c("i2c0",
+                        async_reset);
+    i2c0->i_clk(i_sys_clk);
+    i2c0->i_nrst(i_sys_nrst);
+    i2c0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_I2C0]);
+    i2c0->o_cfg(dev_pnp[SOC_PNP_I2C]);
+    i2c0->i_apbi(apbi[CFG_BUS1_PSLV_I2C0]);
+    i2c0->o_apbo(apbo[CFG_BUS1_PSLV_I2C0]);
+    i2c0->o_scl(o_i2c0_scl);
+    i2c0->o_sda(o_i2c0_sda);
+    i2c0->o_sda_dir(o_i2c0_sda_dir);
+    i2c0->i_sda(i_i2c0_sda);
+    i2c0->o_irq(w_irq_i2c0);
+
     // See reference: pg054-7series-pcie.pdf
     pcidma0 = new pcie_dma("pcidma0",
                             async_reset);
@@ -269,6 +288,7 @@ accel_soc::accel_soc(sc_module_name name,
     sensitive << i_jtag_tms;
     sensitive << i_jtag_tdi;
     sensitive << i_uart1_rd;
+    sensitive << i_i2c0_sda;
     sensitive << i_prci_pdevcfg;
     sensitive << i_prci_apbo;
     sensitive << i_ddr_pdevcfg;
@@ -321,6 +341,7 @@ accel_soc::accel_soc(sc_module_name name,
     sensitive << wb_pcie_dma_state;
     sensitive << w_dbg_valid;
     sensitive << w_dbg_payload;
+    sensitive << w_irq_i2c0;
 }
 
 accel_soc::~accel_soc() {
@@ -347,6 +368,9 @@ accel_soc::~accel_soc() {
     }
     if (gpio0) {
         delete gpio0;
+    }
+    if (i2c0) {
+        delete i2c0;
     }
     if (pcidma0) {
         delete pcidma0;
@@ -383,6 +407,10 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_jtag_vref, o_jtag_vref.name());
         sc_trace(o_vcd, i_uart1_rd, i_uart1_rd.name());
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
+        sc_trace(o_vcd, o_i2c0_scl, o_i2c0_scl.name());
+        sc_trace(o_vcd, o_i2c0_sda, o_i2c0_sda.name());
+        sc_trace(o_vcd, o_i2c0_sda_dir, o_i2c0_sda_dir.name());
+        sc_trace(o_vcd, i_i2c0_sda, i_i2c0_sda.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
         sc_trace(o_vcd, o_prci_apbi, o_prci_apbi.name());
         sc_trace(o_vcd, i_prci_apbo, i_prci_apbo.name());
@@ -421,6 +449,9 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (gpio0) {
         gpio0->generateVCD(i_vcd, o_vcd);
     }
+    if (i2c0) {
+        i2c0->generateVCD(i_vcd, o_vcd);
+    }
     if (pcidma0) {
         pcidma0->generateVCD(i_vcd, o_vcd);
     }
@@ -450,7 +481,8 @@ void accel_soc::comb() {
     vb_ext_irqs(22, 0) = 0;
     vb_ext_irqs(((23 + SOC_GPIO0_WIDTH) - 1), 23) = wb_irq_gpio.read();// FU740: 16 bits, current 12-bits
     vb_ext_irqs[39] = w_irq_uart1.read();
-    vb_ext_irqs(69, 40) = 0;
+    vb_ext_irqs[40] = w_irq_i2c0.read();
+    vb_ext_irqs(69, 41) = 0;
     vb_ext_irqs[70] = w_irq_pnp.read();
     vb_ext_irqs((SOC_PLIC_IRQ_TOTAL - 1), 71) = 0;
     wb_ext_irqs = vb_ext_irqs;

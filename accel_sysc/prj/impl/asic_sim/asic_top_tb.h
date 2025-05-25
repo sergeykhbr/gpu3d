@@ -51,6 +51,8 @@ SC_MODULE(asic_top_tb) {
     sc_signal<bool> w_uart1_rd;
     sc_signal<bool> w_uart1_td;
     sc_signal<bool> w_uart1_loopback_ena;
+    sc_signal<bool> w_i2c_scl;
+    sc_signal<bool> w_i2c_sda;
     sc_uint<32> wb_clk_cnt;
 
     vip_clk *clk0;

@@ -31,6 +31,7 @@
 #include "../misclib/plic.h"
 #include "../misclib/apb_uart.h"
 #include "../misclib/apb_gpio.h"
+#include "../misclib/apb_i2c.h"
 #include "../pcie_dma/pcie_dma.h"
 #include "../pcie_dma/apb_pcie.h"
 #include "../misclib/apb_pnp.h"
@@ -61,6 +62,11 @@ SC_MODULE(accel_soc) {
     // UART1 signals
     sc_in<bool> i_uart1_rd;
     sc_out<bool> o_uart1_td;
+    // I2C master interface for HDMI transmitter
+    sc_out<bool> o_i2c0_scl;                                // Clock up to 400 KHz. Default 100 KHz
+    sc_out<bool> o_i2c0_sda;                                // I2C output data
+    sc_out<bool> o_i2c0_sda_dir;                            // output data tri-stte buffer control
+    sc_in<bool> i_i2c0_sda;                                 // I2C input data
     // PLL and Reset interfaces:
     sc_out<bool> o_dmreset;                                 // Debug reset request. Everything except DMI.
     sc_out<mapinfo_type> o_prci_pmapinfo;                   // PRCI mapping information
@@ -137,6 +143,7 @@ SC_MODULE(accel_soc) {
     sc_signal<sc_uint<4>> wb_pcie_dma_state;
     sc_signal<bool> w_dbg_valid;
     sc_signal<sc_uint<64>> w_dbg_payload;
+    sc_signal<bool> w_irq_i2c0;
 
     axictrl_bus0 *bus0;
     axi2apb_bus1 *bus1;
@@ -146,6 +153,7 @@ SC_MODULE(accel_soc) {
     plic<SOC_PLIC_CONTEXT_TOTAL, SOC_PLIC_IRQ_TOTAL> *plic0;
     apb_uart<SOC_UART1_LOG2_FIFOSZ> *uart1;
     apb_gpio<SOC_GPIO0_WIDTH> *gpio0;
+    apb_i2c *i2c0;
     pcie_dma *pcidma0;
     apb_pcie *ppcie0;
     apb_pnp<SOC_PNP_TOTAL> *pnp0;

@@ -17,6 +17,7 @@
 #include <systemc.h>
 #include "../prj/impl/asic_sim/asic_top_tb.h"
 #include "../prj/tb/pcie_dma_tb.h"
+#include "../prj/tb/apb_i2c_tb.h"
 
 using namespace debugger;
 
@@ -25,6 +26,8 @@ int sc_main(int argc, char *argv[]) {
     vcd_->set_time_unit(1, SC_PS);
 
 #if 1
+    apb_i2c_tb *tb = new apb_i2c_tb("tb");
+#elif 0
     pcie_dma_tb *tb = new pcie_dma_tb("tb");
 #else
     asic_top_tb *tb = new asic_top_tb("tb");

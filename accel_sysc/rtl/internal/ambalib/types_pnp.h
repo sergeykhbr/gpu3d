@@ -72,6 +72,8 @@ static const uint16_t OPTIMITECH_SDCTRL_MEM = 0x008B;
 static const uint16_t OPTIMITECH_RIVER_DMI = 0x008A;
 // PCIE end-point APB controller:
 static const uint16_t OPTIMITECH_PCIE_CTRL = 0x008C;
+// I2C master interface meant for ADV7511 HDMI transmitter
+static const uint16_t OPTIMITECH_I2C = 0x008D;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -99,9 +101,10 @@ static const int SOC_PNP_PNP = 10;
 static const int SOC_PNP_PBRIDGE0 = 11;
 static const int SOC_PNP_DMI = 12;
 static const int SOC_PNP_UART1 = 13;
-static const int SOC_PNP_PCIE_DMA = 14;
-static const int SOC_PNP_PCIE_APB = 15;
-static const int SOC_PNP_TOTAL = 16;
+static const int SOC_PNP_I2C = 14;
+static const int SOC_PNP_PCIE_DMA = 15;
+static const int SOC_PNP_PCIE_APB = 16;
+static const int SOC_PNP_TOTAL = 17;
 
 // @brief   Plug-n-play descriptor structure for connected device.
 // @details Each device must generates this datatype output that

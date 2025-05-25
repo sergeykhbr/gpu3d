@@ -293,9 +293,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
 
     if (i_m_axis_rx_tuser.read()[2] == 1) {                 // Select BAR0 region
         vb_bar_offset = 0x008000000;                        // BAR0, 32-bits, 2MB, SRAM
-    } else if (i_m_axis_rx_tuser.read()[3] == 1) {          // Select BAR1 region
-        vb_bar_offset = 0x000000000;                        // BAR1, 32-bits, 1GB
-    } else if (i_m_axis_rx_tuser.read()(5, 4) == 0x3) {     // Select BAR2/BAR3
+    } else {
         vb_bar_offset = 0x080000000;                        // BAR2/BAR3 64-bits, 4GB to DDR
     }
 
@@ -309,10 +307,12 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
         vb_req_addr_1_0 = 3;
     }
     // Max implemented BAR is 4GB so take 32-bits of address
-    vb_addr_ldw = (vb_bar_offset + i_m_axis_rx_tdata.read()(31, 0));
-    vb_addr_ldw(1, 0) = vb_req_addr_1_0;
-    vb_addr_mdw = (vb_bar_offset + i_m_axis_rx_tdata.read()(63, 32));
-    vb_addr_mdw(1, 0) = vb_req_addr_1_0;
+    vb_addr_ldw = (vb_bar_offset((CFG_PCIE_DMAADDR_WIDTH - 1), 16),
+            i_m_axis_rx_tdata.read()(15, 2),
+            vb_req_addr_1_0);
+    vb_addr_mdw = (vb_bar_offset((CFG_PCIE_DMAADDR_WIDTH - 1), 16),
+            i_m_axis_rx_tdata.read()(47, 34),
+            vb_req_addr_1_0);
 
     // Calculate byte count based on byte enable
     vb_add_be20 = ((0, r.req_be.read()[3]) + (0, r.req_be.read()[2]));

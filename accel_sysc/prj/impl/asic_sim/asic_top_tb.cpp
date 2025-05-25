@@ -56,6 +56,8 @@ asic_top_tb::asic_top_tb(sc_module_name name)
     tt->o_jtag_vref(w_jtag_vref);
     tt->i_uart1_rd(w_uart1_rd);
     tt->o_uart1_td(w_uart1_td);
+    tt->o_i2c0_scl(w_i2c_scl);
+    tt->io_i2c0_sda(w_i2c_sda);
 
     SC_METHOD(test);
     sensitive << w_sclk_p.posedge_event();
