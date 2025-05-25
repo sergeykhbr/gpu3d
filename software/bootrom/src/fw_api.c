@@ -75,6 +75,6 @@ void fw_disable_plic_irq(int ctxid, int irqidx) {
 
 void led_set(int output) {
     // [3:0] DIP pins
-    ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->output_val = (output << 4);
+    ((gpio_map *)ADDR_BUS0_APB_GPIO)->output_val = (output << 4);
 }
 

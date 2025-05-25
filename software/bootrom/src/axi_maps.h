@@ -27,18 +27,20 @@
 #include "maps/map_mpu.h"
 #include "maps/map_prci.h"
 #include "maps/map_pcictrl.h"
+#include "maps/map_i2c.h"
 
 #define ADDR_BUS0_XSLV_CLINT        0x02000000 // Core-local interruptor (CLINT)
 #define ADDR_BUS0_XSLV_SRAM         0x08000000 // 0x0800_0000..0x081F_FFFF = L2 Cache Controller
 #define ADDR_BUS0_XSLV_FWIMAGE      0x09000000 // ROM FU740 compatible
 #define ADDR_BUS0_XSLV_PLIC         0x0C000000 // FU740 compatible
-#define ADDR_BUS0_XSLV_UART0        0x10010000 // 0x10000000: qemu, 0x10010000: FU740 compatible
-#define ADDR_BUS0_XSLV_UART1        0x10011000 // FU740 compatible
+#define ADDR_BUS0_APB_UART0         0x10010000 // 0x10000000: qemu, 0x10010000: FU740 compatible
+#define ADDR_BUS0_APB_UART1         0x10011000 // FU740 compatible
 #define ADDR_BUS1_APB_PRCI          0x10012000 // not compatible with FU740
 #define ADDR_BUS1_APB_QSPI2         0x10050000 // FU740 compatible
-#define ADDR_BUS0_XSLV_GPIO         0x10060000 // FU740 compatible
-#define ADDR_BUS0_XSLV_OTP          0x10070000
-#define ADDR_BUS0_XSLV_ETHMAC       0x10090000 // 0x1009_0000 .. 0x1009_1FFF Ethernet on FU740
+#define ADDR_BUS0_APB_I2C           0x10052000 // 
+#define ADDR_BUS0_APB_GPIO          0x10060000 // FU740 compatible
+#define ADDR_BUS0_APB_OTP           0x10070000
+#define ADDR_BUS0_APB_ETHMAC        0x10090000 // 0x1009_0000 .. 0x1009_1FFF Ethernet on FU740
 #define ADDR_BUS1_APB_DDRCTRL       0x100C0000 // DDR controller.
 #define ADDR_BUS1_APB_PCICTRL       0x100C1000 // PCIE DMA controller.
 // GNSS Sub System
@@ -77,6 +79,7 @@
 #define CFG_IRQ_GPIO_15     38   // The same in 740 (unmatched)
 #define CFG_IRQ_UART0       39   // The same in 740 (unmatched)
 #define CFG_IRQ_UART1       40   // The same in 740 (unmatched)
+#define PLIC_IRQ_I2C        41
 // Interrupt for the self-test that triggered on write access 
 // into read-only register pnp->hwid
 #define PLIC_IRQ_PNP        70

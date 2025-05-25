@@ -18,7 +18,7 @@
 #include <axi_maps.h>
 
 void __attribute__((weak)) hwinit() {
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_map *uart = (uart_map *)ADDR_BUS0_APB_UART0;
 
     // scaler is enabled in SRAM self test, duplicate it here
     uart->scaler = SYS_HZ / 115200 / 2;

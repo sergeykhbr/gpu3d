@@ -53,6 +53,7 @@ SOURCES = startup \
 	test_mtimer \
 	test_swirq \
 	test_ddr \
+	hdmi \
 	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))

@@ -28,6 +28,7 @@ void test_swirq(void);
 void test_mtimer(void);
 int test_ddr();
 void print_pnp(void);
+void setup_hdmi();
 
 void wait_pcie() {
     prci_map *prci = (prci_map *)ADDR_BUS1_APB_PRCI;
@@ -95,8 +96,8 @@ uint64_t ddr_torture(uint64_t addr) {
 int __main() {
     uint32_t cfg;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
-    gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
+    uart_map *uart = (uart_map *)ADDR_BUS0_APB_UART0;
+    gpio_map *gpio = (gpio_map *)ADDR_BUS0_APB_GPIO;
     pcictrl_map *pcictrl = (pcictrl_map *)ADDR_BUS1_APB_PCICTRL;
     uint64_t ddr_addr = 0;
     uint32_t cpu_max;
@@ -130,6 +131,9 @@ int __main() {
     led_set(0x55);
     print_pnp();
 
+    led_set(0x56);
+    setup_hdmi();
+
     led_set(0x1F);
 
     test_ddr();
@@ -138,10 +142,10 @@ int __main() {
 
     printf_uart("PCIe:. . . . . .0x%04x\r\n", pcictrl->bdf);
 
-    setup_1sec_irq();
+    //setup_1sec_irq();
     ddr_addr = ADDR_BUS0_XSLV_DDR;
     while (1) {
-        ddr_addr = ddr_torture(ddr_addr);
+        //ddr_addr = ddr_torture(ddr_addr);
     }
 
     // NEVER REACH THIS POINT

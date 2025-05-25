@@ -67,7 +67,7 @@ void buf_put(uart_data_type *p, char s) {
 
 void isr_uart0_tx() {
     uart_data_type *pdata = fw_get_ram_data(UART0_NAME);
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_map *uart = (uart_map *)ADDR_BUS0_APB_UART0;
 #ifdef UART_BUF_ENABLE    
     uart_txdata_type txdata;
 
@@ -89,7 +89,7 @@ int uart_tx_nempty() {
 #endif
 
 void uart_isr_init(void) {
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_map *uart = (uart_map *)ADDR_BUS0_APB_UART0;
     uart_data_type *pdata;
 
     register_ext_interrupt_handler(CFG_IRQ_UART0, isr_uart0_tx);
@@ -327,7 +327,7 @@ signed_number:
 }
 
 void print_uart(const char *buf, int sz) {
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_map *uart = (uart_map *)ADDR_BUS0_APB_UART0;
     uart_txdata_type txdata;
     for (int i = 0; i < sz; i++) {
         do {
@@ -339,7 +339,7 @@ void print_uart(const char *buf, int sz) {
 
 void print_uart_hex(uint64_t val) {
     unsigned char t, s;
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_map *uart = (uart_map *)ADDR_BUS0_APB_UART0;
     uart_txdata_type txdata;
 
     for (int i = 0; i < 16; i++) {
@@ -363,7 +363,7 @@ int putchar(int ch) {
     uart_data_type *p = fw_get_ram_data(UART0_NAME);
     buf_put(p, ch);
 #else
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_map *uart = (uart_map *)ADDR_BUS0_APB_UART0;
     uart_txdata_type txdata;
 
     // No need to lock UART because we transmit only one symbol
@@ -377,7 +377,7 @@ int putchar(int ch) {
 
 void printf_uart(const char *fmt, ... ) {
     uart_data_type *pdata = fw_get_ram_data(UART0_NAME);
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_map *uart = (uart_map *)ADDR_BUS0_APB_UART0;
     int id = fw_get_cpuid() + 1;
 
     // lock UART to current CPU
