@@ -85,6 +85,18 @@ set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_rd]
 set_property PACKAGE_PIN K24 [get_ports o_uart1_td]
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
+#I2C interface connected to I2C multiplexer
+set_property PULLUP true [get_ports o_i2c0_scl]
+set_property LOC K21 [get_ports o_i2c0_scl]
+set_property IOSTANDARD LVCMOS25 [get_ports o_i2c0_scl]
+
+set_property PULLUP true [get_ports io_i2c0_sda]
+set_property LOC L21 [get_ports io_i2c0_sda]
+set_property IOSTANDARD LVCMOS25 [get_ports io_i2c0_sda]
+
+set_property LOC P23 [get_ports o_i2c0_nreset]
+set_property IOSTANDARD LVCMOS25 [get_ports o_i2c0_nreset]
+
 #########################################################
 # PCIE
 # Dedicated PCI Express oscillator 100 MHz. FPGA Pins: U8=PCIE_CLK_QO_P, U7=PCIE_CLK_QO_N
