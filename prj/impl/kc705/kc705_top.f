@@ -7,5 +7,6 @@ ${RTL_HOME}/external/xilinx/io/idsbuf_tech.sv
 ${RTL_HOME}/external/xilinx/io/igdsbuf_tech.sv
 ${RTL_HOME}/external/xilinx/io/iobuf_tech.sv
 ${RTL_HOME}/external/xilinx/io/obuf_tech.sv
+${RTL_HOME}/external/xilinx/io/obuf_arr_tech.sv
 ${IMPL_ROOT}/kc705/kc705_top.sv
 

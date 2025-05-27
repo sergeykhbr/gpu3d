@@ -42,6 +42,15 @@ module kc705_top #(
     output logic o_i2c0_scl,                                // I2C clock upto 400 kHz (default 100 kHz)
     inout logic io_i2c0_sda,                                // I2C bi-directional data
     output logic o_i2c0_nreset,                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
+    // Data interface to HDMI transmitter:
+    output logic o_hdmi_clk,                                // HDMI clock depends on resolution for 1366x768@60Hz is ~83MHz
+    output logic o_hdmi_hsync,                              // Horizontal sync. strob
+    output logic o_hdmi_vsync,                              // Vertical sync. strob
+    output logic o_hdmi_de,                                 // Data enable strob
+    output logic [17:0] o_hdmi_d,                           // Data in format YCbCr 16-bits
+    output logic o_hdmi_spdif,                              // Sound channel output
+    input logic i_hdmi_spdif_out,                           // Reverse sound channel
+    input logic i_hdmi_int,                                 // External interrupt from HDMI transmitter
     // DDR3 signals:
     output o_ddr3_reset_n,
     output [0:0] o_ddr3_ck_n,
@@ -100,6 +109,13 @@ logic ob_i2c0_sda;
 logic ob_i2c0_sda_direction;
 logic ib_i2c0_sda;
 logic ob_i2c0_nreset;
+logic ob_hdmi_hsync;
+logic ob_hdmi_vsync;
+logic ob_hdmi_de;
+logic [17:0] ob_hdmi_d;
+logic ob_hdmi_spdif;
+logic ib_hdmi_spdif_out;
+logic ib_hdmi_int;
 
   logic             w_sys_rst;
   logic             w_sys_nrst;
@@ -180,6 +196,7 @@ logic ob_i2c0_nreset;
     end
   endgenerate
 
+// ======== HDMI I2C interface ========
 obuf_tech oi2c0scl (
     .i(ob_i2c0_scl),
     .o(o_i2c0_scl)
@@ -195,6 +212,49 @@ iobuf_tech ioi2c0sda (
     .o(ib_i2c0_sda),
     .i(ob_i2c0_sda),
     .t(ob_i2c0_sda_direction)
+);
+
+// ======== HDMI data buffer ========
+obuf_tech ohdmiclk (
+    .i(w_sys_clk),
+    .o(o_hdmi_clk)
+);
+
+obuf_tech ohdmihsync (
+    .i(ob_hdmi_hsync),
+    .o(o_hdmi_hsync)
+);
+
+obuf_tech ohdmivsync (
+    .i(ob_hdmi_vsync),
+    .o(o_hdmi_vsync)
+);
+
+obuf_tech ohdmide (
+    .i(ob_hdmi_de),
+    .o(o_hdmi_de)
+);
+
+obuf_arr_tech #(
+    .width(18)
+) ohdmid (
+    .i(ob_hdmi_d),
+    .o(o_hdmi_d)
+);
+
+obuf_tech ohdmispdif (
+    .i(ob_hdmi_spdif),
+    .o(o_hdmi_spdif)
+);
+
+ibuf_tech ihdmispdif (
+    .i(i_hdmi_spdif_out),
+    .o(ib_hdmi_spdif_out)
+);
+
+ibuf_tech ihdmiint (
+    .i(i_hdmi_int),
+    .o(ib_hdmi_int)
 );
 
 
@@ -275,6 +335,15 @@ iobuf_tech ioi2c0sda (
     .o_i2c0_sda_dir(ob_i2c0_sda_direction),
     .i_i2c0_sda(ib_i2c0_sda),
     .o_i2c0_nreset(ob_i2c0_nreset),
+    // HDMI
+    .i_hdmi_clk(w_sys_clk),
+    .o_hdmi_hsync(ob_hdmi_hsync),
+    .o_hdmi_vsync(ob_hdmi_vsync),
+    .o_hdmi_de(ob_hdmi_de),
+    .o_hdmi_d(ob_hdmi_d),
+    .o_hdmi_spdif(ob_hdmi_spdif),
+    .i_hdmi_spdif_out(ib_hdmi_spdif_out),
+    .i_hdmi_int(ib_hdmi_int),
     // PRCI:
     .o_dmreset(w_dmreset),
     .o_prci_pmapinfo(prci_pmapinfo),
