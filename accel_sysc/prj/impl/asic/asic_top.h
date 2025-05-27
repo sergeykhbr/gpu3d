@@ -23,6 +23,8 @@
 #include "../../../rtl/sim/io/ids_tech.h"
 #include "../../../rtl/sim/io/obuf_tech.h"
 #include "../../../rtl/sim/io/iobuf_tech.h"
+#include "../../../rtl/sim/io/obuf_arr_tech.h"
+#include "../../../rtl/sim/io/ibuf_tech.h"
 #include "../../../rtl/sim/pll/SysPLL_tech.h"
 #include "../../../rtl/internal/misclib/apb_prci.h"
 #include "../../../rtl/internal/accel/accel_soc.h"
@@ -52,6 +54,15 @@ SC_MODULE(asic_top) {
     sc_out<bool> o_i2c0_scl;                                // I2C clock upto 400 kHz (default 100 kHz)
     sc_inout<bool> io_i2c0_sda;                             // I2C bi-directional data
     sc_out<bool> o_i2c0_nreset;                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
+    // Data interface to HDMI transmitter:
+    sc_out<bool> o_hdmi_clk;                                // HDMI clock depends on resolution for 1366x768@60Hz is ~83MHz
+    sc_out<bool> o_hdmi_hsync;                              // Horizontal sync. strob
+    sc_out<bool> o_hdmi_vsync;                              // Vertical sync. strob
+    sc_out<bool> o_hdmi_de;                                 // Data enable strob
+    sc_out<sc_uint<18>> o_hdmi_d;                           // Data in format YCbCr 16-bits
+    sc_out<bool> o_hdmi_spdif;                              // Sound channel output
+    sc_in<bool> i_hdmi_spdif_out;                           // Reverse sound channel
+    sc_in<bool> i_hdmi_int;                                 // External interrupt from HDMI transmitter
 
 
     asic_top(sc_module_name name,
@@ -74,6 +85,13 @@ SC_MODULE(asic_top) {
     sc_signal<bool> ob_i2c0_sda_direction;
     sc_signal<bool> ib_i2c0_sda;
     sc_signal<bool> ob_i2c0_nreset;
+    sc_signal<bool> ob_hdmi_hsync;
+    sc_signal<bool> ob_hdmi_vsync;
+    sc_signal<bool> ob_hdmi_de;
+    sc_signal<sc_uint<18>> ob_hdmi_d;
+    sc_signal<bool> ob_hdmi_spdif;
+    sc_signal<bool> ib_hdmi_spdif_out;
+    sc_signal<bool> ib_hdmi_int;
     sc_signal<bool> w_sys_rst;
     sc_signal<bool> w_sys_nrst;
     sc_signal<bool> w_dbg_nrst;
@@ -109,6 +127,14 @@ SC_MODULE(asic_top) {
     obuf_tech *oi2c0scl;
     obuf_tech *oi2c0nreset;
     iobuf_tech *ioi2c0sda;
+    obuf_tech *ohdmiclk;
+    obuf_tech *ohdmihsync;
+    obuf_tech *ohdmivsync;
+    obuf_tech *ohdmide;
+    obuf_arr_tech<18> *ohdmid;
+    obuf_tech *ohdmispdif;
+    ibuf_tech *ihdmispdif;
+    ibuf_tech *ihdmiint;
     SysPLL_tech *pll0;
     apb_prci *prci0;
     accel_soc *soc0;

@@ -54,8 +54,16 @@ SC_MODULE(asic_top_tb) {
     sc_signal<bool> w_uart1_td;
     sc_signal<bool> w_uart1_loopback_ena;
     sc_signal<bool> w_i2c_scl;
-    sc_signal<bool> w_i2c_sda;
+    sc_signal<bool, SC_UNCHECKED_WRITERS> w_i2c_sda;
     sc_signal<bool> w_i2c_nreset;
+    sc_signal<bool> w_hdmi_clk;
+    sc_signal<bool> w_hdmi_hsync;
+    sc_signal<bool> w_hdmi_vsync;
+    sc_signal<bool> w_hdmi_de;
+    sc_signal<sc_uint<18>> wb_hdmi_d;
+    sc_signal<bool> w_hdmi_spdif;
+    sc_signal<bool> w_hdmi_spdif_out;
+    sc_signal<bool> w_hdmi_int;
     sc_signal<bool> w_bufo_i2c0_sda;
     sc_signal<bool> w_vipo_i2c0_sda;
     sc_signal<bool> w_vipo_i2c0_sda_dir;

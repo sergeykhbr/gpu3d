@@ -25,7 +25,7 @@ int sc_main(int argc, char *argv[]) {
     sc_trace_file *vcd_ = sc_create_vcd_trace_file(CMAKE_BINARY_DIR"/accel");
     vcd_->set_time_unit(1, SC_PS);
 
-#if 1
+#if 0
     apb_i2c_tb *tb = new apb_i2c_tb("tb");
 #elif 0
     pcie_dma_tb *tb = new pcie_dma_tb("tb");

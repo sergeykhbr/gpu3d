@@ -37,7 +37,15 @@ asic_top::asic_top(sc_module_name name,
     o_uart1_td("o_uart1_td"),
     o_i2c0_scl("o_i2c0_scl"),
     io_i2c0_sda("io_i2c0_sda"),
-    o_i2c0_nreset("o_i2c0_nreset") {
+    o_i2c0_nreset("o_i2c0_nreset"),
+    o_hdmi_clk("o_hdmi_clk"),
+    o_hdmi_hsync("o_hdmi_hsync"),
+    o_hdmi_vsync("o_hdmi_vsync"),
+    o_hdmi_de("o_hdmi_de"),
+    o_hdmi_d("o_hdmi_d"),
+    o_hdmi_spdif("o_hdmi_spdif"),
+    i_hdmi_spdif_out("i_hdmi_spdif_out"),
+    i_hdmi_int("i_hdmi_int") {
 
     async_reset_ = async_reset;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
@@ -45,6 +53,14 @@ asic_top::asic_top(sc_module_name name,
     oi2c0scl = 0;
     oi2c0nreset = 0;
     ioi2c0sda = 0;
+    ohdmiclk = 0;
+    ohdmihsync = 0;
+    ohdmivsync = 0;
+    ohdmide = 0;
+    ohdmid = 0;
+    ohdmispdif = 0;
+    ihdmispdif = 0;
+    ihdmiint = 0;
     pll0 = 0;
     prci0 = 0;
     soc0 = 0;
@@ -54,6 +70,7 @@ asic_top::asic_top(sc_module_name name,
     iclk0->i_clk_n(i_sclk_n);
     iclk0->o_clk(ib_clk_tcxo);
 
+    // ======== HDMI I2C interface ========
     oi2c0scl = new obuf_tech("oi2c0scl");
     oi2c0scl->i(ob_i2c0_scl);
     oi2c0scl->o(o_i2c0_scl);
@@ -67,6 +84,39 @@ asic_top::asic_top(sc_module_name name,
     ioi2c0sda->o(ib_i2c0_sda);
     ioi2c0sda->i(ob_i2c0_sda);
     ioi2c0sda->t(ob_i2c0_sda_direction);
+
+    // ======== HDMI data buffer ========
+    ohdmiclk = new obuf_tech("ohdmiclk");
+    ohdmiclk->i(w_sys_clk);
+    ohdmiclk->o(o_hdmi_clk);
+
+    ohdmihsync = new obuf_tech("ohdmihsync");
+    ohdmihsync->i(ob_hdmi_hsync);
+    ohdmihsync->o(o_hdmi_hsync);
+
+    ohdmivsync = new obuf_tech("ohdmivsync");
+    ohdmivsync->i(ob_hdmi_vsync);
+    ohdmivsync->o(o_hdmi_vsync);
+
+    ohdmide = new obuf_tech("ohdmide");
+    ohdmide->i(ob_hdmi_de);
+    ohdmide->o(o_hdmi_de);
+
+    ohdmid = new obuf_arr_tech<18>("ohdmid");
+    ohdmid->i(ob_hdmi_d);
+    ohdmid->o(o_hdmi_d);
+
+    ohdmispdif = new obuf_tech("ohdmispdif");
+    ohdmispdif->i(ob_hdmi_spdif);
+    ohdmispdif->o(o_hdmi_spdif);
+
+    ihdmispdif = new ibuf_tech("ihdmispdif");
+    ihdmispdif->i(i_hdmi_spdif_out);
+    ihdmispdif->o(ib_hdmi_spdif_out);
+
+    ihdmiint = new ibuf_tech("ihdmiint");
+    ihdmiint->i(i_hdmi_int);
+    ihdmiint->o(ib_hdmi_int);
 
     pll0 = new SysPLL_tech("pll0");
     pll0->i_reset(i_rst);
@@ -119,6 +169,14 @@ asic_top::asic_top(sc_module_name name,
     soc0->o_i2c0_sda_dir(ob_i2c0_sda_direction);
     soc0->i_i2c0_sda(ib_i2c0_sda);
     soc0->o_i2c0_nreset(ob_i2c0_nreset);
+    soc0->i_hdmi_clk(w_sys_clk);
+    soc0->o_hdmi_hsync(ob_hdmi_hsync);
+    soc0->o_hdmi_vsync(ob_hdmi_vsync);
+    soc0->o_hdmi_de(ob_hdmi_de);
+    soc0->o_hdmi_d(ob_hdmi_d);
+    soc0->o_hdmi_spdif(ob_hdmi_spdif);
+    soc0->i_hdmi_spdif_out(ib_hdmi_spdif_out);
+    soc0->i_hdmi_int(ib_hdmi_int);
     soc0->o_dmreset(w_dmreset);
     soc0->o_prci_pmapinfo(prci_pmapinfo);
     soc0->i_prci_pdevcfg(prci_dev_cfg);
@@ -152,6 +210,30 @@ asic_top::~asic_top() {
     if (ioi2c0sda) {
         delete ioi2c0sda;
     }
+    if (ohdmiclk) {
+        delete ohdmiclk;
+    }
+    if (ohdmihsync) {
+        delete ohdmihsync;
+    }
+    if (ohdmivsync) {
+        delete ohdmivsync;
+    }
+    if (ohdmide) {
+        delete ohdmide;
+    }
+    if (ohdmid) {
+        delete ohdmid;
+    }
+    if (ohdmispdif) {
+        delete ohdmispdif;
+    }
+    if (ihdmispdif) {
+        delete ihdmispdif;
+    }
+    if (ihdmiint) {
+        delete ihdmiint;
+    }
     if (pll0) {
         delete pll0;
     }
@@ -180,6 +262,14 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_i2c0_scl, o_i2c0_scl.name());
         sc_trace(o_vcd, io_i2c0_sda, io_i2c0_sda.name());
         sc_trace(o_vcd, o_i2c0_nreset, o_i2c0_nreset.name());
+        sc_trace(o_vcd, o_hdmi_clk, o_hdmi_clk.name());
+        sc_trace(o_vcd, o_hdmi_hsync, o_hdmi_hsync.name());
+        sc_trace(o_vcd, o_hdmi_vsync, o_hdmi_vsync.name());
+        sc_trace(o_vcd, o_hdmi_de, o_hdmi_de.name());
+        sc_trace(o_vcd, o_hdmi_d, o_hdmi_d.name());
+        sc_trace(o_vcd, o_hdmi_spdif, o_hdmi_spdif.name());
+        sc_trace(o_vcd, i_hdmi_spdif_out, i_hdmi_spdif_out.name());
+        sc_trace(o_vcd, i_hdmi_int, i_hdmi_int.name());
     }
 
     if (iclk0) {
@@ -193,6 +283,30 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (ioi2c0sda) {
         ioi2c0sda->generateVCD(i_vcd, o_vcd);
+    }
+    if (ohdmiclk) {
+        ohdmiclk->generateVCD(i_vcd, o_vcd);
+    }
+    if (ohdmihsync) {
+        ohdmihsync->generateVCD(i_vcd, o_vcd);
+    }
+    if (ohdmivsync) {
+        ohdmivsync->generateVCD(i_vcd, o_vcd);
+    }
+    if (ohdmide) {
+        ohdmide->generateVCD(i_vcd, o_vcd);
+    }
+    if (ohdmid) {
+        ohdmid->generateVCD(i_vcd, o_vcd);
+    }
+    if (ohdmispdif) {
+        ohdmispdif->generateVCD(i_vcd, o_vcd);
+    }
+    if (ihdmispdif) {
+        ihdmispdif->generateVCD(i_vcd, o_vcd);
+    }
+    if (ihdmiint) {
+        ihdmiint->generateVCD(i_vcd, o_vcd);
     }
     if (pll0) {
         pll0->generateVCD(i_vcd, o_vcd);

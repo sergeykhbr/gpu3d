@@ -85,17 +85,130 @@ set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_rd]
 set_property PACKAGE_PIN K24 [get_ports o_uart1_td]
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
-#I2C interface connected to I2C multiplexer
-set_property PULLUP true [get_ports o_i2c0_scl]
+#I2C interface connected to I2C multiplexer (no need to pull-up, already pull-uped)
+#set_property PULLUP true [get_ports o_i2c0_scl]
 set_property LOC K21 [get_ports o_i2c0_scl]
 set_property IOSTANDARD LVCMOS25 [get_ports o_i2c0_scl]
 
-set_property PULLUP true [get_ports io_i2c0_sda]
+#set_property PULLUP true [get_ports io_i2c0_sda]
 set_property LOC L21 [get_ports io_i2c0_sda]
 set_property IOSTANDARD LVCMOS25 [get_ports io_i2c0_sda]
 
 set_property LOC P23 [get_ports o_i2c0_nreset]
 set_property IOSTANDARD LVCMOS25 [get_ports o_i2c0_nreset]
+
+# HDMI interface
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[0]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[0]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[0]}]
+set_property PACKAGE_PIN B23 [get_ports {o_hdmi_d[0]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[1]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[1]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[1]}]
+set_property PACKAGE_PIN A23 [get_ports {o_hdmi_d[1]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[2]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[2]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[2]}]
+set_property PACKAGE_PIN E23 [get_ports {o_hdmi_d[2]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[3]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[3]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[3]}]
+set_property PACKAGE_PIN D23 [get_ports {o_hdmi_d[3]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[4]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[4]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[4]}]
+set_property PACKAGE_PIN F25 [get_ports {o_hdmi_d[4]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[5]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[5]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[5]}]
+set_property PACKAGE_PIN E25 [get_ports {o_hdmi_d[5]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[6]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[6]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[6]}]
+set_property PACKAGE_PIN E24 [get_ports {o_hdmi_d[6]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[7]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[7]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[7]}]
+set_property PACKAGE_PIN D24 [get_ports {o_hdmi_d[7]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[8]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[8]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[8]}]
+set_property PACKAGE_PIN F26 [get_ports {o_hdmi_d[8]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[9]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[9]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[9]}]
+set_property PACKAGE_PIN E26 [get_ports {o_hdmi_d[9]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[10]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[10]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[10]}]
+set_property PACKAGE_PIN G23 [get_ports {o_hdmi_d[10]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[11]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[11]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[11]}]
+set_property PACKAGE_PIN G24 [get_ports {o_hdmi_d[11]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[12]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[12]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[12]}]
+set_property PACKAGE_PIN J19 [get_ports {o_hdmi_d[12]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[13]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[13]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[13]}]
+set_property PACKAGE_PIN H19 [get_ports {o_hdmi_d[13]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[14]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[14]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[14]}]
+set_property PACKAGE_PIN L17 [get_ports {o_hdmi_d[14]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[15]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[15]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[15]}]
+set_property PACKAGE_PIN L18 [get_ports {o_hdmi_d[15]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[16]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[16]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[16]}]
+set_property PACKAGE_PIN K19 [get_ports {o_hdmi_d[16]}]
+
+set_property VCCAUX_IO HIGH [get_ports {o_hdmi_d[17]}]
+set_property SLEW FAST [get_ports {o_hdmi_d[17]}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_d[17]}]
+set_property PACKAGE_PIN K20 [get_ports {o_hdmi_d[17]}]
+
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_de}]
+set_property PACKAGE_PIN H17 [get_ports {o_hdmi_de}]
+
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_spdif}]
+set_property PACKAGE_PIN J17 [get_ports {o_hdmi_spdif}]
+
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_clk}]
+set_property PACKAGE_PIN K18 [get_ports {o_hdmi_clk}]
+
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_vsync}]
+set_property PACKAGE_PIN H20 [get_ports {o_hdmi_vsync}]
+
+set_property IOSTANDARD LVCMOS25 [get_ports {o_hdmi_hsync}]
+set_property PACKAGE_PIN J18 [get_ports {o_hdmi_hsync}]
+
+set_property IOSTANDARD LVCMOS25 [get_ports {i_hdmi_int}]
+set_property PACKAGE_PIN AH24 [get_ports {i_hdmi_int}]
+
+set_property IOSTANDARD LVCMOS25 [get_ports {i_hdmi_spdif_out}]
+set_property PACKAGE_PIN G20 [get_ports {i_hdmi_spdif_out}]
+
 
 #########################################################
 # PCIE

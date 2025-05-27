@@ -44,6 +44,14 @@ accel_soc::accel_soc(sc_module_name name,
     o_i2c0_sda_dir("o_i2c0_sda_dir"),
     i_i2c0_sda("i_i2c0_sda"),
     o_i2c0_nreset("o_i2c0_nreset"),
+    i_hdmi_clk("i_hdmi_clk"),
+    o_hdmi_hsync("o_hdmi_hsync"),
+    o_hdmi_vsync("o_hdmi_vsync"),
+    o_hdmi_de("o_hdmi_de"),
+    o_hdmi_d("o_hdmi_d"),
+    o_hdmi_spdif("o_hdmi_spdif"),
+    i_hdmi_spdif_out("i_hdmi_spdif_out"),
+    i_hdmi_int("i_hdmi_int"),
     o_dmreset("o_dmreset"),
     o_prci_pmapinfo("o_prci_pmapinfo"),
     i_prci_pdevcfg("i_prci_pdevcfg"),
@@ -83,6 +91,7 @@ accel_soc::accel_soc(sc_module_name name,
     uart1 = 0;
     gpio0 = 0;
     i2c0 = 0;
+    hdmi0 = 0;
     pcidma0 = 0;
     ppcie0 = 0;
     pnp0 = 0;
@@ -234,6 +243,19 @@ accel_soc::accel_soc(sc_module_name name,
     i2c0->o_irq(w_irq_i2c0);
     i2c0->o_nreset(o_i2c0_nreset);
 
+    hdmi0 = new hdmi_top("hdmi0",
+                          async_reset);
+    hdmi0->i_nrst(i_sys_nrst);
+    hdmi0->i_clk(i_sys_clk);
+    hdmi0->i_hdmi_clk(i_hdmi_clk);
+    hdmi0->o_hsync(o_hdmi_hsync);
+    hdmi0->o_vsync(o_hdmi_vsync);
+    hdmi0->o_de(o_hdmi_de);
+    hdmi0->o_data(o_hdmi_d);
+    hdmi0->o_spdif(o_hdmi_spdif);
+    hdmi0->i_spdif_out(i_hdmi_spdif_out);
+    hdmi0->i_irq(i_hdmi_int);
+
     // See reference: pg054-7series-pcie.pdf
     pcidma0 = new pcie_dma("pcidma0",
                             async_reset);
@@ -291,6 +313,9 @@ accel_soc::accel_soc(sc_module_name name,
     sensitive << i_jtag_tdi;
     sensitive << i_uart1_rd;
     sensitive << i_i2c0_sda;
+    sensitive << i_hdmi_clk;
+    sensitive << i_hdmi_spdif_out;
+    sensitive << i_hdmi_int;
     sensitive << i_prci_pdevcfg;
     sensitive << i_prci_apbo;
     sensitive << i_ddr_pdevcfg;
@@ -374,6 +399,9 @@ accel_soc::~accel_soc() {
     if (i2c0) {
         delete i2c0;
     }
+    if (hdmi0) {
+        delete hdmi0;
+    }
     if (pcidma0) {
         delete pcidma0;
     }
@@ -414,6 +442,14 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_i2c0_sda_dir, o_i2c0_sda_dir.name());
         sc_trace(o_vcd, i_i2c0_sda, i_i2c0_sda.name());
         sc_trace(o_vcd, o_i2c0_nreset, o_i2c0_nreset.name());
+        sc_trace(o_vcd, i_hdmi_clk, i_hdmi_clk.name());
+        sc_trace(o_vcd, o_hdmi_hsync, o_hdmi_hsync.name());
+        sc_trace(o_vcd, o_hdmi_vsync, o_hdmi_vsync.name());
+        sc_trace(o_vcd, o_hdmi_de, o_hdmi_de.name());
+        sc_trace(o_vcd, o_hdmi_d, o_hdmi_d.name());
+        sc_trace(o_vcd, o_hdmi_spdif, o_hdmi_spdif.name());
+        sc_trace(o_vcd, i_hdmi_spdif_out, i_hdmi_spdif_out.name());
+        sc_trace(o_vcd, i_hdmi_int, i_hdmi_int.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
         sc_trace(o_vcd, o_prci_apbi, o_prci_apbi.name());
         sc_trace(o_vcd, i_prci_apbo, i_prci_apbo.name());
@@ -454,6 +490,9 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (i2c0) {
         i2c0->generateVCD(i_vcd, o_vcd);
+    }
+    if (hdmi0) {
+        hdmi0->generateVCD(i_vcd, o_vcd);
     }
     if (pcidma0) {
         pcidma0->generateVCD(i_vcd, o_vcd);

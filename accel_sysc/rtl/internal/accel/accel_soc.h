@@ -32,6 +32,7 @@
 #include "../misclib/apb_uart.h"
 #include "../misclib/apb_gpio.h"
 #include "../misclib/apb_i2c.h"
+#include "../hdmilib/hdmi_top.h"
 #include "../pcie_dma/pcie_dma.h"
 #include "../pcie_dma/apb_pcie.h"
 #include "../misclib/apb_pnp.h"
@@ -68,6 +69,14 @@ SC_MODULE(accel_soc) {
     sc_out<bool> o_i2c0_sda_dir;                            // output data tri-stte buffer control
     sc_in<bool> i_i2c0_sda;                                 // I2C input data
     sc_out<bool> o_i2c0_nreset;                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
+    sc_in<bool> i_hdmi_clk;                                 // HDMI Clock depends on resolution: for 1366x768@60Hz is ~83 MHz
+    sc_out<bool> o_hdmi_hsync;                              // Horizontal sync. strob
+    sc_out<bool> o_hdmi_vsync;                              // Vertical sync. strob
+    sc_out<bool> o_hdmi_de;                                 // Data enable strob
+    sc_out<sc_uint<18>> o_hdmi_d;                           // Data in format YCbCr 16-bits
+    sc_out<bool> o_hdmi_spdif;                              // Sound channel output
+    sc_in<bool> i_hdmi_spdif_out;                           // Reverse sound channel
+    sc_in<bool> i_hdmi_int;                                 // External interrupt from HDMI transmitter
     // PLL and Reset interfaces:
     sc_out<bool> o_dmreset;                                 // Debug reset request. Everything except DMI.
     sc_out<mapinfo_type> o_prci_pmapinfo;                   // PRCI mapping information
@@ -155,6 +164,7 @@ SC_MODULE(accel_soc) {
     apb_uart<SOC_UART1_LOG2_FIFOSZ> *uart1;
     apb_gpio<SOC_GPIO0_WIDTH> *gpio0;
     apb_i2c *i2c0;
+    hdmi_top *hdmi0;
     pcie_dma *pcidma0;
     apb_pcie *ppcie0;
     apb_pnp<SOC_PNP_TOTAL> *pnp0;

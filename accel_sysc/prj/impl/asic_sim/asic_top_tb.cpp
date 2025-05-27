@@ -76,6 +76,14 @@ asic_top_tb::asic_top_tb(sc_module_name name)
     tt->o_i2c0_scl(w_i2c_scl);
     tt->io_i2c0_sda(w_i2c_sda);
     tt->o_i2c0_nreset(w_i2c_nreset);
+    tt->o_hdmi_clk(w_hdmi_clk);
+    tt->o_hdmi_hsync(w_hdmi_hsync);
+    tt->o_hdmi_vsync(w_hdmi_vsync);
+    tt->o_hdmi_de(w_hdmi_de);
+    tt->o_hdmi_d(wb_hdmi_d);
+    tt->o_hdmi_spdif(w_hdmi_spdif);
+    tt->i_hdmi_spdif_out(w_hdmi_spdif_out);
+    tt->i_hdmi_int(w_hdmi_int);
 
     SC_METHOD(test);
     sensitive << w_sclk_p.posedge_event();
@@ -130,6 +138,8 @@ void asic_top_tb::test() {
 
     w_nrst = (!w_rst.read());
     w_sclk_n = (!w_sclk_p.read());
+    w_hdmi_spdif_out = 0;
+    w_hdmi_int = 0;
 }
 
 }  // namespace debugger
