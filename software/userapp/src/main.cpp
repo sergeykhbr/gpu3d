@@ -33,13 +33,13 @@ int main(int argc, char *argv[])
     FrameBufferType *fbuf;
     int sz;
     int errcnt;
-    int TotalCnt = 10;
+    int TotalCnt = 1000;
 
     if (!fdev) {
         printf("Cannot open device /dev/khbr_accel\n");
         return -1;
     }
-
+#if 1
     errcnt = 0;
     printf("Start PCIE read/write torture %d tests.\n", TotalCnt);
     for (int i = 0; i < TotalCnt; i++) {
@@ -88,16 +88,9 @@ int main(int argc, char *argv[])
             printf("%i testes passed. Error: %d\n", i + 1, errcnt);
         }
     }
-
+#endif
 
     printf("Start PCIE mmap tests.\n");
-    lseek(fdev, 0, SEEK_SET);
-    ((uint32_t *)wbuf)[0] = 0x11111111;
-    ((uint32_t *)wbuf)[1] = 0x22222222;
-    ((uint32_t *)wbuf)[2] = 0x33333333;
-    ((uint32_t *)wbuf)[3] = 0x44444444;
-    sz = write(fdev, wbuf, 16);
-    lseek(fdev, 0, SEEK_SET);
     fbuf = (FrameBufferType *)mmap(NULL,                     // addr
                                  2*1024*1024,  // length
                                  PROT_READ | PROT_WRITE,   // prot
@@ -112,20 +105,42 @@ int main(int argc, char *argv[])
         printf("mmap() success\n");
     }
 
+#if 1
     /**
       Basic read/write tests.
      */
-    fbuf->ui64[0] = 0xddccbbaa44332211ull;
-    fbuf->ui64[1] = 0x123456789abcdef0ull;
-    if (fbuf->ui32[0] != 0x44332211) {
-        printf("Wrong fb->ui32[0]=%08x\n", fbuf->ui32[0]);
+    int offset = 0x1000;
+    fbuf->ui32[offset + 0] = 0x44332211;
+    fbuf->ui32[offset + 1] = 0xddccbbaa;
+    fbuf->ui64[offset/2 + 1] = 0xccccccccddddddddull;
+
+    if (fbuf->ui32[offset + 0] != 0x44332211) {
+        printf("Wrong fb->ui32[0]=%08x\n", fbuf->ui32[offset + 0]);
     }
-    if (fbuf->ui32[1] != 0xddccbbaa) {
-        printf("Wrong fb->ui32[1]=%08x\n", fbuf->ui32[1]);
+    if (fbuf->ui32[offset + 1] != 0xddccbbaa) {
+        printf("Wrong fb->ui32[1]=%08x\n", fbuf->ui32[offset + 1]);
     }
-    if (fbuf->ui64[1] != 0x123456789abcdef0ull) {
-        printf("Wrong fb->ui64[1]=%016llx\n", fbuf->ui64[1]);
+    if (fbuf->ui64[offset/2 + 1] != 0xccccccccddddddddull) {
+        printf("Wrong fb->ui64[1]=%016llx\n", fbuf->ui64[offset/2 + 1]);
     }
+    for (int i = 0; i < 8; i++) {
+        printf("fb->ui32[%d]=%08x\n", i, fbuf->ui32[offset + i]);
+    }
+    for (int i = 0; i < 4; i++) {
+        printf("fb->ui64[%d]=%016lx\n", i, fbuf->ui64[offset/2 + i]);
+    }
+ 
+    printf("mmap(): check memcpy\n");
+    char tbuf[1024];
+    for (int i = 0; i < 1024; i++) {
+        tbuf[i] = (char)(i);
+    }
+    memcpy(&fbuf->i8[offset], tbuf, 1024);
+    for (int i = 0; i < 1024/8; i++) {
+        printf("fb->ui64[%d]=%016lx\n", i, fbuf->ui64[offset/8 + i]);
+    }
+
+#endif
     printf("mmap() tests finished\n");
     munmap(fbuf, FRAME_BUFFER_SIZE);
     close(fdev);
