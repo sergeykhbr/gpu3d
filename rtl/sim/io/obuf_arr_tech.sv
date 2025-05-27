@@ -28,8 +28,8 @@ module obuf_arr_tech #(
   generate 
     for (n = 0; n < width; n++) begin: obufx
       obuf_tech obx(
-         .o(i[n]),
-         .i(o[n])
+         .o(o[n]),
+         .i(i[n])
       );
     end
   endgenerate

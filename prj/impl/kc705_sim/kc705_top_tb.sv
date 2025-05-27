@@ -46,13 +46,21 @@ module kc705_top_tb;
     wire [11:0] io_gpio_in;
     reg [11:0] io_gpio_out;
     bit [11:0] io_gpio_dir;
-    // I2C
-    wire w_i2c_scl;
-    wire w_i2c_sda;
-    wire w_i2c_nreset;
-    wire w_bufo_i2c0_sda;
-    wire w_vipo_i2c0_sda;
-    wire w_vipo_i2c0_sda_dir;
+// I2C
+logic w_i2c_scl;
+wire w_i2c_sda;
+logic w_i2c_nreset;
+logic w_hdmi_clk;
+logic w_hdmi_hsync;
+logic w_hdmi_vsync;
+logic w_hdmi_de;
+logic [17:0] wb_hdmi_d;
+logic w_hdmi_spdif;
+logic w_hdmi_spdif_out;
+logic w_hdmi_int;
+logic w_bufo_i2c0_sda;
+logic w_vipo_i2c0_sda;
+logic w_vipo_i2c0_sda_dir;
     // JTAG
     logic i_jtag_trst;
     logic i_jtag_tck;
@@ -169,7 +177,16 @@ module kc705_top_tb;
     // I2C
     .o_i2c0_scl(w_i2c_scl),
     .io_i2c0_sda(w_i2c_sda),
-    .o_i2c0_nreset(w_i2c_nreset)
+    .o_i2c0_nreset(w_i2c_nreset),
+    // HDMI
+    .o_hdmi_clk(w_hdmi_clk),
+    .o_hdmi_hsync(w_hdmi_hsync),
+    .o_hdmi_vsync(w_hdmi_vsync),
+    .o_hdmi_de(w_hdmi_de),
+    .o_hdmi_d(wb_hdmi_d),
+    .o_hdmi_spdif(w_hdmi_spdif),
+    .i_hdmi_spdif_out(w_hdmi_spdif_out),
+    .i_hdmi_int(w_hdmi_int),
     // DDR signals:
     .o_ddr3_reset_n(o_ddr3_reset_n),
     .o_ddr3_ck_n(o_ddr3_ck_n),
