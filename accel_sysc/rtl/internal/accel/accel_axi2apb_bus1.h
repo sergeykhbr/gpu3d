@@ -16,14 +16,14 @@
 #pragma once
 
 #include <systemc.h>
-#include "types_amba.h"
-#include "types_pnp.h"
-#include "types_bus1.h"
-#include "axi_slv.h"
+#include "types_accel_bus1.h"
+#include "../ambalib/types_amba.h"
+#include "../ambalib/types_pnp.h"
+#include "../ambalib/axi_slv.h"
 
 namespace debugger {
 
-SC_MODULE(axi2apb_bus1) {
+SC_MODULE(accel_axi2apb_bus1) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
@@ -38,9 +38,9 @@ SC_MODULE(axi2apb_bus1) {
     void comb();
     void registers();
 
-    axi2apb_bus1(sc_module_name name,
-                 bool async_reset);
-    virtual ~axi2apb_bus1();
+    accel_axi2apb_bus1(sc_module_name name,
+                       bool async_reset);
+    virtual ~accel_axi2apb_bus1();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -52,7 +52,7 @@ SC_MODULE(axi2apb_bus1) {
     static const uint8_t State_access = 2;
     static const uint8_t State_out = 3;
 
-    struct axi2apb_bus1_registers {
+    struct accel_axi2apb_bus1_registers {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<CFG_BUS1_PSLV_LOG2_TOTAL>> selidx;
         sc_signal<bool> pvalid;
@@ -68,7 +68,7 @@ SC_MODULE(axi2apb_bus1) {
         sc_signal<sc_uint<8>> size;
     };
 
-    void axi2apb_bus1_r_reset(axi2apb_bus1_registers& iv) {
+    void accel_axi2apb_bus1_r_reset(accel_axi2apb_bus1_registers& iv) {
         iv.state = State_Idle;
         iv.selidx = 0;
         iv.pvalid = 0;
@@ -92,8 +92,8 @@ SC_MODULE(axi2apb_bus1) {
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_req_wstrb;
     sc_signal<bool> w_req_last;
     sc_signal<bool> w_req_ready;
-    axi2apb_bus1_registers v;
-    axi2apb_bus1_registers r;
+    accel_axi2apb_bus1_registers v;
+    accel_axi2apb_bus1_registers r;
 
     axi_slv *axi0;
 

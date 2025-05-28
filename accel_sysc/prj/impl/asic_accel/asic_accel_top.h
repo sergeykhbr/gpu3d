@@ -19,7 +19,7 @@
 #include "../../../rtl/internal/ambalib/types_amba.h"
 #include "../../../rtl/internal/ambalib/types_pnp.h"
 #include "../../../rtl/internal/ambalib/types_dma.h"
-#include "target_cfg.h"
+#include "target_accel_cfg.h"
 #include "../../../rtl/sim/io/ids_tech.h"
 #include "../../../rtl/sim/io/obuf_tech.h"
 #include "../../../rtl/sim/io/iobuf_tech.h"
@@ -32,7 +32,7 @@
 
 namespace debugger {
 
-SC_MODULE(asic_top) {
+SC_MODULE(asic_accel_top) {
  public:
     sc_in<bool> i_rst;                                      // Power-on system reset active HIGH
     // Differential clock (LVDS) positive/negaive signal.
@@ -65,10 +65,10 @@ SC_MODULE(asic_top) {
     sc_in<bool> i_hdmi_int;                                 // External interrupt from HDMI transmitter
 
 
-    asic_top(sc_module_name name,
-             bool async_reset,
-             int sim_uart_speedup_rate);
-    virtual ~asic_top();
+    asic_accel_top(sc_module_name name,
+                   bool async_reset,
+                   int sim_uart_speedup_rate);
+    virtual ~asic_accel_top();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 

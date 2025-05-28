@@ -20,18 +20,18 @@
 #include "../../common/vips/uart/vip_uart_top.h"
 #include "../../../rtl/sim/io/iobuf_tech.h"
 #include "../../common/vips/i2c/vip_i2c_s.h"
-#include "../asic/asic_top.h"
+#include "../asic_accel/asic_accel_top.h"
 #include "sv_func.h"
 
 namespace debugger {
 
-SC_MODULE(asic_top_tb) {
+SC_MODULE(asic_accel_top_tb) {
  public:
 
     void test();
 
-    asic_top_tb(sc_module_name name);
-    virtual ~asic_top_tb();
+    asic_accel_top_tb(sc_module_name name);
+    virtual ~asic_accel_top_tb();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -73,7 +73,7 @@ SC_MODULE(asic_top_tb) {
     vip_uart_top *uart1;
     iobuf_tech *iosda0;
     vip_i2c_s *i2c0;
-    asic_top *tt;
+    asic_accel_top *tt;
 
 };
 

@@ -14,12 +14,12 @@
 //  limitations under the License.
 // 
 
-#include "asic_top_tb.h"
+#include "asic_accel_top_tb.h"
 #include "api_core.h"
 
 namespace debugger {
 
-asic_top_tb::asic_top_tb(sc_module_name name)
+asic_accel_top_tb::asic_accel_top_tb(sc_module_name name)
     : sc_module(name) {
 
     clk0 = 0;
@@ -58,9 +58,9 @@ asic_top_tb::asic_top_tb(sc_module_name name)
     uart1->o_tx(w_uart1_rd);
     uart1->i_loopback_ena(w_uart1_loopback_ena);
 
-    tt = new asic_top("tt",
-                       CFG_ASYNC_RESET,
-                       sim_uart_speedup_rate);
+    tt = new asic_accel_top("tt",
+                             CFG_ASYNC_RESET,
+                             sim_uart_speedup_rate);
     tt->i_rst(w_rst);
     tt->i_sclk_p(w_sclk_p);
     tt->i_sclk_n(w_sclk_n);
@@ -89,7 +89,7 @@ asic_top_tb::asic_top_tb(sc_module_name name)
     sensitive << w_sclk_p.posedge_event();
 }
 
-asic_top_tb::~asic_top_tb() {
+asic_accel_top_tb::~asic_accel_top_tb() {
     if (clk0) {
         delete clk0;
     }
@@ -107,7 +107,7 @@ asic_top_tb::~asic_top_tb() {
     }
 }
 
-void asic_top_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void asic_accel_top_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
     }
 
@@ -128,7 +128,7 @@ void asic_top_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-void asic_top_tb::test() {
+void asic_accel_top_tb::test() {
     wb_clk_cnt = (wb_clk_cnt + 1);
     if (wb_clk_cnt < 10) {
         w_rst = 1;

@@ -14,14 +14,14 @@
 //  limitations under the License.
 // 
 
-#include "asic_top.h"
+#include "asic_accel_top.h"
 #include "api_core.h"
 
 namespace debugger {
 
-asic_top::asic_top(sc_module_name name,
-                   bool async_reset,
-                   int sim_uart_speedup_rate)
+asic_accel_top::asic_accel_top(sc_module_name name,
+                               bool async_reset,
+                               int sim_uart_speedup_rate)
     : sc_module(name),
     i_rst("i_rst"),
     i_sclk_p("i_sclk_p"),
@@ -197,7 +197,7 @@ asic_top::asic_top(sc_module_name name,
     soc0->i_pcie_dmai(pcie_dmai);
 }
 
-asic_top::~asic_top() {
+asic_accel_top::~asic_accel_top() {
     if (iclk0) {
         delete iclk0;
     }
@@ -245,7 +245,7 @@ asic_top::~asic_top() {
     }
 }
 
-void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void asic_accel_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_rst, i_rst.name());
         sc_trace(o_vcd, i_sclk_p, i_sclk_p.name());

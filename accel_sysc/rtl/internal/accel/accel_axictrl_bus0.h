@@ -16,14 +16,14 @@
 #pragma once
 
 #include <systemc.h>
-#include "types_pnp.h"
-#include "types_amba.h"
-#include "types_bus0.h"
-#include "axi_slv.h"
+#include "types_accel_bus0.h"
+#include "../ambalib/types_pnp.h"
+#include "../ambalib/types_amba.h"
+#include "../ambalib/axi_slv.h"
 
 namespace debugger {
 
-SC_MODULE(axictrl_bus0) {
+SC_MODULE(accel_axictrl_bus0) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
@@ -37,16 +37,16 @@ SC_MODULE(axictrl_bus0) {
     void comb();
     void registers();
 
-    axictrl_bus0(sc_module_name name,
-                 bool async_reset);
-    virtual ~axictrl_bus0();
+    accel_axictrl_bus0(sc_module_name name,
+                       bool async_reset);
+    virtual ~accel_axictrl_bus0();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
 
-    struct axictrl_bus0_registers {
+    struct accel_axictrl_bus0_registers {
         sc_signal<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>> r_midx;
         sc_signal<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>> r_sidx;
         sc_signal<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>> w_midx;
@@ -55,7 +55,7 @@ SC_MODULE(axictrl_bus0) {
         sc_signal<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>> b_sidx;
     };
 
-    void axictrl_bus0_r_reset(axictrl_bus0_registers& iv) {
+    void accel_axictrl_bus0_r_reset(accel_axictrl_bus0_registers& iv) {
         iv.r_midx = CFG_BUS0_XMST_TOTAL;
         iv.r_sidx = CFG_BUS0_XSLV_TOTAL;
         iv.w_midx = CFG_BUS0_XMST_TOTAL;
@@ -78,8 +78,8 @@ SC_MODULE(axictrl_bus0) {
     sc_signal<bool> w_def_resp_valid;
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_def_resp_rdata;
     sc_signal<bool> w_def_resp_err;
-    axictrl_bus0_registers v;
-    axictrl_bus0_registers r;
+    accel_axictrl_bus0_registers v;
+    accel_axictrl_bus0_registers r;
 
     axi_slv *xdef0;
 

@@ -58,10 +58,10 @@ begin: comb_proc
         v.Cr = 8'd128;
     end else if (i_x < 11'd340) begin
         // Black
-        v.Y0 = 8'd219;
-        v.Y1 = 8'd219;
-        v.Cb = 8'd16;
-        v.Cr = 8'd16;
+        v.Y0 = 8'd16;
+        v.Y1 = 8'd16;
+        v.Cb = 8'd128;
+        v.Cr = 8'd128;
     end else if (i_x < 11'd510) begin
         // Red
         v.Y0 = 8'd82;
@@ -73,7 +73,7 @@ begin: comb_proc
         v.Y0 = 8'd145;
         v.Y1 = 8'd145;
         v.Cb = 8'd54;
-        v.Cr = 8'd234;
+        v.Cr = 8'd34;
     end else if (i_x < 11'd850) begin
         // Blue
         v.Y0 = 8'd41;
@@ -88,23 +88,23 @@ begin: comb_proc
         v.Cr = 8'd146;
     end else if (i_x < 11'd1190) begin
         // Cyan
-        v.Y0 = 8'd105;
-        v.Y1 = 8'd105;
-        v.Cb = 8'd212;
-        v.Cr = 8'd234;
-    end else begin
-        // Magneta
         v.Y0 = 8'd170;
         v.Y1 = 8'd170;
         v.Cb = 8'd166;
         v.Cr = 8'd16;
+    end else begin
+        // Magneta
+        v.Y0 = 8'd106;
+        v.Y1 = 8'd106;
+        v.Cb = 8'd102;
+        v.Cr = 8'd222;
     end
 
     // See style 1 output:
     if (r.pix_x0 == 1'b0) begin
-        v.YCbCr = {r.Y1, r.Cb};
+        v.YCbCr = {r.Cb, r.Y1};
     end else begin
-        v.YCbCr = {r.Y1, r.Cr};
+        v.YCbCr = {r.Cr, r.Y1};
     end
 
     if ((~async_reset) && (i_nrst == 1'b0)) begin

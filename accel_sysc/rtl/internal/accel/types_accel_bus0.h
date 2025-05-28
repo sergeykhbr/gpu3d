@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "types_amba.h"
+#include "../ambalib/types_amba.h"
 
 namespace debugger {
 

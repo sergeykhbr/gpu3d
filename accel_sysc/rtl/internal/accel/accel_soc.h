@@ -16,15 +16,15 @@
 #pragma once
 
 #include <systemc.h>
+#include "types_accel_bus0.h"
+#include "types_accel_bus1.h"
 #include "../ambalib/types_amba.h"
 #include "../ambalib/types_pnp.h"
 #include "../ambalib/types_dma.h"
-#include "../ambalib/types_bus0.h"
-#include "../ambalib/types_bus1.h"
 #include "../riverlib/river_cfg.h"
-#include "../../../prj/impl/asic/target_cfg.h"
-#include "../ambalib/axictrl_bus0.h"
-#include "../ambalib/axi2apb_bus1.h"
+#include "../../../prj/impl/asic_accel/target_accel_cfg.h"
+#include "accel_axictrl_bus0.h"
+#include "accel_axi2apb_bus1.h"
 #include "../misclib/axi_rom.h"
 #include "../misclib/axi_sram.h"
 #include "../misclib/clint.h"
@@ -155,8 +155,8 @@ SC_MODULE(accel_soc) {
     sc_signal<sc_uint<64>> w_dbg_payload;
     sc_signal<bool> w_irq_i2c0;
 
-    axictrl_bus0 *bus0;
-    axi2apb_bus1 *bus1;
+    accel_axictrl_bus0 *bus0;
+    accel_axi2apb_bus1 *bus1;
     axi_rom<CFG_BOOTROM_LOG2_SIZE> *rom0;
     axi_sram<CFG_SRAM_LOG2_SIZE> *sram0;
     clint<CFG_CPU_MAX> *clint0;

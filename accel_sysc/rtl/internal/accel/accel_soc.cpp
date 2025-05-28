@@ -98,8 +98,8 @@ accel_soc::accel_soc(sc_module_name name,
     group0 = 0;
     u_cdc_ddr0 = 0;
 
-    bus0 = new axictrl_bus0("bus0",
-                             async_reset);
+    bus0 = new accel_axictrl_bus0("bus0",
+                                   async_reset);
     bus0->i_clk(i_sys_clk);
     bus0->i_nrst(i_sys_nrst);
     bus0->o_cfg(dev_pnp[SOC_PNP_XCTRL0]);
@@ -109,8 +109,8 @@ accel_soc::accel_soc(sc_module_name name,
     bus0->o_xslvi(axisi);
     bus0->o_mapinfo(bus0_mapinfo);
 
-    bus1 = new axi2apb_bus1("bus1",
-                             async_reset);
+    bus1 = new accel_axi2apb_bus1("bus1",
+                                   async_reset);
     bus1->i_clk(i_sys_clk);
     bus1->i_nrst(i_sys_nrst);
     bus1->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PBRIDGE]);
@@ -559,6 +559,9 @@ void accel_soc::comb() {
     dev_pnp[SOC_PNP_DDR_APB] = i_ddr_pdevcfg.read();
     o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
     apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo.read();
+    // SD-controlled disabled:
+    dev_pnp[SOC_PNP_SDCTRL_REG] = dev_config_none;
+    dev_pnp[SOC_PNP_SDCTRL_MEM] = dev_config_none;
 }
 
 }  // namespace debugger

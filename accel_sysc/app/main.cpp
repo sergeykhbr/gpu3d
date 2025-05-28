@@ -15,7 +15,7 @@
 // 
 
 #include <systemc.h>
-#include "../prj/impl/asic_sim/asic_top_tb.h"
+#include "../prj/impl/asic_accel_sim/asic_accel_top_tb.h"
 #include "../prj/tb/pcie_dma_tb.h"
 #include "../prj/tb/apb_i2c_tb.h"
 
@@ -30,7 +30,7 @@ int sc_main(int argc, char *argv[]) {
 #elif 0
     pcie_dma_tb *tb = new pcie_dma_tb("tb");
 #else
-    asic_top_tb *tb = new asic_top_tb("tb");
+    asic_accel_top_tb *tb = new asic_accel_top_tb("tb");
 #endif
     tb->generateVCD(0, vcd_);
 

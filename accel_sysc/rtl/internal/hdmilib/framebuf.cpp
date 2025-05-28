@@ -99,10 +99,10 @@ void framebuf::comb() {
         v.Cr = 128;
     } else if (i_x.read() < 340) {
         // Black
-        v.Y0 = 219;
-        v.Y1 = 219;
-        v.Cb = 16;
-        v.Cr = 16;
+        v.Y0 = 16;
+        v.Y1 = 16;
+        v.Cb = 128;
+        v.Cr = 128;
     } else if (i_x.read() < 510) {
         // Red
         v.Y0 = 82;
@@ -114,7 +114,7 @@ void framebuf::comb() {
         v.Y0 = 145;
         v.Y1 = 145;
         v.Cb = 54;
-        v.Cr = 234;
+        v.Cr = 34;
     } else if (i_x.read() < 850) {
         // Blue
         v.Y0 = 41;
@@ -129,23 +129,23 @@ void framebuf::comb() {
         v.Cr = 146;
     } else if (i_x.read() < 1190) {
         // Cyan
-        v.Y0 = 105;
-        v.Y1 = 105;
-        v.Cb = 212;
-        v.Cr = 234;
-    } else {
-        // Magneta
         v.Y0 = 170;
         v.Y1 = 170;
         v.Cb = 166;
         v.Cr = 16;
+    } else {
+        // Magneta
+        v.Y0 = 106;
+        v.Y1 = 106;
+        v.Cb = 102;
+        v.Cr = 222;
     }
 
     // See style 1 output:
     if (r.pix_x0.read() == 0) {
-        v.YCbCr = (r.Y1.read(), r.Cb.read());
+        v.YCbCr = (r.Cb.read(), r.Y1.read());
     } else {
-        v.YCbCr = (r.Y1.read(), r.Cr.read());
+        v.YCbCr = (r.Cr.read(), r.Y1.read());
     }
 
     if ((!async_reset_) && (i_nrst.read() == 0)) {

@@ -14,13 +14,13 @@
 //  limitations under the License.
 // 
 
-#include "axictrl_bus0.h"
+#include "accel_axictrl_bus0.h"
 #include "api_core.h"
 
 namespace debugger {
 
-axictrl_bus0::axictrl_bus0(sc_module_name name,
-                           bool async_reset)
+accel_axictrl_bus0::accel_axictrl_bus0(sc_module_name name,
+                                       bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -90,13 +90,13 @@ axictrl_bus0::axictrl_bus0(sc_module_name name,
     sensitive << i_clk.pos();
 }
 
-axictrl_bus0::~axictrl_bus0() {
+accel_axictrl_bus0::~accel_axictrl_bus0() {
     if (xdef0) {
         delete xdef0;
     }
 }
 
-void axictrl_bus0::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void accel_axictrl_bus0::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, r.r_midx, pn + ".r.r_midx");
@@ -112,7 +112,7 @@ void axictrl_bus0::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-void axictrl_bus0::comb() {
+void accel_axictrl_bus0::comb() {
     axi4_master_in_type vmsti[(CFG_BUS0_XMST_TOTAL + 1)];
     axi4_master_out_type vmsto[(CFG_BUS0_XMST_TOTAL + 1)];
     axi4_slave_in_type vslvi[(CFG_BUS0_XSLV_TOTAL + 1)];
@@ -305,7 +305,7 @@ void axictrl_bus0::comb() {
     vslvi[i_b_sidx].b_ready = vmsto[i_b_midx].b_ready;
 
     if ((!async_reset_) && (i_nrst.read() == 0)) {
-        axictrl_bus0_r_reset(v);
+        accel_axictrl_bus0_r_reset(v);
     }
 
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
@@ -319,9 +319,9 @@ void axictrl_bus0::comb() {
     wb_def_mapinfo = vb_def_mapinfo;
 }
 
-void axictrl_bus0::registers() {
+void accel_axictrl_bus0::registers() {
     if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
-        axictrl_bus0_r_reset(r);
+        accel_axictrl_bus0_r_reset(r);
     } else {
         r = v;
     }

@@ -86,26 +86,6 @@ static const uint8_t PNP_CFG_TYPE_SLAVE = 0x2;
 // @details Firmware uses this value instead of sizeof(slave_config_type).
 static const uint8_t PNP_CFG_DEV_DESCR_BYTES = 0x10;
 
-// Plug-and-Play device descriptors array connected to pnp module:
-static const int SOC_PNP_XCTRL0 = 0;
-static const int SOC_PNP_GROUP0 = 1;
-static const int SOC_PNP_BOOTROM = 2;
-static const int SOC_PNP_SRAM = 3;
-static const int SOC_PNP_DDR_AXI = 4;
-static const int SOC_PNP_DDR_APB = 5;
-static const int SOC_PNP_PRCI = 6;
-static const int SOC_PNP_GPIO = 7;
-static const int SOC_PNP_CLINT = 8;
-static const int SOC_PNP_PLIC = 9;
-static const int SOC_PNP_PNP = 10;
-static const int SOC_PNP_PBRIDGE0 = 11;
-static const int SOC_PNP_DMI = 12;
-static const int SOC_PNP_UART1 = 13;
-static const int SOC_PNP_I2C = 14;
-static const int SOC_PNP_PCIE_DMA = 15;
-static const int SOC_PNP_PCIE_APB = 16;
-static const int SOC_PNP_TOTAL = 17;
-
 // @brief   Plug-n-play descriptor structure for connected device.
 // @details Each device must generates this datatype output that
 //          is connected directly to the 'pnp' slave module on system bus.
@@ -202,6 +182,28 @@ class dev_config_type {
 
 // @brief Default config value for empty slot.
 static const dev_config_type dev_config_none;
+
+// Plug-and-Play device descriptors array connected to pnp module:
+static const int SOC_PNP_XCTRL0 = 0;
+static const int SOC_PNP_GROUP0 = 1;
+static const int SOC_PNP_BOOTROM = 2;
+static const int SOC_PNP_SRAM = 3;
+static const int SOC_PNP_DDR_AXI = 4;
+static const int SOC_PNP_DDR_APB = 5;
+static const int SOC_PNP_PRCI = 6;
+static const int SOC_PNP_GPIO = 7;
+static const int SOC_PNP_CLINT = 8;
+static const int SOC_PNP_PLIC = 9;
+static const int SOC_PNP_PNP = 10;
+static const int SOC_PNP_PBRIDGE0 = 11;
+static const int SOC_PNP_DMI = 12;
+static const int SOC_PNP_UART1 = 13;
+static const int SOC_PNP_SDCTRL_REG = 14;
+static const int SOC_PNP_SDCTRL_MEM = 15;
+static const int SOC_PNP_I2C = 16;
+static const int SOC_PNP_PCIE_DMA = 17;
+static const int SOC_PNP_PCIE_APB = 18;
+static const int SOC_PNP_TOTAL = 19;
 
 typedef sc_vector<sc_signal<dev_config_type>> soc_pnp_vector;
 
