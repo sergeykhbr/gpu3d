@@ -51,6 +51,15 @@ void write_hdmi_main_reg(uint32_t offset, uint32_t byte_cnt, uint32_t val) {
     i2c_wait();
 }
 
+void check_reg(uint32_t offset, uint32_t expected) {
+    uint32_t rd = read_hdmi_main_reg(offset, 1);
+    printf_uart("%02x %02x exp:%02x", offset, rd, expected);
+    if (rd != expected) {
+        printf_uart("%s", "!!!! error !!!!");
+   }
+   printf_uart("%s", "\r\n");
+}
+
 void setup_hdmi() {
     i2c_map *i2c = (i2c_map *)ADDR_BUS0_APB_I2C;
     uint32_t hw_revision = 0;
@@ -108,7 +117,7 @@ void setup_hdmi() {
     // 0x16[5:4] Input Color Depth: 00=invalid; 01=10bit; 10=12bit; 11=8bit
     // 0x16[3:2] Video Input Style: 00=invalid; 01=style2; 10=style1; 11= style3
     // 0x16[1]   DDR input Edge: 0=falling edge; 1=rising edge
-    write_hdmi_main_reg(0x16, 1, 0xB8);  // 8bit, style 1 (Cb.Y/Cr.Y)
+    write_hdmi_main_reg(0x16, 1, 0x38);  // 8bit, style 1 (Cb.Y/Cr.Y)
     // 0x17[6] VSync Polarity: 0=high; 1=low
     // 0x17[5] HSync Polarity: 0=high; 1=low
     // 0x17[2] 4:2:2 to 4:4:4 interpolation: 0=zero order; 1=first order
@@ -143,6 +152,49 @@ void setup_hdmi() {
     // 0x97[6] BKSV Interrupt Flag (Wait for value to be 0b1 then write 0b1)
     // 0x97[7] DDC Controller Error Irq: 0=no irq detected; 1=irq detected
     write_hdmi_main_reg(0x97, 1, 0x00);
+
+
+/*    printf_uart("%s", "HDMI Register verification:\r\n");
+    check_reg(0x15, 0x01);
+    check_reg(0x16, 0x38);
+    check_reg(0x41, 0x10);
+    check_reg(0x48, 0x08);
+    check_reg(0x55, 0x00);
+    check_reg(0x56, 0x28);
+    check_reg(0x98, 0x03);
+    check_reg(0x9A, 0xe0);
+    check_reg(0x9C, 0x30);
+    check_reg(0x9D, 0x61);
+    check_reg(0xA2, 0xA4);
+    check_reg(0xA3, 0xA4);
+    check_reg(0xAF, 0x06);
+    check_reg(0xBA, 0x60);
+    check_reg(0xE0, 0xD0);
+    check_reg(0xF9, 0x00);
+    check_reg(0x18, 0xAC);
+    check_reg(0x19, 0x53);
+    check_reg(0x1A, 0x08);
+    check_reg(0x1B, 0x00);
+    check_reg(0x1C, 0x00);
+    check_reg(0x1D, 0x00);
+    check_reg(0x1E, 0x19);
+    check_reg(0x1F, 0xD6);
+    check_reg(0x20, 0x1C);
+    check_reg(0x21, 0x56);
+    check_reg(0x22, 0x08);
+    check_reg(0x23, 0x00);
+    check_reg(0x24, 0x1E);
+    check_reg(0x25, 0x88);
+    check_reg(0x26, 0x02);
+    check_reg(0x27, 0x91);
+    check_reg(0x28, 0x1F);
+    check_reg(0x29, 0xFF);
+    check_reg(0x2A, 0x08);
+    check_reg(0x2B, 0x00);
+    check_reg(0x2C, 0x0E);
+    check_reg(0x2D, 0x85);
+    check_reg(0x2E, 0x18);
+    check_reg(0x2F, 0xBE);*/
 
 /*
 Set up the video output mode
