@@ -122,9 +122,10 @@ logic ib_hdmi_int;
   logic             w_dbg_nrst;
   logic             w_pcie_nrst;
   logic             w_dmreset;
-  logic             w_sys_clk;
-  logic             w_ddr_clk;
-  logic             w_pll_lock;
+  logic w_sys_clk;
+  logic w_ddr_clk;
+  logic w_ddr_phy_clk;
+  logic w_pll_lock;
 
   // DDR interface
   mapinfo_type ddr_xmapinfo;
@@ -274,6 +275,7 @@ ibuf_tech ihdmiint (
     .i_clk_tcxo(ib_clk_tcxo),
     .o_clk_sys(w_sys_clk),
     .o_clk_ddr(w_ddr_clk),
+    .o_clk_ddr_phy(w_ddr_phy_clk),   // 800 (4:1 to ddr for UberDDR3). It is possible 400:100
     .o_locked(w_pll_lock)
   );  
 
@@ -373,6 +375,9 @@ ddr3_tech #(
     .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),  // "FAST"-for simulation true; "OFF"
     .SIMULATION(SIMULATION)
 ) ddr0 (
+    .i_ctrl_clk(w_ddr_clk),        // CONTROLLER_CLK_PERIOD
+    .i_phy_clk(w_ddr_phy_clk),     // DDR3_CLK_PERIOD must be 4:1 CONTROLLER_CLK_PERIOD
+    .i_ref_clk200(ib_clk_tcxo),    // 200MHz
      // AXI memory access (ddr clock)
     .i_xslv_nrst(w_sys_nrst),
     .i_xslv_clk(ib_clk_tcxo),

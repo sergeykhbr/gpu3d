@@ -22,9 +22,9 @@ module ddr3_tech
     parameter SIMULATION            = "FALSE"
 )
 (
-    input i_ctrl_clk,      // UberDDR3: CONTROLLER_CLK_PERIOD
-    input i_phy_clk,       // UberDDR3: DDR3_CLK_PERIOD must be 4:1 CONTROLLER_CLK_PERIOD
-    input i_ref_clk200,    // UberDDR3: 200MHz
+    input i_ctrl_clk,      // CONTROLLER_CLK_PERIOD
+    input i_phy_clk,       // DDR3_CLK_PERIOD must be 4:1 CONTROLLER_CLK_PERIOD
+    input i_ref_clk200,    // 200MHz
     input i_apb_nrst,
     input i_apb_clk,
     input i_xslv_nrst,
@@ -68,6 +68,7 @@ bit w_ddr_mmcm_locked;
 bit w_ddr_app_sr_active;
 bit w_ddr_app_ref_ack;
 bit w_ddr_app_zq_ack;
+bit w_ddr_user_self_refresh;
 bit w_ddr_init_calib_complete;
 bit [11:0] wb_ddr_device_temp;
 bit w_ui_rst;
@@ -91,41 +92,37 @@ bit w_ui_rst;
 
   assign o_ui_nrst = ~w_ui_rst;
   assign o_init_calib_done = w_ddr_init_calib_complete;
+  // User enabled self-refresh
+  assign w_ddr_user_self_refresh = 1'b0;
 
-
-  mig_ddr3 #(
-    .SYSCLK_TYPE(SYSCLK_TYPE), // "NO_BUFFER,"DIFFERENTIAL"
-    .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),  // "FAST"-for simulation true; "OFF"
-    .SIMULATION(SIMULATION)
-  ) mig0 (
-    .ddr3_dq(io_ddr3_dq),
-    .ddr3_dqs_n(io_ddr3_dqs_n),
-    .ddr3_dqs_p(io_ddr3_dqs_p),
-    .ddr3_addr(o_ddr3_addr),
-    .ddr3_ba(o_ddr3_ba),
-    .ddr3_ras_n(o_ddr3_ras_n),
-    .ddr3_cas_n(o_ddr3_cas_n),
-    .ddr3_we_n(o_ddr3_we_n),
-    .ddr3_reset_n(o_ddr3_reset_n),
-    .ddr3_ck_p(o_ddr3_ck_p),
-    .ddr3_ck_n(o_ddr3_ck_n),
-    .ddr3_cke(o_ddr3_cke),
-    .ddr3_cs_n(o_ddr3_cs_n),
-    .ddr3_dm(o_ddr3_dm),
-    .ddr3_odt(o_ddr3_odt),
-    .sys_clk_p(1'b0),
-    .sys_clk_n(1'b0),
-    .sys_clk_i(i_xslv_clk),
-    .ui_clk(o_ui_clk),
-    .ui_clk_sync_rst(w_ui_rst),
-    .mmcm_locked(w_ddr_mmcm_locked),
-    .aresetn(i_xslv_nrst),
-    .app_sr_req(1'b0),
-    .app_ref_req(1'b0),
-    .app_zq_req(1'b0),
-    .app_sr_active(w_ddr_app_sr_active),
-    .app_ref_ack(w_ddr_app_ref_ack),
-    .app_zq_ack(w_ddr_app_zq_ack),
+ddr3_top_axi #(
+    .CONTROLLER_CLK_PERIOD(5_000), //ps, clock period of the controller interface
+    .DDR3_CLK_PERIOD(1_250), //ps, clock period of the DDR3 RAM device (must be 1/4 of the CONTROLLER_CLK_PERIOD) 
+    .ROW_BITS(14),   //width of row address
+    .COL_BITS(10), //width of column address
+    .BA_BITS(3), //width of bank address
+    .BYTE_LANES(1), //number of byte lanes of DDR3 RAM (axiw_data=64-bits)
+    .AXI_ID_WIDTH(1), // The AXI id width used for R&W, an int between 1-16
+    .WB2_ADDR_BITS(7), //width of 2nd wishbone address bus 
+    .WB2_DATA_BITS(32), //width of 2nd wishbone data bus 
+    .MICRON_SIM(1), //!!! FIXME !!!! enable faster simulation for micron ddr3 model (shorten POWER_ON_RESET_HIGH and INITIAL_CKE_LOW)
+    .ODELAY_SUPPORTED(1), //set to 1 when ODELAYE2 is supported
+    .SECOND_WISHBONE(0), //set to 1 if 2nd wishbone for debugging is needed 
+    .WB_ERROR(0), // set to 1 to support Wishbone error (asserts at ECC double bit error)
+    .BIST_MODE(0), // 0 = No BIST, 1 = run through all address space ONCE , 2 = run through all address space for every test (burst w/r, random w/r, alternating r/w)
+    .ECC_ENABLE(0), // set to 1 or 2 to add ECC (1 = Side-band ECC per burst, 2 = Side-band ECC per 8 bursts , 3 = Inline ECC ) 
+    .DIC(2'b00), //Output Driver Impedance Control (2'b00 = RZQ/6, 2'b01 = RZQ/7, RZQ = 240ohms) (only change when you know what you are doing)
+    .RTT_NOM(3'b011), //RTT Nominal (3'b000 = disabled, 3'b001 = RZQ/4, 3'b010 = RZQ/2 , 3'b011 = RZQ/6, RZQ = 240ohms)  (only change when you know what you are doing)
+    .SELF_REFRESH(2'b00) // 0 = use i_user_self_refresh input, 1 = Self-refresh mode is enabled after 64 controller clock cycles of no requests, 2 = 128 cycles, 3 = 256 cycles
+) (
+    .i_controller_clk(i_ctrl_clk), // CONTROLLER_CLK_PERIOD
+    .i_ddr3_clk(i_phy_clk),       // DDR3_CLK_PERIOD
+    .i_ref_clk(i_ref_clk200),        // 200MHz
+    .i_ddr3_clk_90(0), //required only when ODELAY_SUPPORTED is zero
+    .i_rst_n(i_xslv_nrst),
+    // AXI write address channel signals
+    .s_axi_awvalid(i_xslvi.aw_valid),
+    .s_axi_awready(o_xslvo.aw_ready),
     .s_axi_awid(i_xslvi.aw_id),
     .s_axi_awaddr(i_xslvi.aw_bits.addr[29:0]),
     .s_axi_awlen(i_xslvi.aw_bits.len),
@@ -135,17 +132,20 @@ bit w_ui_rst;
     .s_axi_awcache(i_xslvi.aw_bits.cache),
     .s_axi_awprot(i_xslvi.aw_bits.prot),
     .s_axi_awqos(i_xslvi.aw_bits.qos),
-    .s_axi_awvalid(i_xslvi.aw_valid),
-    .s_axi_awready(o_xslvo.aw_ready),
+    // AXI write data channel signals
+    .s_axi_wvalid(i_xslvi.w_valid),
+    .s_axi_wready(o_xslvo.w_ready),
     .s_axi_wdata(i_xslvi.w_data),
     .s_axi_wstrb(i_xslvi.w_strb),
     .s_axi_wlast(i_xslvi.w_last),
-    .s_axi_wvalid(i_xslvi.w_valid),
-    .s_axi_wready(o_xslvo.w_ready),
+    // AXI write response channel signals
+    .s_axi_bvalid(o_xslvo.b_valid),
     .s_axi_bready(i_xslvi.b_ready),
     .s_axi_bid(o_xslvo.b_id),
     .s_axi_bresp(o_xslvo.b_resp),
-    .s_axi_bvalid(o_xslvo.b_valid),
+    // AXI read address channel signals
+    .s_axi_arvalid(i_xslvi.ar_valid),
+    .s_axi_arready(o_xslvo.ar_ready),
     .s_axi_arid(i_xslvi.ar_id),
     .s_axi_araddr(i_xslvi.ar_bits.addr[29:0]),
     .s_axi_arlen(i_xslvi.ar_bits.len),
@@ -155,18 +155,37 @@ bit w_ui_rst;
     .s_axi_arcache(i_xslvi.ar_bits.cache),
     .s_axi_arprot(i_xslvi.ar_bits.prot),
     .s_axi_arqos(i_xslvi.ar_bits.qos),
-    .s_axi_arvalid(i_xslvi.ar_valid),
-    .s_axi_arready(o_xslvo.ar_ready),
+    // AXI read data channel signals
+    .s_axi_rvalid(o_xslvo.r_valid),
     .s_axi_rready(i_xslvi.r_ready),
     .s_axi_rid(o_xslvo.r_id),
     .s_axi_rdata(o_xslvo.r_data),
-    .s_axi_rresp(o_xslvo.r_resp),
     .s_axi_rlast(o_xslvo.r_last),
-    .s_axi_rvalid(o_xslvo.r_valid),
-    .init_calib_complete(w_ddr_init_calib_complete),
-    .device_temp(wb_ddr_device_temp),
-    .sys_rst(i_xslv_nrst)  // active LOW. Connected to IODELAY
-  );
+    .s_axi_rresp(o_xslvo.r_resp),
+    // DDR3 I/O Interface
+    .o_ddr3_clk_p(o_ddr3_ck_p),
+    .o_ddr3_clk_n(o_ddr3_ck_n),
+    .o_ddr3_reset_n(o_ddr3_reset_n),
+    .o_ddr3_cke(o_ddr3_cke),
+    .o_ddr3_cs_n(o_ddr3_cs_n),
+    .o_ddr3_ras_n(o_ddr3_ras_n),
+    .o_ddr3_cas_n(o_ddr3_cas_n),
+    .o_ddr3_we_n(o_ddr3_we_n),
+    .o_ddr3_addr(o_ddr3_addr),
+    .o_ddr3_ba_addr(o_ddr3_ba),
+    .io_ddr3_dq(io_ddr3_dq),
+    .io_ddr3_dqs(io_ddr3_dqs_p),
+    .io_ddr3_dqs_n(io_ddr3_dqs_n),
+    .o_ddr3_dm(o_ddr3_dm),
+    .o_ddr3_odt(o_ddr3_odt),
+    // Done Calibration pin
+    .o_calib_complete(w_ddr_init_calib_complete),
+    // Debug outputs
+    .o_debug1(),
+    // User enabled self-refresh
+    .i_user_self_refresh(w_ddr_user_self_refresh)
+);
+
 
   // TODO: fix me with registers
   assign o_xslvo.r_user = '0;

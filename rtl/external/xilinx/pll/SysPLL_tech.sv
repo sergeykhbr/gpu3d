@@ -18,6 +18,7 @@ module SysPLL_tech
   input         i_clk_tcxo,
   output        o_clk_sys,       // 40 MHz
   output        o_clk_ddr,       // 200
+  output        o_clk_ddr_phy,   // 800 (4:1 to ddr for UberDDR3)
   output        o_locked
  );
   // Input buffering
@@ -39,7 +40,7 @@ wire clk_in2_clk_wiz_0;
 
   wire        w_clk_sys_unbuf;
   wire        w_clk_ddr_unbuf;
-  wire        clkout2_unused;
+  wire        w_clk_ddr_phy_unbuf;
   wire        clkout3_unused;
   wire        clkout4_unused;
   wire        clk_out6_clk_wiz_0;
@@ -68,18 +69,24 @@ wire clk_in2_clk_wiz_0;
     .COMPENSATION         ("ZHOLD"),
     .STARTUP_WAIT         ("FALSE"),
     .DIVCLK_DIVIDE        (1),
-    .CLKFBOUT_MULT_F      (5.000),
+    .CLKFBOUT_MULT_F      (4.000),
     .CLKFBOUT_PHASE       (0.000),
     .CLKFBOUT_USE_FINE_PS ("FALSE"),
-    .CLKOUT0_DIVIDE_F     (25.000),    // sys = 40 MHz
+    .CLKOUT0_DIVIDE_F     (20.000),    // sys = 40 MHz
     .CLKOUT0_PHASE        (0.000),
     .CLKOUT0_DUTY_CYCLE   (0.500),
     .CLKOUT0_USE_FINE_PS  ("FALSE"),
-    .CLKOUT1_DIVIDE       (5),         // ddr = 200 MHz
+    .CLKOUT1_DIVIDE       (4),         // ddr = 200 MHz
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
-    .CLKIN1_PERIOD        (5.000))
+    .CLKIN1_PERIOD        (5.000),
+    .CLKOUT2_DIVIDE       (1),         // ddr_phy = 800 MHz
+    .CLKOUT2_PHASE        (0.000),
+    .CLKOUT2_DUTY_CYCLE   (0.500),
+    .CLKOUT2_USE_FINE_PS  ("FALSE"),
+    .CLKIN2_PERIOD        (5.000))
+
   mmcm_adv_inst
     // Output clocks
    (
@@ -90,7 +97,7 @@ wire clk_in2_clk_wiz_0;
     .CLKOUT1             (w_clk_ddr_unbuf),
     .CLKOUT1B            (clkout1b_unused),
     .CLKOUT2             (clkout2_unused),
-    .CLKOUT2B            (clkout2b_unused),
+    .CLKOUT2B            (w_clk_ddr_phy_unbuf),
     .CLKOUT3             (clkout3_unused),
     .CLKOUT3B            (clkout3b_unused),
     .CLKOUT4             (clkout4_unused),
@@ -145,6 +152,9 @@ wire clk_in2_clk_wiz_0;
    (.O   (o_clk_ddr),
     .I   (w_clk_ddr_unbuf));
 
+  BUFG clkout3_buf
+   (.O   (o_clk_ddr_phy),
+    .I   (w_clk_ddr_phy_unbuf));
 
 
 endmodule
