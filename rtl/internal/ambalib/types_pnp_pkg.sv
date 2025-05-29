@@ -83,26 +83,6 @@ localparam bit [1:0] PNP_CFG_TYPE_SLAVE = 2'h2;
 // @details Firmware uses this value instead of sizeof(slave_config_type).
 localparam bit [7:0] PNP_CFG_DEV_DESCR_BYTES = 8'h10;
 
-// Plug-and-Play device descriptors array connected to pnp module:
-localparam int SOC_PNP_XCTRL0 = 0;
-localparam int SOC_PNP_GROUP0 = 1;
-localparam int SOC_PNP_BOOTROM = 2;
-localparam int SOC_PNP_SRAM = 3;
-localparam int SOC_PNP_DDR_AXI = 4;
-localparam int SOC_PNP_DDR_APB = 5;
-localparam int SOC_PNP_PRCI = 6;
-localparam int SOC_PNP_GPIO = 7;
-localparam int SOC_PNP_CLINT = 8;
-localparam int SOC_PNP_PLIC = 9;
-localparam int SOC_PNP_PNP = 10;
-localparam int SOC_PNP_PBRIDGE0 = 11;
-localparam int SOC_PNP_DMI = 12;
-localparam int SOC_PNP_UART1 = 13;
-localparam int SOC_PNP_I2C = 14;
-localparam int SOC_PNP_PCIE_DMA = 15;
-localparam int SOC_PNP_PCIE_APB = 16;
-localparam int SOC_PNP_TOTAL = 17;
-
 // @brief   Plug-n-play descriptor structure for connected device.
 // @details Each device must generates this datatype output that
 //          is connected directly to the 'pnp' slave module on system bus.
@@ -130,6 +110,28 @@ const dev_config_type dev_config_none = '{
     VENDOR_GNSSSENSOR,                  // vid
     SLV_DID_EMPTY                       // did
 };
+
+// Plug-and-Play device descriptors array connected to pnp module:
+localparam int SOC_PNP_XCTRL0 = 0;
+localparam int SOC_PNP_GROUP0 = 1;
+localparam int SOC_PNP_BOOTROM = 2;
+localparam int SOC_PNP_SRAM = 3;
+localparam int SOC_PNP_DDR_AXI = 4;
+localparam int SOC_PNP_DDR_APB = 5;
+localparam int SOC_PNP_PRCI = 6;
+localparam int SOC_PNP_GPIO = 7;
+localparam int SOC_PNP_CLINT = 8;
+localparam int SOC_PNP_PLIC = 9;
+localparam int SOC_PNP_PNP = 10;
+localparam int SOC_PNP_PBRIDGE0 = 11;
+localparam int SOC_PNP_DMI = 12;
+localparam int SOC_PNP_UART1 = 13;
+localparam int SOC_PNP_SDCTRL_REG = 14;
+localparam int SOC_PNP_SDCTRL_MEM = 15;
+localparam int SOC_PNP_I2C = 16;
+localparam int SOC_PNP_PCIE_DMA = 17;
+localparam int SOC_PNP_PCIE_APB = 18;
+localparam int SOC_PNP_TOTAL = 19;
 
 typedef dev_config_type soc_pnp_vector[0:SOC_PNP_TOTAL - 1];
 

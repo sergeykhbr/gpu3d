@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package types_bus0_pkg;
+package types_accel_bus0_pkg;
 
 import types_amba_pkg::*;
 
@@ -88,4 +88,4 @@ const bus0_mapinfo_vector CFG_BUS0_MAP = '{
         }// 5, ddr, 1 GB
 };
 
-endpackage: types_bus0_pkg
+endpackage: types_accel_bus0_pkg

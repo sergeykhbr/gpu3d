@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package types_bus1_pkg;
+package types_accel_bus1_pkg;
 
 import types_amba_pkg::*;
 
@@ -83,4 +83,4 @@ const bus1_mapinfo_vector CFG_BUS1_MAP = '{
         }// Plug'n'Play 4KB
 };
 
-endpackage: types_bus1_pkg
+endpackage: types_accel_bus1_pkg

@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "../../../../prj/impl/asic_accel/target_accel_cfg.h"
+#include "../../../../prj/impl/asic_accel/target_cfg.h"
 #include "../cache/tagmemnway.h"
 
 namespace debugger {

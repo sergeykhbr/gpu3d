@@ -77,11 +77,11 @@ module accel_soc #(
     input types_dma_pkg::pcie_dma64_in_type i_pcie_dmai     // PCIE DMA enging interface
 );
 
+import types_accel_bus0_pkg::*;
+import types_accel_bus1_pkg::*;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import types_dma_pkg::*;
-import types_bus0_pkg::*;
-import types_bus1_pkg::*;
 import river_cfg_pkg::*;
 import target_cfg_pkg::*;
 import accel_soc_pkg::*;
@@ -112,7 +112,7 @@ logic w_dbg_valid;
 logic [63:0] w_dbg_payload;
 logic w_irq_i2c0;
 
-axictrl_bus0 #(
+accel_axictrl_bus0 #(
     .async_reset(async_reset)
 ) bus0 (
     .i_clk(i_sys_clk),
@@ -125,7 +125,7 @@ axictrl_bus0 #(
     .o_mapinfo(bus0_mapinfo)
 );
 
-axi2apb_bus1 #(
+accel_axi2apb_bus1 #(
     .async_reset(async_reset)
 ) bus1 (
     .i_clk(i_sys_clk),
@@ -399,6 +399,9 @@ begin: comb_proc
     dev_pnp[SOC_PNP_DDR_APB] = i_ddr_pdevcfg;
     o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
     apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
+    // SD-controlled disabled:
+    dev_pnp[SOC_PNP_SDCTRL_REG] = dev_config_none;
+    dev_pnp[SOC_PNP_SDCTRL_MEM] = dev_config_none;
 end: comb_proc
 
 endmodule: accel_soc

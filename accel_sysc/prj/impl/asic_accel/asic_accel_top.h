@@ -19,7 +19,7 @@
 #include "../../../rtl/internal/ambalib/types_amba.h"
 #include "../../../rtl/internal/ambalib/types_pnp.h"
 #include "../../../rtl/internal/ambalib/types_dma.h"
-#include "target_accel_cfg.h"
+#include "target_cfg.h"
 #include "../../../rtl/sim/io/ids_tech.h"
 #include "../../../rtl/sim/io/obuf_tech.h"
 #include "../../../rtl/sim/io/iobuf_tech.h"

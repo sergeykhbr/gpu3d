@@ -22,7 +22,7 @@
 #include "../ambalib/types_pnp.h"
 #include "../ambalib/types_dma.h"
 #include "../riverlib/river_cfg.h"
-#include "../../../prj/impl/asic_accel/target_accel_cfg.h"
+#include "../../../prj/impl/asic_accel/target_cfg.h"
 #include "accel_axictrl_bus0.h"
 #include "accel_axi2apb_bus1.h"
 #include "../misclib/axi_rom.h"

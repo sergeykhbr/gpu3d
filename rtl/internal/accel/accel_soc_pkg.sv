@@ -15,11 +15,11 @@
 // 
 package accel_soc_pkg;
 
+import types_accel_bus0_pkg::*;
+import types_accel_bus1_pkg::*;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import types_dma_pkg::*;
-import types_bus0_pkg::*;
-import types_bus1_pkg::*;
 import river_cfg_pkg::*;
 import target_cfg_pkg::*;
 
