@@ -84,16 +84,16 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   parameter         AER_CAP_ON = "FALSE",
   parameter         AER_CAP_PERMIT_ROOTERR_UPDATE = "FALSE",
 
-  parameter [31:0]  BAR0 = 32'hFFE00004,    // 32-bits, 2MB
-  parameter [31:0]  BAR1 = 32'hFFFFFFFF,    //32'hC0000000,    // 32-bits, 1GB
-  parameter [31:0]  BAR2 = 32'h00000000,    // disabled//32'h00000004,    // 64-bits, 4GB
-  parameter [31:0]  BAR3 = 32'h00000000,    // disabled//32'hFFFFFFFF,    // BAR2/BAR3
-  parameter [31:0]  BAR4 = 32'h00000000,    // disabled
-  parameter [31:0]  BAR5 = 32'h00000000,    // disabled
+  parameter [31:0]  BAR0 = 32'hFFE00000,
+  parameter [31:0]  BAR1 = 32'hFFE00000,
+  parameter [31:0]  BAR2 = 32'hFF000004,
+  parameter [31:0]  BAR3 = 32'hFFFFFFFF,
+  parameter [31:0]  BAR4 = 32'h00000000,
+  parameter [31:0]  BAR5 = 32'h00000000,
 
   parameter         C_DATA_WIDTH = 64,
   parameter [31:0]  CARDBUS_CIS_POINTER = 32'h00000000,
-  parameter [23:0]  CLASS_CODE = 24'h058000,
+  parameter [23:0]  CLASS_CODE = 24'hFF0000, // Vendor Specific class(0xFF), subclass(0x00), ProgIF(0x00) instead of 24'h058000,
   parameter         CMD_INTX_IMPLEMENTED = "TRUE",
   parameter         CPL_TIMEOUT_DISABLE_SUPPORTED = "FALSE",
   parameter [3:0]   CPL_TIMEOUT_RANGES_SUPPORTED = 4'h2,
@@ -413,7 +413,7 @@ module pcie_7x_1line_5gts_64bits_core_top # (
   parameter [3:0]   RBAR_CAP_VERSION = 4'h1,
   parameter         PCIE_USE_MODE = "3.0",
   parameter         PCIE_GT_DEVICE = "GTX",
-  parameter         PCIE_CHAN_BOND = 0,
+  parameter         PCIE_CHAN_BOND = 1,
   parameter         PCIE_PLL_SEL   = "CPLL",
   parameter         PCIE_ASYNC_EN  = "FALSE",
   parameter         PCIE_TXBUF_EN  = "FALSE",

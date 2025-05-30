@@ -187,7 +187,7 @@ module pcie_7x_1line_5gts_64bits_pipe_wrapper #
     parameter PCIE_RXBUF_EN                 = "TRUE",       // PCIe RX buffer enable for Gen3      only
     parameter PCIE_TXSYNC_MODE              = 0,            // PCIe TX sync mode
     parameter PCIE_RXSYNC_MODE              = 0,            // PCIe RX sync mode
-    parameter PCIE_CHAN_BOND                = 0,            // PCIe channel bonding mode
+    parameter PCIE_CHAN_BOND                = 1,            // PCIe channel bonding mode
     parameter PCIE_CHAN_BOND_EN             = "TRUE",       // PCIe channel bonding enable for Gen1/Gen2 only
     parameter PCIE_LANE                     = 1,            // PCIe number of lanes
     parameter PCIE_LINK_SPEED               = 2,            // PCIe link speed 

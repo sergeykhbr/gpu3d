@@ -153,8 +153,10 @@ begin: comb_proc
 
     if (i_m_axis_rx_tuser[2] == 1'b1) begin                 // Select BAR0 region
         vb_bar_offset = 34'h008000000;                      // BAR0, 32-bits, 2MB, SRAM
+    end else if (i_m_axis_rx_tuser[3] == 1'b1) begin        // Select BAR1 region
+        vb_bar_offset = 34'h010000000;                      // BAR1, 32-bits, 2MB
     end else begin
-        vb_bar_offset = 34'h080000000;                      // BAR2/BAR3 64-bits, 4GB to DDR
+        vb_bar_offset = 34'h080000000;                      // BAR2/BAR3 64-bits, 16MB to DDR
     end
 
     if (r.req_be[0] == 1'b1) begin

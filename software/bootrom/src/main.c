@@ -19,8 +19,6 @@
 #include "encoding.h"
 #include "fw_api.h"
 
-//#define PRINT_DDR_IMAGE
-
 void allocate_exception_table(void);
 void allocate_interrupt_table(void);
 void test_plic(void);
@@ -132,17 +130,17 @@ int __main() {
     print_pnp();
 
     led_set(0x56);
-    setup_hdmi();
+    test_ddr();
+
+    led_set(0x57);
+    wait_pcie();
+    printf_uart("PCIe:. . . . . .0x%04x\r\n", pcictrl->bdf);
 
     led_set(0x1F);
 
-    test_ddr();
-
-    wait_pcie();
-
-    printf_uart("PCIe:. . . . . .0x%04x\r\n", pcictrl->bdf);
-
     //setup_1sec_irq();
+    setup_hdmi();
+
     ddr_addr = ADDR_BUS0_XSLV_DDR;
     while (1) {
         //ddr_addr = ddr_torture(ddr_addr);

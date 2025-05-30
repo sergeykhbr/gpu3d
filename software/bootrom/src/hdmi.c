@@ -60,10 +60,20 @@ void check_reg(uint32_t offset, uint32_t expected) {
    printf_uart("%s", "\r\n");
 }
 
+void wait_seconds(int sec) {
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+    uint64_t t_start = clint->mtime;
+    printf_uart("Wait %d sec . . .", sec);
+    while ((clint->mtime - t_start) < sec * SYS_HZ) {
+    }
+    printf_uart("%s", "done\r\n");
+}
+
 void setup_hdmi() {
     i2c_map *i2c = (i2c_map *)ADDR_BUS0_APB_I2C;
     uint32_t hw_revision = 0;
     printf_uart("Start HDMI setup%s", "\r\n");
+    wait_seconds(30);
 
     i2c->ctrl_status = 1 << 16; // set nreset; active LOW for I2C multiplexer
     i2c->scaler = 0x00320064;   // scaler=100; setup time=50
