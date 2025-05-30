@@ -293,8 +293,10 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
 
     if (i_m_axis_rx_tuser.read()[2] == 1) {                 // Select BAR0 region
         vb_bar_offset = 0x008000000;                        // BAR0, 32-bits, 2MB, SRAM
+    } else if (i_m_axis_rx_tuser.read()[3] == 1) {          // Select BAR1 region
+        vb_bar_offset = 0x010000000;                        // BAR1, 32-bits, 2MB
     } else {
-        vb_bar_offset = 0x080000000;                        // BAR2/BAR3 64-bits, 4GB to DDR
+        vb_bar_offset = 0x080000000;                        // BAR2/BAR3 64-bits, 16MB to DDR
     }
 
     if (r.req_be.read()[0] == 1) {
