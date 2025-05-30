@@ -9,13 +9,12 @@ BENCH=kc705_top_tb
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
-INC+=+incdir+${RTL_HOME}/external/kc705/hdmi_phy
 INC+=+incdir+${RTL_HOME}/external/xilinx/ddr3_cdc_axi_sync
 INC+=+incdir+${VIPS_HOME}/ddr3
 INC+=+incdir+${VIPS_HOME}/pcie_rootport
 INC+=+incdir+${PRJ_ROOT}/tb/pcie
 # Remove vhdl after updating HDMI PHY
-VHDL_PARAMS=-64 -v93 -smartorder
+#VHDL_PARAMS=-64 -v93 -smartorder
 VLOG_PARAMS_TB=-64 -sv -work work
 ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE} -access +rwc
 SIM_OPTS = -64 -input ./ncsim_settings work.${BENCH} +cycles=${CYCLES} \
@@ -61,11 +60,8 @@ comp: prep clr_logs
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_cdc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_ddr3_phy.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_pcie_phy.f
-	${SRUN} xmvhdl ${VHDL_PARAMS} -work work                 -f ../kc705/kc705_hdmi_phy_vhdl.f
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_hdmi_phy.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_top.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f kc705_top_sim.f
-	${SRUN} xmvhdl ${VHDL_PARAMS} -work work                 -f kc705_top_sim_vhdl.f
 
 build: comp
 	@echo "==========================================================================================="
@@ -88,18 +84,15 @@ mce_flow: prep clr_logs
     +UART_LOG_PATH=uart -input run.tcl  ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} \
 	../kc705/target_cfg_pkg.sv \
 	-f ${LISTS_HOME}/ambalib.f \
+	-f ${LISTS_HOME}/cdc.f \
+	-f ${LISTS_HOME}/mem.f \
 	-f ${LISTS_HOME}/riverlib.f \
-	-f ${LISTS_HOME}/techmap.f \
-	-f ${LISTS_HOME}/techmap_ddr_kc705.f \
-	-f ${LISTS_HOME}/techmap_pcie_vhdl_kc705.f \
-	-f ${LISTS_HOME}/techmap_pcie_kc705.f \
-	-f ${LISTS_HOME}/techmap_hdmi_vhdl_phy.f \
-	-f ${LISTS_HOME}/techmap_hdmi_phy.f \
 	-f ${LISTS_HOME}/misclib.f \
-	-f ${LISTS_HOME}/pcie.f \
+	-f ${LISTS_HOME}/pcie_dma.f \
 	-f ${LISTS_HOME}/hdmilib.f \
-	-f ${LISTS_HOME}/sdctrl.f \
-	-f ${LISTS_HOME}/riscv_soc.f \
+	-f ../kc705/kc705_cdc.f \
+	-f ../kc705/kc705_ddr3_phy.f \
+	-f ../kc705/kc705_pcie_phy.f \
 	-f ../kc705/kc705_top.f \
 	-f kc705_top_sim.f \
 	-top kc705_top_tb \

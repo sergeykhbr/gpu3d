@@ -108,7 +108,6 @@ if {[string is true $load_files]} {
 	set filelist_name ${LIST_ROOT}/hdmilib.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/riverlib.f;     	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/misclib.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${PRJ_ROOT}/kc705_sip_vhdl.f; source -notrace scripts/get_file_list.tcl; read_vhdl -library work [subst $filelist]
 	#set filelist_name ${PRJ_ROOT}/kc705_sip.f; 	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${PRJ_ROOT}/kc705_cdc.f; 	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${PRJ_ROOT}/kc705_ddr3_phy.f; source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
