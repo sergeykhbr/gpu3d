@@ -91,27 +91,6 @@
   <FileSets Version="1" Minor="32">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../rtl/external/xilinx/ddr3_cdc_axi_sync/axi_infrastructure_v1_1_0.vh">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-          <Attr Name="IsVisible" Val="1"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../rtl/external/xilinx/ddr3_cdc_axi_sync/axi_clock_converter_v2_1_vl_rfs.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../rtl/external/xilinx/ddr3_cdc_axi_sync/cdc_ddr.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../../rtl/external/kc705/ddr3_phy/controller/mig_7series_v4_2_arb_mux.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -1190,6 +1169,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../rtl/internal/cdc/afifo_xslv.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../rtl/internal/riverlib/core/arith/alu_logic_pkg.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -1387,13 +1373,6 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../rtl/internal/cdc/cdc_afifo_gray.sv">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../rtl/external/xilinx/ddr3_cdc_axi_sync/cdc_axi_sync_tech.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

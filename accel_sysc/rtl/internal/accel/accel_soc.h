@@ -37,7 +37,7 @@
 #include "../pcie_dma/apb_pcie.h"
 #include "../misclib/apb_pnp.h"
 #include "../riverlib/workgroup.h"
-#include "../../sim/cdc_axi_sync/cdc_axi_sync_tech.h"
+#include "../cdc/afifo_xslv.h"
 #include "sv_func.h"
 
 namespace debugger {
@@ -169,7 +169,7 @@ SC_MODULE(accel_soc) {
     apb_pcie *ppcie0;
     apb_pnp<SOC_PNP_TOTAL> *pnp0;
     Workgroup *group0;
-    cdc_axi_sync_tech *u_cdc_ddr0;
+    afifo_xslv<2, 9> *afifo_ddr0;
 
 };
 
