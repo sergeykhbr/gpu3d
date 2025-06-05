@@ -27,7 +27,7 @@ module axi_dma #(
     output logic o_req_mem_ready,                           // Ready to accept next data
     input logic i_req_mem_valid,                            // Request data is ready to accept
     input logic i_req_mem_write,                            // 0=read; 1=write operation
-    input logic [9:0] i_req_mem_bytes,                      // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    input logic [11:0] i_req_mem_bytes,                     // 0=4096 B; 4=DWORD; 8=QWORD; ...
     input logic [abits-1:0] i_req_mem_addr,                 // Address to read/write
     input logic [7:0] i_req_mem_strob,                      // Byte enabling write strob
     input logic [63:0] i_req_mem_data,                      // Data to write
@@ -108,7 +108,7 @@ axi_dma_registers rin;
 always_comb
 begin: comb_proc
     axi_dma_registers v;
-    logic [9:0] vb_req_mem_bytes_m1;
+    logic [11:0] vb_req_mem_bytes_m1;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] vb_req_addr_inc;
     logic [CFG_SYSBUS_DATA_BITS-1:0] vb_r_data_swap;
     axi4_master_out_type vmsto;
@@ -175,18 +175,18 @@ begin: comb_proc
         if (i_req_mem_valid == 1'b1) begin
             v.req_ready = 1'b0;
             v.req_addr = {'0, i_req_mem_addr};
-            if (i_req_mem_bytes == 10'd1) begin
+            if (i_req_mem_bytes == 12'd1) begin
                 v.req_size = 3'd0;
                 v.req_len = 8'd0;
-            end else if (i_req_mem_bytes == 10'd2) begin
+            end else if (i_req_mem_bytes == 12'd2) begin
                 v.req_size = 3'd1;
                 v.req_len = 8'd0;
-            end else if (i_req_mem_bytes == 10'd4) begin
+            end else if (i_req_mem_bytes == 12'd4) begin
                 v.req_size = 3'd2;
                 v.req_len = 8'd0;
             end else begin
                 v.req_size = 3'd3;
-                v.req_len = {1'b0, vb_req_mem_bytes_m1[9: 3]};
+                v.req_len = vb_req_mem_bytes_m1[10: 3];
             end
             if (i_req_mem_write == 1'b0) begin
                 v.ar_valid = 1'b1;
@@ -206,7 +206,6 @@ begin: comb_proc
             // debug interface:
             v.dbg_payload = {1'b1,
                     i_req_mem_addr[10: 0],
-                    2'h0,
                     i_req_mem_bytes,
                     i_req_mem_strob,
                     i_req_mem_data[31: 0]};
