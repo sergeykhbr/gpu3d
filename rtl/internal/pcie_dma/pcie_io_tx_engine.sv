@@ -45,7 +45,7 @@ module pcie_io_tx_engine #(
     input logic [7:0] i_req_tag,
     input logic [7:0] i_req_be,
     input logic [pcie_cfg_pkg::CFG_PCIE_DMAADDR_WIDTH-1:0] i_req_addr,
-    input logic [9:0] i_req_bytes,
+    input logic [11:0] i_req_bytes,                         // PCI TLP accept 1024 Bytes, but AXI is limited with 4096.
     // 
     input logic i_dma_resp_valid,
     input logic i_dma_resp_last,
@@ -154,7 +154,7 @@ begin: comb_proc
             vb_s_axis_tx_tdata[63: 48] = i_completer_id;    // DW1[31:16] completer ID
             vb_s_axis_tx_tdata[47: 45] = 3'd0;              // DW1[15:13] compl status
             vb_s_axis_tx_tdata[44] = 1'b0;                  // DW1[12] BCM (Byte Count Modified for PCI legacy support)
-            vb_s_axis_tx_tdata[43: 32] = i_req_bytes;       // DW1[11:0] byte count
+            vb_s_axis_tx_tdata[43: 32] = i_req_bytes[9: 0]; // DW1[11:0] byte count
             vb_s_axis_tx_tdata[31] = 1'b0;                  // DW0[31] R
             if (i_tx_with_data == 1'b1) begin
                 vb_s_axis_tx_tdata[30: 24] = PIO_CPLD_FMT_TYPE;// DW0[30:29] fmt; DW0[28:24] type

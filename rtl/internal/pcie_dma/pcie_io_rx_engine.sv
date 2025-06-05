@@ -49,7 +49,7 @@ module pcie_io_rx_engine #(
     input logic i_req_mem_ready,                            // Ready to accept next memory request
     output logic o_req_mem_valid,                           // Request data is valid to accept
     output logic o_req_mem_write,                           // 0=read; 1=write operation
-    output logic [9:0] o_req_mem_bytes,                     // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    output logic [11:0] o_req_mem_bytes,                    // 0=4095 B; 4=DWORD; 8=QWORD; ...
     output logic [pcie_cfg_pkg::CFG_PCIE_DMAADDR_WIDTH-1:0] o_req_mem_addr,// Address to read/write
     output logic [7:0] o_req_mem_strob,                     // Byte enabling write strob
     output logic [63:0] o_req_mem_data,                     // Data to write
@@ -91,7 +91,7 @@ typedef struct {
     logic [15:0] req_rid;
     logic [7:0] req_tag;
     logic [7:0] req_be;
-    logic [9:0] req_bytes;
+    logic [11:0] req_bytes;
     logic [CFG_PCIE_DMAADDR_WIDTH-1:0] req_addr;
     logic wr_en;
     logic [63:0] wr_data;
@@ -136,7 +136,8 @@ begin: comb_proc
     logic [1:0] vb_req_addr_1_0;
     logic [1:0] vb_add_be20;
     logic [1:0] vb_add_be21;
-    logic [9:0] vb_req_bytes;
+    logic [11:0] vb_req_bytes;
+    logic [1:0] vb_req_bytes_msb;
     logic [CFG_PCIE_DMAADDR_WIDTH-1:0] vb_bar_offset;
     logic [CFG_PCIE_DMAADDR_WIDTH-1:0] vb_addr_ldw;
     logic [CFG_PCIE_DMAADDR_WIDTH-1:0] vb_addr_mdw;
@@ -146,6 +147,7 @@ begin: comb_proc
     vb_add_be20 = '0;
     vb_add_be21 = '0;
     vb_req_bytes = '0;
+    vb_req_bytes_msb = '0;
     vb_bar_offset = '0;
     vb_addr_ldw = '0;
     vb_addr_mdw = '0;
@@ -180,9 +182,11 @@ begin: comb_proc
     vb_add_be20 = ({1'b0, r.req_be[3]} + {1'b0, r.req_be[2]});
     vb_add_be21 = ({1'b0, r.req_be[1]} + {1'b0, r.req_be[0]});
     if (r.req_len == 10'd1) begin
-        vb_req_bytes = ({8'd0, vb_add_be20} + {8'd0, vb_add_be21});
+        vb_req_bytes = ({10'd0, vb_add_be20} + {10'd0, vb_add_be21});
     end else begin
-        vb_req_bytes = {r.req_len, 2'd0};
+        // PCI request size 0 is equal to 1024 bytes:
+        vb_req_bytes_msb = {1'b0, (~(|r.req_len))};
+        vb_req_bytes = {vb_req_bytes_msb, r.req_len, 2'd0};
     end
 
     if (i_req_mem_ready == 1'b1) begin

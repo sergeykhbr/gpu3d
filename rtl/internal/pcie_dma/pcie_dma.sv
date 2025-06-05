@@ -66,7 +66,7 @@ logic w_tx_src_dsc;
 logic w_req_mem_ready;
 logic w_req_mem_valid;
 logic w_req_mem_write;                                      // 0=read; 1=write operation
-logic [9:0] wb_req_mem_bytes;                               // 0=1024 B; 4=DWORD; 8=QWORD; ...
+logic [11:0] wb_req_mem_bytes;                              // PCIe TLP is limited to 1024 B (10-bits); 4=DWORD; 8=QWORD; ...
 logic [CFG_PCIE_DMAADDR_WIDTH-1:0] wb_req_mem_addr;
 logic [7:0] wb_req_mem_strob;
 logic [63:0] wb_req_mem_data;
