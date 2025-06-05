@@ -29,8 +29,10 @@ namespace debugger {
 static const int CFG_BUS0_XMST_GROUP0 = 0;
 // PCIE DMA master interface.
 static const int CFG_BUS0_XMST_PCIE = 1;
+// HDMI DMA master interface.
+static const int CFG_BUS0_XMST_HDMI = 2;
 // Total Number of master devices on system bus.
-static const int CFG_BUS0_XMST_TOTAL = 2;
+static const int CFG_BUS0_XMST_TOTAL = 3;
 // Necessary bus width to store index + 1.
 static const int CFG_BUS0_XMST_LOG2_TOTAL = 2;              // $clog2(CFG_BUS0_XMST_TOTAL + 1)
 

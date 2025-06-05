@@ -41,6 +41,7 @@ SC_MODULE(afifo_xslv_tb) {
     sc_signal<bool> w_clk1;
     sc_signal<bool> w_clk2;
     sc_uint<32> wb_clk1_cnt;
+    sc_uint<32> wb_clk2_cnt;
     sc_signal<axi4_slave_in_type> wb_clk1_xslvi;            // Clock 1 input
     sc_signal<axi4_slave_out_type> wb_clk1_xslvo;           // Clock 1 output
     sc_signal<axi4_slave_in_type> wb_clk2_xmsto;            // Clock 2 output
@@ -58,14 +59,17 @@ SC_MODULE(afifo_xslv_tb) {
     sc_signal<bool> w_slv_i_resp_valid;
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_slv_i_resp_rdata;
     sc_signal<bool> w_slv_i_resp_err;
-    bool rd_valid;
+    bool v_busy;
+    sc_uint<3> rd_valid;
+    bool req_ready;
     sc_uint<4> rd_addr;
+    sc_uint<64> rd_data;
     sc_uint<64> mem[16];
 
     vip_clk *clk1;
     vip_clk *clk2;
     axi_slv *slv0;
-    afifo_xslv<2, 10> *tt;
+    afifo_xslv<2, 2> *tt;
 
 };
 

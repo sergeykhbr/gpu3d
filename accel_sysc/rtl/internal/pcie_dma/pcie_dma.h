@@ -94,7 +94,7 @@ SC_MODULE(pcie_dma) {
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
     sc_signal<bool> w_req_mem_write;                        // 0=read; 1=write operation
-    sc_signal<sc_uint<10>> wb_req_mem_bytes;                // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    sc_signal<sc_uint<12>> wb_req_mem_bytes;                // PCIe TLP is limited to 1024 B (10-bits); 4=DWORD; 8=QWORD; ...
     sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> wb_req_mem_addr;
     sc_signal<sc_uint<8>> wb_req_mem_strob;
     sc_signal<sc_uint<64>> wb_req_mem_data;

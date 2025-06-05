@@ -16,6 +16,7 @@
 #pragma once
 
 #include <systemc.h>
+#include "../mem/ram_tech.h"
 
 namespace debugger {
 
@@ -32,12 +33,23 @@ SC_MODULE(framebuf) {
     sc_out<bool> o_vsync;                                   // delayed vertical sync
     sc_out<bool> o_de;                                      // delayed data enable
     sc_out<sc_uint<18>> o_YCbCr;                            // YCbCr multiplexed odd/even pixels
+    // DMA engine compatible interface (always read). Get pixels array:
+    sc_in<bool> i_req_2d_ready;                             // 2D pixels ready to accept request
+    sc_out<bool> o_req_2d_valid;                            // 2D pixels request is valid
+    sc_out<sc_uint<12>> o_req_2d_bytes;                     // 0=4096 Bytes; 4=DWORD; 8=QWORD; ...
+    sc_out<sc_uint<24>> o_req_2d_addr;                      // 16 MB allocated for framebuffer
+    sc_in<bool> i_resp_2d_valid;                            // 2D pixels buffer response is valid
+    sc_in<bool> i_resp_2d_last;                             // Last data in burst read
+    sc_in<sc_uint<24>> i_resp_2d_addr;                      // 16 MB allocated for framebuffer
+    sc_in<sc_uint<64>> i_resp_2d_data;                      // Read data
+    sc_out<bool> o_resp_2d_ready;                           // Ready to accept 2D pixels response
 
     void comb();
     void registers();
 
     framebuf(sc_module_name name,
              bool async_reset);
+    virtual ~framebuf();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -68,8 +80,19 @@ SC_MODULE(framebuf) {
         iv.YCbCr = 0;
     }
 
+    sc_signal<sc_uint<8>> wb_ping_addr;
+    sc_signal<bool> w_ping_wena;
+    sc_signal<sc_uint<64>> wb_ping_wdata;
+    sc_signal<sc_uint<64>> wb_ping_rdata;
+    sc_signal<sc_uint<8>> wb_pong_addr;
+    sc_signal<bool> w_pong_wena;
+    sc_signal<sc_uint<64>> wb_pong_wdata;
+    sc_signal<sc_uint<64>> wb_pong_rdata;
     framebuf_registers v;
     framebuf_registers r;
+
+    ram_tech<8, 64> *ping;
+    ram_tech<8, 64> *pong;
 
 };
 

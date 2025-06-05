@@ -36,6 +36,8 @@ static const uint16_t GNSSSENSOR_UART_TAP = 0x050A;
 static const uint16_t OPTIMITECH_JTAG_SBA = 0x050B;
 // PCIE DMA engine
 static const uint16_t OPTIMITECH_PCIE_DMA = 0x050C;
+// HDMI DMA engine
+static const uint16_t OPTIMITECH_HDMI_DMA = 0x050D;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -203,7 +205,8 @@ static const int SOC_PNP_SDCTRL_MEM = 15;
 static const int SOC_PNP_I2C = 16;
 static const int SOC_PNP_PCIE_DMA = 17;
 static const int SOC_PNP_PCIE_APB = 18;
-static const int SOC_PNP_TOTAL = 19;
+static const int SOC_PNP_HDMI_DMA = 19;
+static const int SOC_PNP_TOTAL = 20;
 
 typedef sc_vector<sc_signal<dev_config_type>> soc_pnp_vector;
 

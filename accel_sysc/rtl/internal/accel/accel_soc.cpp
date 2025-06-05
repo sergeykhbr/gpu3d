@@ -256,6 +256,9 @@ accel_soc::accel_soc(sc_module_name name,
     hdmi0->o_spdif(o_hdmi_spdif);
     hdmi0->i_spdif_out(i_hdmi_spdif_out);
     hdmi0->i_irq(i_hdmi_int);
+    hdmi0->o_xmst_cfg(dev_pnp[SOC_PNP_HDMI_DMA]);
+    hdmi0->i_xmsti(aximi[CFG_BUS0_XMST_HDMI]);
+    hdmi0->o_xmsto(aximo[CFG_BUS0_XMST_HDMI]);
 
     // See reference: pg054-7series-pcie.pdf
     pcidma0 = new pcie_dma("pcidma0",

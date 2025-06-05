@@ -29,14 +29,14 @@ afifo_xslv_tb::afifo_xslv_tb(sc_module_name name)
 
     clk1 = new vip_clk("clk1",
                         5.0);
-    clk1->o_clk(w_clk1);
+    clk1->o_clk(w_clk2);
 
     clk2 = new vip_clk("clk2",
                         25.0);
-    clk2->o_clk(w_clk2);
+    clk2->o_clk(w_clk1);
 
     tt = new afifo_xslv<2,
-                        10>("tt");
+                        2>("tt");
     tt->i_xslv_nrst(i_nrst);
     tt->i_xslv_clk(w_clk1);
     tt->i_xslvi(wb_clk1_xslvi);
@@ -180,6 +180,70 @@ void afifo_xslv_tb::test_clk1() {
         vb_xslvi.ar_bits.addr = 0x000008000008;
         vb_xslvi.ar_bits.size = 0x3;
         vb_xslvi.ar_bits.len = 0x3;
+    } else if (wb_clk1_cnt == 2000) {
+        vb_xslvi.aw_valid = 1;
+        vb_xslvi.aw_bits.addr = 0x000008000028;
+        vb_xslvi.aw_bits.size = 0x3;
+        vb_xslvi.aw_bits.len = 0x3;
+        vb_xslvi.ar_valid = 1;
+        vb_xslvi.ar_bits.addr = 0x000008000028;
+        vb_xslvi.ar_bits.size = 0x3;
+        vb_xslvi.ar_bits.len = 0x3;
+    } else if (wb_clk1_cnt == 2001) {
+        vb_xslvi.w_valid = 1;
+        vb_xslvi.w_data = 0xFF22334455667788;
+        vb_xslvi.w_strb = 0xFF;
+        vb_xslvi.ar_valid = 1;
+        vb_xslvi.ar_bits.addr = 0x000008000038;
+        vb_xslvi.ar_bits.size = 0x3;
+        vb_xslvi.ar_bits.len = 0x03;
+    } else if (wb_clk1_cnt == 2002) {
+        vb_xslvi.w_valid = 1;
+        vb_xslvi.w_data = 0xFA22334455667788;
+        vb_xslvi.w_strb = 0xFF;
+        vb_xslvi.ar_valid = 1;
+        vb_xslvi.ar_bits.addr = 0x000008000038;
+        vb_xslvi.ar_bits.size = 0x3;
+        vb_xslvi.ar_bits.len = 0x2;
+    } else if (wb_clk1_cnt == 2003) {
+        vb_xslvi.w_valid = 1;
+        vb_xslvi.w_data = 0xFB22334455667788;
+        vb_xslvi.w_strb = 0xFF;
+        vb_xslvi.ar_valid = 1;
+        vb_xslvi.ar_bits.addr = 0x000008000038;
+        vb_xslvi.ar_bits.size = 0x3;
+        vb_xslvi.ar_bits.len = 0x1;
+    } else if (wb_clk1_cnt == 2004) {
+        vb_xslvi.w_valid = 1;
+        vb_xslvi.w_data = 0xFC22334455667788;
+        vb_xslvi.w_strb = 0xFF;
+        vb_xslvi.w_last = 1;
+        vb_xslvi.ar_valid = 1;
+        vb_xslvi.ar_bits.addr = 0x000008000038;
+        vb_xslvi.ar_bits.size = 0x3;
+        vb_xslvi.ar_bits.len = 0x0;
+    } else if (wb_clk1_cnt == 2005) {
+        vb_xslvi.aw_valid = 1;
+        vb_xslvi.aw_bits.addr = 0x000008000040;
+        vb_xslvi.aw_bits.size = 0x3;
+        vb_xslvi.aw_bits.len = 0x3;
+    } else if (wb_clk1_cnt == 2156) {
+        vb_xslvi.w_valid = 1;
+        vb_xslvi.w_data = 0x0000000000001111;
+        vb_xslvi.w_strb = 0xFF;
+    } else if (wb_clk1_cnt == 2267) {
+        vb_xslvi.w_valid = 1;
+        vb_xslvi.w_data = 0x0000000000002222;
+        vb_xslvi.w_strb = 0xFF;
+    } else if (wb_clk1_cnt == 2378) {
+        vb_xslvi.w_valid = 1;
+        vb_xslvi.w_data = 0x0000000000003333;
+        vb_xslvi.w_strb = 0xFF;
+    } else if (wb_clk1_cnt == 2489) {
+        vb_xslvi.w_valid = 1;
+        vb_xslvi.w_data = 0x0000000000004444;
+        vb_xslvi.w_strb = 0xFF;
+        vb_xslvi.w_last = 1;
     }
 
     wb_clk1_xslvi = vb_xslvi;
@@ -188,16 +252,24 @@ void afifo_xslv_tb::test_clk1() {
 void afifo_xslv_tb::test_clk2() {
     if (i_nrst.read() == 0) {
         rd_valid = 0;
+        req_ready = 0;
         rd_addr = 0;
+        rd_data = 0;
+        v_busy = 0;
     } else {
+        wb_clk2_cnt = (wb_clk2_cnt + 1);
+        v_busy = 0;
         if ((w_slv_o_req_write.read() == 1) && (w_slv_o_req_valid.read() == 1)) {
             mem[wb_slv_o_req_addr.read()(5, 2).to_int()] = wb_slv_o_req_wdata.read();
         }
         rd_addr = wb_slv_o_req_addr.read()(5, 2);
-        rd_valid = w_slv_o_req_valid.read();
+        if ((w_slv_o_req_valid.read() & (!v_busy)) == 1) {
+            rd_data = mem[wb_slv_o_req_addr.read()(5, 2).to_int()];
+        }
+        rd_valid = (rd_valid(1, 0), (w_slv_o_req_valid.read() & (!v_busy)));
     }
-    wb_slv_i_resp_rdata = mem[rd_addr(3, 0).to_int()];
-    w_slv_i_resp_valid = rd_valid;
+    wb_slv_i_resp_rdata = rd_data;
+    w_slv_i_resp_valid = rd_valid[0];
     w_slv_i_req_ready = 1;
     w_slv_i_resp_err = 0;
 }

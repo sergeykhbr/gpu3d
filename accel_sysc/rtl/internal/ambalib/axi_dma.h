@@ -29,7 +29,7 @@ SC_MODULE(axi_dma) {
     sc_out<bool> o_req_mem_ready;                           // Ready to accept next data
     sc_in<bool> i_req_mem_valid;                            // Request data is ready to accept
     sc_in<bool> i_req_mem_write;                            // 0=read; 1=write operation
-    sc_in<sc_uint<10>> i_req_mem_bytes;                     // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    sc_in<sc_uint<12>> i_req_mem_bytes;                     // 0=4096 B; 4=DWORD; 8=QWORD; ...
     sc_in<sc_uint<abits>> i_req_mem_addr;                   // Address to read/write
     sc_in<sc_uint<8>> i_req_mem_strob;                      // Byte enabling write strob
     sc_in<sc_uint<64>> i_req_mem_data;                      // Data to write
@@ -236,7 +236,7 @@ void axi_dma<abits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 template<int abits>
 void axi_dma<abits>::comb() {
-    sc_uint<10> vb_req_mem_bytes_m1;
+    sc_uint<12> vb_req_mem_bytes_m1;
     sc_uint<CFG_SYSBUS_ADDR_BITS> vb_req_addr_inc;
     sc_uint<CFG_SYSBUS_DATA_BITS> vb_r_data_swap;
     axi4_master_out_type vmsto;
@@ -314,7 +314,7 @@ void axi_dma<abits>::comb() {
                 v.req_len = 0;
             } else {
                 v.req_size = 3;
-                v.req_len = (0, vb_req_mem_bytes_m1(9, 3));
+                v.req_len = vb_req_mem_bytes_m1(10, 3);
             }
             if (i_req_mem_write.read() == 0) {
                 v.ar_valid = 1;
@@ -334,7 +334,6 @@ void axi_dma<abits>::comb() {
             // debug interface:
             v.dbg_payload = (1,
                     i_req_mem_addr.read()(10, 0),
-                    0x0,
                     i_req_mem_bytes.read(),
                     i_req_mem_strob.read(),
                     i_req_mem_data.read()(31, 0));

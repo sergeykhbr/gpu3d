@@ -53,7 +53,7 @@ SC_MODULE(pcie_io_rx_engine) {
     sc_in<bool> i_req_mem_ready;                            // Ready to accept next memory request
     sc_out<bool> o_req_mem_valid;                           // Request data is valid to accept
     sc_out<bool> o_req_mem_write;                           // 0=read; 1=write operation
-    sc_out<sc_uint<10>> o_req_mem_bytes;                    // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    sc_out<sc_uint<12>> o_req_mem_bytes;                    // 0=4095 B; 4=DWORD; 8=QWORD; ...
     sc_out<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> o_req_mem_addr; // Address to read/write
     sc_out<sc_uint<8>> o_req_mem_strob;                     // Byte enabling write strob
     sc_out<sc_uint<64>> o_req_mem_data;                     // Data to write
@@ -101,7 +101,7 @@ SC_MODULE(pcie_io_rx_engine) {
         sc_signal<sc_uint<16>> req_rid;
         sc_signal<sc_uint<8>> req_tag;
         sc_signal<sc_uint<8>> req_be;
-        sc_signal<sc_uint<10>> req_bytes;
+        sc_signal<sc_uint<12>> req_bytes;
         sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> req_addr;
         sc_signal<bool> wr_en;
         sc_signal<sc_uint<64>> wr_data;
@@ -276,7 +276,8 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     sc_uint<2> vb_req_addr_1_0;
     sc_uint<2> vb_add_be20;
     sc_uint<2> vb_add_be21;
-    sc_uint<10> vb_req_bytes;
+    sc_uint<12> vb_req_bytes;
+    sc_uint<2> vb_req_bytes_msb;
     sc_uint<CFG_PCIE_DMAADDR_WIDTH> vb_bar_offset;
     sc_uint<CFG_PCIE_DMAADDR_WIDTH> vb_addr_ldw;
     sc_uint<CFG_PCIE_DMAADDR_WIDTH> vb_addr_mdw;
@@ -286,6 +287,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     vb_add_be20 = 0;
     vb_add_be21 = 0;
     vb_req_bytes = 0;
+    vb_req_bytes_msb = 0;
     vb_bar_offset = 0;
     vb_addr_ldw = 0;
     vb_addr_mdw = 0;
@@ -322,7 +324,9 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     if (r.req_len.read() == 1) {
         vb_req_bytes = ((0, vb_add_be20) + (0, vb_add_be21));
     } else {
-        vb_req_bytes = (r.req_len.read() << 2);
+        // PCI request size 0 is equal to 1024 bytes:
+        vb_req_bytes_msb = (0, (!r.req_len.read().or_reduce()));
+        vb_req_bytes = (vb_req_bytes_msb, r.req_len.read(), 0);
     }
 
     if (i_req_mem_ready.read() == 1) {

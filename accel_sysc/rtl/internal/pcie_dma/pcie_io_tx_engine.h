@@ -49,7 +49,7 @@ SC_MODULE(pcie_io_tx_engine) {
     sc_in<sc_uint<8>> i_req_tag;
     sc_in<sc_uint<8>> i_req_be;
     sc_in<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> i_req_addr;
-    sc_in<sc_uint<10>> i_req_bytes;
+    sc_in<sc_uint<12>> i_req_bytes;                         // PCI TLP accept 1024 Bytes, but AXI is limited with 4096.
     // 
     sc_in<bool> i_dma_resp_valid;
     sc_in<bool> i_dma_resp_last;
@@ -298,7 +298,7 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             vb_s_axis_tx_tdata(63, 48) = i_completer_id.read();// DW1[31:16] completer ID
             vb_s_axis_tx_tdata(47, 45) = 0;                 // DW1[15:13] compl status
             vb_s_axis_tx_tdata[44] = 0;                     // DW1[12] BCM (Byte Count Modified for PCI legacy support)
-            vb_s_axis_tx_tdata(43, 32) = i_req_bytes.read();// DW1[11:0] byte count
+            vb_s_axis_tx_tdata(43, 32) = i_req_bytes.read()(9, 0);// DW1[11:0] byte count
             vb_s_axis_tx_tdata[31] = 0;                     // DW0[31] R
             if (i_tx_with_data.read() == 1) {
                 vb_s_axis_tx_tdata(30, 24) = PIO_CPLD_FMT_TYPE;// DW0[30:29] fmt; DW0[28:24] type

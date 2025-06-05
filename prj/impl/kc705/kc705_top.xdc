@@ -280,6 +280,18 @@ set_max_delay -datapath_only 16.0 -from soc0/pcidma0/reqfifo/rgray0/gray* -to so
 set_max_delay -datapath_only 16.0 -from soc0/pcidma0/respfifo/wgray0/gray* -to soc0/pcidma0/respfifo/q1_wgray*
 set_max_delay -datapath_only 16.0 -from soc0/pcidma0/respfifo/rgray0/gray* -to soc0/pcidma0/respfifo/q1_rgray*
 
+# DDR fifos:
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/req_ar/wgray0/gray* -to soc0/afifo_ddr0/req_ar/q1_wgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/req_ar/rgray0/gray* -to soc0/afifo_ddr0/req_ar/q1_rgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/req_aw/wgray0/gray* -to soc0/afifo_ddr0/req_aw/q1_wgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/req_aw/rgray0/gray* -to soc0/afifo_ddr0/req_aw/q1_rgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/req_w/wgray0/gray* -to soc0/afifo_ddr0/req_w/q1_wgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/req_w/rgray0/gray* -to soc0/afifo_ddr0/req_w/q1_rgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/resp_r/wgray0/gray* -to soc0/afifo_ddr0/resp_r/q1_wgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/resp_r/rgray0/gray* -to soc0/afifo_ddr0/resp_r/q1_rgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/resp_b/wgray0/gray* -to soc0/afifo_ddr0/resp_b/q1_wgray*
+set_max_delay -datapath_only 5.0 -from soc0/afifo_ddr0/resp_b/rgray0/gray* -to soc0/afifo_ddr0/resp_b/q1_rgray*
+
 ##################################################################################################
 ## Controller 0
 ## Memory Device: DDR3_SDRAM->SODIMMs->MT8JTF12864HZ-1G6

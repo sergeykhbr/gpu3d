@@ -48,7 +48,7 @@ SC_MODULE(pcie_io_ep) {
     sc_in<bool> i_req_mem_ready;                            // Ready to accept next memory request
     sc_out<bool> o_req_mem_valid;                           // Request data is valid to accept
     sc_out<bool> o_req_mem_write;                           // 0=read; 1=write operation
-    sc_out<sc_uint<10>> o_req_mem_bytes;                    // 0=1024 B; 4=DWORD; 8=QWORD; ...
+    sc_out<sc_uint<12>> o_req_mem_bytes;                    // PCI TLP is limited to 1024 B (10-bits); 4=DWORD; 8=QWORD; ...
     sc_out<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> o_req_mem_addr; // Address to read/write
     sc_out<sc_uint<8>> o_req_mem_strob;                     // Byte enabling write strob
     sc_out<sc_uint<64>> o_req_mem_data;                     // Data to write
@@ -83,7 +83,7 @@ SC_MODULE(pcie_io_ep) {
     sc_signal<sc_uint<8>> wb_req_tag;
     sc_signal<sc_uint<8>> wb_req_be;
     sc_signal<sc_uint<CFG_PCIE_DMAADDR_WIDTH>> wb_req_addr;
-    sc_signal<sc_uint<10>> wb_req_bytes;
+    sc_signal<sc_uint<12>> wb_req_bytes;
     sc_signal<sc_uint<C_DATA_WIDTH>> wb_req_mem_data;
     sc_signal<sc_uint<C_DATA_WIDTH>> wb_resp_mem_data;
 
