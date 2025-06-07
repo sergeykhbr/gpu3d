@@ -50,13 +50,15 @@ SC_MODULE(axi_dma) {
 
     axi_dma(sc_module_name name,
             bool async_reset,
-            int userbits);
+            int userbits,
+            sc_uint<CFG_SYSBUS_ADDR_BITS> base_offset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
     int userbits_;
+    sc_uint<CFG_SYSBUS_ADDR_BITS> base_offset_;
 
     static const uint8_t state_idle = 0;
     static const uint8_t state_ar = 1;
@@ -123,7 +125,8 @@ SC_MODULE(axi_dma) {
 template<int abits>
 axi_dma<abits>::axi_dma(sc_module_name name,
                         bool async_reset,
-                        int userbits)
+                        int userbits,
+                        sc_uint<CFG_SYSBUS_ADDR_BITS> base_offset)
     : sc_module(name),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
@@ -148,6 +151,7 @@ axi_dma<abits>::axi_dma(sc_module_name name,
 
     async_reset_ = async_reset;
     userbits_ = userbits;
+    base_offset_ = base_offset;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -252,7 +256,7 @@ void axi_dma<abits>::comb() {
 
     // Byte swapping:
     if (r.req_size.read() == 0) {
-        vb_req_addr_inc(9, 0) = (r.req_addr.read()(9, 0) + 0x001);
+        vb_req_addr_inc(11, 0) = (r.req_addr.read()(11, 0) + 0x001);
         if (r.req_addr.read()(2, 0) == 0) {
             vb_r_data_swap(31, 0) = (i_msti.read().r_data(7, 0), i_msti.read().r_data(7, 0), i_msti.read().r_data(7, 0), i_msti.read().r_data(7, 0));
         } else if (r.req_addr.read()(2, 0) == 1) {
@@ -272,7 +276,7 @@ void axi_dma<abits>::comb() {
         }
         vb_r_data_swap(63, 32) = vb_r_data_swap(31, 0);
     } else if (r.req_size.read() == 1) {
-        vb_req_addr_inc(9, 0) = (r.req_addr.read()(9, 0) + 0x002);
+        vb_req_addr_inc(11, 0) = (r.req_addr.read()(11, 0) + 0x002);
         if (r.req_addr.read()(2, 1) == 0) {
             vb_r_data_swap = (i_msti.read().r_data(15, 0), i_msti.read().r_data(15, 0), i_msti.read().r_data(15, 0), i_msti.read().r_data(15, 0));
         } else if (r.req_addr.read()(2, 1) == 1) {
@@ -283,14 +287,14 @@ void axi_dma<abits>::comb() {
             vb_r_data_swap = (i_msti.read().r_data(63, 48), i_msti.read().r_data(63, 48), i_msti.read().r_data(63, 48), i_msti.read().r_data(63, 48));
         }
     } else if (r.req_size.read() == 2) {
-        vb_req_addr_inc(9, 0) = (r.req_addr.read()(9, 0) + 0x004);
+        vb_req_addr_inc(11, 0) = (r.req_addr.read()(11, 0) + 0x004);
         if (r.req_addr.read()[2] == 0) {
             vb_r_data_swap = (i_msti.read().r_data(31, 0), i_msti.read().r_data(31, 0));
         } else {
             vb_r_data_swap = (i_msti.read().r_data(63, 32), i_msti.read().r_data(63, 32));
         }
     } else {
-        vb_req_addr_inc(9, 0) = (r.req_addr.read()(9, 0) + 0x008);
+        vb_req_addr_inc(11, 0) = (r.req_addr.read()(11, 0) + 0x008);
         vb_r_data_swap = i_msti.read().r_data;
     }
 
@@ -302,7 +306,7 @@ void axi_dma<abits>::comb() {
         v.resp_last = 0;
         if (i_req_mem_valid.read() == 1) {
             v.req_ready = 0;
-            v.req_addr = (0, i_req_mem_addr.read());
+            v.req_addr = (base_offset_((CFG_SYSBUS_ADDR_BITS - 1), abits), i_req_mem_addr.read());
             if (i_req_mem_bytes.read() == 1) {
                 v.req_size = 0;
                 v.req_len = 0;

@@ -58,6 +58,7 @@ hdmi_top::hdmi_top(sc_module_name name,
     sync0->o_de(w_sync_de);
     sync0->o_x(wb_sync_x);
     sync0->o_y(wb_sync_y);
+    sync0->o_xy_total(wb_sync_xy_total);
 
     fb0 = new framebuf("fb0",
                         async_reset);
@@ -68,6 +69,7 @@ hdmi_top::hdmi_top(sc_module_name name,
     fb0->i_de(w_sync_de);
     fb0->i_x(wb_sync_x);
     fb0->i_y(wb_sync_y);
+    fb0->i_xy_total(wb_sync_xy_total);
     fb0->o_hsync(o_hsync);
     fb0->o_vsync(o_vsync);
     fb0->o_de(o_de);
@@ -84,7 +86,8 @@ hdmi_top::hdmi_top(sc_module_name name,
 
     xdma0 = new axi_dma<24>("xdma0",
                             async_reset,
-                            1);
+                            1,
+                            0x000080000000);
     xdma0->i_nrst(i_nrst);
     xdma0->i_clk(i_clk);
     xdma0->o_req_mem_ready(w_req_mem_ready);
@@ -117,6 +120,7 @@ hdmi_top::hdmi_top(sc_module_name name,
     sensitive << w_sync_de;
     sensitive << wb_sync_x;
     sensitive << wb_sync_y;
+    sensitive << wb_sync_xy_total;
     sensitive << w_req_mem_ready;
     sensitive << w_req_mem_valid;
     sensitive << w_req_mem_write;
@@ -149,6 +153,7 @@ hdmi_top::~hdmi_top() {
 
 void hdmi_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
+        sc_trace(o_vcd, i_nrst, i_nrst.name());
         sc_trace(o_vcd, i_hdmi_clk, i_hdmi_clk.name());
         sc_trace(o_vcd, o_hsync, o_hsync.name());
         sc_trace(o_vcd, o_vsync, o_vsync.name());

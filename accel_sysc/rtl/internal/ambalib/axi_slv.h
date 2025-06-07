@@ -73,7 +73,7 @@ SC_MODULE(axi_slv) {
         sc_signal<sc_uint<5>> wstate;
         sc_signal<bool> ar_ready;
         sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> ar_addr;
-        sc_signal<sc_uint<8>> ar_len;
+        sc_signal<sc_uint<9>> ar_len;
         sc_signal<sc_uint<XSIZE_TOTAL>> ar_bytes;
         sc_signal<sc_uint<2>> ar_burst;
         sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> ar_id;

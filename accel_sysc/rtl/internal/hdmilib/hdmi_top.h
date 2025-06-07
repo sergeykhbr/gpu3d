@@ -57,6 +57,7 @@ SC_MODULE(hdmi_top) {
     sc_signal<bool> w_sync_de;
     sc_signal<sc_uint<11>> wb_sync_x;
     sc_signal<sc_uint<10>> wb_sync_y;
+    sc_signal<sc_uint<24>> wb_sync_xy_total;
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
     sc_signal<bool> w_req_mem_write;                        // 0=read; 1=write operation

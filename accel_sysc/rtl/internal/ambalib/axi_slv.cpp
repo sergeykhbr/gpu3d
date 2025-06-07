@@ -145,7 +145,7 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void axi_slv::comb() {
     sc_uint<12> vb_ar_addr_next;
     sc_uint<12> vb_aw_addr_next;
-    sc_uint<8> vb_ar_len_next;
+    sc_uint<9> vb_ar_len_next;
     dev_config_type vcfg;
     axi4_slave_out_type vxslvo;
 
@@ -228,7 +228,7 @@ void axi_slv::comb() {
     switch (r.rstate.read()) {
     case State_r_idle:
         v.ar_addr = (i_xslvi.read().ar_bits.addr - i_mapinfo.read().addr_start);
-        v.ar_len = (i_xslvi.read().ar_bits.len + 1);
+        v.ar_len = ((0, i_xslvi.read().ar_bits.len) + 1);
         v.ar_burst = i_xslvi.read().ar_bits.burst;
         v.ar_bytes = XSizeToBytes(i_xslvi.read().ar_bits.size);
         v.ar_last = (!i_xslvi.read().ar_bits.len.or_reduce());
@@ -252,10 +252,10 @@ void axi_slv::comb() {
     case State_r_addr:
         v.req_valid = i_xslvi.read().r_ready;
         if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1)) {
-            if (r.ar_len.read() > 0x01) {
+            if (r.ar_len.read() > 0x001) {
                 v.ar_len = (r.ar_len.read() - 1);
                 v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_ar_addr_next);
-                v.req_last = (!vb_ar_len_next(7, 1).or_reduce());
+                v.req_last = (!vb_ar_len_next(8, 1).or_reduce());
                 v.rstate = State_r_data;
             } else {
                 v.ar_len = 0;
@@ -267,10 +267,10 @@ void axi_slv::comb() {
     case State_r_data:
         v.req_valid = i_xslvi.read().r_ready;
         if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1)) {
-            if (r.ar_len.read() > 0x01) {
+            if (r.ar_len.read() > 0x001) {
                 v.ar_len = vb_ar_len_next;
                 v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_ar_addr_next);
-                v.req_last = (!vb_ar_len_next(7, 1).or_reduce());
+                v.req_last = (!vb_ar_len_next(8, 1).or_reduce());
             } else {
                 v.ar_len = 0;
                 v.req_last = 1;

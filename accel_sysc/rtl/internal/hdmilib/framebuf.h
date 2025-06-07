@@ -29,6 +29,7 @@ SC_MODULE(framebuf) {
     sc_in<bool> i_de;                                       // data enable
     sc_in<sc_uint<11>> i_x;                                 // x-pixel
     sc_in<sc_uint<10>> i_y;                                 // y-pixel
+    sc_in<sc_uint<24>> i_xy_total;                          // x*y resolution, up to 16MB
     sc_out<bool> o_hsync;                                   // delayed horizontal sync
     sc_out<bool> o_vsync;                                   // delayed vertical sync
     sc_out<bool> o_de;                                      // delayed data enable
@@ -56,7 +57,19 @@ SC_MODULE(framebuf) {
  private:
     bool async_reset_;
 
+    // state machine states:
+    static const uint8_t STATE_Request = 0x1;
+    static const uint8_t STATE_Writing = 0x2;
+    static const uint8_t STATE_Idle = 0x0;
+
     struct framebuf_registers {
+        sc_signal<sc_uint<2>> state;
+        sc_signal<bool> pingpong;
+        sc_signal<sc_uint<18>> req_addr;                    // 16 MB allocated space split on 64 B: 32x64=2048 B
+        sc_signal<bool> req_valid;
+        sc_signal<bool> resp_ready;
+        sc_signal<sc_uint<11>> raddr;
+        sc_signal<sc_uint<11>> raddr_z;
         sc_signal<bool> pix_x0;
         sc_signal<sc_uint<2>> h_sync;
         sc_signal<sc_uint<2>> v_sync;
@@ -69,6 +82,13 @@ SC_MODULE(framebuf) {
     };
 
     void framebuf_r_reset(framebuf_registers& iv) {
+        iv.state = STATE_Request;
+        iv.pingpong = 0;
+        iv.req_addr = 32;
+        iv.req_valid = 0;
+        iv.resp_ready = 0;
+        iv.raddr = 0;
+        iv.raddr_z = 0;
         iv.pix_x0 = 0;
         iv.h_sync = 0;
         iv.v_sync = 0;
@@ -82,11 +102,9 @@ SC_MODULE(framebuf) {
 
     sc_signal<sc_uint<8>> wb_ping_addr;
     sc_signal<bool> w_ping_wena;
-    sc_signal<sc_uint<64>> wb_ping_wdata;
     sc_signal<sc_uint<64>> wb_ping_rdata;
     sc_signal<sc_uint<8>> wb_pong_addr;
     sc_signal<bool> w_pong_wena;
-    sc_signal<sc_uint<64>> wb_pong_wdata;
     sc_signal<sc_uint<64>> wb_pong_rdata;
     framebuf_registers v;
     framebuf_registers r;

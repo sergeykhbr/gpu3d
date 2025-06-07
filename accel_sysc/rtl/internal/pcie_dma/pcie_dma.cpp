@@ -100,7 +100,8 @@ pcie_dma::pcie_dma(sc_module_name name,
 
     xdma0 = new axi_dma<CFG_PCIE_DMAADDR_WIDTH>("xdma0",
                                                 async_reset,
-                                                1);
+                                                1,
+                                                0x000000000000);
     xdma0->i_nrst(i_nrst);
     xdma0->i_clk(i_clk);
     xdma0->o_req_mem_ready(w_req_mem_ready);
