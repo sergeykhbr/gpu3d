@@ -20,7 +20,7 @@ module axi_dma #(
     parameter int abits = 48,                               // adress bits used
     parameter logic async_reset = 1'b0,
     parameter int userbits = 1,
-    parameter logic [CFG_SYSBUS_ADDR_BITS-1:0] base_offset = '0// Address offset for all DMA transactions
+    parameter logic [63:0] base_offset = '0                 // Address offset for all DMA transactions
 )
 (
     input logic i_nrst,                                     // Reset: active LOW

@@ -69,6 +69,46 @@ void wait_seconds(int sec) {
     printf_uart("%s", "done\r\n");
 }
 
+void init_ddr_hdmi_region(uint64_t *fb, int w, int h) {
+    uint64_t YCbCr = 0;
+    int off = 0;
+    int xy_cnt = 0;
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x+=2) {
+            if (x < 170) {
+                YCbCr >>= 32;
+                YCbCr |= (0x80EB80EB00000000ull);  // Y=235,Cb=128,Cr=128 White
+            } else if (x < 340) {
+                YCbCr >>= 32;
+                YCbCr |= (0x8010801000000000ull);  // Y=16,Cb=128,Cr=128 Black
+            } else if (x < 510) {
+                YCbCr >>= 32;
+                YCbCr |= (0xF0525A5200000000ull);  // Y=82,Cb=90,Cr=240 Red
+            } else if (x < 680) {
+                YCbCr >>= 32;
+                YCbCr |= (0x2291369100000000ull);  // Y=145,Cb=54,Cr=34 Green
+            } else if (x < 850) {
+                YCbCr >>= 32;
+                YCbCr |= (0x6E29F02900000000ull);  // Y=41,Cb=240,Cr=110 Blue
+            } else if (x < 1020) {
+                YCbCr >>= 32;
+                YCbCr |= (0x92C810C800000000ull);  // Y=200,Cb=16,Cr=146 Yellow
+            } else if (x < 1190) {
+                YCbCr >>= 32;
+                YCbCr |= (0x10AAA6AA00000000ull);  // Y=170,Cb=166,Cr=16 Cyan
+            } else {
+                YCbCr >>= 32;
+                YCbCr |= (0xDE6A666A00000000ull);  // Y=106,Cb=102,Cr=222 Magneta
+            }
+            xy_cnt += 2;
+            if (xy_cnt >= 4) {
+                xy_cnt = 0;
+                fb[off++] = YCbCr;
+            }
+        }
+    }
+}
+
 void setup_hdmi() {
     i2c_map *i2c = (i2c_map *)ADDR_BUS0_APB_I2C;
     uint32_t hw_revision = 0;
@@ -218,4 +258,6 @@ Audio Mode
 0x0A[3:2] Audio Mode
 0x0A[3:2] Audio Select
 */
+
+    init_ddr_hdmi_region((uint64_t *)ADDR_BUS0_XSLV_DDR, 1366, 768);
 }

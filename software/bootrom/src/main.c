@@ -144,7 +144,7 @@ int __main() {
 
     ddr_addr = ADDR_BUS0_XSLV_DDR;
     while (1) {
-        ddr_addr = ddr_torture(ddr_addr);
+        //ddr_addr = ddr_torture(ddr_addr);
     }
 
     // NEVER REACH THIS POINT

@@ -51,14 +51,14 @@ SC_MODULE(axi_dma) {
     axi_dma(sc_module_name name,
             bool async_reset,
             int userbits,
-            sc_uint<CFG_SYSBUS_ADDR_BITS> base_offset);
+            sc_uint<64> base_offset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
     int userbits_;
-    sc_uint<CFG_SYSBUS_ADDR_BITS> base_offset_;
+    sc_uint<64> base_offset_;
 
     static const uint8_t state_idle = 0;
     static const uint8_t state_ar = 1;
@@ -126,7 +126,7 @@ template<int abits>
 axi_dma<abits>::axi_dma(sc_module_name name,
                         bool async_reset,
                         int userbits,
-                        sc_uint<CFG_SYSBUS_ADDR_BITS> base_offset)
+                        sc_uint<64> base_offset)
     : sc_module(name),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
