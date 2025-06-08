@@ -153,7 +153,6 @@ hdmi_top::~hdmi_top() {
 
 void hdmi_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_nrst, i_nrst.name());
         sc_trace(o_vcd, i_hdmi_clk, i_hdmi_clk.name());
         sc_trace(o_vcd, o_hsync, o_hsync.name());
         sc_trace(o_vcd, o_vsync, o_vsync.name());

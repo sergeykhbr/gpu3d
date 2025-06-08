@@ -71,9 +71,9 @@ SC_MODULE(framebuf) {
         sc_signal<sc_uint<11>> raddr;
         sc_signal<sc_uint<11>> raddr_z;
         sc_signal<bool> pix_x0;
-        sc_signal<sc_uint<2>> h_sync;
-        sc_signal<sc_uint<2>> v_sync;
-        sc_signal<sc_uint<2>> de;
+        sc_signal<sc_uint<4>> h_sync;
+        sc_signal<sc_uint<4>> v_sync;
+        sc_signal<sc_uint<4>> de;
         sc_signal<sc_uint<8>> Y0;
         sc_signal<sc_uint<8>> Y1;
         sc_signal<sc_uint<8>> Cb;

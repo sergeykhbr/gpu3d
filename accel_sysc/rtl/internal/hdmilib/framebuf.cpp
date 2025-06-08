@@ -157,30 +157,23 @@ void framebuf::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void framebuf::comb() {
-    sc_uint<19> fb_addr;                                    // 1 value per 2 pixels
+    sc_uint<11> vb_raddr_next;
 
     v = r;
-    fb_addr = 0;
+    vb_raddr_next = 0;
 
     // delayed signals:
-    v.de = (r.de.read()[0], i_de.read());
-    v.h_sync = (r.h_sync.read()[0], i_hsync.read());
-    v.v_sync = (r.v_sync.read()[0], i_vsync.read());
+    v.de = (r.de.read()(2, 0), i_de.read());
+    v.h_sync = (r.h_sync.read()(2, 0), i_hsync.read());
+    v.v_sync = (r.v_sync.read()(2, 0), i_vsync.read());
     v.pix_x0 = i_x.read()[0];
 
-    fb_addr = (i_y.read(), i_x.read()(10, 2));
-
-    if (i_x.read()(1, 0) == 0) {
-    } else if (i_x.read()(1, 0) == 1) {
-    } else if (i_x.read()(1, 0) == 2) {
-    } else {
-    }
-
+    vb_raddr_next = (r.raddr.read() + 1);
     if ((r.req_valid.read() == 1) && (i_req_2d_ready.read() == 1)) {
         v.req_valid = 0;
     }
     if (i_de.read() == 1) {
-        v.raddr = (r.raddr.read() + 1);
+        v.raddr = vb_raddr_next;
         v.raddr_z = r.raddr.read();
     }
 
@@ -209,12 +202,7 @@ void framebuf::comb() {
         }
         break;
     case STATE_Idle:
-        if (i_vsync.read() == 1) {
-            v.raddr = 0;
-            v.req_addr = 32;                                // 32-burst transactions 64B each => 2048 B
-            v.req_valid = 1;
-            v.state = STATE_Request;
-        } else if (r.raddr.read()[10] != r.raddr_z.read()[10]) {
+        if (r.raddr.read()[10] != vb_raddr_next[10]) {
             v.pingpong = (!r.pingpong.read());
             if ((r.req_addr.read() + 1) >= i_xy_total.read()(22, 5)) {// 2048 B = 1024 pixel (16 bits each)
                 // request first data while processing the last one:
@@ -230,15 +218,13 @@ void framebuf::comb() {
         break;
     }
 
-    // See style 1 output:
-    if (r.pix_x0.read() == 0) {
-        v.YCbCr = (r.Cb.read(), r.Y1.read());
-    } else {
-        v.YCbCr = (r.Cr.read(), r.Y1.read());
-    }
-
-    if ((!async_reset_) && (i_nrst.read() == 0)) {
-        framebuf_r_reset(v);
+    if ((i_vsync.read() == 1) && (r.v_sync.read()[0] == 0)) {
+        // Update the second memory bank, so that ping & pong were updated
+        v.pingpong = (!r.pingpong.read());
+        v.raddr = 0;
+        v.req_addr = 32;                                    // 32-burst transactions 64B each => 2048 B
+        v.req_valid = 1;
+        v.state = STATE_Request;
     }
 
     if (r.pingpong.read() == 1) {
@@ -276,6 +262,10 @@ void framebuf::comb() {
     }
     w_ping_wena = (i_resp_2d_valid.read() & (!r.pingpong.read()));
     w_pong_wena = (i_resp_2d_valid.read() & r.pingpong.read());
+
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
+        framebuf_r_reset(v);
+    }
 
     o_hsync = r.h_sync.read()[1];
     o_vsync = r.v_sync.read()[1];
