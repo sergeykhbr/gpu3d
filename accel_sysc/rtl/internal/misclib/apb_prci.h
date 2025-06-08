@@ -36,6 +36,7 @@ SC_MODULE(apb_prci) {
     sc_out<bool> o_sys_nrst;                                // System reset except DMI. Active LOW
     sc_out<bool> o_dbg_nrst;                                // Reset DMI. Active LOW
     sc_out<bool> o_pcie_nrst;                               // Reset PCIE DMA. Active LOW. Reset until link is up.
+    sc_out<bool> o_hdmi_nrst;                               // Reset HDMI. Reset until DDR link up
     sc_in<mapinfo_type> i_mapinfo;                          // interconnect slot information
     sc_out<dev_config_type> o_cfg;                          // Device descriptor
     sc_in<apb_in_type> i_apbi;                              // APB  Slave to Bridge interface
@@ -74,6 +75,7 @@ SC_MODULE(apb_prci) {
     sc_signal<bool> r_sys_nrst;
     bool r_dbg_nrst;
     sc_uint<2> rb_pcie_nrst;
+    sc_uint<2> rb_hdmi_nrst;
     bool r_sys_locked;
     sc_uint<2> rb_ddr_locked;
     sc_uint<2> rb_pcie_lnk_up;

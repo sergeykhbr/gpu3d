@@ -34,6 +34,7 @@ hdmi_tb::hdmi_tb(sc_module_name name)
                        0);
     tt->i_nrst(i_nrst);
     tt->i_clk(w_clk);
+    tt->i_hdmi_nrst(i_nrst);
     tt->i_hdmi_clk(w_clk);
     tt->o_hsync(w_hdmi_hsync);
     tt->o_vsync(w_hdmi_vsync);

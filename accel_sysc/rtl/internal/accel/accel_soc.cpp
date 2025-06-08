@@ -44,6 +44,7 @@ accel_soc::accel_soc(sc_module_name name,
     o_i2c0_sda_dir("o_i2c0_sda_dir"),
     i_i2c0_sda("i_i2c0_sda"),
     o_i2c0_nreset("o_i2c0_nreset"),
+    i_hdmi_nrst("i_hdmi_nrst"),
     i_hdmi_clk("i_hdmi_clk"),
     o_hdmi_hsync("o_hdmi_hsync"),
     o_hdmi_vsync("o_hdmi_vsync"),
@@ -248,6 +249,7 @@ accel_soc::accel_soc(sc_module_name name,
                           async_reset);
     hdmi0->i_nrst(i_sys_nrst);
     hdmi0->i_clk(i_sys_clk);
+    hdmi0->i_hdmi_nrst(i_hdmi_nrst);
     hdmi0->i_hdmi_clk(i_hdmi_clk);
     hdmi0->o_hsync(o_hdmi_hsync);
     hdmi0->o_vsync(o_hdmi_vsync);
@@ -317,6 +319,7 @@ accel_soc::accel_soc(sc_module_name name,
     sensitive << i_jtag_tdi;
     sensitive << i_uart1_rd;
     sensitive << i_i2c0_sda;
+    sensitive << i_hdmi_nrst;
     sensitive << i_hdmi_clk;
     sensitive << i_hdmi_spdif_out;
     sensitive << i_hdmi_int;
@@ -446,6 +449,7 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_i2c0_sda_dir, o_i2c0_sda_dir.name());
         sc_trace(o_vcd, i_i2c0_sda, i_i2c0_sda.name());
         sc_trace(o_vcd, o_i2c0_nreset, o_i2c0_nreset.name());
+        sc_trace(o_vcd, i_hdmi_nrst, i_hdmi_nrst.name());
         sc_trace(o_vcd, i_hdmi_clk, i_hdmi_clk.name());
         sc_trace(o_vcd, o_hdmi_hsync, o_hdmi_hsync.name());
         sc_trace(o_vcd, o_hdmi_vsync, o_hdmi_vsync.name());

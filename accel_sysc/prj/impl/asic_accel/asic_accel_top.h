@@ -95,6 +95,7 @@ SC_MODULE(asic_accel_top) {
     sc_signal<bool> w_sys_rst;
     sc_signal<bool> w_sys_nrst;
     sc_signal<bool> w_dbg_nrst;
+    sc_signal<bool> w_hdmi_nrst;
     sc_signal<bool> w_dmreset;
     sc_signal<bool> w_sys_clk;
     sc_signal<bool> w_ddr_clk;

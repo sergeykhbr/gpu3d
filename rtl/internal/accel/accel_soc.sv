@@ -46,6 +46,7 @@ module accel_soc #(
     output logic o_i2c0_sda_dir,                            // output data tri-stte buffer control
     input logic i_i2c0_sda,                                 // I2C input data
     output logic o_i2c0_nreset,                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
+    input logic i_hdmi_nrst,                                // Reset: active LOW. Must be HIGH only after DDR 
     input logic i_hdmi_clk,                                 // HDMI Clock depends on resolution: for 1366x768@60Hz is ~83 MHz
     output logic o_hdmi_hsync,                              // Horizontal sync. strob
     output logic o_hdmi_vsync,                              // Vertical sync. strob
@@ -292,6 +293,7 @@ hdmi_top #(
 ) hdmi0 (
     .i_nrst(i_sys_nrst),
     .i_clk(i_sys_clk),
+    .i_hdmi_nrst(i_hdmi_nrst),
     .i_hdmi_clk(i_hdmi_clk),
     .o_hsync(o_hdmi_hsync),
     .o_vsync(o_hdmi_vsync),

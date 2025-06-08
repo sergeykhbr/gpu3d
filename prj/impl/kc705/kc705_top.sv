@@ -117,15 +117,16 @@ logic ob_hdmi_spdif;
 logic ib_hdmi_spdif_out;
 logic ib_hdmi_int;
 
-  logic             w_sys_rst;
-  logic             w_sys_nrst;
-  logic             w_dbg_nrst;
-  logic             w_pcie_nrst;
-  logic             w_dmreset;
-  logic w_sys_clk;
-  logic w_ddr_clk;
-  logic w_ddr_phy_clk;
-  logic w_pll_lock;
+logic w_sys_rst;
+logic w_sys_nrst;
+logic w_dbg_nrst;
+logic w_pcie_nrst;
+logic w_hdmi_nrst;
+logic w_dmreset;
+logic w_sys_clk;
+logic w_ddr_clk;
+logic w_ddr_phy_clk;
+logic w_pll_lock;
 
   // DDR interface
   mapinfo_type ddr_xmapinfo;
@@ -296,6 +297,7 @@ ibuf_tech ihdmiint (
     .o_sys_nrst(w_sys_nrst),
     .o_dbg_nrst(w_dbg_nrst),
     .o_pcie_nrst(w_pcie_nrst),
+    .o_hdmi_nrst(w_hdmi_nrst),
     .i_mapinfo(prci_pmapinfo),
     .o_cfg(prci_dev_cfg),
     .i_apbi(prci_apbi),
@@ -338,6 +340,7 @@ ibuf_tech ihdmiint (
     .i_i2c0_sda(ib_i2c0_sda),
     .o_i2c0_nreset(ob_i2c0_nreset),
     // HDMI
+    .i_hdmi_nrst(w_hdmi_nrst),
     .i_hdmi_clk(w_sys_clk),
     .o_hdmi_hsync(ob_hdmi_hsync),
     .o_hdmi_vsync(ob_hdmi_vsync),

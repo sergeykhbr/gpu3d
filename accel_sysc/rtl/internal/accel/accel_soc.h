@@ -69,6 +69,7 @@ SC_MODULE(accel_soc) {
     sc_out<bool> o_i2c0_sda_dir;                            // output data tri-stte buffer control
     sc_in<bool> i_i2c0_sda;                                 // I2C input data
     sc_out<bool> o_i2c0_nreset;                             // I2C slave reset. PCA9548 I2C mux must be de-asserted.
+    sc_in<bool> i_hdmi_nrst;                                // Reset: active LOW. Must be HIGH only after DDR 
     sc_in<bool> i_hdmi_clk;                                 // HDMI Clock depends on resolution: for 1366x768@60Hz is ~83 MHz
     sc_out<bool> o_hdmi_hsync;                              // Horizontal sync. strob
     sc_out<bool> o_hdmi_vsync;                              // Vertical sync. strob

@@ -32,6 +32,7 @@ module apb_prci #(
     output logic o_sys_nrst,                                // System reset except DMI. Active LOW
     output logic o_dbg_nrst,                                // Reset DMI. Active LOW
     output logic o_pcie_nrst,                               // Reset PCIE DMA. Active LOW. Reset until link is up.
+    output logic o_hdmi_nrst,                               // Reset HDMI. Reset until DDR link up
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
     output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB  Slave to Bridge interface
@@ -50,6 +51,7 @@ logic r_sys_rst;
 logic r_sys_nrst;
 logic r_dbg_nrst;
 logic [1:0] rb_pcie_nrst;
+logic [1:0] rb_hdmi_nrst;
 logic r_sys_locked;
 logic [1:0] rb_ddr_locked;
 logic [1:0] rb_pcie_lnk_up;
@@ -117,6 +119,7 @@ begin: comb_proc
     o_sys_nrst = r_sys_nrst;
     o_dbg_nrst = r_dbg_nrst;
     o_pcie_nrst = rb_pcie_nrst[1];
+    o_hdmi_nrst = rb_hdmi_nrst[1];
 
     rin = v;
 end: comb_proc
@@ -131,6 +134,7 @@ always_ff @(posedge i_clk, posedge i_pwrreset) begin: reqff_proc
         r_sys_nrst <= 1'b0;
         r_dbg_nrst <= 1'b0;
         rb_pcie_nrst <= '0;
+        rb_hdmi_nrst <= '0;
     end else begin
         r_sys_locked <= i_sys_locked;
         rb_ddr_locked <= {rb_ddr_locked[0], i_ddr_locked};
@@ -139,6 +143,7 @@ always_ff @(posedge i_clk, posedge i_pwrreset) begin: reqff_proc
         r_sys_nrst <= (i_sys_locked & (~i_dmireset));
         r_dbg_nrst <= i_sys_locked;
         rb_pcie_nrst <= {rb_pcie_nrst[0], (i_pcie_phy_lnk_up & (~i_pcie_phy_rst))};
+        rb_hdmi_nrst <= {rb_hdmi_nrst[0], (rb_ddr_locked[1] & r_sys_nrst)};
     end
 end: reqff_proc
 

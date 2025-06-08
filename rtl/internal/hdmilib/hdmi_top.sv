@@ -22,6 +22,7 @@ module hdmi_top #(
 (
     input logic i_nrst,                                     // Reset: active LOW
     input logic i_clk,                                      // CPU clock
+    input logic i_hdmi_nrst,                                // Reset: active LOW. Must be HIGH only after DDR 
     input logic i_hdmi_clk,                                 // HDMI clock depends on resolution for 1366x768@60Hz ~83MHz
     output logic o_hsync,                                   // Horizontal sync strob
     output logic o_vsync,                                   // Vertical sync. strob
@@ -72,7 +73,7 @@ video_sync #(
     .V_SYNC(5),
     .V_BACK(24)
 ) sync0 (
-    .i_nrst(i_nrst),
+    .i_nrst(i_hdmi_nrst),
     .i_clk(i_hdmi_clk),
     .o_hsync(w_sync_hsync),
     .o_vsync(w_sync_vsync),
@@ -85,7 +86,7 @@ video_sync #(
 framebuf #(
     .async_reset(async_reset)
 ) fb0 (
-    .i_nrst(i_nrst),
+    .i_nrst(i_hdmi_nrst),
     .i_clk(i_hdmi_clk),
     .i_hsync(w_sync_hsync),
     .i_vsync(w_sync_vsync),

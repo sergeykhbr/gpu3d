@@ -140,6 +140,7 @@ asic_accel_top::asic_accel_top(sc_module_name name,
     prci0->o_sys_nrst(w_sys_nrst);
     prci0->o_dbg_nrst(w_dbg_nrst);
     prci0->o_pcie_nrst(w_pcie_nrst);
+    prci0->o_hdmi_nrst(w_hdmi_nrst);
     prci0->i_mapinfo(prci_pmapinfo);
     prci0->o_cfg(prci_dev_cfg);
     prci0->i_apbi(prci_apbi);
@@ -169,6 +170,7 @@ asic_accel_top::asic_accel_top(sc_module_name name,
     soc0->o_i2c0_sda_dir(ob_i2c0_sda_direction);
     soc0->i_i2c0_sda(ib_i2c0_sda);
     soc0->o_i2c0_nreset(ob_i2c0_nreset);
+    soc0->i_hdmi_nrst(w_hdmi_nrst);
     soc0->i_hdmi_clk(w_sys_clk);
     soc0->o_hdmi_hsync(ob_hdmi_hsync);
     soc0->o_hdmi_vsync(ob_hdmi_vsync);

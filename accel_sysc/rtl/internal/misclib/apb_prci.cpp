@@ -34,6 +34,7 @@ apb_prci::apb_prci(sc_module_name name,
     o_sys_nrst("o_sys_nrst"),
     o_dbg_nrst("o_dbg_nrst"),
     o_pcie_nrst("o_pcie_nrst"),
+    o_hdmi_nrst("o_hdmi_nrst"),
     i_mapinfo("i_mapinfo"),
     o_cfg("o_cfg"),
     i_apbi("i_apbi"),
@@ -108,6 +109,7 @@ void apb_prci::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_sys_nrst, o_sys_nrst.name());
         sc_trace(o_vcd, o_dbg_nrst, o_dbg_nrst.name());
         sc_trace(o_vcd, o_pcie_nrst, o_pcie_nrst.name());
+        sc_trace(o_vcd, o_hdmi_nrst, o_hdmi_nrst.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
@@ -159,6 +161,7 @@ void apb_prci::comb() {
     o_sys_nrst = r_sys_nrst.read();
     o_dbg_nrst = r_dbg_nrst;
     o_pcie_nrst = rb_pcie_nrst[1];
+    o_hdmi_nrst = rb_hdmi_nrst[1];
 }
 
 void apb_prci::reqff() {
@@ -170,6 +173,7 @@ void apb_prci::reqff() {
         r_sys_nrst = 0;
         r_dbg_nrst = 0;
         rb_pcie_nrst = 0;
+        rb_hdmi_nrst = 0;
     } else {
         r_sys_locked = i_sys_locked.read();
         rb_ddr_locked = (rb_ddr_locked[0], i_ddr_locked.read());
@@ -178,6 +182,7 @@ void apb_prci::reqff() {
         r_sys_nrst = (i_sys_locked.read() & (!i_dmireset.read()));
         r_dbg_nrst = i_sys_locked.read();
         rb_pcie_nrst = (rb_pcie_nrst[0], (i_pcie_phy_lnk_up.read() & (!i_pcie_phy_rst.read())));
+        rb_hdmi_nrst = (rb_hdmi_nrst[0], (rb_ddr_locked[1] & r_sys_nrst.read()));
     }
 }
 

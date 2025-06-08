@@ -28,6 +28,7 @@ SC_MODULE(hdmi_top) {
  public:
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<bool> i_clk;                                      // CPU clock
+    sc_in<bool> i_hdmi_nrst;                                // Reset: active LOW. Must be HIGH only after DDR 
     sc_in<bool> i_hdmi_clk;                                 // HDMI clock depends on resolution for 1366x768@60Hz ~83MHz
     sc_out<bool> o_hsync;                                   // Horizontal sync strob
     sc_out<bool> o_vsync;                                   // Vertical sync. strob
