@@ -26,8 +26,10 @@ import types_amba_pkg::*;
 localparam int CFG_BUS0_XMST_GROUP0 = 0;
 // PCIE DMA master interface.
 localparam int CFG_BUS0_XMST_PCIE = 1;
+// HDMI DMA master interface.
+localparam int CFG_BUS0_XMST_HDMI = 2;
 // Total Number of master devices on system bus.
-localparam int CFG_BUS0_XMST_TOTAL = 2;
+localparam int CFG_BUS0_XMST_TOTAL = 3;
 // Necessary bus width to store index + 1.
 localparam int CFG_BUS0_XMST_LOG2_TOTAL = 2;                // $clog2(CFG_BUS0_XMST_TOTAL + 1)
 

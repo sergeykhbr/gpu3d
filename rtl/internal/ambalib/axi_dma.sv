@@ -19,7 +19,8 @@
 module axi_dma #(
     parameter int abits = 48,                               // adress bits used
     parameter logic async_reset = 1'b0,
-    parameter int userbits = 1
+    parameter int userbits = 1,
+    parameter logic [CFG_SYSBUS_ADDR_BITS-1:0] base_offset = '0// Address offset for all DMA transactions
 )
 (
     input logic i_nrst,                                     // Reset: active LOW
@@ -124,7 +125,7 @@ begin: comb_proc
 
     // Byte swapping:
     if (r.req_size == 3'd0) begin
-        vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h001);
+        vb_req_addr_inc[11: 0] = (r.req_addr[11: 0] + 12'h001);
         if (r.req_addr[2: 0] == 3'd0) begin
             vb_r_data_swap[31: 0] = {i_msti.r_data[7: 0], i_msti.r_data[7: 0], i_msti.r_data[7: 0], i_msti.r_data[7: 0]};
         end else if (r.req_addr[2: 0] == 3'd1) begin
@@ -144,7 +145,7 @@ begin: comb_proc
         end
         vb_r_data_swap[63: 32] = vb_r_data_swap[31: 0];
     end else if (r.req_size == 3'd1) begin
-        vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h002);
+        vb_req_addr_inc[11: 0] = (r.req_addr[11: 0] + 12'h002);
         if (r.req_addr[2: 1] == 2'd0) begin
             vb_r_data_swap = {i_msti.r_data[15: 0], i_msti.r_data[15: 0], i_msti.r_data[15: 0], i_msti.r_data[15: 0]};
         end else if (r.req_addr[2: 1] == 2'd1) begin
@@ -155,14 +156,14 @@ begin: comb_proc
             vb_r_data_swap = {i_msti.r_data[63: 48], i_msti.r_data[63: 48], i_msti.r_data[63: 48], i_msti.r_data[63: 48]};
         end
     end else if (r.req_size == 3'd2) begin
-        vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h004);
+        vb_req_addr_inc[11: 0] = (r.req_addr[11: 0] + 12'h004);
         if (r.req_addr[2] == 1'b0) begin
             vb_r_data_swap = {i_msti.r_data[31: 0], i_msti.r_data[31: 0]};
         end else begin
             vb_r_data_swap = {i_msti.r_data[63: 32], i_msti.r_data[63: 32]};
         end
     end else begin
-        vb_req_addr_inc[9: 0] = (r.req_addr[9: 0] + 10'h008);
+        vb_req_addr_inc[11: 0] = (r.req_addr[11: 0] + 12'h008);
         vb_r_data_swap = i_msti.r_data;
     end
 
@@ -174,7 +175,7 @@ begin: comb_proc
         v.resp_last = 1'b0;
         if (i_req_mem_valid == 1'b1) begin
             v.req_ready = 1'b0;
-            v.req_addr = {'0, i_req_mem_addr};
+            v.req_addr = {base_offset[(CFG_SYSBUS_ADDR_BITS - 1): abits], i_req_mem_addr};
             if (i_req_mem_bytes == 12'd1) begin
                 v.req_size = 3'd0;
                 v.req_len = 8'd0;

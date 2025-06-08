@@ -299,7 +299,10 @@ hdmi_top #(
     .o_data(o_hdmi_d),
     .o_spdif(o_hdmi_spdif),
     .i_spdif_out(i_hdmi_spdif_out),
-    .i_irq(i_hdmi_int)
+    .i_irq(i_hdmi_int),
+    .o_xmst_cfg(dev_pnp[SOC_PNP_HDMI_DMA]),
+    .i_xmsti(aximi[CFG_BUS0_XMST_HDMI]),
+    .o_xmsto(aximo[CFG_BUS0_XMST_HDMI])
 );
 
 // See reference: pg054-7series-pcie.pdf

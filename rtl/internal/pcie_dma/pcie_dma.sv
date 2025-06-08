@@ -147,7 +147,8 @@ pcie_io_ep #(
 axi_dma #(
     .abits(CFG_PCIE_DMAADDR_WIDTH),
     .async_reset(async_reset),
-    .userbits(1)
+    .userbits(1),
+    .base_offset(48'h000000000000)
 ) xdma0 (
     .i_nrst(i_nrst),
     .i_clk(i_clk),

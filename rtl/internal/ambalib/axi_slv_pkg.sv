@@ -35,7 +35,7 @@ typedef struct {
     logic [4:0] wstate;
     logic ar_ready;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] ar_addr;
-    logic [7:0] ar_len;
+    logic [8:0] ar_len;
     logic [XSIZE_TOTAL-1:0] ar_bytes;
     logic [1:0] ar_burst;
     logic [CFG_SYSBUS_ID_BITS-1:0] ar_id;

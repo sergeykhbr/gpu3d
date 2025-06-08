@@ -54,7 +54,7 @@ begin: comb_proc
     axi_slv_registers v;
     logic [11:0] vb_ar_addr_next;
     logic [11:0] vb_aw_addr_next;
-    logic [7:0] vb_ar_len_next;
+    logic [8:0] vb_ar_len_next;
     dev_config_type vcfg;
     axi4_slave_out_type vxslvo;
 
@@ -137,7 +137,7 @@ begin: comb_proc
     case (r.rstate)
     State_r_idle: begin
         v.ar_addr = (i_xslvi.ar_bits.addr - i_mapinfo.addr_start);
-        v.ar_len = (i_xslvi.ar_bits.len + 1);
+        v.ar_len = ({1'b0, i_xslvi.ar_bits.len} + 9'd1);
         v.ar_burst = i_xslvi.ar_bits.burst;
         v.ar_bytes = XSizeToBytes(i_xslvi.ar_bits.size);
         v.ar_last = (~(|i_xslvi.ar_bits.len));
@@ -161,13 +161,13 @@ begin: comb_proc
     State_r_addr: begin
         v.req_valid = i_xslvi.r_ready;
         if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1)) begin
-            if (r.ar_len > 8'h01) begin
+            if (r.ar_len > 9'h001) begin
                 v.ar_len = (r.ar_len - 1);
                 v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_ar_addr_next};
-                v.req_last = (~(|vb_ar_len_next[7: 1]));
+                v.req_last = (~(|vb_ar_len_next[8: 1]));
                 v.rstate = State_r_data;
             end else begin
-                v.ar_len = 8'd0;
+                v.ar_len = 9'd0;
                 v.ar_last = 1'b1;
                 v.rstate = State_r_last;
             end
@@ -176,12 +176,12 @@ begin: comb_proc
     State_r_data: begin
         v.req_valid = i_xslvi.r_ready;
         if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1)) begin
-            if (r.ar_len > 8'h01) begin
+            if (r.ar_len > 9'h001) begin
                 v.ar_len = vb_ar_len_next;
                 v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_ar_addr_next};
-                v.req_last = (~(|vb_ar_len_next[7: 1]));
+                v.req_last = (~(|vb_ar_len_next[8: 1]));
             end else begin
-                v.ar_len = 8'd0;
+                v.ar_len = 9'd0;
                 v.req_last = 1'b1;
             end
         end

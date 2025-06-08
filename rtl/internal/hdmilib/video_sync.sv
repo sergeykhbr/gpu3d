@@ -34,7 +34,8 @@ module video_sync #(
     output logic o_vsync,                                   // Vertical sync pulse
     output logic o_de,                                      // Data enable, HIGH in active zone 1366x768 screen resolution
     output logic [10:0] o_x,                                // Width pixel coordinate
-    output logic [9:0] o_y                                  // Height pixel coordinate
+    output logic [9:0] o_y,                                 // Height pixel coordinate
+    output logic [23:0] o_xy_total                          // Total resolution to address 16MB frame buffer
 );
 
 import video_sync_pkg::*;
@@ -95,6 +96,7 @@ begin: comb_proc
     o_vsync = r.v_sync;
     o_x = r.x_pix;
     o_y = r.y_pix;
+    o_xy_total = 24'd1049088;                               // hardcoded resolution 1366x768
 
     rin = v;
 end: comb_proc
