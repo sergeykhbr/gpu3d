@@ -161,7 +161,7 @@ jtagtap<abits, irlen, idcode>::jtagtap(sc_module_name name)
 
     SC_METHOD(rnhegisters);
     sensitive << i_trst;
-    sensitive << i_tck.pos();
+    sensitive << i_tck.neg();
 }
 
 template<int abits, int irlen, uint32_t idcode>

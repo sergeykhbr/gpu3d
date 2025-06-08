@@ -18,6 +18,7 @@
 #include <systemc.h>
 #include "../../common/vips/clk/vip_clk.h"
 #include "../../common/vips/uart/vip_uart_top.h"
+#include "../../common/vips/jtag/jtag_app.h"
 #include "../../../rtl/sim/io/iobuf_tech.h"
 #include "../../common/vips/i2c/vip_i2c_s.h"
 #include "../asic_accel/asic_accel_top.h"
@@ -71,6 +72,7 @@ SC_MODULE(asic_accel_top_tb) {
 
     vip_clk *clk0;
     vip_uart_top *uart1;
+    jtag_app *jtag0;
     iobuf_tech *iosda0;
     vip_i2c_s *i2c0;
     asic_accel_top *tt;

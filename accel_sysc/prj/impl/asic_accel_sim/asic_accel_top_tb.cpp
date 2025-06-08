@@ -24,6 +24,7 @@ asic_accel_top_tb::asic_accel_top_tb(sc_module_name name)
 
     clk0 = 0;
     uart1 = 0;
+    jtag0 = 0;
     iosda0 = 0;
     i2c0 = 0;
     tt = 0;
@@ -57,6 +58,13 @@ asic_accel_top_tb::asic_accel_top_tb(sc_module_name name)
     uart1->i_rx(w_uart1_td);
     uart1->o_tx(w_uart1_rd);
     uart1->i_loopback_ena(w_uart1_loopback_ena);
+
+    jtag0 = new jtag_app("jtag0");
+    jtag0->o_trst(w_jtag_trst);
+    jtag0->o_tck(w_jtag_tck);
+    jtag0->o_tms(w_jtag_tms);
+    jtag0->o_tdo(w_jtag_tdi);
+    jtag0->i_tdi(w_jtag_tdo);
 
     tt = new asic_accel_top("tt",
                              CFG_ASYNC_RESET,
@@ -96,6 +104,9 @@ asic_accel_top_tb::~asic_accel_top_tb() {
     if (uart1) {
         delete uart1;
     }
+    if (jtag0) {
+        delete jtag0;
+    }
     if (iosda0) {
         delete iosda0;
     }
@@ -116,6 +127,9 @@ void asic_accel_top_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
     }
     if (uart1) {
         uart1->generateVCD(i_vcd, o_vcd);
+    }
+    if (jtag0) {
+        jtag0->generateVCD(i_vcd, o_vcd);
     }
     if (iosda0) {
         iosda0->generateVCD(i_vcd, o_vcd);
