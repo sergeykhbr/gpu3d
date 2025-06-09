@@ -26,7 +26,7 @@ SC_MODULE(vip_jtag_tap) {
     sc_in<bool> i_req_valid;                                // request
     sc_in<sc_uint<4>> i_req_irlen;                          // irlen in an range 1..15: ARM=4
     sc_in<sc_uint<16>> i_req_ir;                            // ir reg
-    sc_in<sc_uint<6>> i_req_drlen;                          // drlen in an range 1..635: ARM=35/32
+    sc_in<sc_uint<7>> i_req_drlen;                          // drlen in an range 1..64: ARM=35/32
     sc_in<sc_uint<64>> i_req_dr;                            // dr reg
     sc_out<bool> o_resp_valid;                              // response valid
     sc_out<sc_uint<64>> o_resp_data;                        // response data
@@ -64,23 +64,24 @@ SC_MODULE(vip_jtag_tap) {
     struct vip_jtag_tap_rxegisters {
         sc_signal<bool> req_valid;
         sc_signal<sc_uint<4>> req_irlen;
-        sc_signal<sc_uint<6>> req_drlen;
+        sc_signal<sc_uint<7>> req_drlen;
         sc_signal<sc_uint<16>> req_ir;
         sc_signal<sc_uint<64>> req_dr;
+        sc_signal<sc_uint<4>> state;
         sc_signal<sc_uint<7>> dr_length;
         sc_signal<sc_uint<64>> dr;
         sc_signal<bool> bypass;
+        sc_signal<sc_uint<32>> datacnt;
+        sc_signal<sc_uint<64>> shiftreg;
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<64>> resp_data;
+        sc_signal<sc_uint<16>> ir;
     };
 
     struct vip_jtag_tap_rnxegisters {
-        sc_signal<sc_uint<4>> state;
         sc_signal<bool> trst;
         sc_signal<bool> tms;
-        sc_signal<sc_uint<32>> datacnt;
-        sc_signal<sc_uint<64>> shiftreg;
-        sc_signal<sc_uint<16>> ir;
+        sc_signal<bool> tdo;
     };
 
     sc_signal<bool> w_tck;

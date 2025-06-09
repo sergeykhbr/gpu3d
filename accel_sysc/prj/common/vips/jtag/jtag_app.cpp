@@ -114,6 +114,12 @@ void jtag_app::test_clk1() {
         wb_req_ir = 0x1;
         wb_req_drlen = 32;
         wb_req_dr = 0;
+    } else if (wb_clk1_cnt == 250) {
+        w_req_valid = 1;
+        wb_req_irlen = 5;
+        wb_req_ir = 0x10;                                   // 0x10 DTM_CONTROL
+        wb_req_drlen = 32;
+        wb_req_dr = 0x12345678;
     } else {
         w_req_valid = 0;
     }

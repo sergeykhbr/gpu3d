@@ -44,7 +44,7 @@ SC_MODULE(jtag_app) {
     sc_signal<bool> w_req_valid;
     sc_signal<sc_uint<4>> wb_req_irlen;
     sc_signal<sc_uint<16>> wb_req_ir;
-    sc_signal<sc_uint<6>> wb_req_drlen;
+    sc_signal<sc_uint<7>> wb_req_drlen;
     sc_signal<sc_uint<64>> wb_req_dr;
     sc_signal<bool> w_resp_valid;
     sc_signal<sc_uint<64>> wb_resp_data;
