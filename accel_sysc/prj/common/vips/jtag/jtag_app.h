@@ -29,6 +29,7 @@ SC_MODULE(jtag_app) {
     sc_out<bool> o_tdo;
     sc_in<bool> i_tdi;
 
+    void init();
     void comb();
     void test_clk1();
 

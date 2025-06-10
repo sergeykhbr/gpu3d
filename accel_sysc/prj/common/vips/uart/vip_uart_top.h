@@ -31,6 +31,7 @@ SC_MODULE(vip_uart_top) {
     sc_out<bool> o_tx;
     sc_in<bool> i_loopback_ena;                             // redirect Rx bytes into Tx
 
+    void init();
     void comb();
     void fileout();
     void registers();

@@ -117,14 +117,8 @@ Tracer::Tracer(sc_module_name name,
     async_reset_ = async_reset;
     hartid_ = hartid;
     trace_file_ = trace_file;
-    // initial
-    char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s%d.log",
-            trace_file_.c_str(),
-            hartid_);
-    trfilename = std::string(tstr);
-    fl = fopen(trfilename.c_str(), "wb");
-    // end initial
+
+    SC_THREAD(init);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -1280,6 +1274,15 @@ std::string Tracer::TraceOutput(sc_uint<TRACE_TBL_ABITS> rcnt) {
         ostr += std::string(tstr);
     }
     return ostr;
+}
+
+void Tracer::init() {
+    char tstr[256];
+    RISCV_sprintf(tstr, sizeof(tstr), "%s%d.log",
+            trace_file_.c_str(),
+            hartid_);
+    trfilename = std::string(tstr);
+    fl = fopen(trfilename.c_str(), "wb");
 }
 
 void Tracer::comb() {

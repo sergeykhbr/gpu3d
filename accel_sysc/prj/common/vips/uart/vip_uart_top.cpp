@@ -41,21 +41,6 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     rx0 = 0;
     tx0 = 0;
 
-    // initial
-    char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log",
-            logpath_.c_str(),
-            instnum_);
-    outfilename = std::string(tstr);
-    fl = fopen(outfilename.c_str(), "wb");
-
-    // Output string with each new symbol ended
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log.tmp",
-            logpath_.c_str(),
-            instnum_);
-    outfilename = std::string(tstr);
-    fl_tmp = fopen(outfilename.c_str(), "wb");
-    // end initial
 
     clk0 = new vip_clk("clk0",
                         pll_period);
@@ -80,6 +65,8 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     tx0->i_wdata(wb_rdata);
     tx0->o_full(w_tx_full);
     tx0->o_tx(o_tx);
+
+    SC_THREAD(init);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -146,6 +133,22 @@ std::string vip_uart_top::U8ToString(
     tstr[tsz] = 0;
     ostr = tstr;
     return ostr;
+}
+
+void vip_uart_top::init() {
+    char tstr[256];
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log",
+            logpath_.c_str(),
+            instnum_);
+    outfilename = std::string(tstr);
+    fl = fopen(outfilename.c_str(), "wb");
+
+    // Output string with each new symbol ended
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log.tmp",
+            logpath_.c_str(),
+            instnum_);
+    outfilename = std::string(tstr);
+    fl_tmp = fopen(outfilename.c_str(), "wb");
 }
 
 void vip_uart_top::comb() {

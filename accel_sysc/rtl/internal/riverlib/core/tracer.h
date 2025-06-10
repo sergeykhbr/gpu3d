@@ -46,6 +46,7 @@ SC_MODULE(Tracer) {
     sc_in<sc_uint<RISCV_ARCH>> i_m_wdata;
     sc_in<bool> i_reg_ignored;
 
+    void init();
     void comb();
     void traceout();
     void registers();

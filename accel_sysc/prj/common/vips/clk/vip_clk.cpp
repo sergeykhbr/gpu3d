@@ -38,9 +38,9 @@ void vip_clk::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void vip_clk::comb() {
     while (true) {
-        wait(static_cast<int>(0.5 * period_), SC_NS);
+        wait(static_cast<int>((0.5 * period_)), SC_NS);
         o_clk = 0;
-        wait(static_cast<int>(0.5 * period_), SC_NS);
+        wait(static_cast<int>((0.5 * period_)), SC_NS);
         o_clk = 1;
     }
 }

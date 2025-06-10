@@ -28,6 +28,7 @@ SC_MODULE(rom_inferred_2x32) {
     sc_in<sc_uint<abits>> i_addr;
     sc_out<sc_uint<64>> o_rdata;
 
+    void init();
     void registers();
 
     rom_inferred_2x32(sc_module_name name,
@@ -57,7 +58,15 @@ rom_inferred_2x32<abits>::rom_inferred_2x32(sc_module_name name,
     o_rdata("o_rdata") {
 
     filename_ = filename;
-    // initial
+
+    SC_THREAD(init);
+
+    SC_METHOD(registers);
+    sensitive << i_clk.pos();
+}
+
+template<int abits>
+void rom_inferred_2x32<abits>::init() {
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "%s_lo.hex", filename_.c_str());
     hexname0 = std::string(tstr);
@@ -66,10 +75,6 @@ rom_inferred_2x32<abits>::rom_inferred_2x32(sc_module_name name,
     RISCV_sprintf(tstr, sizeof(tstr), "%s_hi.hex", filename_.c_str());
     hexname1 = std::string(tstr);
     SV_readmemh(hexname1.c_str(), mem1);
-    // end initial
-
-    SC_METHOD(registers);
-    sensitive << i_clk.pos();
 }
 
 template<int abits>

@@ -50,10 +50,7 @@ jtag_app::jtag_app(sc_module_name name)
     tap->o_tdo(o_tdo);
     tap->i_tdi(i_tdi);
 
-    // initial
-    w_nrst = 0;
-    wb_clk1_cnt = 0;
-    // end initial
+    SC_THREAD(init);
 
     SC_METHOD(comb);
     sensitive << i_tdi;
@@ -97,21 +94,26 @@ void jtag_app::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
+void jtag_app::init() {
+    w_nrst = 0;
+    wait(static_cast<int>(800.0), SC_NS);
+    w_nrst = 1;
+}
+
 void jtag_app::comb() {
 }
 
 void jtag_app::test_clk1() {
-    wb_clk1_cnt = (wb_clk1_cnt + 1);
-    if (wb_clk1_cnt < 10) {
-        w_nrst = 0;
+    if (w_nrst.read() == 0) {
+        wb_clk1_cnt = 0;
     } else {
-        w_nrst = 1;
+        wb_clk1_cnt = (wb_clk1_cnt + 1);
     }
 
     if (wb_clk1_cnt == 50) {
         w_req_valid = 1;
         wb_req_irlen = 5;
-        wb_req_ir = 0x1;
+        wb_req_ir = 0x01;
         wb_req_drlen = 32;
         wb_req_dr = 0;
     } else if (wb_clk1_cnt == 250) {
