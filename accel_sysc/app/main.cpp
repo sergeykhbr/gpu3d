@@ -28,9 +28,9 @@ int sc_main(int argc, char *argv[]) {
     sc_trace_file *vcd_ = sc_create_vcd_trace_file(CMAKE_BINARY_DIR"/accel");
     vcd_->set_time_unit(1, SC_PS);
 
-#if 1
+#if 0
     mathlib_tb *tb = new mathlib_tb("tb");
-#elif 0
+#elif 1
     hdmi_tb *tb = new hdmi_tb("tb");
 #elif 0
     afifo_xslv_tb *tb = new afifo_xslv_tb("tb");
@@ -48,7 +48,7 @@ int sc_main(int argc, char *argv[]) {
               << ": Simulation started successfully. Continue for 10 ms..."
               << std::endl;
 
-    sc_start(50, SC_US);
+    sc_start(100, SC_US);
 
     if (vcd_) {
         sc_close_vcd_trace_file(vcd_);

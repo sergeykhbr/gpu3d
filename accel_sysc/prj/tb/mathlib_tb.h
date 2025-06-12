@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../common/vips/clk/vip_clk.h"
-#include "../../rtl/internal/mathlib/mul_i8.h"
+#include "../../rtl/internal/mathlib/mul_4x4_i8.h"
 
 namespace debugger {
 
@@ -37,13 +37,19 @@ SC_MODULE(mathlib_tb) {
     sc_signal<bool> w_nrst;                                 // Power-on system reset active LOW
     sc_signal<bool> w_clk;
     sc_uint<32> wb_clk_cnt;
-    sc_signal<sc_uint<8>> wb_a;
-    sc_signal<sc_uint<8>> wb_b;
-    sc_signal<sc_uint<16>> wb_res;
     sc_signal<bool> w_signed;
+    sc_signal<sc_uint<8>> wb_v0;
+    sc_signal<sc_uint<8>> wb_v1;
+    sc_signal<sc_uint<8>> wb_v2;
+    sc_signal<sc_uint<8>> wb_v3;
+    sc_signal<sc_biguint<128>> wb_m;
+    sc_signal<sc_uint<18>> wb_res0;
+    sc_signal<sc_uint<18>> wb_res1;
+    sc_signal<sc_uint<18>> wb_res2;
+    sc_signal<sc_uint<18>> wb_res3;
 
     vip_clk *clk;
-    mul_i8 *mul0;
+    mul_4x4_i8 *im8;
 
 };
 

@@ -40,6 +40,7 @@ hdmi_top::hdmi_top(sc_module_name name,
     async_reset_ = async_reset;
     sync0 = 0;
     fb0 = 0;
+    rgb2y0 = 0;
     xdma0 = 0;
 
     sync0 = new video_sync("sync0",
@@ -71,10 +72,10 @@ hdmi_top::hdmi_top(sc_module_name name,
     fb0->i_x(wb_sync_x);
     fb0->i_y(wb_sync_y);
     fb0->i_xy_total(wb_sync_xy_total);
-    fb0->o_hsync(o_hsync);
-    fb0->o_vsync(o_vsync);
-    fb0->o_de(o_de);
-    fb0->o_YCbCr(o_data);
+    fb0->o_hsync(w_fb_hsync);
+    fb0->o_vsync(w_fb_vsync);
+    fb0->o_de(w_fb_de);
+    fb0->o_rgb565(wb_fb_rgb565);
     fb0->i_req_2d_ready(w_req_mem_ready);
     fb0->o_req_2d_valid(w_req_mem_valid);
     fb0->o_req_2d_bytes(wb_req_mem_bytes);
@@ -84,6 +85,19 @@ hdmi_top::hdmi_top(sc_module_name name,
     fb0->i_resp_2d_addr(wb_resp_mem_addr);
     fb0->i_resp_2d_data(wb_resp_mem_data);
     fb0->o_resp_2d_ready(w_resp_mem_ready);
+
+    rgb2y0 = new rgb2ycbcr("rgb2y0",
+                            async_reset);
+    rgb2y0->i_nrst(i_hdmi_nrst);
+    rgb2y0->i_clk(i_hdmi_clk);
+    rgb2y0->i_rgb565(wb_fb_rgb565);
+    rgb2y0->i_hsync(w_fb_hsync);
+    rgb2y0->i_vsync(w_fb_vsync);
+    rgb2y0->i_de(w_fb_de);
+    rgb2y0->o_ycbcr422(o_data);
+    rgb2y0->o_hsync(o_hsync);
+    rgb2y0->o_vsync(o_vsync);
+    rgb2y0->o_de(o_de);
 
     xdma0 = new axi_dma<24>("xdma0",
                             async_reset,
@@ -123,6 +137,10 @@ hdmi_top::hdmi_top(sc_module_name name,
     sensitive << wb_sync_x;
     sensitive << wb_sync_y;
     sensitive << wb_sync_xy_total;
+    sensitive << w_fb_hsync;
+    sensitive << w_fb_vsync;
+    sensitive << w_fb_de;
+    sensitive << wb_fb_rgb565;
     sensitive << w_req_mem_ready;
     sensitive << w_req_mem_valid;
     sensitive << w_req_mem_write;
@@ -147,6 +165,9 @@ hdmi_top::~hdmi_top() {
     }
     if (fb0) {
         delete fb0;
+    }
+    if (rgb2y0) {
+        delete rgb2y0;
     }
     if (xdma0) {
         delete xdma0;
@@ -173,6 +194,9 @@ void hdmi_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (fb0) {
         fb0->generateVCD(i_vcd, o_vcd);
+    }
+    if (rgb2y0) {
+        rgb2y0->generateVCD(i_vcd, o_vcd);
     }
     if (xdma0) {
         xdma0->generateVCD(i_vcd, o_vcd);

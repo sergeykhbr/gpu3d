@@ -33,7 +33,7 @@ framebuf::framebuf(sc_module_name name,
     o_hsync("o_hsync"),
     o_vsync("o_vsync"),
     o_de("o_de"),
-    o_YCbCr("o_YCbCr"),
+    o_rgb565("o_rgb565"),
     i_req_2d_ready("i_req_2d_ready"),
     o_req_2d_valid("o_req_2d_valid"),
     o_req_2d_bytes("o_req_2d_bytes"),
@@ -90,15 +90,10 @@ framebuf::framebuf(sc_module_name name,
     sensitive << r.resp_ready;
     sensitive << r.raddr;
     sensitive << r.raddr_z;
-    sensitive << r.pix_x0;
     sensitive << r.h_sync;
     sensitive << r.v_sync;
     sensitive << r.de;
-    sensitive << r.Y0;
-    sensitive << r.Y1;
-    sensitive << r.Cb;
-    sensitive << r.Cr;
-    sensitive << r.YCbCr;
+    sensitive << r.rgb;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -126,7 +121,7 @@ void framebuf::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_hsync, o_hsync.name());
         sc_trace(o_vcd, o_vsync, o_vsync.name());
         sc_trace(o_vcd, o_de, o_de.name());
-        sc_trace(o_vcd, o_YCbCr, o_YCbCr.name());
+        sc_trace(o_vcd, o_rgb565, o_rgb565.name());
         sc_trace(o_vcd, i_req_2d_ready, i_req_2d_ready.name());
         sc_trace(o_vcd, o_req_2d_valid, o_req_2d_valid.name());
         sc_trace(o_vcd, o_req_2d_bytes, o_req_2d_bytes.name());
@@ -143,15 +138,10 @@ void framebuf::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.resp_ready, pn + ".r.resp_ready");
         sc_trace(o_vcd, r.raddr, pn + ".r.raddr");
         sc_trace(o_vcd, r.raddr_z, pn + ".r.raddr_z");
-        sc_trace(o_vcd, r.pix_x0, pn + ".r.pix_x0");
         sc_trace(o_vcd, r.h_sync, pn + ".r.h_sync");
         sc_trace(o_vcd, r.v_sync, pn + ".r.v_sync");
         sc_trace(o_vcd, r.de, pn + ".r.de");
-        sc_trace(o_vcd, r.Y0, pn + ".r.Y0");
-        sc_trace(o_vcd, r.Y1, pn + ".r.Y1");
-        sc_trace(o_vcd, r.Cb, pn + ".r.Cb");
-        sc_trace(o_vcd, r.Cr, pn + ".r.Cr");
-        sc_trace(o_vcd, r.YCbCr, pn + ".r.YCbCr");
+        sc_trace(o_vcd, r.rgb, pn + ".r.rgb");
     }
 
 }
@@ -166,7 +156,6 @@ void framebuf::comb() {
     v.de = (r.de.read()(2, 0), i_de.read());
     v.h_sync = (r.h_sync.read()(2, 0), i_hsync.read());
     v.v_sync = (r.v_sync.read()(2, 0), i_vsync.read());
-    v.pix_x0 = i_x.read()[0];
 
     vb_raddr_next = (r.raddr.read() + 1);
     if ((r.req_valid.read() == 1) && (i_req_2d_ready.read() == 1)) {
@@ -232,32 +221,32 @@ void framebuf::comb() {
         wb_pong_addr = i_resp_2d_addr.read()(10, 3);
         if (r.de.read().or_reduce() == 1) {
             if (r.raddr_z.read()(1, 0) == 0) {
-                v.YCbCr = wb_ping_rdata.read()(15, 0);
+                v.rgb = wb_ping_rdata.read()(15, 0);
             } else if (r.raddr_z.read()(1, 0) == 1) {
-                v.YCbCr = wb_ping_rdata.read()(31, 16);
+                v.rgb = wb_ping_rdata.read()(31, 16);
             } else if (r.raddr_z.read()(1, 0) == 2) {
-                v.YCbCr = wb_ping_rdata.read()(47, 32);
+                v.rgb = wb_ping_rdata.read()(47, 32);
             } else {
-                v.YCbCr = wb_ping_rdata.read()(63, 48);
+                v.rgb = wb_ping_rdata.read()(63, 48);
             }
         } else {
-            v.YCbCr = 0;
+            v.rgb = 0;
         }
     } else {
         wb_ping_addr = i_resp_2d_addr.read()(10, 3);
         wb_pong_addr = r.raddr.read()(9, 2);
         if (r.de.read().or_reduce() == 1) {
             if (r.raddr_z.read()(1, 0) == 0) {
-                v.YCbCr = wb_pong_rdata.read()(15, 0);
+                v.rgb = wb_pong_rdata.read()(15, 0);
             } else if (r.raddr_z.read()(1, 0) == 1) {
-                v.YCbCr = wb_pong_rdata.read()(31, 16);
+                v.rgb = wb_pong_rdata.read()(31, 16);
             } else if (r.raddr_z.read()(1, 0) == 2) {
-                v.YCbCr = wb_pong_rdata.read()(47, 32);
+                v.rgb = wb_pong_rdata.read()(47, 32);
             } else {
-                v.YCbCr = wb_pong_rdata.read()(63, 48);
+                v.rgb = wb_pong_rdata.read()(63, 48);
             }
         } else {
-            v.YCbCr = 0;
+            v.rgb = 0;
         }
     }
     w_ping_wena = (i_resp_2d_valid.read() & (!r.pingpong.read()));
@@ -270,7 +259,7 @@ void framebuf::comb() {
     o_hsync = r.h_sync.read()[1];
     o_vsync = r.v_sync.read()[1];
     o_de = r.de.read()[1];
-    o_YCbCr = (0, r.YCbCr.read());
+    o_rgb565 = r.rgb.read();
 
     o_req_2d_valid = r.req_valid.read();
     o_req_2d_bytes = 64;                                    // Xilinx MIG is limited to burst beat length 8

@@ -33,7 +33,7 @@ SC_MODULE(framebuf) {
     sc_out<bool> o_hsync;                                   // delayed horizontal sync
     sc_out<bool> o_vsync;                                   // delayed vertical sync
     sc_out<bool> o_de;                                      // delayed data enable
-    sc_out<sc_uint<18>> o_YCbCr;                            // YCbCr multiplexed odd/even pixels
+    sc_out<sc_uint<16>> o_rgb565;                           // RGB 16-bits pixels
     // DMA engine compatible interface (always read). Get pixels array:
     sc_in<bool> i_req_2d_ready;                             // 2D pixels ready to accept request
     sc_out<bool> o_req_2d_valid;                            // 2D pixels request is valid
@@ -70,15 +70,10 @@ SC_MODULE(framebuf) {
         sc_signal<bool> resp_ready;
         sc_signal<sc_uint<11>> raddr;
         sc_signal<sc_uint<11>> raddr_z;
-        sc_signal<bool> pix_x0;
         sc_signal<sc_uint<4>> h_sync;
         sc_signal<sc_uint<4>> v_sync;
         sc_signal<sc_uint<4>> de;
-        sc_signal<sc_uint<8>> Y0;
-        sc_signal<sc_uint<8>> Y1;
-        sc_signal<sc_uint<8>> Cb;
-        sc_signal<sc_uint<8>> Cr;
-        sc_signal<sc_uint<16>> YCbCr;
+        sc_signal<sc_uint<16>> rgb;
     };
 
     void framebuf_r_reset(framebuf_registers& iv) {
@@ -89,15 +84,10 @@ SC_MODULE(framebuf) {
         iv.resp_ready = 0;
         iv.raddr = 0;
         iv.raddr_z = 0;
-        iv.pix_x0 = 0;
         iv.h_sync = 0;
         iv.v_sync = 0;
         iv.de = 0;
-        iv.Y0 = 0;
-        iv.Y1 = 0;
-        iv.Cb = 0;
-        iv.Cr = 0;
-        iv.YCbCr = 0;
+        iv.rgb = 0;
     }
 
     sc_signal<sc_uint<8>> wb_ping_addr;

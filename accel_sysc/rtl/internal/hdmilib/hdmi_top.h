@@ -20,6 +20,7 @@
 #include "../ambalib/types_amba.h"
 #include "video_sync.h"
 #include "framebuf.h"
+#include "rgb2ycbcr.h"
 #include "../ambalib/axi_dma.h"
 
 namespace debugger {
@@ -59,6 +60,10 @@ SC_MODULE(hdmi_top) {
     sc_signal<sc_uint<11>> wb_sync_x;
     sc_signal<sc_uint<10>> wb_sync_y;
     sc_signal<sc_uint<24>> wb_sync_xy_total;
+    sc_signal<bool> w_fb_hsync;
+    sc_signal<bool> w_fb_vsync;
+    sc_signal<bool> w_fb_de;
+    sc_signal<sc_uint<16>> wb_fb_rgb565;
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
     sc_signal<bool> w_req_mem_write;                        // 0=read; 1=write operation
@@ -78,6 +83,7 @@ SC_MODULE(hdmi_top) {
 
     video_sync *sync0;
     framebuf *fb0;
+    rgb2ycbcr *rgb2y0;
     axi_dma<24> *xdma0;
 
 };
