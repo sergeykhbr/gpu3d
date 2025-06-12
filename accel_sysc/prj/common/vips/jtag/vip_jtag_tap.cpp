@@ -47,28 +47,30 @@ vip_jtag_tap::vip_jtag_tap(sc_module_name name)
     sensitive << i_req_dr;
     sensitive << i_tdi;
     sensitive << w_tck;
-    sensitive << rx.req_valid;
-    sensitive << rx.req_irlen;
-    sensitive << rx.req_drlen;
-    sensitive << rx.req_ir;
-    sensitive << rx.req_dr;
-    sensitive << rx.state;
-    sensitive << rx.dr_length;
-    sensitive << rx.dr;
-    sensitive << rx.bypass;
-    sensitive << rx.datacnt;
-    sensitive << rx.shiftreg;
-    sensitive << rx.resp_valid;
-    sensitive << rx.resp_data;
-    sensitive << rx.ir;
-    sensitive << rnx.trst;
-    sensitive << rnx.tms;
-    sensitive << rnx.tdo;
+    sensitive << r.req_valid;
+    sensitive << r.req_irlen;
+    sensitive << r.req_drlen;
+    sensitive << r.req_ir;
+    sensitive << r.req_dr;
+    sensitive << r.state;
+    sensitive << r.dr_length;
+    sensitive << r.dr;
+    sensitive << r.bypass;
+    sensitive << r.datacnt;
+    sensitive << r.shiftreg;
+    sensitive << r.resp_valid;
+    sensitive << r.resp_data;
+    sensitive << r.ir;
+    sensitive << rn.trst;
+    sensitive << rn.tms;
+    sensitive << rn.tdo;
 
-    SC_METHOD(rxegisters);
+    SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_tck.pos();
 
-    SC_METHOD(rnxegisters);
+    SC_METHOD(rnegisters);
+    sensitive << i_nrst;
     sensitive << i_tck.neg();
 }
 
@@ -88,23 +90,23 @@ void vip_jtag_tap::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_tms, o_tms.name());
         sc_trace(o_vcd, o_tdo, o_tdo.name());
         sc_trace(o_vcd, i_tdi, i_tdi.name());
-        sc_trace(o_vcd, rx.req_valid, pn + ".rx.req_valid");
-        sc_trace(o_vcd, rx.req_irlen, pn + ".rx.req_irlen");
-        sc_trace(o_vcd, rx.req_drlen, pn + ".rx.req_drlen");
-        sc_trace(o_vcd, rx.req_ir, pn + ".rx.req_ir");
-        sc_trace(o_vcd, rx.req_dr, pn + ".rx.req_dr");
-        sc_trace(o_vcd, rx.state, pn + ".rx.state");
-        sc_trace(o_vcd, rx.dr_length, pn + ".rx.dr_length");
-        sc_trace(o_vcd, rx.dr, pn + ".rx.dr");
-        sc_trace(o_vcd, rx.bypass, pn + ".rx.bypass");
-        sc_trace(o_vcd, rx.datacnt, pn + ".rx.datacnt");
-        sc_trace(o_vcd, rx.shiftreg, pn + ".rx.shiftreg");
-        sc_trace(o_vcd, rx.resp_valid, pn + ".rx.resp_valid");
-        sc_trace(o_vcd, rx.resp_data, pn + ".rx.resp_data");
-        sc_trace(o_vcd, rx.ir, pn + ".rx.ir");
-        sc_trace(o_vcd, rnx.trst, pn + ".rnx.trst");
-        sc_trace(o_vcd, rnx.tms, pn + ".rnx.tms");
-        sc_trace(o_vcd, rnx.tdo, pn + ".rnx.tdo");
+        sc_trace(o_vcd, r.req_valid, pn + ".r.req_valid");
+        sc_trace(o_vcd, r.req_irlen, pn + ".r.req_irlen");
+        sc_trace(o_vcd, r.req_drlen, pn + ".r.req_drlen");
+        sc_trace(o_vcd, r.req_ir, pn + ".r.req_ir");
+        sc_trace(o_vcd, r.req_dr, pn + ".r.req_dr");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.dr_length, pn + ".r.dr_length");
+        sc_trace(o_vcd, r.dr, pn + ".r.dr");
+        sc_trace(o_vcd, r.bypass, pn + ".r.bypass");
+        sc_trace(o_vcd, r.datacnt, pn + ".r.datacnt");
+        sc_trace(o_vcd, r.shiftreg, pn + ".r.shiftreg");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
+        sc_trace(o_vcd, r.resp_data, pn + ".r.resp_data");
+        sc_trace(o_vcd, r.ir, pn + ".r.ir");
+        sc_trace(o_vcd, rn.trst, pn + ".rn.trst");
+        sc_trace(o_vcd, rn.tms, pn + ".rn.tms");
+        sc_trace(o_vcd, rn.tdo, pn + ".rn.tdo");
     }
 
 }
@@ -113,120 +115,138 @@ void vip_jtag_tap::comb() {
     sc_uint<64> vb_shiftreg;
     int vi_dr_idx;
 
-    vnx = rnx;
-    vx = rx;
-    vb_shiftreg = rx.shiftreg.read();
+    vn = rn;
+    v = r;
+    vb_shiftreg = r.shiftreg.read();
     vi_dr_idx = 0;
 
-    vnx.tms = 0;
-    vx.resp_valid = 0;
-    if (rx.req_drlen.read().or_reduce() == 1) {
-        vi_dr_idx = (rx.req_drlen.read().to_int() - 1);
+    vn.tms = 0;
+    v.resp_valid = 0;
+    if (r.req_drlen.read().or_reduce() == 1) {
+        vi_dr_idx = (r.req_drlen.read().to_int() - 1);
     } else {
         vi_dr_idx = 0;
     }
 
     if (i_req_valid.read() == 1) {
-        vx.req_valid = 1;
-        vx.req_irlen = i_req_irlen.read();
-        vx.req_ir = i_req_ir.read();
-        vx.req_drlen = i_req_drlen.read();
-        vx.req_dr = i_req_dr.read();
+        v.req_valid = 1;
+        v.req_irlen = i_req_irlen.read();
+        v.req_ir = i_req_ir.read();
+        v.req_drlen = i_req_drlen.read();
+        v.req_dr = i_req_dr.read();
     }
 
-    switch (rx.state.read()) {
+    switch (r.state.read()) {
+    case INIT_RESET:
+        vn.trst = 1;
+        vn.tms = 1;
+        // 127 clocks to reset JTAG state machine without TRST
+        if (r.dr_length.read().or_reduce() == 1) {
+            v.dr_length = (r.dr_length.read() - 1);
+        } else {
+            v.state = RESET_TAP;
+        }
+        break;
     case RESET_TAP:
-        vnx.trst = 1;
-        vx.ir = ~0ull;
-        vx.state = IDLE;
+        vn.trst = 1;
+        v.ir = ~0ull;
+        v.state = IDLE;
         break;
     case IDLE:
-        vnx.trst = 0;
-        vx.resp_data = 0;
-        if (rx.req_valid.read() == 1) {
-            vx.req_valid = 0;
-            vnx.tms = 1;
-            vx.state = SELECT_DR_SCAN1;
+        vn.trst = 0;
+        v.resp_data = 0;
+        if (r.req_valid.read() == 1) {
+            v.req_valid = 0;
+            vn.tms = 1;
+            v.state = SELECT_DR_SCAN1;
         }
         break;
     case SELECT_DR_SCAN1:
-        vnx.tms = 1;
-        vx.state = SELECT_IR_SCAN;
+        vn.tms = 1;
+        v.state = SELECT_IR_SCAN;
         break;
     case SELECT_IR_SCAN:
-        vx.state = CAPTURE_IR;
-        vx.ir = rx.req_ir.read();
+        v.state = CAPTURE_IR;
+        v.ir = r.req_ir.read();
         break;
     case CAPTURE_IR:
-        vx.state = SHIFT_IR;
-        vb_shiftreg = rx.ir.read();
-        vx.datacnt = rx.req_irlen.read();
+        v.state = SHIFT_IR;
+        vb_shiftreg = r.ir.read();
+        v.datacnt = r.req_irlen.read();
         break;
     case SHIFT_IR:
-        if (rx.datacnt.read() <= 1) {
-            vnx.tms = 1;
-            vx.state = EXIT1_IR;
+        if (r.datacnt.read() <= 1) {
+            vn.tms = 1;
+            v.state = EXIT1_IR;
         } else {
-            vb_shiftreg = (0, rx.shiftreg.read()(63, 1));
-            vx.datacnt = (rx.datacnt.read() - 1);
+            vb_shiftreg = (0, r.shiftreg.read()(63, 1));
+            v.datacnt = (r.datacnt.read() - 1);
         }
         break;
     case EXIT1_IR:
-        vnx.tms = 1;
-        vx.state = UPDATE_IR;
+        vn.tms = 1;
+        v.state = UPDATE_IR;
         break;
     case UPDATE_IR:
-        vnx.tms = 1;
-        vx.state = SELECT_DR_SCAN;
+        vn.tms = 1;
+        v.state = SELECT_DR_SCAN;
         break;
     case SELECT_DR_SCAN:
-        vx.state = CAPTURE_DR;
+        v.state = CAPTURE_DR;
         break;
     case CAPTURE_DR:
-        vb_shiftreg = rx.req_dr.read();
-        vx.datacnt = rx.req_drlen.read();
-        vx.state = SHIFT_DR;
+        vb_shiftreg = r.req_dr.read();
+        v.datacnt = r.req_drlen.read();
+        v.state = SHIFT_DR;
         break;
     case SHIFT_DR:
-        vb_shiftreg = (0, rx.shiftreg.read()(63, 1));
-        if (rx.datacnt.read() <= 1) {
-            vnx.tms = 1;
-            vx.state = EXIT1_DR;
+        vb_shiftreg = (0, r.shiftreg.read()(63, 1));
+        if (r.datacnt.read() <= 1) {
+            vn.tms = 1;
+            v.state = EXIT1_DR;
         } else {
-            vx.datacnt = (rx.datacnt.read() - 1);
+            v.datacnt = (r.datacnt.read() - 1);
         }
         break;
     case EXIT1_DR:
-        vnx.tms = 1;
-        vx.state = UPDATE_DR;
+        vn.tms = 1;
+        v.state = UPDATE_DR;
         break;
     case UPDATE_DR:
-        vx.resp_valid = 1;
-        vx.resp_data = rx.shiftreg.read();
-        vx.state = IDLE;
+        v.resp_valid = 1;
+        v.resp_data = r.shiftreg.read();
+        v.state = IDLE;
         break;
     default:
-        vx.state = IDLE;
+        v.state = IDLE;
         break;
     }
 
-    vnx.tdo = rx.shiftreg.read()[0];
+    vn.tdo = r.shiftreg.read()[0];
     vb_shiftreg[vi_dr_idx] = i_tdi.read();
-    vx.shiftreg = vb_shiftreg;
-    o_trst = rnx.trst.read();
+    v.shiftreg = vb_shiftreg;
+    o_trst = rn.trst.read();
     o_tck = i_tck.read();
-    o_tms = rnx.tms.read();
-    o_tdo = rnx.tdo.read();
-    o_resp_valid = rx.resp_valid.read();
-    o_resp_data = rx.resp_data.read();
+    o_tms = rn.tms.read();
+    o_tdo = rn.tdo.read();
+    o_resp_valid = r.resp_valid.read();
+    o_resp_data = r.resp_data.read();
 }
 
-void vip_jtag_tap::rxegisters() {
-    rx = vx;
+void vip_jtag_tap::registers() {
+    if (i_nrst.read() == 0) {
+        vip_jtag_tap_r_reset(r);
+    } else {
+        r = v;
+    }
 }
 
-void vip_jtag_tap::rnxegisters() {
-    rnx = vnx;
+void vip_jtag_tap::rnegisters() {
+    if (i_nrst.read() == 0) {
+        vip_jtag_tap_rn_reset(rn);
+    } else {
+        rn = vn;
+    }
 }
 
 }  // namespace debugger

@@ -37,8 +37,8 @@ SC_MODULE(vip_jtag_tap) {
     sc_in<bool> i_tdi;
 
     void comb();
-    void rxegisters();
-    void rnxegisters();
+    void registers();
+    void rnegisters();
 
     vip_jtag_tap(sc_module_name name);
 
@@ -60,8 +60,9 @@ SC_MODULE(vip_jtag_tap) {
     static const uint8_t SHIFT_IR = 10;
     static const uint8_t EXIT1_IR = 11;
     static const uint8_t UPDATE_IR = 12;
+    static const uint8_t INIT_RESET = 15;
 
-    struct vip_jtag_tap_rxegisters {
+    struct vip_jtag_tap_registers {
         sc_signal<bool> req_valid;
         sc_signal<sc_uint<4>> req_irlen;
         sc_signal<sc_uint<7>> req_drlen;
@@ -78,17 +79,40 @@ SC_MODULE(vip_jtag_tap) {
         sc_signal<sc_uint<16>> ir;
     };
 
-    struct vip_jtag_tap_rnxegisters {
+    void vip_jtag_tap_r_reset(vip_jtag_tap_registers& iv) {
+        iv.req_valid = 0;
+        iv.req_irlen = 0x1;
+        iv.req_drlen = 0x01;
+        iv.req_ir = 0;
+        iv.req_dr = 0;
+        iv.state = INIT_RESET;
+        iv.dr_length = 0x7F;
+        iv.dr = 0;
+        iv.bypass = 0;
+        iv.datacnt = 0;
+        iv.shiftreg = 0;
+        iv.resp_valid = 0;
+        iv.resp_data = 0;
+        iv.ir = ~0ull;
+    }
+
+    struct vip_jtag_tap_rnegisters {
         sc_signal<bool> trst;
         sc_signal<bool> tms;
         sc_signal<bool> tdo;
     };
 
+    void vip_jtag_tap_rn_reset(vip_jtag_tap_rnegisters& iv) {
+        iv.trst = 0;
+        iv.tms = 1;
+        iv.tdo = 0;
+    }
+
     sc_signal<bool> w_tck;
-    vip_jtag_tap_rxegisters vx;
-    vip_jtag_tap_rxegisters rx;
-    vip_jtag_tap_rnxegisters vnx;
-    vip_jtag_tap_rnxegisters rnx;
+    vip_jtag_tap_registers v;
+    vip_jtag_tap_registers r;
+    vip_jtag_tap_rnegisters vn;
+    vip_jtag_tap_rnegisters rn;
 
 };
 

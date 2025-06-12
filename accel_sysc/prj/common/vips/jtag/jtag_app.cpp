@@ -110,13 +110,13 @@ void jtag_app::test_clk1() {
         wb_clk1_cnt = (wb_clk1_cnt + 1);
     }
 
-    if (wb_clk1_cnt == 50) {
+    if (wb_clk1_cnt == 500) {
         w_req_valid = 1;
         wb_req_irlen = 5;
         wb_req_ir = 0x01;
         wb_req_drlen = 32;
         wb_req_dr = 0;
-    } else if (wb_clk1_cnt == 250) {
+    } else if (wb_clk1_cnt == 750) {
         w_req_valid = 1;
         wb_req_irlen = 5;
         wb_req_ir = 0x10;                                   // 0x10 DTM_CONTROL
