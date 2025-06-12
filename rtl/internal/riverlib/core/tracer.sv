@@ -887,6 +887,7 @@ begin
 end
 endfunction: TraceOutput
 
+
 initial begin
     trfilename = $sformatf("%s%d.log",
             trace_file,
@@ -897,6 +898,7 @@ initial begin
         $warning("Cannot open log-file");
     end
 end
+
 
 always_comb
 begin: comb_proc

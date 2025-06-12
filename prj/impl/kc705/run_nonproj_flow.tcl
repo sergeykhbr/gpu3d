@@ -103,6 +103,7 @@ if {[string is true $load_files]} {
 	read_verilog -sv target_cfg_pkg.sv
 	set filelist_name ${LIST_ROOT}/ambalib.f;       source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/mem.f;		source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/mathlib.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/cdc.f;		source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/pcie_dma.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/hdmilib.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]

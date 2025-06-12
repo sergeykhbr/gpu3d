@@ -45,6 +45,10 @@ logic w_sync_de;
 logic [10:0] wb_sync_x;
 logic [9:0] wb_sync_y;
 logic [23:0] wb_sync_xy_total;
+logic w_fb_hsync;
+logic w_fb_vsync;
+logic w_fb_de;
+logic [15:0] wb_fb_rgb565;
 logic w_req_mem_ready;
 logic w_req_mem_valid;
 logic w_req_mem_write;                                      // 0=read; 1=write operation
@@ -94,10 +98,10 @@ framebuf #(
     .i_x(wb_sync_x),
     .i_y(wb_sync_y),
     .i_xy_total(wb_sync_xy_total),
-    .o_hsync(o_hsync),
-    .o_vsync(o_vsync),
-    .o_de(o_de),
-    .o_YCbCr(o_data),
+    .o_hsync(w_fb_hsync),
+    .o_vsync(w_fb_vsync),
+    .o_de(w_fb_de),
+    .o_rgb565(wb_fb_rgb565),
     .i_req_2d_ready(w_req_mem_ready),
     .o_req_2d_valid(w_req_mem_valid),
     .o_req_2d_bytes(wb_req_mem_bytes),
@@ -107,6 +111,21 @@ framebuf #(
     .i_resp_2d_addr(wb_resp_mem_addr),
     .i_resp_2d_data(wb_resp_mem_data),
     .o_resp_2d_ready(w_resp_mem_ready)
+);
+
+rgb2ycbcr #(
+    .async_reset(async_reset)
+) rgb2y0 (
+    .i_nrst(i_hdmi_nrst),
+    .i_clk(i_hdmi_clk),
+    .i_rgb565(wb_fb_rgb565),
+    .i_hsync(w_fb_hsync),
+    .i_vsync(w_fb_vsync),
+    .i_de(w_fb_de),
+    .o_ycbcr422(o_data),
+    .o_hsync(o_hsync),
+    .o_vsync(o_vsync),
+    .o_de(o_de)
 );
 
 axi_dma #(

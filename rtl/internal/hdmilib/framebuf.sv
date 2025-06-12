@@ -31,7 +31,7 @@ module framebuf #(
     output logic o_hsync,                                   // delayed horizontal sync
     output logic o_vsync,                                   // delayed vertical sync
     output logic o_de,                                      // delayed data enable
-    output logic [17:0] o_YCbCr,                            // YCbCr multiplexed odd/even pixels
+    output logic [15:0] o_rgb565,                           // RGB 16-bits pixels
     // DMA engine compatible interface (always read). Get pixels array:
     input logic i_req_2d_ready,                             // 2D pixels ready to accept request
     output logic o_req_2d_valid,                            // 2D pixels request is valid
@@ -89,7 +89,6 @@ begin: comb_proc
     v.de = {r.de[2: 0], i_de};
     v.h_sync = {r.h_sync[2: 0], i_hsync};
     v.v_sync = {r.v_sync[2: 0], i_vsync};
-    v.pix_x0 = i_x[0];
 
     vb_raddr_next = (r.raddr + 1);
     if ((r.req_valid == 1'b1) && (i_req_2d_ready == 1'b1)) begin
@@ -155,32 +154,32 @@ begin: comb_proc
         wb_pong_addr = i_resp_2d_addr[10: 3];
         if ((|r.de) == 1'b1) begin
             if (r.raddr_z[1: 0] == 2'd0) begin
-                v.YCbCr = wb_ping_rdata[15: 0];
+                v.rgb = wb_ping_rdata[15: 0];
             end else if (r.raddr_z[1: 0] == 2'd1) begin
-                v.YCbCr = wb_ping_rdata[31: 16];
+                v.rgb = wb_ping_rdata[31: 16];
             end else if (r.raddr_z[1: 0] == 2'd2) begin
-                v.YCbCr = wb_ping_rdata[47: 32];
+                v.rgb = wb_ping_rdata[47: 32];
             end else begin
-                v.YCbCr = wb_ping_rdata[63: 48];
+                v.rgb = wb_ping_rdata[63: 48];
             end
         end else begin
-            v.YCbCr = 16'd0;
+            v.rgb = 16'd0;
         end
     end else begin
         wb_ping_addr = i_resp_2d_addr[10: 3];
         wb_pong_addr = r.raddr[9: 2];
         if ((|r.de) == 1'b1) begin
             if (r.raddr_z[1: 0] == 2'd0) begin
-                v.YCbCr = wb_pong_rdata[15: 0];
+                v.rgb = wb_pong_rdata[15: 0];
             end else if (r.raddr_z[1: 0] == 2'd1) begin
-                v.YCbCr = wb_pong_rdata[31: 16];
+                v.rgb = wb_pong_rdata[31: 16];
             end else if (r.raddr_z[1: 0] == 2'd2) begin
-                v.YCbCr = wb_pong_rdata[47: 32];
+                v.rgb = wb_pong_rdata[47: 32];
             end else begin
-                v.YCbCr = wb_pong_rdata[63: 48];
+                v.rgb = wb_pong_rdata[63: 48];
             end
         end else begin
-            v.YCbCr = 16'd0;
+            v.rgb = 16'd0;
         end
     end
     w_ping_wena = (i_resp_2d_valid & (~r.pingpong));
@@ -193,7 +192,7 @@ begin: comb_proc
     o_hsync = r.h_sync[1];
     o_vsync = r.v_sync[1];
     o_de = r.de[1];
-    o_YCbCr = {2'd0, r.YCbCr};
+    o_rgb565 = r.rgb;
 
     o_req_2d_valid = r.req_valid;
     o_req_2d_bytes = 12'd64;                                // Xilinx MIG is limited to burst beat length 8

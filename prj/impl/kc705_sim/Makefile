@@ -53,6 +53,7 @@ comp: prep clr_logs
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/ambalib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/cdc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/mem.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/mathlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/pcie_dma.f
@@ -85,6 +86,7 @@ mce_flow: prep clr_logs
 	-f ${LISTS_HOME}/ambalib.f \
 	-f ${LISTS_HOME}/cdc.f \
 	-f ${LISTS_HOME}/mem.f \
+	-f ${LISTS_HOME}/mathlib.f \
 	-f ${LISTS_HOME}/riverlib.f \
 	-f ${LISTS_HOME}/misclib.f \
 	-f ${LISTS_HOME}/pcie_dma.f \

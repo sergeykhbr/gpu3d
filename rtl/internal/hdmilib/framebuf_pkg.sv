@@ -29,15 +29,10 @@ typedef struct {
     logic resp_ready;
     logic [10:0] raddr;
     logic [10:0] raddr_z;
-    logic pix_x0;
     logic [3:0] h_sync;
     logic [3:0] v_sync;
     logic [3:0] de;
-    logic [7:0] Y0;
-    logic [7:0] Y1;
-    logic [7:0] Cb;
-    logic [7:0] Cr;
-    logic [15:0] YCbCr;
+    logic [15:0] rgb;
 } framebuf_registers;
 
 const framebuf_registers framebuf_r_reset = '{
@@ -48,14 +43,9 @@ const framebuf_registers framebuf_r_reset = '{
     1'b0,                               // resp_ready
     11'd0,                              // raddr
     11'd0,                              // raddr_z
-    1'b0,                               // pix_x0
     4'd0,                               // h_sync
     4'd0,                               // v_sync
     4'd0,                               // de
-    8'd0,                               // Y0
-    8'd0,                               // Y1
-    8'd0,                               // Cb
-    8'd0,                               // Cr
-    '0                                  // YCbCr
+    '0                                  // rgb
 };
 endpackage: framebuf_pkg
