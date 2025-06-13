@@ -46,20 +46,23 @@ SC_MODULE(hdmi_top) {
     void comb();
 
     hdmi_top(sc_module_name name,
-             bool async_reset);
+             bool async_reset,
+             sc_uint<12> WIDTH,
+             sc_uint<12> HEIGHT);
     virtual ~hdmi_top();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    sc_uint<12> WIDTH_;
+    sc_uint<12> HEIGHT_;
 
+    sc_signal<sc_uint<12>> wb_width_m1;
+    sc_signal<sc_uint<12>> wb_height_m1;
     sc_signal<bool> w_sync_hsync;
     sc_signal<bool> w_sync_vsync;
     sc_signal<bool> w_sync_de;
-    sc_signal<sc_uint<11>> wb_sync_x;
-    sc_signal<sc_uint<10>> wb_sync_y;
-    sc_signal<sc_uint<24>> wb_sync_xy_total;
     sc_signal<bool> w_fb_hsync;
     sc_signal<bool> w_fb_vsync;
     sc_signal<bool> w_fb_de;

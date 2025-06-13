@@ -27,9 +27,8 @@ SC_MODULE(framebuf) {
     sc_in<bool> i_hsync;                                    // Horizontal sync
     sc_in<bool> i_vsync;                                    // Vertical sync
     sc_in<bool> i_de;                                       // data enable
-    sc_in<sc_uint<11>> i_x;                                 // x-pixel
-    sc_in<sc_uint<10>> i_y;                                 // y-pixel
-    sc_in<sc_uint<24>> i_xy_total;                          // x*y resolution, up to 16MB
+    sc_in<sc_uint<12>> i_width_m1;                          // x-width: 4K = 3840 - 1
+    sc_in<sc_uint<12>> i_height_m1;                         // y-height: 4K = 2160 - 1
     sc_out<bool> o_hsync;                                   // delayed horizontal sync
     sc_out<bool> o_vsync;                                   // delayed vertical sync
     sc_out<bool> o_de;                                      // delayed data enable
@@ -58,18 +57,26 @@ SC_MODULE(framebuf) {
     bool async_reset_;
 
     // state machine states:
+    static const uint8_t STATE_Idle = 0x0;
     static const uint8_t STATE_Request = 0x1;
     static const uint8_t STATE_Writing = 0x2;
-    static const uint8_t STATE_Idle = 0x0;
+    static const uint8_t STATE_EndOfFrame = 0x3;
 
     struct framebuf_registers {
+        sc_signal<sc_uint<12>> wr_row;
+        sc_signal<sc_uint<12>> wr_col;
+        sc_signal<sc_uint<8>> wr_addr;
+        sc_signal<sc_uint<12>> rd_row;
+        sc_signal<sc_uint<12>> rd_col;
+        sc_signal<sc_uint<8>> rd_addr;
+        sc_signal<sc_uint<4>> mux_ena;
+        sc_signal<sc_uint<4>> ring_sel;
+        sc_signal<sc_uint<4>> pix_sel;
+        sc_signal<sc_uint<9>> difcnt;
         sc_signal<sc_uint<2>> state;
-        sc_signal<bool> pingpong;
-        sc_signal<sc_uint<18>> req_addr;                    // 16 MB allocated space split on 64 B: 32x64=2048 B
+        sc_signal<sc_uint<25>> req_addr;                    // 32 MB (2 Bytes per pixel) allocated space split on 64 B: 32x64=2048 B
         sc_signal<bool> req_valid;
         sc_signal<bool> resp_ready;
-        sc_signal<sc_uint<11>> raddr;
-        sc_signal<sc_uint<11>> raddr_z;
         sc_signal<sc_uint<4>> h_sync;
         sc_signal<sc_uint<4>> v_sync;
         sc_signal<sc_uint<4>> de;
@@ -77,30 +84,45 @@ SC_MODULE(framebuf) {
     };
 
     void framebuf_r_reset(framebuf_registers& iv) {
-        iv.state = STATE_Request;
-        iv.pingpong = 0;
-        iv.req_addr = 32;
+        iv.wr_row = 0;
+        iv.wr_col = 0;
+        iv.wr_addr = 0;
+        iv.rd_row = 0;
+        iv.rd_col = 0;
+        iv.rd_addr = 0;
+        iv.mux_ena = 0x1;
+        iv.ring_sel = 0;
+        iv.pix_sel = 0;
+        iv.difcnt = 0;
+        iv.state = STATE_Idle;
+        iv.req_addr = 0;
         iv.req_valid = 0;
         iv.resp_ready = 0;
-        iv.raddr = 0;
-        iv.raddr_z = 0;
         iv.h_sync = 0;
         iv.v_sync = 0;
         iv.de = 0;
         iv.rgb = 0;
     }
 
-    sc_signal<sc_uint<8>> wb_ping_addr;
-    sc_signal<bool> w_ping_wena;
-    sc_signal<sc_uint<64>> wb_ping_rdata;
-    sc_signal<sc_uint<8>> wb_pong_addr;
-    sc_signal<bool> w_pong_wena;
-    sc_signal<sc_uint<64>> wb_pong_rdata;
+    sc_signal<sc_uint<6>> wb_ring0_addr;
+    sc_signal<bool> w_ring0_wena;
+    sc_signal<sc_uint<64>> wb_ring0_rdata;
+    sc_signal<sc_uint<6>> wb_ring1_addr;
+    sc_signal<bool> w_ring1_wena;
+    sc_signal<sc_uint<64>> wb_ring1_rdata;
+    sc_signal<sc_uint<6>> wb_ring2_addr;
+    sc_signal<bool> w_ring2_wena;
+    sc_signal<sc_uint<64>> wb_ring2_rdata;
+    sc_signal<sc_uint<6>> wb_ring3_addr;
+    sc_signal<bool> w_ring3_wena;
+    sc_signal<sc_uint<64>> wb_ring3_rdata;
     framebuf_registers v;
     framebuf_registers r;
 
-    ram_tech<8, 64> *ping;
-    ram_tech<8, 64> *pong;
+    ram_tech<6, 64> *ring0;
+    ram_tech<6, 64> *ring1;
+    ram_tech<6, 64> *ring2;
+    ram_tech<6, 64> *ring3;
 
 };
 

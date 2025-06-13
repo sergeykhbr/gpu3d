@@ -34,10 +34,7 @@ video_sync::video_sync(sc_module_name name,
     i_clk("i_clk"),
     o_hsync("o_hsync"),
     o_vsync("o_vsync"),
-    o_de("o_de"),
-    o_x("o_x"),
-    o_y("o_y"),
-    o_xy_total("o_xy_total") {
+    o_de("o_de") {
 
     async_reset_ = async_reset;
     H_ACTIVE_ = H_ACTIVE;
@@ -72,9 +69,6 @@ void video_sync::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_hsync, o_hsync.name());
         sc_trace(o_vcd, o_vsync, o_vsync.name());
         sc_trace(o_vcd, o_de, o_de.name());
-        sc_trace(o_vcd, o_x, o_x.name());
-        sc_trace(o_vcd, o_y, o_y.name());
-        sc_trace(o_vcd, o_xy_total, o_xy_total.name());
         sc_trace(o_vcd, r.h_count, pn + ".r.h_count");
         sc_trace(o_vcd, r.v_count, pn + ".r.v_count");
         sc_trace(o_vcd, r.h_sync, pn + ".r.h_sync");
@@ -130,9 +124,6 @@ void video_sync::comb() {
     o_de = r.de.read();
     o_hsync = r.h_sync.read();
     o_vsync = r.v_sync.read();
-    o_x = r.x_pix.read();
-    o_y = r.y_pix.read();
-    o_xy_total = 1049088;                                   // hardcoded resolution 1366x768
 }
 
 void video_sync::registers() {

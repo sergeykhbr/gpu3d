@@ -246,7 +246,9 @@ accel_soc::accel_soc(sc_module_name name,
     i2c0->o_nreset(o_i2c0_nreset);
 
     hdmi0 = new hdmi_top("hdmi0",
-                          async_reset);
+                          async_reset,
+                          1366,
+                          768);
     hdmi0->i_nrst(i_sys_nrst);
     hdmi0->i_clk(i_sys_clk);
     hdmi0->i_hdmi_nrst(i_hdmi_nrst);

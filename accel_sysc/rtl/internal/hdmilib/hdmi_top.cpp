@@ -20,7 +20,9 @@
 namespace debugger {
 
 hdmi_top::hdmi_top(sc_module_name name,
-                   bool async_reset)
+                   bool async_reset,
+                   sc_uint<12> WIDTH,
+                   sc_uint<12> HEIGHT)
     : sc_module(name),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
@@ -38,6 +40,8 @@ hdmi_top::hdmi_top(sc_module_name name,
     o_xmsto("o_xmsto") {
 
     async_reset_ = async_reset;
+    WIDTH_ = WIDTH;
+    HEIGHT_ = HEIGHT;
     sync0 = 0;
     fb0 = 0;
     rgb2y0 = 0;
@@ -45,11 +49,11 @@ hdmi_top::hdmi_top(sc_module_name name,
 
     sync0 = new video_sync("sync0",
                             async_reset,
-                            1366,
+                            WIDTH,
                             70,
                             143,
                             213,
-                            768,
+                            HEIGHT,
                             3,
                             5,
                             24);
@@ -58,9 +62,6 @@ hdmi_top::hdmi_top(sc_module_name name,
     sync0->o_hsync(w_sync_hsync);
     sync0->o_vsync(w_sync_vsync);
     sync0->o_de(w_sync_de);
-    sync0->o_x(wb_sync_x);
-    sync0->o_y(wb_sync_y);
-    sync0->o_xy_total(wb_sync_xy_total);
 
     fb0 = new framebuf("fb0",
                         async_reset);
@@ -69,9 +70,8 @@ hdmi_top::hdmi_top(sc_module_name name,
     fb0->i_hsync(w_sync_hsync);
     fb0->i_vsync(w_sync_vsync);
     fb0->i_de(w_sync_de);
-    fb0->i_x(wb_sync_x);
-    fb0->i_y(wb_sync_y);
-    fb0->i_xy_total(wb_sync_xy_total);
+    fb0->i_width_m1(wb_width_m1);
+    fb0->i_height_m1(wb_height_m1);
     fb0->o_hsync(w_fb_hsync);
     fb0->o_vsync(w_fb_vsync);
     fb0->o_de(w_fb_de);
@@ -131,12 +131,11 @@ hdmi_top::hdmi_top(sc_module_name name,
     sensitive << i_spdif_out;
     sensitive << i_irq;
     sensitive << i_xmsti;
+    sensitive << wb_width_m1;
+    sensitive << wb_height_m1;
     sensitive << w_sync_hsync;
     sensitive << w_sync_vsync;
     sensitive << w_sync_de;
-    sensitive << wb_sync_x;
-    sensitive << wb_sync_y;
-    sensitive << wb_sync_xy_total;
     sensitive << w_fb_hsync;
     sensitive << w_fb_vsync;
     sensitive << w_fb_de;
@@ -217,6 +216,8 @@ void hdmi_top::comb() {
     wb_req_mem_strob = 0;
     wb_req_mem_data = 0;
     w_req_mem_last = 0;
+    wb_width_m1 = (WIDTH_ - 1);
+    wb_height_m1 = (HEIGHT_ - 1);
 }
 
 }  // namespace debugger

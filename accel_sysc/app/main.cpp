@@ -48,7 +48,7 @@ int sc_main(int argc, char *argv[]) {
               << ": Simulation started successfully. Continue for 10 ms..."
               << std::endl;
 
-    sc_start(100, SC_US);
+    sc_start(50, SC_US);
 
     if (vcd_) {
         sc_close_vcd_trace_file(vcd_);

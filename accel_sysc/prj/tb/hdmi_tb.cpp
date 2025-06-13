@@ -31,7 +31,9 @@ hdmi_tb::hdmi_tb(sc_module_name name)
     clk->o_clk(w_clk);
 
     tt = new hdmi_top("tt",
-                       0);
+                       0,
+                       1366,
+                       768);
     tt->i_nrst(i_nrst);
     tt->i_clk(w_clk);
     tt->i_hdmi_nrst(i_nrst);

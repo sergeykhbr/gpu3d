@@ -26,9 +26,6 @@ SC_MODULE(video_sync) {
     sc_out<bool> o_hsync;                                   // Horisontal sync pulse
     sc_out<bool> o_vsync;                                   // Vertical sync pulse
     sc_out<bool> o_de;                                      // Data enable, HIGH in active zone 1366x768 screen resolution
-    sc_out<sc_uint<11>> o_x;                                // Width pixel coordinate
-    sc_out<sc_uint<10>> o_y;                                // Height pixel coordinate
-    sc_out<sc_uint<24>> o_xy_total;                         // Total resolution to address 16MB frame buffer
 
     void comb();
     void registers();
