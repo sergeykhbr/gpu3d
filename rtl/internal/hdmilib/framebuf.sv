@@ -25,9 +25,8 @@ module framebuf #(
     input logic i_hsync,                                    // Horizontal sync
     input logic i_vsync,                                    // Vertical sync
     input logic i_de,                                       // data enable
-    input logic [10:0] i_x,                                 // x-pixel
-    input logic [9:0] i_y,                                  // y-pixel
-    input logic [23:0] i_xy_total,                          // x*y resolution, up to 16MB
+    input logic [11:0] i_width_m1,                          // x-width: 4K = 3840 - 1
+    input logic [11:0] i_height_m1,                         // y-height: 4K = 2160 - 1
     output logic o_hsync,                                   // delayed horizontal sync
     output logic o_vsync,                                   // delayed vertical sync
     output logic o_de,                                      // delayed data enable
@@ -46,60 +45,95 @@ module framebuf #(
 
 import framebuf_pkg::*;
 
-logic [7:0] wb_ping_addr;
-logic w_ping_wena;
-logic [63:0] wb_ping_rdata;
-logic [7:0] wb_pong_addr;
-logic w_pong_wena;
-logic [63:0] wb_pong_rdata;
+logic [5:0] wb_ring0_addr;
+logic w_ring0_wena;
+logic [63:0] wb_ring0_rdata;
+logic [5:0] wb_ring1_addr;
+logic w_ring1_wena;
+logic [63:0] wb_ring1_rdata;
+logic [5:0] wb_ring2_addr;
+logic w_ring2_wena;
+logic [63:0] wb_ring2_rdata;
+logic [5:0] wb_ring3_addr;
+logic w_ring3_wena;
+logic [63:0] wb_ring3_rdata;
 framebuf_registers r;
 framebuf_registers rin;
 
 ram_tech #(
-    .abits(8),
+    .abits(6),
     .dbits(64)
-) ping (
+) ring0 (
     .i_clk(i_clk),
-    .i_addr(wb_ping_addr),
-    .i_wena(w_ping_wena),
+    .i_addr(wb_ring0_addr),
+    .i_wena(w_ring0_wena),
     .i_wdata(i_resp_2d_data),
-    .o_rdata(wb_ping_rdata)
+    .o_rdata(wb_ring0_rdata)
 );
 
 ram_tech #(
-    .abits(8),
+    .abits(6),
     .dbits(64)
-) pong (
+) ring1 (
     .i_clk(i_clk),
-    .i_addr(wb_pong_addr),
-    .i_wena(w_pong_wena),
+    .i_addr(wb_ring1_addr),
+    .i_wena(w_ring1_wena),
     .i_wdata(i_resp_2d_data),
-    .o_rdata(wb_pong_rdata)
+    .o_rdata(wb_ring1_rdata)
+);
+
+ram_tech #(
+    .abits(6),
+    .dbits(64)
+) ring2 (
+    .i_clk(i_clk),
+    .i_addr(wb_ring2_addr),
+    .i_wena(w_ring2_wena),
+    .i_wdata(i_resp_2d_data),
+    .o_rdata(wb_ring2_rdata)
+);
+
+ram_tech #(
+    .abits(6),
+    .dbits(64)
+) ring3 (
+    .i_clk(i_clk),
+    .i_addr(wb_ring3_addr),
+    .i_wena(w_ring3_wena),
+    .i_wdata(i_resp_2d_data),
+    .o_rdata(wb_ring3_rdata)
 );
 
 always_comb
 begin: comb_proc
     framebuf_registers v;
-    logic [10:0] vb_raddr_next;
+    logic v_rd_ena;
+    logic [63:0] vb_ring_rdata;
+    logic [15:0] vb_pix;
 
     v = r;
-    vb_raddr_next = 11'd0;
+    v_rd_ena = 1'b0;
+    vb_ring_rdata = '0;
+    vb_pix = '0;
 
     // delayed signals:
     v.de = {r.de[2: 0], i_de};
     v.h_sync = {r.h_sync[2: 0], i_hsync};
     v.v_sync = {r.v_sync[2: 0], i_vsync};
 
-    vb_raddr_next = (r.raddr + 1);
-    if ((r.req_valid == 1'b1) && (i_req_2d_ready == 1'b1)) begin
-        v.req_valid = 1'b0;
-    end
-    if (i_de == 1'b1) begin
-        v.raddr = vb_raddr_next;
-        v.raddr_z = r.raddr;
+    if ((i_vsync == 1'b1) && (r.v_sync[0] == 1'b0)) begin
+        // Posedge of vsync:
+        v.state = STATE_EndOfFrame;
     end
 
     case (r.state)
+    STATE_Idle: begin
+        if ((r.difcnt[8] == 1'b1) || (r.difcnt <= 9'd96)) begin
+            v.req_valid = 1'b1;
+            v.req_addr = {r.wr_row, r.wr_col, 1'b0};        // 2 Bytes per pixel
+            v.state = STATE_Request;
+        end
+    end
     STATE_Request: begin
         v.req_valid = 1'b1;
         v.resp_ready = 1'b0;
@@ -111,79 +145,127 @@ begin: comb_proc
     end
     STATE_Writing: begin
         if (i_resp_2d_valid == 1'b1) begin
+            v.wr_col = (r.wr_col + 12'd4);                  // 64-bits contains 4x16-bits pixels
+            v.wr_addr = (r.wr_addr + 1);
             if (i_resp_2d_last == 1'b1) begin
                 v.resp_ready = 1'b0;
-                if ((&i_resp_2d_addr[10: 3]) == 1'b1) begin
-                    v.state = STATE_Idle;
-                end else begin
-                    v.req_valid = 1'b1;
-                    v.req_addr = (r.req_addr + 1);
-                    v.state = STATE_Request;
+                v.state = STATE_Idle;
+                if (r.wr_col >= i_width_m1) begin
+                    v.wr_col = 12'd0;
+                    v.wr_row = (r.wr_row + 1);
+                    v.wr_addr = {(r.wr_addr[7: 6] + 1), 6'd0};
                 end
             end
         end
     end
-    STATE_Idle: begin
-        if (r.raddr[10] != vb_raddr_next[10]) begin
-            v.pingpong = (~r.pingpong);
-            if ((r.req_addr + 1) >= i_xy_total[22: 5]) begin// 2048 B = 1024 pixel (16 bits each)
-                // request first data while processing the last one:
-                v.req_addr = 18'd0;
-            end else begin
-                v.req_addr = (r.req_addr + 1);
-            end
-            v.req_valid = 1'b1;
-            v.state = STATE_Request;
+    STATE_EndOfFrame: begin
+        if (i_vsync == 1'b0) begin
+            // Negedge of vsync:
+            v.wr_col = 12'd0;
+            v.wr_row = 12'd0;
+            v.wr_addr = 8'd0;
+            v.difcnt = 9'd0;
+            v.rd_row = 12'd0;
+            v.rd_col = 12'd0;
+            v.rd_addr = 8'd0;
+            v.mux_ena = 4'h1;
+            v.state = STATE_Idle;
         end
-    end
-    default: begin
     end
     endcase
 
-    if ((i_vsync == 1'b1) && (r.v_sync[0] == 1'b0)) begin
-        // Update the second memory bank, so that ping & pong were updated
-        v.pingpong = (~r.pingpong);
-        v.raddr = 11'd0;
-        v.req_addr = 18'd32;                                // 32-burst transactions 64B each => 2048 B
-        v.req_valid = 1'b1;
-        v.state = STATE_Request;
+    if (i_de == 1'b1) begin
+        v.mux_ena = {r.mux_ena[2: 0], r.mux_ena[3]};
+        if (r.mux_ena[0] == 1'b1) begin
+            v_rd_ena = 1'b1;
+            v.rd_addr = (r.rd_addr + 1);
+            v.rd_col = (r.rd_col + 12'd4);                  // 64-bits contains 4x16-bits pixels
+        end
+    end else if ((r.de[0] == 1'b1) && (i_de == 1'b0)) begin
+        // Back front of the de (end of row)
+        v.rd_addr = {(r.rd_addr[7: 6] + 1), 6'd0};
+        v.mux_ena = 4'h1;
+        v.rd_col = 12'd0;
+        v.rd_row = (r.rd_row + 1);
+    end
+    if ((i_resp_2d_valid == 1'b1) && (v_rd_ena == 1'b0)) begin
+        v.difcnt = (r.difcnt + 1);
+    end else if ((i_resp_2d_valid == 1'b0) && (v_rd_ena == 1'b1)) begin
+        v.difcnt = (r.difcnt - 1);
+    end else if ((i_hsync == 1'b0) && (r.h_sync[0] == 1'b1)) begin
+        // correction, we can write more than used
+        v.difcnt = r.wr_col[11: 2];
     end
 
-    if (r.pingpong == 1'b1) begin
-        wb_ping_addr = r.raddr[9: 2];
-        wb_pong_addr = i_resp_2d_addr[10: 3];
-        if ((|r.de) == 1'b1) begin
-            if (r.raddr_z[1: 0] == 2'd0) begin
-                v.rgb = wb_ping_rdata[15: 0];
-            end else if (r.raddr_z[1: 0] == 2'd1) begin
-                v.rgb = wb_ping_rdata[31: 16];
-            end else if (r.raddr_z[1: 0] == 2'd2) begin
-                v.rgb = wb_ping_rdata[47: 32];
-            end else begin
-                v.rgb = wb_ping_rdata[63: 48];
-            end
-        end else begin
-            v.rgb = 16'd0;
-        end
+    if (r.wr_addr[7: 6] == 2'd0) begin
+        w_ring0_wena = i_resp_2d_valid;
+        wb_ring0_addr = r.wr_addr[6: 0];
+        w_ring1_wena = 1'b0;
+        wb_ring1_addr = r.rd_addr[6: 0];
+        w_ring2_wena = 1'b0;
+        wb_ring2_addr = r.rd_addr[6: 0];
+        w_ring3_wena = 1'b0;
+        wb_ring3_addr = r.rd_addr[6: 0];
+    end else if (r.wr_addr[7: 6] == 2'd1) begin
+        w_ring0_wena = 1'b0;
+        wb_ring0_addr = r.rd_addr[6: 0];
+        w_ring1_wena = i_resp_2d_valid;
+        wb_ring1_addr = r.wr_addr[6: 0];
+        w_ring2_wena = 1'b0;
+        wb_ring2_addr = r.rd_addr[6: 0];
+        w_ring3_wena = 1'b0;
+        wb_ring3_addr = r.rd_addr[6: 0];
+    end else if (r.wr_addr[7: 6] == 2'd2) begin
+        w_ring0_wena = 1'b0;
+        wb_ring0_addr = r.rd_addr[6: 0];
+        w_ring1_wena = 1'b0;
+        wb_ring1_addr = r.rd_addr[6: 0];
+        w_ring2_wena = i_resp_2d_valid;
+        wb_ring2_addr = r.wr_addr[6: 0];
+        w_ring3_wena = 1'b0;
+        wb_ring3_addr = r.rd_addr[6: 0];
     end else begin
-        wb_ping_addr = i_resp_2d_addr[10: 3];
-        wb_pong_addr = r.raddr[9: 2];
-        if ((|r.de) == 1'b1) begin
-            if (r.raddr_z[1: 0] == 2'd0) begin
-                v.rgb = wb_pong_rdata[15: 0];
-            end else if (r.raddr_z[1: 0] == 2'd1) begin
-                v.rgb = wb_pong_rdata[31: 16];
-            end else if (r.raddr_z[1: 0] == 2'd2) begin
-                v.rgb = wb_pong_rdata[47: 32];
-            end else begin
-                v.rgb = wb_pong_rdata[63: 48];
-            end
-        end else begin
-            v.rgb = 16'd0;
-        end
+        w_ring0_wena = 1'b0;
+        wb_ring0_addr = r.rd_addr[6: 0];
+        w_ring1_wena = 1'b0;
+        wb_ring1_addr = r.rd_addr[6: 0];
+        w_ring2_wena = 1'b0;
+        wb_ring2_addr = r.rd_addr[6: 0];
+        w_ring3_wena = i_resp_2d_valid;
+        wb_ring3_addr = r.wr_addr[6: 0];
     end
-    w_ping_wena = (i_resp_2d_valid & (~r.pingpong));
-    w_pong_wena = (i_resp_2d_valid & r.pingpong);
+    if (r.rd_addr[7: 6] == 2'd0) begin
+        v.ring_sel = 4'h1;
+    end else if (r.rd_addr[7: 6] == 2'd1) begin
+        v.ring_sel = 4'h2;
+    end else if (r.rd_addr[7: 6] == 2'd2) begin
+        v.ring_sel = 4'h4;
+    end else begin
+        v.ring_sel = 4'h8;
+    end
+    v.pix_sel = r.mux_ena;
+
+    if (r.ring_sel[0] == 1'b1) begin
+        vb_ring_rdata = wb_ring0_rdata;
+    end else if (r.ring_sel[1] == 1'b1) begin
+        vb_ring_rdata = wb_ring1_rdata;
+    end else if (r.ring_sel[2] == 1'b1) begin
+        vb_ring_rdata = wb_ring2_rdata;
+    end else begin
+        vb_ring_rdata = wb_ring3_rdata;
+    end
+    if ((|r.de) == 1'b0) begin
+        vb_pix = 16'd0;
+    end else if (r.pix_sel[0] == 1'b1) begin
+        vb_pix = vb_ring_rdata[15: 0];
+    end else if (r.pix_sel[1] == 1'b1) begin
+        vb_pix = vb_ring_rdata[31: 16];
+    end else if (r.pix_sel[2] == 1'b1) begin
+        vb_pix = vb_ring_rdata[47: 32];
+    end else begin
+        vb_pix = vb_ring_rdata[63: 48];
+    end
+    v.rgb = vb_pix;
 
     if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = framebuf_r_reset;
@@ -196,7 +278,7 @@ begin: comb_proc
 
     o_req_2d_valid = r.req_valid;
     o_req_2d_bytes = 12'd64;                                // Xilinx MIG is limited to burst beat length 8
-    o_req_2d_addr = {r.req_addr, 6'd0};
+    o_req_2d_addr = r.req_addr[23: 0];
     o_resp_2d_ready = r.resp_ready;
 
     rin = v;

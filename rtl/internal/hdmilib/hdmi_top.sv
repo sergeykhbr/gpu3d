@@ -17,7 +17,9 @@
 `timescale 1ns/10ps
 
 module hdmi_top #(
-    parameter logic async_reset = 1'b0
+    parameter logic async_reset = 1'b0,
+    parameter logic [11:0] WIDTH = 12'd1366,
+    parameter logic [11:0] HEIGHT = 12'd768
 )
 (
     input logic i_nrst,                                     // Reset: active LOW
@@ -39,12 +41,11 @@ module hdmi_top #(
 
 import types_pnp_pkg::*;
 import types_amba_pkg::*;
+logic [11:0] wb_width_m1;
+logic [11:0] wb_height_m1;
 logic w_sync_hsync;
 logic w_sync_vsync;
 logic w_sync_de;
-logic [10:0] wb_sync_x;
-logic [9:0] wb_sync_y;
-logic [23:0] wb_sync_xy_total;
 logic w_fb_hsync;
 logic w_fb_vsync;
 logic w_fb_de;
@@ -68,11 +69,11 @@ logic [63:0] wb_dbg_payload_unused;
 
 video_sync #(
     .async_reset(async_reset),
-    .H_ACTIVE(1366),
+    .H_ACTIVE(WIDTH),
     .H_FRONT(70),
     .H_SYNC(143),
     .H_BACK(213),
-    .V_ACTIVE(768),
+    .V_ACTIVE(HEIGHT),
     .V_FRONT(3),
     .V_SYNC(5),
     .V_BACK(24)
@@ -81,10 +82,7 @@ video_sync #(
     .i_clk(i_hdmi_clk),
     .o_hsync(w_sync_hsync),
     .o_vsync(w_sync_vsync),
-    .o_de(w_sync_de),
-    .o_x(wb_sync_x),
-    .o_y(wb_sync_y),
-    .o_xy_total(wb_sync_xy_total)
+    .o_de(w_sync_de)
 );
 
 framebuf #(
@@ -95,9 +93,8 @@ framebuf #(
     .i_hsync(w_sync_hsync),
     .i_vsync(w_sync_vsync),
     .i_de(w_sync_de),
-    .i_x(wb_sync_x),
-    .i_y(wb_sync_y),
-    .i_xy_total(wb_sync_xy_total),
+    .i_width_m1(wb_width_m1),
+    .i_height_m1(wb_height_m1),
     .o_hsync(w_fb_hsync),
     .o_vsync(w_fb_vsync),
     .o_de(w_fb_de),
@@ -173,5 +170,7 @@ assign w_req_mem_write = 1'b0;                              // Always read
 assign wb_req_mem_strob = 8'd0;
 assign wb_req_mem_data = '0;
 assign w_req_mem_last = 1'b0;
+assign wb_width_m1 = (WIDTH - 1);
+assign wb_height_m1 = (HEIGHT - 1);
 
 endmodule: hdmi_top

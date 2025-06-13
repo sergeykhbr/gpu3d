@@ -17,18 +17,26 @@ package framebuf_pkg;
 
 
 // state machine states:
+localparam bit [1:0] STATE_Idle = 2'h0;
 localparam bit [1:0] STATE_Request = 2'h1;
 localparam bit [1:0] STATE_Writing = 2'h2;
-localparam bit [1:0] STATE_Idle = 2'h0;
+localparam bit [1:0] STATE_EndOfFrame = 2'h3;
 
 typedef struct {
+    logic [11:0] wr_row;
+    logic [11:0] wr_col;
+    logic [7:0] wr_addr;
+    logic [11:0] rd_row;
+    logic [11:0] rd_col;
+    logic [7:0] rd_addr;
+    logic [3:0] mux_ena;
+    logic [3:0] ring_sel;
+    logic [3:0] pix_sel;
+    logic [8:0] difcnt;
     logic [1:0] state;
-    logic pingpong;
-    logic [17:0] req_addr;                                  // 16 MB allocated space split on 64 B: 32x64=2048 B
+    logic [24:0] req_addr;                                  // 32 MB (2 Bytes per pixel) allocated space split on 64 B: 32x64=2048 B
     logic req_valid;
     logic resp_ready;
-    logic [10:0] raddr;
-    logic [10:0] raddr_z;
     logic [3:0] h_sync;
     logic [3:0] v_sync;
     logic [3:0] de;
@@ -36,13 +44,20 @@ typedef struct {
 } framebuf_registers;
 
 const framebuf_registers framebuf_r_reset = '{
-    STATE_Request,                      // state
-    1'b0,                               // pingpong
-    18'd32,                             // req_addr
+    '0,                                 // wr_row
+    '0,                                 // wr_col
+    '0,                                 // wr_addr
+    '0,                                 // rd_row
+    '0,                                 // rd_col
+    '0,                                 // rd_addr
+    4'h1,                               // mux_ena
+    '0,                                 // ring_sel
+    '0,                                 // pix_sel
+    '0,                                 // difcnt
+    STATE_Idle,                         // state
+    '0,                                 // req_addr
     1'b0,                               // req_valid
     1'b0,                               // resp_ready
-    11'd0,                              // raddr
-    11'd0,                              // raddr_z
     4'd0,                               // h_sync
     4'd0,                               // v_sync
     4'd0,                               // de

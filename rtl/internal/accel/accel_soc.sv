@@ -289,7 +289,9 @@ apb_i2c #(
 );
 
 hdmi_top #(
-    .async_reset(async_reset)
+    .async_reset(async_reset),
+    .WIDTH(12'd1366),
+    .HEIGHT(12'd768)
 ) hdmi0 (
     .i_nrst(i_sys_nrst),
     .i_clk(i_sys_clk),
