@@ -69,42 +69,54 @@ void wait_seconds(int sec) {
     printf_uart("%s", "done\r\n");
 }
 
-void init_ddr_hdmi_region(uint64_t *fb, int w, int h) {
-    uint64_t YCbCr = 0;
+void init_ddr_hdmi_region(uint8_t *fb, int xstart, int xend, int xsize,
+                                       int ystart, int yend, int ysize) {
+    uint64_t val = 0;
     int off = 0;
+    int idx = 0;
     int xy_cnt = 0;
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x+=2) {
-            if (x < 170) {
-                YCbCr >>= 32;
-                YCbCr |= (0x80EB80EB00000000ull);  // Y=235,Cb=128,Cr=128 White
-            } else if (x < 340) {
-                YCbCr >>= 32;
-                YCbCr |= (0x8010801000000000ull);  // Y=16,Cb=128,Cr=128 Black
-            } else if (x < 510) {
-                YCbCr >>= 32;
-                YCbCr |= (0xF0525A5200000000ull);  // Y=82,Cb=90,Cr=240 Red
-            } else if (x < 680) {
-                YCbCr >>= 32;
-                YCbCr |= (0x2291369100000000ull);  // Y=145,Cb=54,Cr=34 Green
-            } else if (x < 850) {
-                YCbCr >>= 32;
-                YCbCr |= (0x6E29F02900000000ull);  // Y=41,Cb=240,Cr=110 Blue
-            } else if (x < 1020) {
-                YCbCr >>= 32;
-                YCbCr |= (0x92C810C800000000ull);  // Y=200,Cb=16,Cr=146 Yellow
-            } else if (x < 1190) {
-                YCbCr >>= 32;
-                YCbCr |= (0x10AAA6AA00000000ull);  // Y=170,Cb=166,Cr=16 Cyan
-            } else {
-                YCbCr >>= 32;
-                YCbCr |= (0xDE6A666A00000000ull);  // Y=106,Cb=102,Cr=222 Magneta
+    int t1;
+    const uint64_t rgb565[8] = {
+                 0xFFFF, // white
+                 0x0000, // black
+                 0xF800, // red
+                 0x07E0, // green
+                 0x001F, // blue
+                 0xFFE0, // yellow
+                 0x07FF, // cyan
+                 0xF81F // magneta
+                };
+    int border[8] = {
+                xsize >> 3,
+                2 *(xsize >> 3),
+                3 *(xsize >> 3),
+                4 *(xsize >> 3),
+                5 *(xsize >> 3),
+                6 *(xsize >> 3),
+                7 *(xsize >> 3),
+                xsize
+                };
+
+    // split screen on 8 strips without using division/multiplier    
+    for (int y = ystart; y < yend; y++) {
+        val = 0;
+        for (int x = xstart; x < xend; x++) {
+            idx = 0;
+            while (x > border[idx]) {
+                idx++;
             }
-            xy_cnt += 2;
-            if (xy_cnt >= 4) {
+
+            val >>= 16;
+            val |= (rgb565[idx] << 48);
+            xy_cnt++;
+            if ((x & 0x3) == 0x3) {
                 xy_cnt = 0;
-                fb[off++] = YCbCr;
+                *((uint64_t *)&fb[(y << 13) + (x >> 2)]) = val;  // y * 0x2000 line (8 KB per line)
+                val = 0;
             }
+        }
+        if (xy_cnt) {
+            *((uint64_t *)&fb[(y << 13) + (xend >> 2)]) = val;  // y * 0x2000 line (8 KB per line)
         }
     }
 }
@@ -259,5 +271,5 @@ Audio Mode
 0x0A[3:2] Audio Select
 */
 
-    init_ddr_hdmi_region((uint64_t *)ADDR_BUS0_XSLV_DDR, 1366, 768);
+    init_ddr_hdmi_region((uint8_t *)ADDR_BUS0_XSLV_DDR, 0, 1366, 1366, 0, 768, 768);
 }
