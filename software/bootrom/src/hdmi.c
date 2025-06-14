@@ -69,13 +69,12 @@ void wait_seconds(int sec) {
     printf_uart("%s", "done\r\n");
 }
 
-void init_ddr_hdmi_region(uint8_t *fb, int xstart, int xend, int xsize,
+void init_ddr_hdmi_region(uint64_t *fb, int xstart, int xend, int xsize,
                                        int ystart, int yend, int ysize) {
     uint64_t val = 0;
     int off = 0;
     int idx = 0;
     int xy_cnt = 0;
-    int t1;
     const uint64_t rgb565[8] = {
                  0xFFFF, // white
                  0x0000, // black
@@ -111,12 +110,17 @@ void init_ddr_hdmi_region(uint8_t *fb, int xstart, int xend, int xsize,
             xy_cnt++;
             if ((x & 0x3) == 0x3) {
                 xy_cnt = 0;
-                *((uint64_t *)&fb[(y << 13) + (x >> 2)]) = val;  // y * 0x2000 line (8 KB per line)
+                off = (y << 10) + (x >> 2);
+                fb[off] = val;  // y * 0x2000 line (8 KB per line)
                 val = 0;
             }
         }
         if (xy_cnt) {
-            *((uint64_t *)&fb[(y << 13) + (xend >> 2)]) = val;  // y * 0x2000 line (8 KB per line)
+            while (xy_cnt++ < 4) {
+                val >>= 16;
+            }
+            off = (y << 10) + (xend >> 2);
+            fb[off] = val;      // y * 0x2000 line (8 KB per line)
         }
     }
 }
@@ -271,5 +275,5 @@ Audio Mode
 0x0A[3:2] Audio Select
 */
 
-    init_ddr_hdmi_region((uint8_t *)ADDR_BUS0_XSLV_DDR, 0, 1366, 1366, 0, 768, 768);
+    init_ddr_hdmi_region((uint64_t *)ADDR_BUS0_XSLV_DDR, 0, 1366, 1366, 0, 768, 768);
 }
