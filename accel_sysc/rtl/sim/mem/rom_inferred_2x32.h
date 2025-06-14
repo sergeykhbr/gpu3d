@@ -16,6 +16,7 @@
 #pragma once
 
 #include <systemc.h>
+#include "rom_inferred_32.h"
 #include "api_core.h"
 #include "sv_func.h"
 
@@ -28,11 +29,11 @@ SC_MODULE(rom_inferred_2x32) {
     sc_in<sc_uint<abits>> i_addr;
     sc_out<sc_uint<64>> o_rdata;
 
-    void init();
-    void registers();
+    void comb();
 
     rom_inferred_2x32(sc_module_name name,
                       std::string filename);
+    virtual ~rom_inferred_2x32();
 
 
  private:
@@ -40,12 +41,11 @@ SC_MODULE(rom_inferred_2x32) {
 
     static const int DEPTH = (1 << abits);
 
-    std::string hexname0;
-    std::string hexname1;
-    sc_uint<32> wb_rdata0;
-    sc_uint<32> wb_rdata1;
-    sc_uint<32> mem0[DEPTH];
-    sc_uint<32> mem1[DEPTH];
+    sc_signal<sc_uint<32>> wb_rdata0;
+    sc_signal<sc_uint<32>> wb_rdata1;
+
+    rom_inferred_32<abits> *rom0;
+    rom_inferred_32<abits> *rom1;
 
 };
 
@@ -58,31 +58,40 @@ rom_inferred_2x32<abits>::rom_inferred_2x32(sc_module_name name,
     o_rdata("o_rdata") {
 
     filename_ = filename;
+    rom0 = 0;
+    rom1 = 0;
 
-    SC_THREAD(init);
+    rom0 = new rom_inferred_32<abits>("rom0",
+                                      std::string(filename) + std::string("_lo.hex"));
+    rom0->i_clk(i_clk);
+    rom0->i_addr(i_addr);
+    rom0->o_rdata(wb_rdata0);
 
-    SC_METHOD(registers);
-    sensitive << i_clk.pos();
+    rom1 = new rom_inferred_32<abits>("rom1",
+                                      std::string(filename) + std::string("_hi.hex"));
+    rom1->i_clk(i_clk);
+    rom1->i_addr(i_addr);
+    rom1->o_rdata(wb_rdata1);
+
+    SC_METHOD(comb);
+    sensitive << i_addr;
+    sensitive << wb_rdata0;
+    sensitive << wb_rdata1;
 }
 
 template<int abits>
-void rom_inferred_2x32<abits>::init() {
-    char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_lo.hex", filename_.c_str());
-    hexname0 = std::string(tstr);
-    SV_readmemh(hexname0.c_str(), mem0);
-
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_hi.hex", filename_.c_str());
-    hexname1 = std::string(tstr);
-    SV_readmemh(hexname1.c_str(), mem1);
+rom_inferred_2x32<abits>::~rom_inferred_2x32() {
+    if (rom0) {
+        delete rom0;
+    }
+    if (rom1) {
+        delete rom1;
+    }
 }
 
 template<int abits>
-void rom_inferred_2x32<abits>::registers() {
-    wb_rdata0 = mem0[i_addr.read().to_int()];
-    wb_rdata1 = mem1[i_addr.read().to_int()];
-
-    o_rdata = (wb_rdata1, wb_rdata0);
+void rom_inferred_2x32<abits>::comb() {
+    o_rdata = (wb_rdata1.read(), wb_rdata0.read());
 }
 
 }  // namespace debugger

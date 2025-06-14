@@ -30,7 +30,7 @@ int sc_main(int argc, char *argv[]) {
 
 #if 0
     mathlib_tb *tb = new mathlib_tb("tb");
-#elif 1
+#elif 0
     hdmi_tb *tb = new hdmi_tb("tb");
 #elif 0
     afifo_xslv_tb *tb = new afifo_xslv_tb("tb");
@@ -48,7 +48,7 @@ int sc_main(int argc, char *argv[]) {
               << ": Simulation started successfully. Continue for 10 ms..."
               << std::endl;
 
-    sc_start(50, SC_US);
+    sc_start(500, SC_US);
 
     if (vcd_) {
         sc_close_vcd_trace_file(vcd_);

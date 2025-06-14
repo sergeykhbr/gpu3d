@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "../../mem/ram_mmu_tech.h"
+#include "../../../sim/mem/ram_mmu_tech.h"
 
 namespace debugger {
 

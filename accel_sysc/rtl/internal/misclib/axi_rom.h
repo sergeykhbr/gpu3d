@@ -19,7 +19,7 @@
 #include "../ambalib/types_amba.h"
 #include "../ambalib/types_pnp.h"
 #include "../ambalib/axi_slv.h"
-#include "../mem/rom_tech.h"
+#include "../../sim/mem/rom_tech.h"
 #include "api_core.h"
 #include "sv_func.h"
 

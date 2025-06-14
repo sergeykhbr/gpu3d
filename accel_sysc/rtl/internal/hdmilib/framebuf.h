@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "../mem/ram_tech.h"
+#include "../../sim/mem/ram_tech.h"
 
 namespace debugger {
 
