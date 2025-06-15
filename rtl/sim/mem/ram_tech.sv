@@ -13,7 +13,7 @@ module ram_tech
     input [dbits - 1:0]        i_wdata
 );
 
-`ifdef TARGET_INFERRED
+//`ifdef TARGET_INFERRED
     ram_inferred
     #(
         .abits(abits),
@@ -25,21 +25,21 @@ module ram_tech
         .i_wena,
         .i_wdata
     );
-`elsif TARGET_KC705
-    ram_fpga_distr
-    #(
-        .abits(abits),
-        .dbits(dbits)
-    ) RAM (
-        .i_clk,
-        .i_addr,
-        .o_rdata,
-        .i_wena,
-        .i_wdata
-    );
-`else
-    initial $error("INSTANCE macro is undefined, check technology-dependent memories.");
-`endif
+//`elsif TARGET_KC705
+//    ram_fpga_distr
+//    #(
+//        .abits(abits),
+//        .dbits(dbits)
+//    ) RAM (
+//        .i_clk,
+//        .i_addr,
+//        .o_rdata,
+//        .i_wena,
+//        .i_wdata
+//    );
+//`else
+//    initial $error("INSTANCE macro is undefined, check technology-dependent memories.");
+//`endif
 
 
 

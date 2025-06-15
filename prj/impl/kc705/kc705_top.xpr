@@ -2079,35 +2079,35 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/mem/ram_bytes_tech.sv">
+      <File Path="$PPRDIR/../../../rtl/sim/mem/ram_bytes_tech.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/mem/ram_cache_bwe_tech.sv">
+      <File Path="$PPRDIR/../../../rtl/sim/mem/ram_cache_bwe_tech.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/mem/ram_fpga_distr.sv">
+      <File Path="$PPRDIR/../../../rtl/sim/mem/ram_inferred.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/mem/ram_mmu_tech.sv">
+      <File Path="$PPRDIR/../../../rtl/sim/mem/ram_mmu_tech.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/mem/ram_tech.sv">
+      <File Path="$PPRDIR/../../../rtl/sim/mem/ram_tech.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -2163,21 +2163,21 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/mem/rom_inferred_2x32.sv">
+      <File Path="$PPRDIR/../../../rtl/sim/mem/rom_inferred_2x32.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/mem/rom_inferred_32.sv">
+      <File Path="$PPRDIR/../../../rtl/sim/mem/rom_inferred_32.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../rtl/internal/mem/rom_tech.sv">
+      <File Path="$PPRDIR/../../../rtl/sim/mem/rom_tech.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
