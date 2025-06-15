@@ -144,7 +144,7 @@ begin: comb_proc
     vmsto.aw_bits.qos = 4'd0;
     vmsto.aw_bits.region = 4'd0;
     vmsto.aw_id = 1'b0;
-    vmsto.aw_user = 1'b0;
+    vmsto.aw_user = 3'd0;
     // vmsto.w_valid = vmsto_w_valid;
     vmsto.w_data = i_req_data;
     // vmsto.w_last = vmsto_w_last;
@@ -163,7 +163,7 @@ begin: comb_proc
     vmsto.ar_bits.qos = 4'd0;
     vmsto.ar_bits.region = 4'd0;
     vmsto.ar_id = 1'b0;
-    vmsto.ar_user = 1'b0;
+    vmsto.ar_user = 3'd0;
     // vmsto.r_ready = vmsto_r_ready;
 
     o_msto = vmsto;

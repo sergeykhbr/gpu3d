@@ -77,14 +77,14 @@ SC_MODULE(axi_slv) {
         sc_signal<sc_uint<XSIZE_TOTAL>> ar_bytes;
         sc_signal<sc_uint<2>> ar_burst;
         sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> ar_id;
-        sc_signal<bool> ar_user;
+        sc_signal<sc_uint<CFG_SYSBUS_USER_BITS>> ar_user;
         sc_signal<bool> ar_last;
         sc_signal<bool> aw_ready;
         sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> aw_addr;
         sc_signal<sc_uint<XSIZE_TOTAL>> aw_bytes;
         sc_signal<sc_uint<2>> aw_burst;
         sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> aw_id;
-        sc_signal<bool> aw_user;
+        sc_signal<sc_uint<CFG_SYSBUS_USER_BITS>> aw_user;
         sc_signal<bool> w_last;
         sc_signal<bool> w_ready;
         sc_signal<bool> r_valid;

@@ -93,6 +93,8 @@ asic_accel_top_tb::asic_accel_top_tb(sc_module_name name)
     tt->i_hdmi_spdif_out(w_hdmi_spdif_out);
     tt->i_hdmi_int(w_hdmi_int);
 
+    SC_THREAD(init);
+
     SC_METHOD(test);
     sensitive << w_sclk_p.posedge_event();
 }
@@ -142,15 +144,19 @@ void asic_accel_top_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
     }
 }
 
+void asic_accel_top_tb::init() {
+    w_nrst = 0;
+    wait(static_cast<int>(200.0), SC_NS);
+    w_nrst = 1;
+}
+
 void asic_accel_top_tb::test() {
-    wb_clk_cnt = (wb_clk_cnt + 1);
-    if (wb_clk_cnt < 10) {
-        w_rst = 1;
+    if (w_nrst.read() == 0) {
+        wb_clk_cnt = 0;
     } else {
-        w_rst = 0;
+        wb_clk_cnt = (wb_clk_cnt + 1);
     }
 
-    w_nrst = (!w_rst.read());
     w_sclk_n = (!w_sclk_p.read());
     w_hdmi_spdif_out = 0;
     w_hdmi_int = 0;

@@ -200,17 +200,17 @@ begin: comb_proc
     // ar channel read side:
     vb_xmsto.ar_valid = w_req_ar_rvalid_o;
     w_req_ar_rd_i = i_xmsti.ar_ready;
-    vb_xmsto.ar_bits.addr = wb_req_ar_payload_o[82: 35];
-    vb_xmsto.ar_bits.len = wb_req_ar_payload_o[34: 27];
-    vb_xmsto.ar_bits.size = wb_req_ar_payload_o[26: 24];
-    vb_xmsto.ar_bits.burst = wb_req_ar_payload_o[23: 22];
-    vb_xmsto.ar_bits.lock = wb_req_ar_payload_o[21];
-    vb_xmsto.ar_bits.cache = wb_req_ar_payload_o[20: 17];
-    vb_xmsto.ar_bits.prot = wb_req_ar_payload_o[16: 14];
-    vb_xmsto.ar_bits.qos = wb_req_ar_payload_o[13: 10];
-    vb_xmsto.ar_bits.region = wb_req_ar_payload_o[9: 6];
-    vb_xmsto.ar_id = wb_req_ar_payload_o[5: 1];
-    vb_xmsto.ar_user = wb_req_ar_payload_o[0];
+    vb_xmsto.ar_bits.addr = wb_req_ar_payload_o[84: 37];
+    vb_xmsto.ar_bits.len = wb_req_ar_payload_o[36: 29];
+    vb_xmsto.ar_bits.size = wb_req_ar_payload_o[28: 26];
+    vb_xmsto.ar_bits.burst = wb_req_ar_payload_o[25: 24];
+    vb_xmsto.ar_bits.lock = wb_req_ar_payload_o[23];
+    vb_xmsto.ar_bits.cache = wb_req_ar_payload_o[22: 19];
+    vb_xmsto.ar_bits.prot = wb_req_ar_payload_o[18: 16];
+    vb_xmsto.ar_bits.qos = wb_req_ar_payload_o[15: 12];
+    vb_xmsto.ar_bits.region = wb_req_ar_payload_o[11: 8];
+    vb_xmsto.ar_id = wb_req_ar_payload_o[7: 3];
+    vb_xmsto.ar_user = wb_req_ar_payload_o[2: 0];
 
     // aw channel write side:
     w_req_aw_valid_i = i_xslvi.aw_valid;
@@ -229,17 +229,17 @@ begin: comb_proc
     // aw channel read side:
     vb_xmsto.aw_valid = w_req_aw_rvalid_o;
     w_req_aw_rd_i = i_xmsti.aw_ready;
-    vb_xmsto.aw_bits.addr = wb_req_aw_payload_o[82: 35];
-    vb_xmsto.aw_bits.len = wb_req_aw_payload_o[34: 27];
-    vb_xmsto.aw_bits.size = wb_req_aw_payload_o[26: 24];
-    vb_xmsto.aw_bits.burst = wb_req_aw_payload_o[23: 22];
-    vb_xmsto.aw_bits.lock = wb_req_aw_payload_o[21];
-    vb_xmsto.aw_bits.cache = wb_req_aw_payload_o[20: 17];
-    vb_xmsto.aw_bits.prot = wb_req_aw_payload_o[16: 14];
-    vb_xmsto.aw_bits.qos = wb_req_aw_payload_o[13: 10];
-    vb_xmsto.aw_bits.region = wb_req_aw_payload_o[9: 6];
-    vb_xmsto.aw_id = wb_req_aw_payload_o[5: 1];
-    vb_xmsto.aw_user = wb_req_aw_payload_o[0];
+    vb_xmsto.aw_bits.addr = wb_req_aw_payload_o[84: 37];
+    vb_xmsto.aw_bits.len = wb_req_aw_payload_o[36: 29];
+    vb_xmsto.aw_bits.size = wb_req_aw_payload_o[28: 26];
+    vb_xmsto.aw_bits.burst = wb_req_aw_payload_o[25: 24];
+    vb_xmsto.aw_bits.lock = wb_req_aw_payload_o[23];
+    vb_xmsto.aw_bits.cache = wb_req_aw_payload_o[22: 19];
+    vb_xmsto.aw_bits.prot = wb_req_aw_payload_o[18: 16];
+    vb_xmsto.aw_bits.qos = wb_req_aw_payload_o[15: 12];
+    vb_xmsto.aw_bits.region = wb_req_aw_payload_o[11: 8];
+    vb_xmsto.aw_id = wb_req_aw_payload_o[7: 3];
+    vb_xmsto.aw_user = wb_req_aw_payload_o[2: 0];
 
     // w channel write side:
     w_req_w_valid_i = i_xslvi.w_valid;
@@ -251,10 +251,10 @@ begin: comb_proc
     // w channel read side:
     vb_xmsto.w_valid = w_req_w_rvalid_o;
     w_req_w_rd_i = i_xmsti.w_ready;
-    vb_xmsto.w_data = wb_req_w_payload_o[73: 10];
-    vb_xmsto.w_last = wb_req_w_payload_o[9];
-    vb_xmsto.w_strb = wb_req_w_payload_o[8: 1];
-    vb_xmsto.w_user = wb_req_w_payload_o[0];
+    vb_xmsto.w_data = wb_req_w_payload_o[75: 12];
+    vb_xmsto.w_last = wb_req_w_payload_o[11];
+    vb_xmsto.w_strb = wb_req_w_payload_o[10: 3];
+    vb_xmsto.w_user = wb_req_w_payload_o[2: 0];
 
     // r channel write side:
     w_resp_r_valid_i = i_xmsti.r_valid;
@@ -267,11 +267,11 @@ begin: comb_proc
     // r channel read side:
     vb_xslvo.r_valid = w_resp_r_rvalid_o;
     w_resp_r_rd_i = i_xslvi.r_ready;
-    vb_xslvo.r_resp = wb_resp_r_payload_o[72: 71];
-    vb_xslvo.r_data = wb_resp_r_payload_o[70: 7];
-    vb_xslvo.r_last = wb_resp_r_payload_o[6];
-    vb_xslvo.r_id = wb_resp_r_payload_o[5: 1];
-    vb_xslvo.r_user = wb_resp_r_payload_o[0];
+    vb_xslvo.r_resp = wb_resp_r_payload_o[74: 73];
+    vb_xslvo.r_data = wb_resp_r_payload_o[72: 9];
+    vb_xslvo.r_last = wb_resp_r_payload_o[8];
+    vb_xslvo.r_id = wb_resp_r_payload_o[7: 3];
+    vb_xslvo.r_user = wb_resp_r_payload_o[2: 0];
 
     // b channel write side:
     w_resp_b_valid_i = i_xmsti.b_valid;
@@ -282,9 +282,9 @@ begin: comb_proc
     // b channel read side:
     vb_xslvo.b_valid = w_resp_b_rvalid_o;
     w_resp_b_rd_i = i_xslvi.b_ready;
-    vb_xslvo.b_resp = wb_resp_b_payload_o[7: 6];
-    vb_xslvo.b_id = wb_resp_b_payload_o[5: 1];
-    vb_xslvo.b_user = wb_resp_b_payload_o[0];
+    vb_xslvo.b_resp = wb_resp_b_payload_o[9: 8];
+    vb_xslvo.b_id = wb_resp_b_payload_o[7: 3];
+    vb_xslvo.b_user = wb_resp_b_payload_o[2: 0];
 
     o_xslvo = vb_xslvo;
     o_xmsto = vb_xmsto;

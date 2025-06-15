@@ -19,7 +19,7 @@ package types_amba_pkg;
 localparam int CFG_SYSBUS_ADDR_BITS = 48;
 localparam int CFG_LOG2_SYSBUS_DATA_BYTES = 3;
 localparam int CFG_SYSBUS_ID_BITS = 5;
-localparam int CFG_SYSBUS_USER_BITS = 1;
+localparam int CFG_SYSBUS_USER_BITS = 3;                    // 1 bit per device + 2 bits axictrl (4 masters)
 
 localparam int CFG_SYSBUS_DATA_BYTES = (2**CFG_LOG2_SYSBUS_DATA_BYTES);
 localparam int CFG_SYSBUS_DATA_BITS = (8 * CFG_SYSBUS_DATA_BYTES);

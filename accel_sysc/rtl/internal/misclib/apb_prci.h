@@ -73,12 +73,12 @@ SC_MODULE(apb_prci) {
     sc_signal<sc_uint<32>> wb_req_wdata;
     bool r_sys_rst;
     sc_signal<bool> r_sys_nrst;
-    bool r_dbg_nrst;
-    sc_uint<2> rb_pcie_nrst;
-    sc_uint<2> rb_hdmi_nrst;
-    bool r_sys_locked;
-    sc_uint<2> rb_ddr_locked;
-    sc_uint<2> rb_pcie_lnk_up;
+    sc_signal<bool> r_dbg_nrst;
+    sc_signal<sc_uint<2>> rb_pcie_nrst;
+    sc_signal<sc_uint<2>> rb_hdmi_nrst;
+    sc_signal<bool> r_sys_locked;
+    sc_signal<sc_uint<2>> rb_ddr_locked;
+    sc_signal<sc_uint<2>> rb_pcie_lnk_up;
     apb_prci_registers v;
     apb_prci_registers r;
 

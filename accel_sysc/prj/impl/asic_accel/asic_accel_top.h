@@ -27,6 +27,7 @@
 #include "../../../rtl/sim/io/ibuf_tech.h"
 #include "../../../rtl/sim/pll/SysPLL_tech.h"
 #include "../../../rtl/internal/misclib/apb_prci.h"
+#include "../../../rtl/external/ddr3_phy/ddr3_tech.h"
 #include "../../../rtl/internal/accel/accel_soc.h"
 #include "sv_func.h"
 
@@ -138,6 +139,7 @@ SC_MODULE(asic_accel_top) {
     ibuf_tech *ihdmiint;
     SysPLL_tech *pll0;
     apb_prci *prci0;
+    ddr3_tech *ddr3;
     accel_soc *soc0;
 
 };

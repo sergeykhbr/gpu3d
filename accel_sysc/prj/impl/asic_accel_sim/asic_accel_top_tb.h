@@ -29,6 +29,7 @@ namespace debugger {
 SC_MODULE(asic_accel_top_tb) {
  public:
 
+    void init();
     void test();
 
     asic_accel_top_tb(sc_module_name name);

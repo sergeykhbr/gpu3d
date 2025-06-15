@@ -76,6 +76,12 @@ apb_prci::apb_prci(sc_module_name name,
     sensitive << w_req_write;
     sensitive << wb_req_wdata;
     sensitive << r_sys_nrst;
+    sensitive << r_dbg_nrst;
+    sensitive << rb_pcie_nrst;
+    sensitive << rb_hdmi_nrst;
+    sensitive << r_sys_locked;
+    sensitive << rb_ddr_locked;
+    sensitive << rb_pcie_lnk_up;
     sensitive << r.resp_valid;
     sensitive << r.resp_rdata;
     sensitive << r.resp_err;
@@ -132,13 +138,13 @@ void apb_prci::comb() {
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
     case 0:                                                 // 0x00: pll statuses
-        vb_rdata[0] = r_sys_locked;
-        vb_rdata[1] = rb_ddr_locked[1];
-        vb_rdata[2] = rb_pcie_lnk_up[1];
+        vb_rdata[0] = r_sys_locked.read();
+        vb_rdata[1] = rb_ddr_locked.read()[1];
+        vb_rdata[2] = rb_pcie_lnk_up.read()[1];
         break;
     case 1:                                                 // 0x04: reset status
         vb_rdata[0] = r_sys_nrst.read();
-        vb_rdata[1] = r_dbg_nrst;
+        vb_rdata[1] = r_dbg_nrst.read();
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
                 // todo:
@@ -159,9 +165,9 @@ void apb_prci::comb() {
 
     o_sys_rst = r_sys_rst;
     o_sys_nrst = r_sys_nrst.read();
-    o_dbg_nrst = r_dbg_nrst;
-    o_pcie_nrst = rb_pcie_nrst[1];
-    o_hdmi_nrst = rb_hdmi_nrst[1];
+    o_dbg_nrst = r_dbg_nrst.read();
+    o_pcie_nrst = rb_pcie_nrst.read()[1];
+    o_hdmi_nrst = rb_hdmi_nrst.read()[1];
 }
 
 void apb_prci::reqff() {
@@ -176,13 +182,13 @@ void apb_prci::reqff() {
         rb_hdmi_nrst = 0;
     } else {
         r_sys_locked = i_sys_locked.read();
-        rb_ddr_locked = (rb_ddr_locked[0], i_ddr_locked.read());
-        rb_pcie_lnk_up = (rb_pcie_lnk_up[0], i_pcie_phy_lnk_up.read());
+        rb_ddr_locked = (rb_ddr_locked.read()[0], i_ddr_locked.read());
+        rb_pcie_lnk_up = (rb_pcie_lnk_up.read()[0], i_pcie_phy_lnk_up.read());
         r_sys_rst = ((!i_sys_locked.read()) || i_dmireset.read());
         r_sys_nrst = (i_sys_locked.read() & (!i_dmireset.read()));
         r_dbg_nrst = i_sys_locked.read();
-        rb_pcie_nrst = (rb_pcie_nrst[0], (i_pcie_phy_lnk_up.read() & (!i_pcie_phy_rst.read())));
-        rb_hdmi_nrst = (rb_hdmi_nrst[0], (rb_ddr_locked[1] & r_sys_nrst.read()));
+        rb_pcie_nrst = (rb_pcie_nrst.read()[0], (i_pcie_phy_lnk_up.read() & (!i_pcie_phy_rst.read())));
+        rb_hdmi_nrst = (rb_hdmi_nrst.read()[0], (rb_ddr_locked.read()[1] & r_sys_nrst.read()));
     }
 }
 

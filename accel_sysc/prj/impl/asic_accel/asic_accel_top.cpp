@@ -63,6 +63,7 @@ asic_accel_top::asic_accel_top(sc_module_name name,
     ihdmiint = 0;
     pll0 = 0;
     prci0 = 0;
+    ddr3 = 0;
     soc0 = 0;
 
     iclk0 = new ids_tech("iclk0");
@@ -197,6 +198,25 @@ asic_accel_top::asic_accel_top(sc_module_name name,
     soc0->i_pcie_completer_id(wb_pcie_completer_id);
     soc0->o_pcie_dmao(pcie_dmao);
     soc0->i_pcie_dmai(pcie_dmai);
+
+    // ----------------------------------------
+    // External IPs
+    ddr3 = new ddr3_tech("ddr3");
+    ddr3->i_apb_nrst(w_sys_nrst);
+    ddr3->i_apb_clk(w_sys_clk);
+    ddr3->i_xslv_nrst(w_sys_nrst);
+    ddr3->i_xslv_clk(w_sys_clk);
+    ddr3->i_xmapinfo(ddr_xmapinfo);
+    ddr3->o_xcfg(ddr_xdev_cfg);
+    ddr3->i_xslvi(ddr_xslvi);
+    ddr3->o_xslvo(ddr_xslvo);
+    ddr3->i_pmapinfo(ddr_pmapinfo);
+    ddr3->o_pcfg(ddr_pdev_cfg);
+    ddr3->i_apbi(ddr_apbi);
+    ddr3->o_apbo(ddr_apbo);
+    ddr3->o_ui_nrst(w_ddr_ui_nrst);
+    ddr3->o_ui_clk(w_ddr_ui_clk);
+    ddr3->o_init_calib_done(w_ddr3_init_calib_complete);
 }
 
 asic_accel_top::~asic_accel_top() {
@@ -241,6 +261,9 @@ asic_accel_top::~asic_accel_top() {
     }
     if (prci0) {
         delete prci0;
+    }
+    if (ddr3) {
+        delete ddr3;
     }
     if (soc0) {
         delete soc0;
@@ -315,6 +338,9 @@ void asic_accel_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (prci0) {
         prci0->generateVCD(i_vcd, o_vcd);
+    }
+    if (ddr3) {
+        ddr3->generateVCD(i_vcd, o_vcd);
     }
     if (soc0) {
         soc0->generateVCD(i_vcd, o_vcd);
