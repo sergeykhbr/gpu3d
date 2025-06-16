@@ -25,8 +25,8 @@ mathlib_tb::mathlib_tb(sc_module_name name)
     clk = 0;
     im8 = 0;
 
-    clk = new vip_clk("clk",
-                       25.0);
+    clk = new pll_generic("clk",
+                           25.0);
     clk->o_clk(w_clk);
 
     im8 = new mul_4x4_i8("im8",

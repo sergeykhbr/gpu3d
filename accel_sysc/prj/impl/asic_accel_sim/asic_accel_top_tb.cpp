@@ -29,8 +29,8 @@ asic_accel_top_tb::asic_accel_top_tb(sc_module_name name)
     i2c0 = 0;
     tt = 0;
 
-    clk0 = new vip_clk("clk0",
-                        25.0);
+    clk0 = new pll_generic("clk0",
+                            25.0);
     clk0->o_clk(w_sclk_p);
 
     iosda0 = new iobuf_tech("iosda0");

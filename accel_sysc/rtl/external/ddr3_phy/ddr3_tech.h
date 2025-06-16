@@ -18,6 +18,7 @@
 #include <systemc.h>
 #include "../../internal/ambalib/types_amba.h"
 #include "../../internal/ambalib/types_pnp.h"
+#include "../../sim/pll/pll_generic.h"
 #include "../../internal/misclib/apb_ddr.h"
 #include "../../internal/misclib/axi_sram.h"
 
@@ -46,7 +47,6 @@ SC_MODULE(ddr3_tech) {
 
     void init();
     void comb();
-    void clktread();
     void registers();
 
     ddr3_tech(sc_module_name name);
@@ -74,6 +74,7 @@ SC_MODULE(ddr3_tech) {
     ddr3_tech_registers v;
     ddr3_tech_registers r;
 
+    pll_generic *clk0;
     apb_ddr *pctrl0;
     axi_sram<12> *sram0;
 

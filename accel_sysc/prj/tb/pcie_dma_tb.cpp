@@ -27,12 +27,12 @@ pcie_dma_tb::pcie_dma_tb(sc_module_name name)
     slv0 = 0;
     tt = 0;
 
-    clk0 = new vip_clk("clk0",
-                        25.0);
+    clk0 = new pll_generic("clk0",
+                            25.0);
     clk0->o_clk(i_clk);
 
-    clk1 = new vip_clk("clk1",
-                        16.0);
+    clk1 = new pll_generic("clk1",
+                            16.0);
     clk1->o_clk(w_pci_clk);
 
     tt = new pcie_dma("tt",

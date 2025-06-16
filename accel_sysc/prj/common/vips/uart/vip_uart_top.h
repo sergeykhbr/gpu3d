@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include <string>
-#include "../clk/vip_clk.h"
+#include "../../../../rtl/sim/pll/pll_generic.h"
 #include "vip_uart_receiver.h"
 #include "vip_uart_transmitter.h"
 #include "sv_func.h"
@@ -81,7 +81,7 @@ SC_MODULE(vip_uart_top) {
     vip_uart_top_registers v;
     vip_uart_top_registers r;
 
-    vip_clk *clk0;
+    pll_generic *clk0;
     vip_uart_receiver *rx0;
     vip_uart_transmitter *tx0;
 

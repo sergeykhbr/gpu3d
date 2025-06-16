@@ -18,7 +18,7 @@
 #include <systemc.h>
 #include "../../rtl/internal/ambalib/types_amba.h"
 #include "../../rtl/internal/ambalib/types_pnp.h"
-#include "../common/vips/clk/vip_clk.h"
+#include "../../rtl/sim/pll/pll_generic.h"
 #include "../../rtl/internal/ambalib/axi_slv.h"
 #include "../../rtl/internal/hdmilib/hdmi_top.h"
 
@@ -71,7 +71,7 @@ SC_MODULE(hdmi_tb) {
     sc_uint<64> rd_data;
     sc_uint<64> mem[16];
 
-    vip_clk *clk;
+    pll_generic *clk;
     axi_slv *slv0;
     hdmi_top *tt;
 

@@ -30,8 +30,8 @@ jtag_app::jtag_app(sc_module_name name)
     clk1 = 0;
     tap = 0;
 
-    clk1 = new vip_clk("clk1",
-                        80.0);
+    clk1 = new pll_generic("clk1",
+                            80.0);
     clk1->o_clk(w_tck);
 
     tap = new vip_jtag_tap("tap");

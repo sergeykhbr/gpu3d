@@ -152,6 +152,8 @@ asic_accel_top::asic_accel_top(sc_module_name name,
                           sim_uart_speedup_rate);
     soc0->i_sys_nrst(w_sys_nrst);
     soc0->i_sys_clk(w_sys_clk);
+    soc0->i_cpu_nrst(w_sys_nrst);
+    soc0->i_cpu_clk(w_sys_clk);
     soc0->i_dbg_nrst(w_dbg_nrst);
     soc0->i_ddr_nrst(w_ddr_ui_nrst);
     soc0->i_ddr_clk(w_ddr_ui_clk);

@@ -38,6 +38,7 @@
 #include "../misclib/apb_pnp.h"
 #include "../riverlib/workgroup.h"
 #include "../cdc/afifo_xslv.h"
+#include "../cdc/afifo_xmst.h"
 #include "sv_func.h"
 
 namespace debugger {
@@ -45,7 +46,9 @@ namespace debugger {
 SC_MODULE(accel_soc) {
  public:
     sc_in<bool> i_sys_nrst;                                 // Power-on system reset active LOW
-    sc_in<bool> i_sys_clk;                                  // System/Bus clock
+    sc_in<bool> i_sys_clk;                                  // System Bus (AXI) clock
+    sc_in<bool> i_cpu_nrst;                                 // CPUs/Groups reset active LOW
+    sc_in<bool> i_cpu_clk;                                  // CPUs/Groups clock
     sc_in<bool> i_dbg_nrst;                                 // Reset from Debug interface (DMI). Reset everything except DMI
     sc_in<bool> i_ddr_nrst;                                 // DDR related logic reset (AXI clock transformator)
     sc_in<bool> i_ddr_clk;                                  // DDR memoru clock
@@ -141,6 +144,8 @@ SC_MODULE(accel_soc) {
     bus1_apb_in_vector apbi;
     bus1_apb_out_vector apbo;
     soc_pnp_vector dev_pnp;
+    sc_signal<axi4_master_out_type> wb_group0_xmsto;
+    sc_signal<axi4_master_in_type> wb_group0_xmsti;
     sc_signal<sc_uint<64>> wb_clint_mtimer;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_msip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_mtip;
@@ -171,6 +176,7 @@ SC_MODULE(accel_soc) {
     apb_pnp<SOC_PNP_TOTAL> *pnp0;
     Workgroup *group0;
     afifo_xslv<2, 9> *afifo_ddr0;
+    afifo_xmst<2, 3> *afifo_group0;
 
 };
 

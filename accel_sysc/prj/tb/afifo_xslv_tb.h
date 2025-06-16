@@ -18,7 +18,7 @@
 #include <systemc.h>
 #include "../../rtl/internal/ambalib/types_amba.h"
 #include "../../rtl/internal/ambalib/types_pnp.h"
-#include "../common/vips/clk/vip_clk.h"
+#include "../../rtl/sim/pll/pll_generic.h"
 #include "../../rtl/internal/ambalib/axi_slv.h"
 #include "../../rtl/internal/cdc/afifo_xslv.h"
 
@@ -66,8 +66,8 @@ SC_MODULE(afifo_xslv_tb) {
     sc_uint<64> rd_data;
     sc_uint<64> mem[16];
 
-    vip_clk *clk1;
-    vip_clk *clk2;
+    pll_generic *clk1;
+    pll_generic *clk2;
     axi_slv *slv0;
     afifo_xslv<2, 2> *tt;
 

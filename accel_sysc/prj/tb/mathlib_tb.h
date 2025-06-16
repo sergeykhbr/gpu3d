@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "../common/vips/clk/vip_clk.h"
+#include "../../rtl/sim/pll/pll_generic.h"
 #include "../../rtl/internal/mathlib/mul_4x4_i8.h"
 
 namespace debugger {
@@ -48,7 +48,7 @@ SC_MODULE(mathlib_tb) {
     sc_signal<sc_uint<18>> wb_res2;
     sc_signal<sc_uint<18>> wb_res3;
 
-    vip_clk *clk;
+    pll_generic *clk;
     mul_4x4_i8 *im8;
 
 };

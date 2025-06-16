@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "../clk/vip_clk.h"
+#include "../../../../rtl/sim/pll/pll_generic.h"
 #include "vip_jtag_tap.h"
 
 namespace debugger {
@@ -50,7 +50,7 @@ SC_MODULE(jtag_app) {
     sc_signal<bool> w_resp_valid;
     sc_signal<sc_uint<64>> wb_resp_data;
 
-    vip_clk *clk1;
+    pll_generic *clk1;
     vip_jtag_tap *tap;
 
 };

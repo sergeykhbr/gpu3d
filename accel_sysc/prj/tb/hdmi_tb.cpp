@@ -26,8 +26,8 @@ hdmi_tb::hdmi_tb(sc_module_name name)
     slv0 = 0;
     tt = 0;
 
-    clk = new vip_clk("clk",
-                       25.0);
+    clk = new pll_generic("clk",
+                           25.0);
     clk->o_clk(w_clk);
 
     tt = new hdmi_top("tt",

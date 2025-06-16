@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "../../common/vips/clk/vip_clk.h"
+#include "../../../rtl/sim/pll/pll_generic.h"
 #include "../../common/vips/uart/vip_uart_top.h"
 #include "../../common/vips/jtag/jtag_app.h"
 #include "../../../rtl/sim/io/iobuf_tech.h"
@@ -71,7 +71,7 @@ SC_MODULE(asic_accel_top_tb) {
     sc_signal<bool> w_vipo_i2c0_sda_dir;
     sc_uint<32> wb_clk_cnt;
 
-    vip_clk *clk0;
+    pll_generic *clk0;
     vip_uart_top *uart1;
     jtag_app *jtag0;
     iobuf_tech *iosda0;

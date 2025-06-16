@@ -18,7 +18,7 @@
 #include <systemc.h>
 #include "../../rtl/internal/ambalib/types_pnp.h"
 #include "../../rtl/internal/ambalib/types_amba.h"
-#include "../common/vips/clk/vip_clk.h"
+#include "../../rtl/sim/pll/pll_generic.h"
 #include "../../rtl/internal/ambalib/axi_slv.h"
 
 namespace debugger {
@@ -74,7 +74,7 @@ SC_MODULE(axi_slv_tb) {
     axi_slv_tb_registers v;
     axi_slv_tb_registers r;
 
-    vip_clk *clk;
+    pll_generic *clk;
     axi_slv *slv0;
 
 };

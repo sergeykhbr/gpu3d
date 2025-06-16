@@ -42,8 +42,8 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     tx0 = 0;
 
 
-    clk0 = new vip_clk("clk0",
-                        pll_period);
+    clk0 = new pll_generic("clk0",
+                            pll_period);
     clk0->o_clk(w_clk);
 
     rx0 = new vip_uart_receiver("rx0",

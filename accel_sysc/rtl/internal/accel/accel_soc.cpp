@@ -25,6 +25,8 @@ accel_soc::accel_soc(sc_module_name name,
     : sc_module(name),
     i_sys_nrst("i_sys_nrst"),
     i_sys_clk("i_sys_clk"),
+    i_cpu_nrst("i_cpu_nrst"),
+    i_cpu_clk("i_cpu_clk"),
     i_dbg_nrst("i_dbg_nrst"),
     i_ddr_nrst("i_ddr_nrst"),
     i_ddr_clk("i_ddr_clk"),
@@ -98,6 +100,7 @@ accel_soc::accel_soc(sc_module_name name,
     pnp0 = 0;
     group0 = 0;
     afifo_ddr0 = 0;
+    afifo_group0 = 0;
 
     bus0 = new accel_axictrl_bus0("bus0",
                                    async_reset);
@@ -122,13 +125,35 @@ accel_soc::accel_soc(sc_module_name name,
     bus1->o_apbi(apbi);
     bus1->o_mapinfo(bus1_mapinfo);
 
+    afifo_group0 = new afifo_xmst<2,
+                                  3>("afifo_group0");
+    afifo_group0->i_xmst_nrst(i_cpu_nrst);
+    afifo_group0->i_xmst_clk(i_cpu_clk);
+    afifo_group0->i_xmsto(wb_group0_xmsto);
+    afifo_group0->o_xmsti(wb_group0_xmsti);
+    afifo_group0->i_xslv_nrst(i_sys_nrst);
+    afifo_group0->i_xslv_clk(i_sys_clk);
+    afifo_group0->o_xslvi(aximo[CFG_BUS0_XMST_GROUP0]);
+    afifo_group0->i_xslvo(aximi[CFG_BUS0_XMST_GROUP0]);
+
+    afifo_ddr0 = new afifo_xslv<2,
+                                9>("afifo_ddr0");
+    afifo_ddr0->i_xslv_nrst(i_sys_nrst);
+    afifo_ddr0->i_xslv_clk(i_sys_clk);
+    afifo_ddr0->i_xslvi(axisi[CFG_BUS0_XSLV_DDR]);
+    afifo_ddr0->o_xslvo(axiso[CFG_BUS0_XSLV_DDR]);
+    afifo_ddr0->i_xmst_nrst(i_ddr_nrst);
+    afifo_ddr0->i_xmst_clk(i_ddr_clk);
+    afifo_ddr0->o_xmsto(o_ddr_xslvi);
+    afifo_ddr0->i_xmsti(i_ddr_xslvo);
+
     group0 = new Workgroup("group0",
                             async_reset,
                             CFG_CPU_NUM,
                             CFG_L2CACHE_ENA);
-    group0->i_cores_nrst(i_sys_nrst);
+    group0->i_cores_nrst(i_cpu_nrst);
     group0->i_dmi_nrst(i_dbg_nrst);
-    group0->i_clk(i_sys_clk);
+    group0->i_clk(i_cpu_clk);
     group0->i_trst(i_jtag_trst);
     group0->i_tck(i_jtag_tck);
     group0->i_tms(i_jtag_tms);
@@ -142,8 +167,8 @@ accel_soc::accel_soc(sc_module_name name,
     group0->i_acpo(acpo);
     group0->o_acpi(acpi);
     group0->o_xmst_cfg(dev_pnp[SOC_PNP_GROUP0]);
-    group0->i_msti(aximi[CFG_BUS0_XMST_GROUP0]);
-    group0->o_msto(aximo[CFG_BUS0_XMST_GROUP0]);
+    group0->i_msti(wb_group0_xmsti);
+    group0->o_msto(wb_group0_xmsto);
     group0->i_dmi_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_DMI]);
     group0->o_dmi_cfg(dev_pnp[SOC_PNP_DMI]);
     group0->i_dmi_apbi(apbi[CFG_BUS1_PSLV_DMI]);
@@ -192,17 +217,6 @@ accel_soc::accel_soc(sc_module_name name,
     plic0->o_xslvo(axiso[CFG_BUS0_XSLV_PLIC]);
     plic0->i_irq_request(wb_ext_irqs);
     plic0->o_ip(wb_plic_xeip);
-
-    afifo_ddr0 = new afifo_xslv<2,
-                                9>("afifo_ddr0");
-    afifo_ddr0->i_xslv_nrst(i_sys_nrst);
-    afifo_ddr0->i_xslv_clk(i_sys_clk);
-    afifo_ddr0->i_xslvi(axisi[CFG_BUS0_XSLV_DDR]);
-    afifo_ddr0->o_xslvo(axiso[CFG_BUS0_XSLV_DDR]);
-    afifo_ddr0->i_xmst_nrst(i_ddr_nrst);
-    afifo_ddr0->i_xmst_clk(i_ddr_clk);
-    afifo_ddr0->o_xmsto(o_ddr_xslvi);
-    afifo_ddr0->i_xmsti(i_ddr_xslvo);
 
     uart1 = new apb_uart<SOC_UART1_LOG2_FIFOSZ>("uart1",
                                                 async_reset,
@@ -311,6 +325,8 @@ accel_soc::accel_soc(sc_module_name name,
     SC_METHOD(comb);
     sensitive << i_sys_nrst;
     sensitive << i_sys_clk;
+    sensitive << i_cpu_nrst;
+    sensitive << i_cpu_clk;
     sensitive << i_dbg_nrst;
     sensitive << i_ddr_nrst;
     sensitive << i_ddr_clk;
@@ -364,6 +380,8 @@ accel_soc::accel_soc(sc_module_name name,
     for (int i = 0; i < SOC_PNP_TOTAL; i++) {
         sensitive << dev_pnp[i];
     }
+    sensitive << wb_group0_xmsto;
+    sensitive << wb_group0_xmsti;
     sensitive << wb_clint_mtimer;
     sensitive << wb_clint_msip;
     sensitive << wb_clint_mtip;
@@ -426,12 +444,17 @@ accel_soc::~accel_soc() {
     if (afifo_ddr0) {
         delete afifo_ddr0;
     }
+    if (afifo_group0) {
+        delete afifo_group0;
+    }
 }
 
 void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_sys_nrst, i_sys_nrst.name());
         sc_trace(o_vcd, i_sys_clk, i_sys_clk.name());
+        sc_trace(o_vcd, i_cpu_nrst, i_cpu_nrst.name());
+        sc_trace(o_vcd, i_cpu_clk, i_cpu_clk.name());
         sc_trace(o_vcd, i_dbg_nrst, i_dbg_nrst.name());
         sc_trace(o_vcd, i_ddr_nrst, i_ddr_nrst.name());
         sc_trace(o_vcd, i_ddr_clk, i_ddr_clk.name());
@@ -518,6 +541,9 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (afifo_ddr0) {
         afifo_ddr0->generateVCD(i_vcd, o_vcd);
+    }
+    if (afifo_group0) {
+        afifo_group0->generateVCD(i_vcd, o_vcd);
     }
 }
 

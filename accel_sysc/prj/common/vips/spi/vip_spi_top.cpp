@@ -41,8 +41,8 @@ vip_spi_top::vip_spi_top(sc_module_name name,
     clk0 = 0;
     tx0 = 0;
 
-    clk0 = new vip_clk("clk0",
-                        pll_period);
+    clk0 = new pll_generic("clk0",
+                            pll_period);
     clk0->o_clk(w_clk);
 
     tx0 = new vip_spi_transmitter("tx0",

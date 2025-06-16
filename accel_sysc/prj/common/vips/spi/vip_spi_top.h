@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "../clk/vip_clk.h"
+#include "../../../../rtl/sim/pll/pll_generic.h"
 #include "vip_spi_transmitter.h"
 
 namespace debugger {
@@ -85,7 +85,7 @@ SC_MODULE(vip_spi_top) {
     vip_spi_top_registers v;
     vip_spi_top_registers r;
 
-    vip_clk *clk0;
+    pll_generic *clk0;
     vip_spi_transmitter *tx0;
 
 };

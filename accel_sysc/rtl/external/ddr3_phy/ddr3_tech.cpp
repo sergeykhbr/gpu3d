@@ -37,8 +37,13 @@ ddr3_tech::ddr3_tech(sc_module_name name)
     o_ui_clk("o_ui_clk"),
     o_init_calib_done("o_init_calib_done") {
 
+    clk0 = 0;
     pctrl0 = 0;
     sram0 = 0;
+
+    clk0 = new pll_generic("clk0",
+                            5.0);
+    clk0->o_clk(w_ui_clk);
 
     pctrl0 = new apb_ddr("pctrl0",
                           0);
@@ -85,14 +90,15 @@ ddr3_tech::ddr3_tech(sc_module_name name)
     sensitive << wb_xcfg_unused;
     sensitive << r.ddr_calib;
 
-    SC_THREAD(clktread);
-
     SC_METHOD(registers);
     sensitive << i_xslv_nrst;
     sensitive << i_xslv_clk.pos();
 }
 
 ddr3_tech::~ddr3_tech() {
+    if (clk0) {
+        delete clk0;
+    }
     if (pctrl0) {
         delete pctrl0;
     }
@@ -118,6 +124,9 @@ void ddr3_tech::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ddr_calib, pn + ".r.ddr_calib");
     }
 
+    if (clk0) {
+        clk0->generateVCD(i_vcd, o_vcd);
+    }
     if (pctrl0) {
         pctrl0->generateVCD(i_vcd, o_vcd);
     }
@@ -143,15 +152,6 @@ void ddr3_tech::comb() {
     o_ui_nrst = w_ui_nrst.read();
     o_ui_clk = w_ui_clk.read();
     o_init_calib_done = w_init_calib_done.read();
-}
-
-void ddr3_tech::clktread() {
-    while (true) {
-        wait(static_cast<int>(2.5), SC_NS);
-        w_ui_clk = 0;
-        wait(static_cast<int>(2.5), SC_NS);
-        w_ui_clk = 1;
-    }
 }
 
 void ddr3_tech::registers() {

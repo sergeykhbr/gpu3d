@@ -18,7 +18,7 @@
 #include <systemc.h>
 #include "../../rtl/internal/ambalib/types_amba.h"
 #include "../../rtl/internal/ambalib/types_pnp.h"
-#include "../common/vips/clk/vip_clk.h"
+#include "../../rtl/sim/pll/pll_generic.h"
 #include "../common/vips/i2c/vip_i2c_s.h"
 #include "../../rtl/internal/misclib/apb_i2c.h"
 
@@ -51,7 +51,7 @@ SC_MODULE(apb_i2c_tb) {
     sc_signal<bool> w_hdmi_sda_dir;
     sc_uint<32> wb_clk_cnt;
 
-    vip_clk *clk0;
+    pll_generic *clk0;
     vip_i2c_s *hdmi;
     apb_i2c *tt;
 

@@ -27,12 +27,12 @@ afifo_xslv_tb::afifo_xslv_tb(sc_module_name name)
     slv0 = 0;
     tt = 0;
 
-    clk1 = new vip_clk("clk1",
-                        5.0);
+    clk1 = new pll_generic("clk1",
+                            5.0);
     clk1->o_clk(w_clk2);
 
-    clk2 = new vip_clk("clk2",
-                        25.0);
+    clk2 = new pll_generic("clk2",
+                            25.0);
     clk2->o_clk(w_clk1);
 
     tt = new afifo_xslv<2,

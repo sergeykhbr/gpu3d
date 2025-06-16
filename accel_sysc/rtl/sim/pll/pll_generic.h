@@ -13,37 +13,27 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
+#pragma once
 
-#include "vip_clk.h"
-#include "api_core.h"
+#include <systemc.h>
 
 namespace debugger {
 
-vip_clk::vip_clk(sc_module_name name,
-                 double period)
-    : sc_module(name),
-    o_clk("o_clk") {
+SC_MODULE(pll_generic) {
+ public:
+    sc_out<bool> o_clk;
 
-    period_ = period;
+    void comb();
 
-    SC_THREAD(comb);
-}
+    pll_generic(sc_module_name name,
+                double period);
 
-void vip_clk::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
-    if (o_vcd) {
-        sc_trace(o_vcd, o_clk, o_clk.name());
-    }
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
-}
+ private:
+    double period_;
 
-void vip_clk::comb() {
-    while (true) {
-        wait(static_cast<int>((0.5 * period_)), SC_NS);
-        o_clk = 0;
-        wait(static_cast<int>((0.5 * period_)), SC_NS);
-        o_clk = 1;
-    }
-}
+};
 
 }  // namespace debugger
 

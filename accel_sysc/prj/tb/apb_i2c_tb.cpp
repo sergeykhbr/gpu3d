@@ -26,8 +26,8 @@ apb_i2c_tb::apb_i2c_tb(sc_module_name name)
     hdmi = 0;
     tt = 0;
 
-    clk0 = new vip_clk("clk0",
-                        25.0);
+    clk0 = new pll_generic("clk0",
+                            25.0);
     clk0->o_clk(i_clk);
 
     hdmi = new vip_i2c_s("hdmi",

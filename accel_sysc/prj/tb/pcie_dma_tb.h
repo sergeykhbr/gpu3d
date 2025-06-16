@@ -19,7 +19,7 @@
 #include "../../rtl/internal/ambalib/types_dma.h"
 #include "../../rtl/internal/ambalib/types_pnp.h"
 #include "../../rtl/internal/ambalib/types_amba.h"
-#include "../common/vips/clk/vip_clk.h"
+#include "../../rtl/sim/pll/pll_generic.h"
 #include "../../rtl/internal/ambalib/axi_slv.h"
 #include "../../rtl/internal/pcie_dma/pcie_dma.h"
 
@@ -70,8 +70,8 @@ SC_MODULE(pcie_dma_tb) {
     sc_uint<4> rd_addr;
     sc_uint<64> mem[16];
 
-    vip_clk *clk0;
-    vip_clk *clk1;
+    pll_generic *clk0;
+    pll_generic *clk1;
     axi_slv *slv0;
     pcie_dma *tt;
 

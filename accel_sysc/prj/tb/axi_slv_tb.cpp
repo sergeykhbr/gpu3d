@@ -25,8 +25,8 @@ axi_slv_tb::axi_slv_tb(sc_module_name name)
     clk = 0;
     slv0 = 0;
 
-    clk = new vip_clk("clk",
-                       25.0);
+    clk = new pll_generic("clk",
+                           25.0);
     clk->o_clk(w_clk);
 
     slv0 = new axi_slv("slv0",
