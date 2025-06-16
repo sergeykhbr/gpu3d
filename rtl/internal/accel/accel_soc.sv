@@ -22,7 +22,11 @@ module accel_soc #(
 )
 (
     input logic i_sys_nrst,                                 // Power-on system reset active LOW
-    input logic i_sys_clk,                                  // System/Bus clock
+    input logic i_sys_clk,                                  // System Bus (AXI) clock
+    input logic i_cpu_nrst,                                 // CPUs/Groups reset active LOW
+    input logic i_cpu_clk,                                  // CPUs/Groups clock
+    input logic i_apb_nrst,                                 // APB sub-system reset: active LOW
+    input logic i_apb_clk,                                  // APB Bus clock
     input logic i_dbg_nrst,                                 // Reset from Debug interface (DMI). Reset everything except DMI
     input logic i_ddr_nrst,                                 // DDR related logic reset (AXI clock transformator)
     input logic i_ddr_clk,                                  // DDR memoru clock
@@ -98,6 +102,10 @@ bus1_mapinfo_vector bus1_mapinfo;
 bus1_apb_in_vector apbi;
 bus1_apb_out_vector apbo;
 soc_pnp_vector dev_pnp;
+axi4_master_out_type wb_group0_xmsto;
+axi4_master_in_type wb_group0_xmsti;
+axi4_slave_in_type wb_pbridge_xslvi;
+axi4_slave_out_type wb_pbridge_xslvo;
 logic [63:0] wb_clint_mtimer;
 logic [CFG_CPU_MAX-1:0] wb_clint_msip;
 logic [CFG_CPU_MAX-1:0] wb_clint_mtip;
@@ -129,15 +137,57 @@ accel_axictrl_bus0 #(
 accel_axi2apb_bus1 #(
     .async_reset(async_reset)
 ) bus1 (
-    .i_clk(i_sys_clk),
-    .i_nrst(i_sys_nrst),
+    .i_clk(i_apb_clk),
+    .i_nrst(i_apb_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PBRIDGE]),
     .o_cfg(dev_pnp[SOC_PNP_PBRIDGE0]),
-    .i_xslvi(axisi[CFG_BUS0_XSLV_PBRIDGE]),
-    .o_xslvo(axiso[CFG_BUS0_XSLV_PBRIDGE]),
+    .i_xslvi(wb_pbridge_xslvi),
+    .o_xslvo(wb_pbridge_xslvo),
     .i_apbo(apbo),
     .o_apbi(apbi),
     .o_mapinfo(bus1_mapinfo)
+);
+
+afifo_xmst #(
+    .abits_depth(2),
+    .dbits_depth(3)
+) afifo_group0 (
+    .i_xmst_nrst(i_cpu_nrst),
+    .i_xmst_clk(i_cpu_clk),
+    .i_xmsto(wb_group0_xmsto),
+    .o_xmsti(wb_group0_xmsti),
+    .i_xslv_nrst(i_sys_nrst),
+    .i_xslv_clk(i_sys_clk),
+    .o_xslvi(aximo[CFG_BUS0_XMST_GROUP0]),
+    .i_xslvo(aximi[CFG_BUS0_XMST_GROUP0])
+);
+
+afifo_xslv #(
+    .abits_depth(2),
+    .dbits_depth(2)
+) afifo_apb0 (
+    .i_xslv_nrst(i_sys_nrst),
+    .i_xslv_clk(i_sys_clk),
+    .i_xslvi(axisi[CFG_BUS0_XSLV_PBRIDGE]),
+    .o_xslvo(axiso[CFG_BUS0_XSLV_PBRIDGE]),
+    .i_xmst_nrst(i_apb_nrst),
+    .i_xmst_clk(i_apb_clk),
+    .o_xmsto(wb_pbridge_xslvi),
+    .i_xmsti(wb_pbridge_xslvo)
+);
+
+afifo_xslv #(
+    .abits_depth(2),
+    .dbits_depth(9)
+) afifo_ddr0 (
+    .i_xslv_nrst(i_sys_nrst),
+    .i_xslv_clk(i_sys_clk),
+    .i_xslvi(axisi[CFG_BUS0_XSLV_DDR]),
+    .o_xslvo(axiso[CFG_BUS0_XSLV_DDR]),
+    .i_xmst_nrst(i_ddr_nrst),
+    .i_xmst_clk(i_ddr_clk),
+    .o_xmsto(o_ddr_xslvi),
+    .i_xmsti(i_ddr_xslvo)
 );
 
 Workgroup #(
@@ -145,9 +195,9 @@ Workgroup #(
     .cpu_num(CFG_CPU_NUM),
     .l2cache_ena(CFG_L2CACHE_ENA)
 ) group0 (
-    .i_cores_nrst(i_sys_nrst),
+    .i_cores_nrst(i_cpu_nrst),
     .i_dmi_nrst(i_dbg_nrst),
-    .i_clk(i_sys_clk),
+    .i_clk(i_cpu_clk),
     .i_trst(i_jtag_trst),
     .i_tck(i_jtag_tck),
     .i_tms(i_jtag_tms),
@@ -161,8 +211,8 @@ Workgroup #(
     .i_acpo(acpo),
     .o_acpi(acpi),
     .o_xmst_cfg(dev_pnp[SOC_PNP_GROUP0]),
-    .i_msti(aximi[CFG_BUS0_XMST_GROUP0]),
-    .o_msto(aximo[CFG_BUS0_XMST_GROUP0]),
+    .i_msti(wb_group0_xmsti),
+    .o_msto(wb_group0_xmsto),
     .i_dmi_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_DMI]),
     .o_dmi_cfg(dev_pnp[SOC_PNP_DMI]),
     .i_dmi_apbi(apbi[CFG_BUS1_PSLV_DMI]),
@@ -225,27 +275,13 @@ plic #(
     .o_ip(wb_plic_xeip)
 );
 
-afifo_xslv #(
-    .abits_depth(2),
-    .dbits_depth(9)
-) afifo_ddr0 (
-    .i_xslv_nrst(i_sys_nrst),
-    .i_xslv_clk(i_sys_clk),
-    .i_xslvi(axisi[CFG_BUS0_XSLV_DDR]),
-    .o_xslvo(axiso[CFG_BUS0_XSLV_DDR]),
-    .i_xmst_nrst(i_ddr_nrst),
-    .i_xmst_clk(i_ddr_clk),
-    .o_xmsto(o_ddr_xslvi),
-    .i_xmsti(i_ddr_xslvo)
-);
-
 apb_uart #(
     .log2_fifosz(SOC_UART1_LOG2_FIFOSZ),
     .async_reset(async_reset),
     .sim_speedup_rate(sim_uart_speedup_rate)
 ) uart1 (
-    .i_clk(i_sys_clk),
-    .i_nrst(i_sys_nrst),
+    .i_clk(i_apb_clk),
+    .i_nrst(i_apb_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_UART1]),
     .o_cfg(dev_pnp[SOC_PNP_UART1]),
     .i_apbi(apbi[CFG_BUS1_PSLV_UART1]),
@@ -259,8 +295,8 @@ apb_gpio #(
     .width(SOC_GPIO0_WIDTH),
     .async_reset(async_reset)
 ) gpio0 (
-    .i_clk(i_sys_clk),
-    .i_nrst(i_sys_nrst),
+    .i_clk(i_apb_clk),
+    .i_nrst(i_apb_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_GPIO]),
     .o_cfg(dev_pnp[SOC_PNP_GPIO]),
     .i_apbi(apbi[CFG_BUS1_PSLV_GPIO]),
@@ -330,8 +366,8 @@ pcie_dma #(
 apb_pcie #(
     .async_reset(async_reset)
 ) ppcie0 (
-    .i_clk(i_sys_clk),
-    .i_nrst(i_sys_nrst),
+    .i_clk(i_apb_clk),
+    .i_nrst(i_apb_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PCIE]),
     .o_cfg(dev_pnp[SOC_PNP_PCIE_APB]),
     .i_apbi(apbi[CFG_BUS1_PSLV_PCIE]),
@@ -350,8 +386,8 @@ apb_pnp #(
     .l2cache_ena(CFG_L2CACHE_ENA),
     .plic_irq_max(SOC_PLIC_IRQ_TOTAL)
 ) pnp0 (
-    .i_clk(i_sys_clk),
-    .i_nrst(i_sys_nrst),
+    .i_clk(i_apb_clk),
+    .i_nrst(i_apb_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PNP]),
     .i_cfg(dev_pnp),
     .o_cfg(dev_pnp[SOC_PNP_PNP]),

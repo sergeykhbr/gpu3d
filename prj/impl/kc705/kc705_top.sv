@@ -314,11 +314,15 @@ ibuf_tech ihdmiint (
     .async_reset(async_reset),
     .sim_uart_speedup_rate(sim_uart_speedup_rate)
   ) soc0 (
-    .i_sys_nrst (w_sys_nrst),
-    .i_sys_clk (w_sys_clk),
+    .i_sys_nrst(w_sys_nrst),
+    .i_sys_clk(w_sys_clk),
+    .i_cpu_nrst(w_sys_nrst),
+    .i_cpu_clk(w_sys_clk),
+    .i_apb_nrst(w_sys_nrst),
+    .i_apb_clk(w_sys_clk),
     .i_dbg_nrst(w_dbg_nrst),
-    .i_ddr_nrst (w_ddr_ui_nrst),
-    .i_ddr_clk (w_ddr_ui_clk),
+    .i_ddr_nrst(w_ddr_ui_nrst),
+    .i_ddr_clk(w_ddr_ui_clk),
     //! GPIO.
     .i_gpio (ib_gpio_ipins),
     .o_gpio (ob_gpio_opins),

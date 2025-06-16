@@ -27,6 +27,8 @@ accel_soc::accel_soc(sc_module_name name,
     i_sys_clk("i_sys_clk"),
     i_cpu_nrst("i_cpu_nrst"),
     i_cpu_clk("i_cpu_clk"),
+    i_apb_nrst("i_apb_nrst"),
+    i_apb_clk("i_apb_clk"),
     i_dbg_nrst("i_dbg_nrst"),
     i_ddr_nrst("i_ddr_nrst"),
     i_ddr_clk("i_ddr_clk"),
@@ -100,6 +102,7 @@ accel_soc::accel_soc(sc_module_name name,
     pnp0 = 0;
     group0 = 0;
     afifo_ddr0 = 0;
+    afifo_apb0 = 0;
     afifo_group0 = 0;
 
     bus0 = new accel_axictrl_bus0("bus0",
@@ -115,12 +118,12 @@ accel_soc::accel_soc(sc_module_name name,
 
     bus1 = new accel_axi2apb_bus1("bus1",
                                    async_reset);
-    bus1->i_clk(i_sys_clk);
-    bus1->i_nrst(i_sys_nrst);
+    bus1->i_clk(i_apb_clk);
+    bus1->i_nrst(i_apb_nrst);
     bus1->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PBRIDGE]);
     bus1->o_cfg(dev_pnp[SOC_PNP_PBRIDGE0]);
-    bus1->i_xslvi(axisi[CFG_BUS0_XSLV_PBRIDGE]);
-    bus1->o_xslvo(axiso[CFG_BUS0_XSLV_PBRIDGE]);
+    bus1->i_xslvi(wb_pbridge_xslvi);
+    bus1->o_xslvo(wb_pbridge_xslvo);
     bus1->i_apbo(apbo);
     bus1->o_apbi(apbi);
     bus1->o_mapinfo(bus1_mapinfo);
@@ -135,6 +138,17 @@ accel_soc::accel_soc(sc_module_name name,
     afifo_group0->i_xslv_clk(i_sys_clk);
     afifo_group0->o_xslvi(aximo[CFG_BUS0_XMST_GROUP0]);
     afifo_group0->i_xslvo(aximi[CFG_BUS0_XMST_GROUP0]);
+
+    afifo_apb0 = new afifo_xslv<2,
+                                2>("afifo_apb0");
+    afifo_apb0->i_xslv_nrst(i_sys_nrst);
+    afifo_apb0->i_xslv_clk(i_sys_clk);
+    afifo_apb0->i_xslvi(axisi[CFG_BUS0_XSLV_PBRIDGE]);
+    afifo_apb0->o_xslvo(axiso[CFG_BUS0_XSLV_PBRIDGE]);
+    afifo_apb0->i_xmst_nrst(i_apb_nrst);
+    afifo_apb0->i_xmst_clk(i_apb_clk);
+    afifo_apb0->o_xmsto(wb_pbridge_xslvi);
+    afifo_apb0->i_xmsti(wb_pbridge_xslvo);
 
     afifo_ddr0 = new afifo_xslv<2,
                                 9>("afifo_ddr0");
@@ -221,8 +235,8 @@ accel_soc::accel_soc(sc_module_name name,
     uart1 = new apb_uart<SOC_UART1_LOG2_FIFOSZ>("uart1",
                                                 async_reset,
                                                 sim_uart_speedup_rate);
-    uart1->i_clk(i_sys_clk);
-    uart1->i_nrst(i_sys_nrst);
+    uart1->i_clk(i_apb_clk);
+    uart1->i_nrst(i_apb_nrst);
     uart1->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_UART1]);
     uart1->o_cfg(dev_pnp[SOC_PNP_UART1]);
     uart1->i_apbi(apbi[CFG_BUS1_PSLV_UART1]);
@@ -233,8 +247,8 @@ accel_soc::accel_soc(sc_module_name name,
 
     gpio0 = new apb_gpio<SOC_GPIO0_WIDTH>("gpio0",
                                           async_reset);
-    gpio0->i_clk(i_sys_clk);
-    gpio0->i_nrst(i_sys_nrst);
+    gpio0->i_clk(i_apb_clk);
+    gpio0->i_nrst(i_apb_nrst);
     gpio0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_GPIO]);
     gpio0->o_cfg(dev_pnp[SOC_PNP_GPIO]);
     gpio0->i_apbi(apbi[CFG_BUS1_PSLV_GPIO]);
@@ -296,8 +310,8 @@ accel_soc::accel_soc(sc_module_name name,
 
     ppcie0 = new apb_pcie("ppcie0",
                            async_reset);
-    ppcie0->i_clk(i_sys_clk);
-    ppcie0->i_nrst(i_sys_nrst);
+    ppcie0->i_clk(i_apb_clk);
+    ppcie0->i_nrst(i_apb_nrst);
     ppcie0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PCIE]);
     ppcie0->o_cfg(dev_pnp[SOC_PNP_PCIE_APB]);
     ppcie0->i_apbi(apbi[CFG_BUS1_PSLV_PCIE]);
@@ -313,8 +327,8 @@ accel_soc::accel_soc(sc_module_name name,
                                       CFG_CPU_NUM,
                                       CFG_L2CACHE_ENA,
                                       SOC_PLIC_IRQ_TOTAL);
-    pnp0->i_clk(i_sys_clk);
-    pnp0->i_nrst(i_sys_nrst);
+    pnp0->i_clk(i_apb_clk);
+    pnp0->i_nrst(i_apb_nrst);
     pnp0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PNP]);
     pnp0->i_cfg(dev_pnp);
     pnp0->o_cfg(dev_pnp[SOC_PNP_PNP]);
@@ -327,6 +341,8 @@ accel_soc::accel_soc(sc_module_name name,
     sensitive << i_sys_clk;
     sensitive << i_cpu_nrst;
     sensitive << i_cpu_clk;
+    sensitive << i_apb_nrst;
+    sensitive << i_apb_clk;
     sensitive << i_dbg_nrst;
     sensitive << i_ddr_nrst;
     sensitive << i_ddr_clk;
@@ -382,6 +398,8 @@ accel_soc::accel_soc(sc_module_name name,
     }
     sensitive << wb_group0_xmsto;
     sensitive << wb_group0_xmsti;
+    sensitive << wb_pbridge_xslvi;
+    sensitive << wb_pbridge_xslvo;
     sensitive << wb_clint_mtimer;
     sensitive << wb_clint_msip;
     sensitive << wb_clint_mtip;
@@ -444,6 +462,9 @@ accel_soc::~accel_soc() {
     if (afifo_ddr0) {
         delete afifo_ddr0;
     }
+    if (afifo_apb0) {
+        delete afifo_apb0;
+    }
     if (afifo_group0) {
         delete afifo_group0;
     }
@@ -455,6 +476,8 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_sys_clk, i_sys_clk.name());
         sc_trace(o_vcd, i_cpu_nrst, i_cpu_nrst.name());
         sc_trace(o_vcd, i_cpu_clk, i_cpu_clk.name());
+        sc_trace(o_vcd, i_apb_nrst, i_apb_nrst.name());
+        sc_trace(o_vcd, i_apb_clk, i_apb_clk.name());
         sc_trace(o_vcd, i_dbg_nrst, i_dbg_nrst.name());
         sc_trace(o_vcd, i_ddr_nrst, i_ddr_nrst.name());
         sc_trace(o_vcd, i_ddr_clk, i_ddr_clk.name());
@@ -541,6 +564,9 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (afifo_ddr0) {
         afifo_ddr0->generateVCD(i_vcd, o_vcd);
+    }
+    if (afifo_apb0) {
+        afifo_apb0->generateVCD(i_vcd, o_vcd);
     }
     if (afifo_group0) {
         afifo_group0->generateVCD(i_vcd, o_vcd);

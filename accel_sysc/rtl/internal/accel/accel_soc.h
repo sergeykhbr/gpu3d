@@ -49,6 +49,8 @@ SC_MODULE(accel_soc) {
     sc_in<bool> i_sys_clk;                                  // System Bus (AXI) clock
     sc_in<bool> i_cpu_nrst;                                 // CPUs/Groups reset active LOW
     sc_in<bool> i_cpu_clk;                                  // CPUs/Groups clock
+    sc_in<bool> i_apb_nrst;                                 // APB sub-system reset: active LOW
+    sc_in<bool> i_apb_clk;                                  // APB Bus clock
     sc_in<bool> i_dbg_nrst;                                 // Reset from Debug interface (DMI). Reset everything except DMI
     sc_in<bool> i_ddr_nrst;                                 // DDR related logic reset (AXI clock transformator)
     sc_in<bool> i_ddr_clk;                                  // DDR memoru clock
@@ -146,6 +148,8 @@ SC_MODULE(accel_soc) {
     soc_pnp_vector dev_pnp;
     sc_signal<axi4_master_out_type> wb_group0_xmsto;
     sc_signal<axi4_master_in_type> wb_group0_xmsti;
+    sc_signal<axi4_slave_in_type> wb_pbridge_xslvi;
+    sc_signal<axi4_slave_out_type> wb_pbridge_xslvo;
     sc_signal<sc_uint<64>> wb_clint_mtimer;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_msip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_mtip;
@@ -176,6 +180,7 @@ SC_MODULE(accel_soc) {
     apb_pnp<SOC_PNP_TOTAL> *pnp0;
     Workgroup *group0;
     afifo_xslv<2, 9> *afifo_ddr0;
+    afifo_xslv<2, 2> *afifo_apb0;
     afifo_xmst<2, 3> *afifo_group0;
 
 };
