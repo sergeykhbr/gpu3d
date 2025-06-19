@@ -126,6 +126,7 @@ void accel_axi2apb_bus1::comb() {
     int iselidx;
     apb_in_type vapbi[(CFG_BUS1_PSLV_TOTAL + 1)];
     apb_out_type vapbo[(CFG_BUS1_PSLV_TOTAL + 1)];
+    sc_uint<32> sel_rdata;
 
     v = r;
     iselidx = 0;
@@ -135,6 +136,7 @@ void accel_axi2apb_bus1::comb() {
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) {
         vapbo[i] = apb_out_none;
     }
+    sel_rdata = 0;
 
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
         vapbo[i] = i_apbo[i].read();                        // Cannot read vector item from port in systemc
@@ -146,6 +148,7 @@ void accel_axi2apb_bus1::comb() {
     w_req_ready = 0;
     v.pvalid = 0;
     iselidx = r.selidx.read().to_int();
+    sel_rdata = vapbo[iselidx].prdata;
 
     switch (r.state.read()) {
     case State_Idle:
@@ -190,22 +193,23 @@ void accel_axi2apb_bus1::comb() {
         v.pslverr = vapbo[iselidx].pslverr;
         if (vapbo[iselidx].pready == 1) {
             v.penable = 0;
-            if (r.paddr.read()[2] == 0) {
-                v.prdata = (r.prdata.read()(63, 32), vapbo[iselidx].prdata);
-            } else {
-                v.prdata = (vapbo[iselidx].prdata, r.prdata.read()(31, 0));
-            }
             if (r.size.read() > 4) {
                 v.size = (r.size.read() - 4);
                 v.paddr = (r.paddr.read() + 4);
                 v.pwdata = (0, wb_req_wdata.read()(63, 32));
                 v.pstrb = (0, wb_req_wstrb.read()(7, 4));
                 v.state = State_setup;
+                if (r.paddr.read()[2] == 0) {
+                    v.prdata = (r.prdata.read()(63, 32), sel_rdata);
+                } else {
+                    v.prdata = (sel_rdata, r.prdata.read()(31, 0));
+                }
             } else {
                 v.pvalid = 1;
                 v.state = State_out;
                 v.pselx = 0;
                 v.pwrite = 0;
+                v.prdata = (sel_rdata, sel_rdata);
             }
         }
         break;

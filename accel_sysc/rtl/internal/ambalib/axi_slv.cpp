@@ -258,6 +258,7 @@ void axi_slv::comb() {
                 v.req_last = (!vb_ar_len_next(8, 1).or_reduce());
                 v.rstate = State_r_data;
             } else {
+                v.req_valid = 0;
                 v.ar_len = 0;
                 v.ar_last = 1;
                 v.rstate = State_r_last;
