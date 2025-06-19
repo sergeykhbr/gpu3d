@@ -167,6 +167,7 @@ begin: comb_proc
                 v.req_last = (~(|vb_ar_len_next[8: 1]));
                 v.rstate = State_r_data;
             end else begin
+                v.req_valid = 1'b0;
                 v.ar_len = 9'd0;
                 v.ar_last = 1'b1;
                 v.rstate = State_r_last;

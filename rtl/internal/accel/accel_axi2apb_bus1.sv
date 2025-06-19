@@ -77,6 +77,7 @@ begin: comb_proc
     int iselidx;
     apb_in_type vapbi[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
     apb_out_type vapbo[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
+    logic [31:0] sel_rdata;
 
     v = r;
     iselidx = 0;
@@ -86,6 +87,7 @@ begin: comb_proc
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) begin
         vapbo[i] = apb_out_none;
     end
+    sel_rdata = '0;
 
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
         vapbo[i] = i_apbo[i];                               // Cannot read vector item from port in systemc
@@ -97,6 +99,7 @@ begin: comb_proc
     w_req_ready = 1'b0;
     v.pvalid = 1'b0;
     iselidx = int'(r.selidx);
+    sel_rdata = vapbo[iselidx].prdata;
 
     case (r.state)
     State_Idle: begin
@@ -141,22 +144,23 @@ begin: comb_proc
         v.pslverr = vapbo[iselidx].pslverr;
         if (vapbo[iselidx].pready == 1'b1) begin
             v.penable = 1'b0;
-            if (r.paddr[2] == 1'b0) begin
-                v.prdata = {r.prdata[63: 32], vapbo[iselidx].prdata};
-            end else begin
-                v.prdata = {vapbo[iselidx].prdata, r.prdata[31: 0]};
-            end
             if (r.size > 8'd4) begin
                 v.size = (r.size - 4);
                 v.paddr = (r.paddr + 4);
                 v.pwdata = {32'd0, wb_req_wdata[63: 32]};
                 v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
                 v.state = State_setup;
+                if (r.paddr[2] == 1'b0) begin
+                    v.prdata = {r.prdata[63: 32], sel_rdata};
+                end else begin
+                    v.prdata = {sel_rdata, r.prdata[31: 0]};
+                end
             end else begin
                 v.pvalid = 1'b1;
                 v.state = State_out;
                 v.pselx = 1'b0;
                 v.pwrite = 1'b0;
+                v.prdata = {sel_rdata, sel_rdata};
             end
         end
     end
