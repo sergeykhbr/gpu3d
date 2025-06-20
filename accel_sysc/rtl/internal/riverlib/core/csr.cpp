@@ -226,25 +226,25 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mxr, o_mxr.name());
         sc_trace(o_vcd, o_sum, o_sum.name());
         for (int i = 0; i < 4; i++) {
-            sc_trace(o_vcd, r.xmode[i].xepc, pn + ".r.xmode(i).xepc");
-            sc_trace(o_vcd, r.xmode[i].xpp, pn + ".r.xmode(i).xpp");
-            sc_trace(o_vcd, r.xmode[i].xpie, pn + ".r.xmode(i).xpie");
-            sc_trace(o_vcd, r.xmode[i].xie, pn + ".r.xmode(i).xie");
-            sc_trace(o_vcd, r.xmode[i].xsie, pn + ".r.xmode(i).xsie");
-            sc_trace(o_vcd, r.xmode[i].xtie, pn + ".r.xmode(i).xtie");
-            sc_trace(o_vcd, r.xmode[i].xeie, pn + ".r.xmode(i).xeie");
-            sc_trace(o_vcd, r.xmode[i].xtvec_off, pn + ".r.xmode(i).xtvec_off");
-            sc_trace(o_vcd, r.xmode[i].xtvec_mode, pn + ".r.xmode(i).xtvec_mode");
-            sc_trace(o_vcd, r.xmode[i].xtval, pn + ".r.xmode(i).xtval");
-            sc_trace(o_vcd, r.xmode[i].xcause_irq, pn + ".r.xmode(i).xcause_irq");
-            sc_trace(o_vcd, r.xmode[i].xcause_code, pn + ".r.xmode(i).xcause_code");
-            sc_trace(o_vcd, r.xmode[i].xscratch, pn + ".r.xmode(i).xscratch");
-            sc_trace(o_vcd, r.xmode[i].xcounteren, pn + ".r.xmode(i).xcounteren");
+            sc_trace(o_vcd, r.xmode[i].xepc, pn + ".r.xmode(" + std::to_string(i) + ").xepc");
+            sc_trace(o_vcd, r.xmode[i].xpp, pn + ".r.xmode(" + std::to_string(i) + ").xpp");
+            sc_trace(o_vcd, r.xmode[i].xpie, pn + ".r.xmode(" + std::to_string(i) + ").xpie");
+            sc_trace(o_vcd, r.xmode[i].xie, pn + ".r.xmode(" + std::to_string(i) + ").xie");
+            sc_trace(o_vcd, r.xmode[i].xsie, pn + ".r.xmode(" + std::to_string(i) + ").xsie");
+            sc_trace(o_vcd, r.xmode[i].xtie, pn + ".r.xmode(" + std::to_string(i) + ").xtie");
+            sc_trace(o_vcd, r.xmode[i].xeie, pn + ".r.xmode(" + std::to_string(i) + ").xeie");
+            sc_trace(o_vcd, r.xmode[i].xtvec_off, pn + ".r.xmode(" + std::to_string(i) + ").xtvec_off");
+            sc_trace(o_vcd, r.xmode[i].xtvec_mode, pn + ".r.xmode(" + std::to_string(i) + ").xtvec_mode");
+            sc_trace(o_vcd, r.xmode[i].xtval, pn + ".r.xmode(" + std::to_string(i) + ").xtval");
+            sc_trace(o_vcd, r.xmode[i].xcause_irq, pn + ".r.xmode(" + std::to_string(i) + ").xcause_irq");
+            sc_trace(o_vcd, r.xmode[i].xcause_code, pn + ".r.xmode(" + std::to_string(i) + ").xcause_code");
+            sc_trace(o_vcd, r.xmode[i].xscratch, pn + ".r.xmode(" + std::to_string(i) + ").xscratch");
+            sc_trace(o_vcd, r.xmode[i].xcounteren, pn + ".r.xmode(" + std::to_string(i) + ").xcounteren");
         }
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-            sc_trace(o_vcd, r.pmp[i].cfg, pn + ".r.pmp(i).cfg");
-            sc_trace(o_vcd, r.pmp[i].addr, pn + ".r.pmp(i).addr");
-            sc_trace(o_vcd, r.pmp[i].mask, pn + ".r.pmp(i).mask");
+            sc_trace(o_vcd, r.pmp[i].cfg, pn + ".r.pmp(" + std::to_string(i) + ").cfg");
+            sc_trace(o_vcd, r.pmp[i].addr, pn + ".r.pmp(" + std::to_string(i) + ").addr");
+            sc_trace(o_vcd, r.pmp[i].mask, pn + ".r.pmp(" + std::to_string(i) + ").mask");
         }
         sc_trace(o_vcd, r.state, pn + ".r.state");
         sc_trace(o_vcd, r.fencestate, pn + ".r.fencestate");

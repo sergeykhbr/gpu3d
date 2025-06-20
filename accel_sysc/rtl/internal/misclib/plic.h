@@ -192,13 +192,13 @@ void plic<ctxmax, irqmax>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
         sc_trace(o_vcd, r.pending, pn + ".r.pending");
         sc_trace(o_vcd, r.ip, pn + ".r.ip");
         for (int i = 0; i < ctxmax; i++) {
-            sc_trace(o_vcd, r.ctx[i].priority_th, pn + ".r.ctx(i).priority_th");
-            sc_trace(o_vcd, r.ctx[i].ie, pn + ".r.ctx(i).ie");
-            sc_trace(o_vcd, r.ctx[i].ip_prio, pn + ".r.ctx(i).ip_prio");
-            sc_trace(o_vcd, r.ctx[i].prio_mask, pn + ".r.ctx(i).prio_mask");
-            sc_trace(o_vcd, r.ctx[i].sel_prio, pn + ".r.ctx(i).sel_prio");
-            sc_trace(o_vcd, r.ctx[i].irq_idx, pn + ".r.ctx(i).irq_idx");
-            sc_trace(o_vcd, r.ctx[i].irq_prio, pn + ".r.ctx(i).irq_prio");
+            sc_trace(o_vcd, r.ctx[i].priority_th, pn + ".r.ctx(" + std::to_string(i) + ").priority_th");
+            sc_trace(o_vcd, r.ctx[i].ie, pn + ".r.ctx(" + std::to_string(i) + ").ie");
+            sc_trace(o_vcd, r.ctx[i].ip_prio, pn + ".r.ctx(" + std::to_string(i) + ").ip_prio");
+            sc_trace(o_vcd, r.ctx[i].prio_mask, pn + ".r.ctx(" + std::to_string(i) + ").prio_mask");
+            sc_trace(o_vcd, r.ctx[i].sel_prio, pn + ".r.ctx(" + std::to_string(i) + ").sel_prio");
+            sc_trace(o_vcd, r.ctx[i].irq_idx, pn + ".r.ctx(" + std::to_string(i) + ").irq_idx");
+            sc_trace(o_vcd, r.ctx[i].irq_prio, pn + ".r.ctx(" + std::to_string(i) + ").irq_prio");
         }
         sc_trace(o_vcd, r.rdata, pn + ".r.rdata");
     }

@@ -107,7 +107,7 @@ void sfifo<dbits, log2_depth>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *
         sc_trace(o_vcd, o_rdata, o_rdata.name());
         sc_trace(o_vcd, o_count, o_count.name());
         for (int i = 0; i < DEPTH; i++) {
-            sc_trace(o_vcd, r.databuf[i], pn + ".r.databuf(i)");
+            sc_trace(o_vcd, r.databuf[i], pn + ".r.databuf(" + std::to_string(i) + ")");
         }
         sc_trace(o_vcd, r.wr_cnt, pn + ".r.wr_cnt");
         sc_trace(o_vcd, r.rd_cnt, pn + ".r.rd_cnt");

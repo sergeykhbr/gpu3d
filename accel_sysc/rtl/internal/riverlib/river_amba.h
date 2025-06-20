@@ -89,6 +89,7 @@ SC_MODULE(RiverAmba) {
         sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data;
         sc_signal<bool> cache_access;
+        sc_signal<sc_uint<13>> watchdog;
     };
 
     void RiverAmba_r_reset(RiverAmba_registers& iv) {
@@ -109,6 +110,7 @@ SC_MODULE(RiverAmba) {
         iv.req_snoop_type = 0;
         iv.resp_snoop_data = 0;
         iv.cache_access = 0;
+        iv.watchdog = 0;
     }
 
     sc_uint<4> reqtype2arsnoop(sc_uint<REQ_MEM_TYPE_BITS> reqtype);

@@ -50,6 +50,7 @@ typedef struct {
     logic [SNOOP_REQ_TYPE_BITS-1:0] req_snoop_type;
     logic [L1CACHE_LINE_BITS-1:0] resp_snoop_data;
     logic cache_access;
+    logic [12:0] watchdog;
 } RiverAmba_registers;
 
 const RiverAmba_registers RiverAmba_r_reset = '{
@@ -69,6 +70,7 @@ const RiverAmba_registers RiverAmba_r_reset = '{
     '0,                                 // cr_resp
     '0,                                 // req_snoop_type
     '0,                                 // resp_snoop_data
-    1'b0                                // cache_access
+    1'b0,                               // cache_access
+    '0                                  // watchdog
 };
 endpackage: river_amba_pkg

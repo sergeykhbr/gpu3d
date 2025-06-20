@@ -173,9 +173,9 @@ void clint<cpu_total>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mtip, o_mtip.name());
         sc_trace(o_vcd, r.mtime, pn + ".r.mtime");
         for (int i = 0; i < cpu_total; i++) {
-            sc_trace(o_vcd, r.hart[i].msip, pn + ".r.hart(i).msip");
-            sc_trace(o_vcd, r.hart[i].mtip, pn + ".r.hart(i).mtip");
-            sc_trace(o_vcd, r.hart[i].mtimecmp, pn + ".r.hart(i).mtimecmp");
+            sc_trace(o_vcd, r.hart[i].msip, pn + ".r.hart(" + std::to_string(i) + ").msip");
+            sc_trace(o_vcd, r.hart[i].mtip, pn + ".r.hart(" + std::to_string(i) + ").mtip");
+            sc_trace(o_vcd, r.hart[i].mtimecmp, pn + ".r.hart(" + std::to_string(i) + ").mtimecmp");
         }
         sc_trace(o_vcd, r.rdata, pn + ".r.rdata");
     }

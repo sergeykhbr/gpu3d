@@ -202,9 +202,11 @@ void accel_axi2apb_bus1_tb::comb() {
     mapinfo_type vb_pslv_mapinfo;
     axi4_slave_in_type vb_xslvi;
     sc_uint<48> vb_bar;
+    sc_uint<32> vb_test_cnt_inv;
 
     v = r;
     vb_bar = 0;
+    vb_test_cnt_inv = 0;
 
     vb_xslv_mapinfo.addr_start = 0x000008000000;
     vb_xslv_mapinfo.addr_end = 0x000009000000;
@@ -214,6 +216,7 @@ void accel_axi2apb_bus1_tb::comb() {
     vb_pslv_mapinfo.addr_end = 0x000000011000;
     wb_pslv_mapinfo = vb_pslv_mapinfo;
 
+    vb_test_cnt_inv = (~r.test_cnt.read());
     vb_bar = 0x0000000008100000;
     v.clk_cnt = (r.clk_cnt.read() + 1);
     v.compare_ena = 0;
@@ -293,7 +296,7 @@ void accel_axi2apb_bus1_tb::comb() {
         if ((r.aw_valid.read() == 1) && (wb_o_xslvo.read().aw_ready == 1)) {
             v.aw_valid = 0;
             v.test_state = 2;
-            v.w_data = (r.test_cnt.read(), r.test_cnt.read());
+            v.w_data = (vb_test_cnt_inv, r.test_cnt.read());
             if (r.xsize.read() == 2) {
                 if (r.test_cnt.read()[0] == 0) {
                     v.w_strb = 0x0F;
@@ -316,7 +319,7 @@ void accel_axi2apb_bus1_tb::comb() {
             v.w_wait_cnt = (r.w_wait_cnt.read() - 1);
         } else {
             v.w_valid = 1;
-            v.w_data = (r.test_cnt.read(), r.test_cnt.read());
+            v.w_data = (vb_test_cnt_inv, r.test_cnt.read());
             if ((r.w_valid.read() == 1) && (wb_o_xslvo.read().w_ready == 1)) {
                 v.w_valid = 0;
                 v.test_state = 3;
@@ -365,7 +368,18 @@ void accel_axi2apb_bus1_tb::comb() {
                 v.r_ready = 0;
                 v.compare_ena = 1;
                 v.compare_a = wb_o_xslvo.read().r_data;
-                v.compare_b = r.w_data.read();
+                if (r.xsize.read() == 2) {
+                    if (r.test_cnt.read()[0] == 0) {
+                        v.compare_b = (r.w_data.read()(31, 0), r.w_data.read()(31, 0));
+                    } else {
+                        v.compare_b = (r.w_data.read()(63, 32), r.w_data.read()(63, 32));
+                    }
+                } else if (r.test_cnt.read()[0] == 0) {
+                    v.compare_b = r.w_data.read();
+                } else {
+                    // Error response
+                    v.compare_b = ~0ull;
+                }
                 if (wb_o_xslvo.read().r_last == 1) {
                     // Goto idle
                     v.test_pause_cnt = 10;

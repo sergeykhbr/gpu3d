@@ -263,16 +263,16 @@ begin: comb_proc
         vmsto.ar_bits.size = r.req_size;
         vmsto.ar_bits.prot = r.req_prot;
         vmsto.ar_snoop = r.req_ar_snoop;
-        if (i_msti.ar_ready == 1'b1) begin
+        if ((i_msti.ar_ready == 1'b1) || r.watchdog[12]) begin
             v.state = state_r;
         end
     end
     state_r: begin
         vmsto.r_ready = 1'b1;
-        v_mem_er_load_fault = i_msti.r_resp[1];
+        v_mem_er_load_fault = (i_msti.r_resp[1] | r.watchdog[12]);
         v_resp_mem_valid = i_msti.r_valid;
         // r_valid and r_last always should be in the same time
-        if ((i_msti.r_valid == 1'b1) && (i_msti.r_last == 1'b1)) begin
+        if (((i_msti.r_valid == 1'b1) && (i_msti.r_last == 1'b1)) || r.watchdog[12]) begin
             v.state = state_idle;
         end
     end
@@ -288,7 +288,7 @@ begin: comb_proc
         vmsto.w_last = 1'b1;
         vmsto.w_data = r.req_wdata;
         vmsto.w_strb = r.req_wstrb;
-        if (i_msti.aw_ready == 1'b1) begin
+        if ((i_msti.aw_ready == 1'b1) || r.watchdog[12]) begin
             if (i_msti.w_ready == 1'b1) begin
                 v.state = state_b;
             end else begin
@@ -302,21 +302,27 @@ begin: comb_proc
         vmsto.w_last = 1'b1;
         vmsto.w_data = r.req_wdata;
         vmsto.w_strb = r.req_wstrb;
-        if (i_msti.w_ready == 1'b1) begin
+        if ((i_msti.w_ready == 1'b1) || (r.watchdog[12] == 1'b1)) begin
             v.state = state_b;
         end
     end
     state_b: begin
         vmsto.b_ready = 1'b1;
         v_resp_mem_valid = i_msti.b_valid;
-        v_mem_er_store_fault = i_msti.b_resp[1];
-        if (i_msti.b_valid == 1'b1) begin
+        v_mem_er_store_fault = (i_msti.b_resp[1] | r.watchdog[12]);
+        if ((i_msti.b_valid == 1'b1) || r.watchdog[12]) begin
             v.state = state_idle;
         end
     end
     default: begin
     end
     endcase
+
+    if (r.state == state_idle) begin
+        v.watchdog = 13'd0;
+    end else begin
+        v.watchdog = (r.watchdog + 1);
+    end
 
     // Snoop processing:
     case (r.snoop_state)

@@ -168,20 +168,27 @@ void accel_axi2apb_bus1::comb() {
             v.pselx = 1;
             v.paddr = (wb_req_addr.read()(31, 2) << 2);
             v.pprot = 0;
-            if (wb_req_addr.read()[2] == 1) {
-                v.pwdata = (0, wb_req_wdata.read()(63, 32));
-                v.pstrb = (0, wb_req_wstrb.read()(7, 4));
-            } else {
-                v.pwdata = wb_req_wdata.read();
-                v.pstrb = wb_req_wstrb.read();
-            }
-            v.state = State_setup;
             v.size = wb_req_size.read();
+            v.state = State_setup;
             if (w_req_last.read() == 0) {
                 v.state = State_out;                        // Burst is not supported
                 v.pselx = 0;
+                v.pvalid = 1;
                 v.pslverr = 1;
                 v.prdata = ~0ull;
+            } else if (wb_req_addr.read()[2] == 1) {
+                v.pwdata = (0, wb_req_wdata.read()(63, 32));
+                v.pstrb = (0, wb_req_wstrb.read()(7, 4));
+                if (wb_req_size.read() > 4) {
+                    v.state = State_out;                    // Unaligned request
+                    v.pselx = 0;
+                    v.pvalid = 1;
+                    v.pslverr = 1;
+                    v.prdata = ~0ull;
+                }
+            } else {
+                v.pwdata = wb_req_wdata.read();
+                v.pstrb = wb_req_wstrb.read();
             }
         }
         break;
@@ -193,8 +200,7 @@ void accel_axi2apb_bus1::comb() {
         v.pslverr = vapbo[iselidx].pslverr;
         if (vapbo[iselidx].pready == 1) {
             v.penable = 0;
-            if (r.size.read() > 4) {
-                v.size = (r.size.read() - 4);
+            if ((r.size.read() == 8) && (r.paddr.read()[2] == 0)) {
                 v.paddr = (r.paddr.read() + 4);
                 v.pwdata = (0, wb_req_wdata.read()(63, 32));
                 v.pstrb = (0, wb_req_wstrb.read()(7, 4));
@@ -209,7 +215,13 @@ void accel_axi2apb_bus1::comb() {
                 v.state = State_out;
                 v.pselx = 0;
                 v.pwrite = 0;
-                v.prdata = (sel_rdata, sel_rdata);
+                if (r.size.read() <= 4) {
+                    v.prdata = (sel_rdata, sel_rdata);
+                } else if (r.paddr.read()[2] == 0) {
+                    v.prdata = (r.prdata.read()(63, 32), sel_rdata);
+                } else {
+                    v.prdata = (sel_rdata, r.prdata.read()(31, 0));
+                }
             }
         }
         break;

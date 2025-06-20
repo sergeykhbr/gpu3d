@@ -69,9 +69,9 @@ void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_bp_npc, o_bp_npc.name());
         sc_trace(o_vcd, o_bp_exec, o_bp_exec.name());
         for (int i = 0; i < CFG_BTB_SIZE; i++) {
-            sc_trace(o_vcd, r.btb[i].pc, pn + ".r.btb(i).pc");
-            sc_trace(o_vcd, r.btb[i].npc, pn + ".r.btb(i).npc");
-            sc_trace(o_vcd, r.btb[i].exec, pn + ".r.btb(i).exec");
+            sc_trace(o_vcd, r.btb[i].pc, pn + ".r.btb(" + std::to_string(i) + ").pc");
+            sc_trace(o_vcd, r.btb[i].npc, pn + ".r.btb(" + std::to_string(i) + ").npc");
+            sc_trace(o_vcd, r.btb[i].exec, pn + ".r.btb(" + std::to_string(i) + ").exec");
         }
     }
 

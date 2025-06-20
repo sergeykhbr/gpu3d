@@ -119,20 +119,27 @@ begin: comb_proc
             v.pselx = 1'b1;
             v.paddr = {wb_req_addr[31: 2], 2'd0};
             v.pprot = 3'd0;
-            if (wb_req_addr[2] == 1'b1) begin
-                v.pwdata = {32'd0, wb_req_wdata[63: 32]};
-                v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
-            end else begin
-                v.pwdata = wb_req_wdata;
-                v.pstrb = wb_req_wstrb;
-            end
-            v.state = State_setup;
             v.size = wb_req_size;
+            v.state = State_setup;
             if (w_req_last == 1'b0) begin
                 v.state = State_out;                        // Burst is not supported
                 v.pselx = 1'b0;
+                v.pvalid = 1'b1;
                 v.pslverr = 1'b1;
                 v.prdata = '1;
+            end else if (wb_req_addr[2] == 1'b1) begin
+                v.pwdata = {32'd0, wb_req_wdata[63: 32]};
+                v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
+                if (wb_req_size > 8'd4) begin
+                    v.state = State_out;                    // Unaligned request
+                    v.pselx = 1'b0;
+                    v.pvalid = 1'b1;
+                    v.pslverr = 1'b1;
+                    v.prdata = '1;
+                end
+            end else begin
+                v.pwdata = wb_req_wdata;
+                v.pstrb = wb_req_wstrb;
             end
         end
     end
@@ -144,8 +151,7 @@ begin: comb_proc
         v.pslverr = vapbo[iselidx].pslverr;
         if (vapbo[iselidx].pready == 1'b1) begin
             v.penable = 1'b0;
-            if (r.size > 8'd4) begin
-                v.size = (r.size - 4);
+            if ((r.size == 8'd8) && (r.paddr[2] == 1'b0)) begin
                 v.paddr = (r.paddr + 4);
                 v.pwdata = {32'd0, wb_req_wdata[63: 32]};
                 v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
@@ -160,7 +166,13 @@ begin: comb_proc
                 v.state = State_out;
                 v.pselx = 1'b0;
                 v.pwrite = 1'b0;
-                v.prdata = {sel_rdata, sel_rdata};
+                if (r.size <= 8'd4) begin
+                    v.prdata = {sel_rdata, sel_rdata};
+                end else if (r.paddr[2] == 1'b0) begin
+                    v.prdata = {r.prdata[63: 32], sel_rdata};
+                end else begin
+                    v.prdata = {sel_rdata, r.prdata[31: 0]};
+                end
             end
         end
     end
