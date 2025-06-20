@@ -19,7 +19,6 @@
 #include "encoding.h"
 #include "fw_api.h"
 
-void allocate_exception_table(void);
 void allocate_interrupt_table(void);
 void test_plic(void);
 void test_swirq(void);
@@ -106,7 +105,6 @@ int __main() {
     gpio->output_en = 0xfff0;
     fw_malloc_init();
     
-    allocate_exception_table();
     allocate_interrupt_table();
 
     uart_isr_init();   // enable printf_uart function and Tx irq=1

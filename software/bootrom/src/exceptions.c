@@ -19,8 +19,6 @@
 #include "encoding.h"
 #include "fw_api.h"
 
-static const char EXCEPTION_TABLE_NAME[8] = "extbl";
-
 int get_mcause() {
     int ret;
     asm("csrr %0, mcause" : "=r" (ret));
@@ -40,20 +38,27 @@ int get_mbadaddr() {
 }
 
 void exception_instr_load_fault_c() {
-    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    uint64_t t1 = pnp->fwdbg1;
+    uint64_t t1;
     asm("csrw mepc, %0" : :"r"(t1));
-    pnp->fwdbg1 = get_mbadaddr();
+    print_uart("instr_load_fault: ", 18);
+    print_uart_hex(t1);
+    while (1) {}
 }
 
 void exception_load_fault_c() {
-    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    pnp->fwdbg1 = get_mbadaddr();
+    uint64_t t1;
+    asm("csrw mepc, %0" : :"r"(t1));
+    print_uart("data_load_fault: ", 17);
+    print_uart_hex(t1);
+    while (1) {}
 }
 
 void exception_store_fault_c() {
-    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    pnp->fwdbg1 = get_mbadaddr();
+    uint64_t t1;
+    asm("csrw mepc, %0" : :"r"(t1));
+    print_uart("data_store_fault: ", 18);
+    print_uart_hex(t1);
+    while (1) {}
 }
 
 void exception_stack_overflow_c() {
@@ -74,9 +79,11 @@ void exception_stack_underflow_c() {
     pnp->fwdbg2 = sp;
 }
 
+extern void *_nmi_table;  // see startup.S
+
 void exception_handler_c() {
     asm("fence.i");
-    IRQ_HANDLER *tbl = fw_get_ram_data(EXCEPTION_TABLE_NAME);
+    IRQ_HANDLER *tbl = (IRQ_HANDLER *)_nmi_table;
     int idx = get_mcause();
     if (tbl[idx] == 0) {
        print_uart("mcause:", 7);
@@ -90,16 +97,4 @@ void exception_handler_c() {
     } else {
        tbl[idx]();
     }
-}
-
-void allocate_exception_table() {
-    IRQ_HANDLER *extbl = (IRQ_HANDLER *)
-        fw_malloc(EXCEPTION_Total * sizeof(IRQ_HANDLER));    
-    fw_register_ram_data(EXCEPTION_TABLE_NAME, extbl);
-
-    extbl[EXCEPTION_InstrFault] = exception_instr_load_fault_c;
-    extbl[EXCEPTION_LoadFault] = exception_load_fault_c;
-    extbl[EXCEPTION_StoreFault] = exception_store_fault_c;
-    extbl[EXCEPTION_StackOverflow] = exception_stack_overflow_c;
-    extbl[EXCEPTION_StackUnderflow] = exception_stack_underflow_c;
 }

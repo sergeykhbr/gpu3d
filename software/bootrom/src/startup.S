@@ -6,6 +6,7 @@
   .section .isr_vector, "x"
   .align 4
   .globl _start
+  .globl _nmi_table
   .globl _mbist_ram_exit
   .globl exception_handler_c
   .globl interrupt_handler_c
@@ -15,6 +16,12 @@
   .globl interrupt_m_timer_c
   .globl interrupt_s_external_c
   .globl interrupt_m_external_c
+
+##! called from trap_handler()
+  .global exception_instr_load_fault_c
+  .global exception_load_fault_c
+  .global exception_store_fault_c
+
 
 _start:
   j reset_vector
@@ -32,6 +39,27 @@ trap_table:
   j interrupt_s_external_entry  # 9 Supervisor external interrupt
   j bad_irq                     # 10 Reserved
   j interrupt_m_external_entry  # 11 Machine external interrupt
+
+_nmi_table:
+  j bad_irq                          # EXCEPTION_InstrMisalign 0    // Instruction misalgined load
+  j exception_instr_load_fault_c     # EXCEPTION_InstrFault    1    // Instruction access fault
+  j bad_irq                          # EXCEPTION_InstrIllegal  2    // Illegal instruction
+  j bad_irq                          # EXCEPTION_Breakpoint    3    // Breakpoint
+  j bad_irq                          # EXCEPTION_LoadMisalign  4    // Load address misaligned
+  j exception_load_fault_c           # EXCEPTION_LoadFault     5    // Load access fault
+  j bad_irq                          # EXCEPTION_StoreMisalign 6    // Store/AMO address misaligned
+  j exception_store_fault_c          # EXCEPTION_StoreFault    7    // Store/AMO access fault
+  j bad_irq                          # EXCEPTION_CallFromUmode 8    // Environment call from U-mode
+  j bad_irq                          # EXCEPTION_CallFromSmode 9    // Environment call from S-mode
+  j bad_irq                          # EXCEPTION_CallFromHmode 10   // Environment call from H-mode
+  j bad_irq                          # EXCEPTION_CallFromMmode 11   // Environment call from M-mode
+  j bad_irq                          # EXCEPTION_InstrPageFault 12
+  j bad_irq                          # EXCEPTION_LoadPageFault  13
+  j bad_irq                          # EXCEPTION_reserved14     14
+  j bad_irq                          # EXCEPTION_StorePageFault 15
+  j exception_stack_overflow_c       # EXCEPTION_StackOverflow  16  // Stack overflow
+  j exception_stack_underflow_c      # EXCEPTION_StackUnderflow 17  // Stack underflow
+
 
 bad_irq:
   j bad_irq
