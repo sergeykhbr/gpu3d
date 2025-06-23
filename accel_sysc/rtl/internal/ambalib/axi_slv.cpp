@@ -424,6 +424,8 @@ void axi_slv::comb() {
         if ((r.b_valid.read() == 1) && (i_xslvi.read().b_ready == 1)) {
             v.b_valid = 0;
             v.b_err = 0;
+            v.aw_ready = 1;
+            v.w_ready = 1;                                  // AXI light
             v.wstate = State_w_idle;
         }
         break;

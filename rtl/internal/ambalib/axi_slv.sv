@@ -333,6 +333,8 @@ begin: comb_proc
         if ((r.b_valid == 1'b1) && (i_xslvi.b_ready == 1'b1)) begin
             v.b_valid = 1'b0;
             v.b_err = 1'b0;
+            v.aw_ready = 1'b1;
+            v.w_ready = 1'b1;                               // AXI light
             v.wstate = State_w_idle;
         end
     end
