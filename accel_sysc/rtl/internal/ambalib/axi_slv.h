@@ -64,13 +64,14 @@ SC_MODULE(axi_slv) {
     static const uint8_t State_w_idle = 0;
     static const uint8_t State_w_wait_reading = 0x01;
     static const uint8_t State_w_wait_reading_light = 0x02;
-    static const uint8_t State_w_addr = 0x04;
-    static const uint8_t State_w_data = 0x08;
-    static const uint8_t State_b = 0x10;
+    static const uint8_t State_w_req = 0x04;
+    static const uint8_t State_w_pipe = 0x08;
+    static const uint8_t State_w_resp = 0x10;
+    static const uint8_t State_b = 0x20;
 
     struct axi_slv_registers {
         sc_signal<sc_uint<4>> rstate;
-        sc_signal<sc_uint<5>> wstate;
+        sc_signal<sc_uint<6>> wstate;
         sc_signal<bool> ar_ready;
         sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> ar_addr;
         sc_signal<sc_uint<9>> ar_len;

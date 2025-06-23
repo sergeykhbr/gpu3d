@@ -334,7 +334,7 @@ void axi_slv::comb() {
             v.req_wstrb = i_xslvi.read().w_strb;
             if ((r.w_ready.read() == 1) && (i_xslvi.read().w_valid == 1)) {
                 // AXI Light support:
-                v.wstate = State_w_data;
+                v.wstate = State_w_pipe;
                 v.w_last = i_xslvi.read().w_last;
                 if (r.rstate.read().or_reduce() == 1) {
                     // Postpone writing
@@ -353,7 +353,9 @@ void axi_slv::comb() {
                 v.wstate = State_w_wait_reading;
                 v.w_ready = 0;
             } else {
-                v.wstate = State_w_addr;
+                v.req_addr = (i_xslvi.read().aw_bits.addr - i_mapinfo.read().addr_start);
+                v.req_bytes = XSizeToBytes(i_xslvi.read().aw_bits.size);
+                v.wstate = State_w_req;
                 v.w_ready = 1;
                 v.req_write = 1;
             }
@@ -361,39 +363,50 @@ void axi_slv::comb() {
             v.aw_ready = 1;
         }
         break;
-    case State_w_addr:
+    case State_w_req:
         if (i_xslvi.read().w_valid == 1) {
+            v.w_ready = (i_req_ready.read() & (!i_xslvi.read().w_last));
             v.req_valid = 1;
-            v.req_addr = r.aw_addr.read();
-            v.req_bytes = r.aw_bytes.read();
-            v.w_ready = ((!i_xslvi.read().w_last) & i_req_ready.read());
             v.req_wdata = i_xslvi.read().w_data;
             v.req_wstrb = i_xslvi.read().w_strb;
             v.req_last = i_xslvi.read().w_last;
-            v.wstate = State_w_data;
+            v.wstate = State_w_pipe;
         }
         break;
-    case State_w_data:
-        v.w_ready = ((!r.req_valid.read()) | i_req_ready.read());
-        if ((i_req_ready.read() == 1) && (i_xslvi.read().w_valid == 1)) {
+    case State_w_pipe:
+        v.w_ready = ((i_req_ready.read() | i_resp_valid.read()) & (!r.req_last.read()));
+        if ((r.w_ready.read() == 1) && (i_xslvi.read().w_valid == 1)) {
             v.req_valid = 1;
             v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_aw_addr_next);
-            v.w_ready = (!i_xslvi.read().w_last);
             v.req_wdata = i_xslvi.read().w_data;
             v.req_wstrb = i_xslvi.read().w_strb;
             v.req_last = i_xslvi.read().w_last;
         }
-        if ((r.req_last.read() == 1) && (i_req_ready.read() == 1)) {
-            v.w_ready = 0;
+        if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1) && (r.req_last.read() == 1)) {
+            v.req_last = 0;
+            v.wstate = State_w_resp;
+        } else if ((i_resp_valid.read() == 1) && (i_xslvi.read().w_valid == 0) && (r.req_valid.read() == 0)) {
+            v.w_ready = 1;
+            v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_aw_addr_next);
+            v.wstate = State_w_req;
+        }
+        break;
+    case State_w_resp:
+        if (i_resp_valid.read() == 1) {
+            v.b_valid = 1;
+            v.b_err = i_resp_err.read();
+            v.w_last = 0;
             v.wstate = State_b;
         }
         break;
     case State_w_wait_reading:
         // ready to accept new data (no latched data)
         if ((r.rstate.read().or_reduce() == 0) || ((r.r_valid.read() & r.r_last.read() & i_xslvi.read().r_ready) == 1)) {
-            v.req_write = 1;
             v.w_ready = 1;
-            v.wstate = State_w_addr;
+            v.req_write = 1;
+            v.req_addr = r.aw_addr.read();
+            v.req_bytes = r.aw_bytes.read();
+            v.wstate = State_w_req;
         }
         break;
     case State_w_wait_reading_light:
@@ -404,18 +417,10 @@ void axi_slv::comb() {
             v.req_addr = r.aw_addr.read();
             v.req_bytes = r.aw_bytes.read();
             v.req_last = r.w_last.read();
-            v.wstate = State_w_data;
+            v.wstate = State_w_pipe;
         }
         break;
     case State_b:
-        if (i_resp_valid.read() == 1) {
-            v.b_valid = 1;
-            v.b_err = i_resp_err.read();
-            v.w_last = 0;
-            if (i_xslvi.read().b_ready == 1) {
-                v.wstate = State_w_idle;
-            }
-        }
         if ((r.b_valid.read() == 1) && (i_xslvi.read().b_ready == 1)) {
             v.b_valid = 0;
             v.b_err = 0;

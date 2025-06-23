@@ -18,6 +18,7 @@
 #include "../prj/impl/asic_accel_sim/asic_accel_top_tb.h"
 #include "../prj/tb/pcie_dma_tb.h"
 #include "../prj/tb/accel_axi2apb_bus1_tb.h"
+#include "../prj/tb/accel_axictrl_bus0_tb.h"
 #include "../prj/tb/apb_i2c_tb.h"
 #include "../prj/tb/afifo_xslv_tb.h"
 #include "../prj/tb/hdmi_tb.h"
@@ -27,6 +28,8 @@ using namespace debugger;
 
 int sc_main(int argc, char *argv[]) {
     sc_trace_file *vcd_ = sc_create_vcd_trace_file(CMAKE_BINARY_DIR"/accel");
+    int duration = 1;
+    sc_time_unit units = SC_MS;
     vcd_->set_time_unit(1, SC_PS);
 
 #if 0
@@ -35,8 +38,12 @@ int sc_main(int argc, char *argv[]) {
     hdmi_tb *tb = new hdmi_tb("tb");
 #elif 0
     afifo_xslv_tb *tb = new afifo_xslv_tb("tb");
-#elif 1
+#elif 0
     accel_axi2apb_bus1_tb *tb = new accel_axi2apb_bus1_tb("tb");
+#elif 1
+    duration = 5;
+    units = SC_MS;
+    accel_axictrl_bus0_tb *tb = new accel_axictrl_bus0_tb("tb");
 #elif 0
     apb_i2c_tb *tb = new apb_i2c_tb("tb");
 #elif 0
@@ -46,12 +53,12 @@ int sc_main(int argc, char *argv[]) {
 #endif
     tb->generateVCD(0, vcd_);
 
-    sc_start(100, SC_NS);
+    sc_start(10, SC_NS);
     std::cout << "@" << sc_time_stamp()
-              << ": Simulation started successfully. Continue for 10 ms..."
+              << ": Simulation started successfully. Continue ..."
               << std::endl;
 
-    sc_start(5, SC_MS);
+    sc_start(duration, units);
 
     if (vcd_) {
         sc_close_vcd_trace_file(vcd_);

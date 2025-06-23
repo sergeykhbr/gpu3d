@@ -23,16 +23,17 @@ localparam bit [3:0] State_r_addr = 4'h1;
 localparam bit [3:0] State_r_data = 4'h2;
 localparam bit [3:0] State_r_last = 4'h4;
 localparam bit [3:0] State_r_wait_writing = 4'h8;
-localparam bit [4:0] State_w_idle = 5'd0;
-localparam bit [4:0] State_w_wait_reading = 5'h01;
-localparam bit [4:0] State_w_wait_reading_light = 5'h02;
-localparam bit [4:0] State_w_addr = 5'h04;
-localparam bit [4:0] State_w_data = 5'h08;
-localparam bit [4:0] State_b = 5'h10;
+localparam bit [5:0] State_w_idle = 6'd0;
+localparam bit [5:0] State_w_wait_reading = 6'h01;
+localparam bit [5:0] State_w_wait_reading_light = 6'h02;
+localparam bit [5:0] State_w_req = 6'h04;
+localparam bit [5:0] State_w_pipe = 6'h08;
+localparam bit [5:0] State_w_resp = 6'h10;
+localparam bit [5:0] State_b = 6'h20;
 
 typedef struct {
     logic [3:0] rstate;
-    logic [4:0] wstate;
+    logic [5:0] wstate;
     logic ar_ready;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] ar_addr;
     logic [8:0] ar_len;

@@ -243,7 +243,7 @@ begin: comb_proc
             v.req_wstrb = i_xslvi.w_strb;
             if ((r.w_ready == 1'b1) && (i_xslvi.w_valid == 1'b1)) begin
                 // AXI Light support:
-                v.wstate = State_w_data;
+                v.wstate = State_w_pipe;
                 v.w_last = i_xslvi.w_last;
                 if ((|r.rstate) == 1'b1) begin
                     // Postpone writing
@@ -262,7 +262,9 @@ begin: comb_proc
                 v.wstate = State_w_wait_reading;
                 v.w_ready = 1'b0;
             end else begin
-                v.wstate = State_w_addr;
+                v.req_addr = (i_xslvi.aw_bits.addr - i_mapinfo.addr_start);
+                v.req_bytes = XSizeToBytes(i_xslvi.aw_bits.size);
+                v.wstate = State_w_req;
                 v.w_ready = 1'b1;
                 v.req_write = 1'b1;
             end
@@ -270,39 +272,50 @@ begin: comb_proc
             v.aw_ready = 1'b1;
         end
     end
-    State_w_addr: begin
+    State_w_req: begin
         if (i_xslvi.w_valid == 1'b1) begin
+            v.w_ready = (i_req_ready & (~i_xslvi.w_last));
             v.req_valid = 1'b1;
-            v.req_addr = r.aw_addr;
-            v.req_bytes = r.aw_bytes;
-            v.w_ready = ((~i_xslvi.w_last) & i_req_ready);
             v.req_wdata = i_xslvi.w_data;
             v.req_wstrb = i_xslvi.w_strb;
             v.req_last = i_xslvi.w_last;
-            v.wstate = State_w_data;
+            v.wstate = State_w_pipe;
         end
     end
-    State_w_data: begin
-        v.w_ready = ((~r.req_valid) | i_req_ready);
-        if ((i_req_ready == 1'b1) && (i_xslvi.w_valid == 1'b1)) begin
+    State_w_pipe: begin
+        v.w_ready = ((i_req_ready | i_resp_valid) & (~r.req_last));
+        if ((r.w_ready == 1'b1) && (i_xslvi.w_valid == 1'b1)) begin
             v.req_valid = 1'b1;
             v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_aw_addr_next};
-            v.w_ready = (~i_xslvi.w_last);
             v.req_wdata = i_xslvi.w_data;
             v.req_wstrb = i_xslvi.w_strb;
             v.req_last = i_xslvi.w_last;
         end
-        if ((r.req_last == 1'b1) && (i_req_ready == 1'b1)) begin
-            v.w_ready = 1'b0;
+        if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1) && (r.req_last == 1'b1)) begin
+            v.req_last = 1'b0;
+            v.wstate = State_w_resp;
+        end else if ((i_resp_valid == 1'b1) && (i_xslvi.w_valid == 1'b0) && (r.req_valid == 1'b0)) begin
+            v.w_ready = 1'b1;
+            v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_aw_addr_next};
+            v.wstate = State_w_req;
+        end
+    end
+    State_w_resp: begin
+        if (i_resp_valid == 1'b1) begin
+            v.b_valid = 1'b1;
+            v.b_err = i_resp_err;
+            v.w_last = 1'b0;
             v.wstate = State_b;
         end
     end
     State_w_wait_reading: begin
         // ready to accept new data (no latched data)
         if (((|r.rstate) == 1'b0) || ((r.r_valid & r.r_last & i_xslvi.r_ready) == 1'b1)) begin
-            v.req_write = 1'b1;
             v.w_ready = 1'b1;
-            v.wstate = State_w_addr;
+            v.req_write = 1'b1;
+            v.req_addr = r.aw_addr;
+            v.req_bytes = r.aw_bytes;
+            v.wstate = State_w_req;
         end
     end
     State_w_wait_reading_light: begin
@@ -313,18 +326,10 @@ begin: comb_proc
             v.req_addr = r.aw_addr;
             v.req_bytes = r.aw_bytes;
             v.req_last = r.w_last;
-            v.wstate = State_w_data;
+            v.wstate = State_w_pipe;
         end
     end
     State_b: begin
-        if (i_resp_valid == 1'b1) begin
-            v.b_valid = 1'b1;
-            v.b_err = i_resp_err;
-            v.w_last = 1'b0;
-            if (i_xslvi.b_ready == 1'b1) begin
-                v.wstate = State_w_idle;
-            end
-        end
         if ((r.b_valid == 1'b1) && (i_xslvi.b_ready == 1'b1)) begin
             v.b_valid = 1'b0;
             v.b_err = 1'b0;
