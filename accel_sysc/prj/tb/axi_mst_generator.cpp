@@ -20,7 +20,9 @@
 namespace debugger {
 
 axi_mst_generator::axi_mst_generator(sc_module_name name,
-                                     sc_uint<48> req_bar)
+                                     sc_uint<48> req_bar,
+                                     sc_uint<4> unique_id,
+                                     bool read_only)
     : sc_module(name),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
@@ -32,6 +34,8 @@ axi_mst_generator::axi_mst_generator(sc_module_name name,
     o_test_busy("o_test_busy") {
 
     req_bar_ = req_bar;
+    unique_id_ = unique_id;
+    read_only_ = read_only;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -40,12 +44,14 @@ axi_mst_generator::axi_mst_generator(sc_module_name name,
     sensitive << i_test_selector;
     sensitive << i_show_result;
     sensitive << r.err_cnt;
+    sensitive << r.compare_cnt;
     sensitive << r.run_cnt;
     sensitive << r.state;
     sensitive << r.xsize;
     sensitive << r.aw_valid;
     sensitive << r.aw_addr;
     sensitive << r.aw_xlen;
+    sensitive << r.w_use_axi_light;
     sensitive << r.w_wait_states;
     sensitive << r.w_wait_cnt;
     sensitive << r.w_valid;
@@ -85,12 +91,14 @@ void axi_mst_generator::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
         sc_trace(o_vcd, i_show_result, i_show_result.name());
         sc_trace(o_vcd, o_test_busy, o_test_busy.name());
         sc_trace(o_vcd, r.err_cnt, pn + ".r.err_cnt");
+        sc_trace(o_vcd, r.compare_cnt, pn + ".r.compare_cnt");
         sc_trace(o_vcd, r.run_cnt, pn + ".r.run_cnt");
         sc_trace(o_vcd, r.state, pn + ".r.state");
         sc_trace(o_vcd, r.xsize, pn + ".r.xsize");
         sc_trace(o_vcd, r.aw_valid, pn + ".r.aw_valid");
         sc_trace(o_vcd, r.aw_addr, pn + ".r.aw_addr");
         sc_trace(o_vcd, r.aw_xlen, pn + ".r.aw_xlen");
+        sc_trace(o_vcd, r.w_use_axi_light, pn + ".r.w_use_axi_light");
         sc_trace(o_vcd, r.w_wait_states, pn + ".r.w_wait_states");
         sc_trace(o_vcd, r.w_wait_cnt, pn + ".r.w_wait_cnt");
         sc_trace(o_vcd, r.w_valid, pn + ".r.w_valid");
@@ -135,25 +143,54 @@ void axi_mst_generator::comb() {
     switch (r.state.read()) {
     case 0:
         if (i_start_test.read() == 1) {
-            v.state = 1;
+            if (read_only_ == 1) {
+                v.state = 5;
+            } else {
+                v.state = 1;
+            }
             v.run_cnt = (r.run_cnt.read() + 1);
             v.w_wait_states = i_test_selector.read()(2, 0);
             v.b_wait_states = i_test_selector.read()(4, 3);
             v.r_wait_states = i_test_selector.read()(7, 5);
             v.aw_xlen = (0, i_test_selector.read()(9, 8));
             v.ar_xlen = (0, i_test_selector.read()(9, 8));
+            if ((i_test_selector.read()(9, 8).or_reduce() == 0) && (i_test_selector.read()(2, 0) == 7)) {
+                v.w_use_axi_light = 1;
+            } else {
+                v.w_use_axi_light = 0;
+            }
             v.xsize = 3;                                    // 8-bytes
+            if (i_test_selector.read()[10] == 1) {
+                v.xsize = 2;                                // 4-bytes
+            }
         }
         break;
     case 1:                                                 // aw request
         v.aw_valid = 1;
         v.aw_addr = (vb_bar + (r.run_cnt.read()(11, 0) << 5));
         v.w_burst_cnt = 0;
+        if (r.w_use_axi_light.read() == 1) {
+            v.w_valid = 1;
+            v.w_last = 1;
+            v.w_data = (unique_id_, vb_run_cnt_inv(27, 0), r.run_cnt.read()(27, 0), r.w_burst_cnt.read());
+            v.w_strb = 0xFF;
+        }
         if ((r.aw_valid.read() == 1) && (i_xmst.read().aw_ready == 1)) {
             v.aw_valid = 0;
-            v.w_data = (vb_run_cnt_inv, r.run_cnt.read()(27, 0), r.w_burst_cnt.read());
+            v.w_data = (unique_id_, vb_run_cnt_inv(27, 0), r.run_cnt.read()(27, 0), r.w_burst_cnt.read());
             v.w_strb = 0xFF;
-            if (r.w_wait_states.read().or_reduce() == 0) {
+            if ((r.w_valid.read() == 1) && (i_xmst.read().w_ready == 1)) {
+                v.w_valid = 0;
+                if (r.b_wait_states.read().or_reduce() == 0) {
+                    v.b_wait_cnt = 0;
+                    v.b_ready = 1;
+                } else {
+                    v.b_wait_cnt = r.b_wait_states.read();
+                }
+                v.state = 4;
+            } else if ((r.w_wait_states.read().or_reduce() == 0) || (r.aw_xlen.read().or_reduce() == 1) || (r.w_valid.read() == 1)) {
+                // 1. Generate first w_valid just after aw in burst transaction to check buffering
+                // 2. Cannot inject waits for AXI Light requests
                 v.w_wait_cnt = 0;
                 v.w_valid = 1;
                 v.w_last = (!r.aw_xlen.read().or_reduce());
@@ -175,10 +212,10 @@ void axi_mst_generator::comb() {
         break;
     case 3:                                                 // w request
         v.w_valid = 1;
-        v.w_data = (vb_run_cnt_inv, r.run_cnt.read()(27, 0), r.w_burst_cnt.read());
+        v.w_data = (unique_id_, vb_run_cnt_inv(27, 0), r.run_cnt.read()(27, 0), r.w_burst_cnt.read());
         if ((r.w_valid.read() == 1) && (i_xmst.read().w_ready == 1)) {
             v.w_burst_cnt = vb_w_burst_cnt_next;
-            v.w_data = (vb_run_cnt_inv, r.run_cnt.read()(27, 0), vb_w_burst_cnt_next);
+            v.w_data = (unique_id_, vb_run_cnt_inv(27, 0), r.run_cnt.read()(27, 0), vb_w_burst_cnt_next);
             v.w_valid = 0;
             v.w_last = 0;
             v.w_wait_cnt = r.w_wait_states.read();
@@ -221,7 +258,7 @@ void axi_mst_generator::comb() {
         if ((r.ar_valid.read() == 1) && (i_xmst.read().ar_ready == 1)) {
             v.ar_valid = 0;
             v.r_burst_cnt = 0;
-            if (r.r_wait_states.read().or_reduce() == 0) {
+            if ((r.r_wait_states.read().or_reduce() == 0) || (r.ar_xlen.read().or_reduce() == 1)) {
                 v.r_wait_cnt = 0;
                 v.r_ready = 1;
                 v.state = 7;
@@ -244,9 +281,9 @@ void axi_mst_generator::comb() {
         if ((r.r_ready.read() == 1) && (i_xmst.read().r_valid == 1)) {
             v.r_burst_cnt = (r.r_burst_cnt.read() + 1);
             v.r_ready = 0;
-            v.compare_ena = 1;
+            v.compare_ena = (!read_only_);
             v.compare_a = i_xmst.read().r_data;
-            v.compare_b = (vb_run_cnt_inv, r.run_cnt.read()(27, 0), r.r_burst_cnt.read());
+            v.compare_b = (unique_id_, vb_run_cnt_inv(27, 0), r.run_cnt.read()(27, 0), r.r_burst_cnt.read());
             if (i_xmst.read().r_last == 1) {
                 // Goto idle
                 v.state = 0;
@@ -265,6 +302,7 @@ void axi_mst_generator::comb() {
     }
 
     if (r.compare_ena.read() == 1) {
+        v.compare_cnt = (r.compare_cnt.read() + 1);
         if (r.compare_a.read() != r.compare_b.read()) {
             v.err_cnt = (r.err_cnt.read() + 1);
         }
@@ -315,7 +353,8 @@ void axi_mst_generator::test() {
     }
     if (i_show_result.read() == 1) {
         if (r.err_cnt.read() == 0) {
-            std::cout << "@" << sc_time_stamp() << " No errors. TESTS PASSED" << std::endl;
+            std::cout << "@" << sc_time_stamp() << " No errors. "
+                      << r.compare_cnt.read() << " TESTS PASSED" << std::endl;
         } else {
             std::cout << "@" << sc_time_stamp() << " TESTS FAILED. Total errors = "
                       << r.err_cnt.read() << std::endl;

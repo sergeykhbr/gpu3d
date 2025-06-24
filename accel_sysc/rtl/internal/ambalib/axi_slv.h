@@ -67,12 +67,13 @@ SC_MODULE(axi_slv) {
     static const uint8_t State_w_wait_reading_light = 0x02;
     static const uint8_t State_w_req = 0x04;
     static const uint8_t State_w_pipe = 0x08;
-    static const uint8_t State_w_resp = 0x10;
-    static const uint8_t State_b = 0x20;
+    static const uint8_t State_w_buf = 0x10;
+    static const uint8_t State_w_resp = 0x20;
+    static const uint8_t State_b = 0x40;
 
     struct axi_slv_registers {
         sc_signal<sc_uint<5>> rstate;
-        sc_signal<sc_uint<6>> wstate;
+        sc_signal<sc_uint<7>> wstate;
         sc_signal<bool> ar_ready;
         sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> ar_addr;
         sc_signal<sc_uint<9>> ar_len;
@@ -105,6 +106,10 @@ SC_MODULE(axi_slv) {
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> req_wdata;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> req_wstrb;
         sc_signal<sc_uint<8>> req_bytes;
+        sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> req_addr_buf;
+        sc_signal<bool> req_last_buf;
+        sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> req_wdata_buf;
+        sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> req_wstrb_buf;
     };
 
     void axi_slv_r_reset(axi_slv_registers& iv) {
@@ -142,6 +147,10 @@ SC_MODULE(axi_slv) {
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.req_bytes = 0;
+        iv.req_addr_buf = 0;
+        iv.req_last_buf = 0;
+        iv.req_wdata_buf = 0;
+        iv.req_wstrb_buf = 0;
     }
 
     axi_slv_registers v;

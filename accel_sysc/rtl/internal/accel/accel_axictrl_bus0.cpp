@@ -128,6 +128,7 @@ void accel_axictrl_bus0::comb() {
     int i_w_sidx;
     int i_b_midx;
     int i_b_sidx;
+    sc_uint<(CFG_BUS0_XMST_TOTAL + 1)> vb_axi_light;
     bool v_aw_fire;
     bool v_ar_fire;
     bool v_w_fire;
@@ -161,6 +162,7 @@ void accel_axictrl_bus0::comb() {
     i_w_sidx = 0;
     i_b_midx = 0;
     i_b_sidx = 0;
+    vb_axi_light = 0;
     v_aw_fire = 0;
     v_ar_fire = 0;
     v_w_fire = 0;
@@ -205,11 +207,14 @@ void accel_axictrl_bus0::comb() {
 
     // Select Master bus:
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
+        vmsto[i].ar_id = (vmsto[i].ar_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
+        vmsto[i].aw_id = (vmsto[i].aw_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
         if (vmsto[i].ar_valid == 1) {
             i_ar_midx = i;
         }
         if (vmsto[i].aw_valid == 1) {
             i_aw_midx = i;
+            vb_axi_light[i] = vmsto[i].w_valid;
         }
     }
 
@@ -281,7 +286,7 @@ void accel_axictrl_bus0::comb() {
     vmsti[i_r_midx].r_resp = vslvo[i_r_sidx].r_resp;
     vmsti[i_r_midx].r_data = vslvo[i_r_sidx].r_data;
     vmsti[i_r_midx].r_last = vslvo[i_r_sidx].r_last;
-    vmsti[i_r_midx].r_id = vslvo[i_r_sidx].r_id;
+    vmsti[i_r_midx].r_id = vslvo[i_r_sidx].r_id((CFG_SYSBUS_USER_BITS - 1), CFG_BUS0_XMST_LOG2_TOTAL);
     vmsti[i_r_midx].r_user = vslvo[i_r_sidx].r_user;
     vslvi[i_r_sidx].r_ready = vmsto[i_r_midx].r_ready;
 
@@ -300,7 +305,7 @@ void accel_axictrl_bus0::comb() {
 
     vmsti[i_b_midx].b_valid = vslvo[i_b_sidx].b_valid;
     vmsti[i_b_midx].b_resp = vslvo[i_b_sidx].b_resp;
-    vmsti[i_b_midx].b_id = vslvo[i_b_sidx].b_id;
+    vmsti[i_b_midx].b_id = vslvo[i_b_sidx].b_id((CFG_SYSBUS_USER_BITS - 1), CFG_BUS0_XMST_LOG2_TOTAL);
     vmsti[i_b_midx].b_user = vslvo[i_b_sidx].b_user;
     vslvi[i_b_sidx].b_ready = vmsto[i_b_midx].b_ready;
 

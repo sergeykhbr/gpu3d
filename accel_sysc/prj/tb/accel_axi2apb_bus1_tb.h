@@ -43,6 +43,7 @@ SC_MODULE(accel_axi2apb_bus1_tb) {
     struct accel_axi2apb_bus1_tb_registers {
         sc_signal<sc_uint<32>> clk_cnt;
         sc_signal<sc_uint<32>> err_cnt;
+        sc_signal<sc_uint<32>> compare_cnt;
         sc_signal<sc_uint<32>> test_cnt;
         sc_signal<sc_uint<3>> test_state;
         sc_signal<sc_uint<2>> apb_wait_states;
@@ -78,6 +79,7 @@ SC_MODULE(accel_axi2apb_bus1_tb) {
     void accel_axi2apb_bus1_tb_r_reset(accel_axi2apb_bus1_tb_registers& iv) {
         iv.clk_cnt = 0;
         iv.err_cnt = 0;
+        iv.compare_cnt = 0;
         iv.test_cnt = 0;
         iv.test_state = 0;
         iv.apb_wait_states = 0;

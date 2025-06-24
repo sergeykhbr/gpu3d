@@ -88,6 +88,10 @@ axi_slv::axi_slv(sc_module_name name,
     sensitive << r.req_wdata;
     sensitive << r.req_wstrb;
     sensitive << r.req_bytes;
+    sensitive << r.req_addr_buf;
+    sensitive << r.req_last_buf;
+    sensitive << r.req_wdata_buf;
+    sensitive << r.req_wstrb_buf;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -144,6 +148,10 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
         sc_trace(o_vcd, r.req_wstrb, pn + ".r.req_wstrb");
         sc_trace(o_vcd, r.req_bytes, pn + ".r.req_bytes");
+        sc_trace(o_vcd, r.req_addr_buf, pn + ".r.req_addr_buf");
+        sc_trace(o_vcd, r.req_last_buf, pn + ".r.req_last_buf");
+        sc_trace(o_vcd, r.req_wdata_buf, pn + ".r.req_wdata_buf");
+        sc_trace(o_vcd, r.req_wstrb_buf, pn + ".r.req_wstrb_buf");
     }
 
 }
@@ -411,19 +419,38 @@ void axi_slv::comb() {
     case State_w_pipe:
         v.w_ready = ((i_req_ready.read() | i_resp_valid.read()) & (!r.req_last.read()));
         if ((r.w_ready.read() == 1) && (i_xslvi.read().w_valid == 1)) {
-            v.req_valid = 1;
-            v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_aw_addr_next);
-            v.req_wdata = i_xslvi.read().w_data;
-            v.req_wstrb = i_xslvi.read().w_strb;
-            v.req_last = i_xslvi.read().w_last;
+            if (i_req_ready.read() == 0) {
+                v.wstate = State_w_buf;
+                v.req_addr_buf = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_aw_addr_next);
+                v.req_wdata_buf = i_xslvi.read().w_data;
+                v.req_wstrb_buf = i_xslvi.read().w_strb;
+                v.req_last_buf = i_xslvi.read().w_last;
+            } else {
+                v.req_valid = 1;
+                v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_aw_addr_next);
+                v.req_wdata = i_xslvi.read().w_data;
+                v.req_wstrb = i_xslvi.read().w_strb;
+                v.req_last = i_xslvi.read().w_last;
+            }
         }
-        if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1) && (r.req_last.read() == 1)) {
+        if ((r.req_valid.read() == 1) && (r.req_last.read() == 1) && (i_req_ready.read() == 1)) {
             v.req_last = 0;
             v.wstate = State_w_resp;
-        } else if ((i_resp_valid.read() == 1) && (i_xslvi.read().w_valid == 0) && (r.req_valid.read() == 0)) {
+        }
+        if ((i_resp_valid.read() == 1) && (i_xslvi.read().w_valid == 0) && (r.req_valid.read() == 0)) {
             v.w_ready = 1;
             v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_aw_addr_next);
             v.wstate = State_w_req;
+        }
+        break;
+    case State_w_buf:
+        if (i_req_ready.read() == 1) {
+            v.req_valid = 1;
+            v.req_last = r.req_last_buf.read();
+            v.req_addr = r.req_addr_buf.read();
+            v.req_wdata = r.req_wdata_buf.read();
+            v.req_wstrb = r.req_wstrb_buf.read();
+            v.wstate = State_w_pipe;
         }
         break;
     case State_w_resp:

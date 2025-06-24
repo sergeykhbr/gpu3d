@@ -92,6 +92,7 @@ accel_axi2apb_bus1_tb::accel_axi2apb_bus1_tb(sc_module_name name)
     sensitive << w_resp_err;
     sensitive << r.clk_cnt;
     sensitive << r.err_cnt;
+    sensitive << r.compare_cnt;
     sensitive << r.test_cnt;
     sensitive << r.test_state;
     sensitive << r.apb_wait_states;
@@ -148,6 +149,7 @@ void accel_axi2apb_bus1_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
     if (o_vcd) {
         sc_trace(o_vcd, r.clk_cnt, pn + ".r.clk_cnt");
         sc_trace(o_vcd, r.err_cnt, pn + ".r.err_cnt");
+        sc_trace(o_vcd, r.compare_cnt, pn + ".r.compare_cnt");
         sc_trace(o_vcd, r.test_cnt, pn + ".r.test_cnt");
         sc_trace(o_vcd, r.test_state, pn + ".r.test_state");
         sc_trace(o_vcd, r.apb_wait_states, pn + ".r.apb_wait_states");
@@ -399,6 +401,7 @@ void accel_axi2apb_bus1_tb::comb() {
     }
 
     if (r.compare_ena.read() == 1) {
+        v.compare_cnt = (r.compare_cnt.read() + 1);
         if (r.compare_a.read() != r.compare_b.read()) {
             v.err_cnt = (r.err_cnt.read() + 1);
         }
@@ -461,7 +464,8 @@ void accel_axi2apb_bus1_tb::test() {
     }
     if (r.end_of_test.read() == 1) {
         if (r.err_cnt.read() == 0) {
-            std::cout << "@" << sc_time_stamp() << " No errors. TESTS PASSED" << std::endl;
+            std::cout << "@" << sc_time_stamp() << " No errors. "
+                      << r.compare_cnt.read() << " TESTS PASSED" << std::endl;
         } else {
             std::cout << "@" << sc_time_stamp() << " TESTS FAILED. Total errors = "
                       << r.err_cnt.read() << std::endl;
