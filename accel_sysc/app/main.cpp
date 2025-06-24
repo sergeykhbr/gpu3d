@@ -41,7 +41,7 @@ int sc_main(int argc, char *argv[]) {
 #elif 0
     accel_axi2apb_bus1_tb *tb = new accel_axi2apb_bus1_tb("tb");
 #elif 1
-    duration = 5;
+    duration = 8;
     units = SC_MS;
     accel_axictrl_bus0_tb *tb = new accel_axictrl_bus0_tb("tb");
 #elif 0

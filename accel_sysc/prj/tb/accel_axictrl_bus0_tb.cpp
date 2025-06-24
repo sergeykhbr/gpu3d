@@ -30,6 +30,8 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     clk0 = 0;
     bus0 = 0;
     xslv0 = 0;
+    mst0 = 0;
+    mst1 = 0;
 
     clk0 = new pll_generic("clk0",
                             10.0);
@@ -68,6 +70,28 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     xslv0->i_resp_rdata(wb_resp_rdata);
     xslv0->i_resp_err(w_resp_err);
 
+    mst0 = new axi_mst_generator("mst0",
+                                  0x000081000000);
+    mst0->i_nrst(nrst);
+    mst0->i_clk(clk);
+    mst0->i_xmst(vec_o_xmsti[CFG_BUS0_XMST_GROUP0]);
+    mst0->o_xmst(vec_i_xmsto[CFG_BUS0_XMST_GROUP0]);
+    mst0->i_start_test(r.m0_start_ena);
+    mst0->i_test_selector(r.m0_test_selector);
+    mst0->i_show_result(r.end_of_test);
+    mst0->o_test_busy(w_m0_busy);
+
+    mst1 = new axi_mst_generator("mst1",
+                                  0x000082000000);
+    mst1->i_nrst(nrst);
+    mst1->i_clk(clk);
+    mst1->i_xmst(vec_o_xmsti[CFG_BUS0_XMST_HDMI]);
+    mst1->o_xmst(vec_i_xmsto[CFG_BUS0_XMST_HDMI]);
+    mst1->i_start_test(r.m1_start_ena);
+    mst1->i_test_selector(r.m1_test_selector);
+    mst1->i_show_result(r.end_of_test);
+    mst1->o_test_busy(w_m1_busy);
+
     SC_THREAD(init);
 
     SC_METHOD(comb);
@@ -101,38 +125,16 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     sensitive << w_resp_valid;
     sensitive << wb_resp_rdata;
     sensitive << w_resp_err;
-    sensitive << wb_m0_xmsti;
-    sensitive << wb_m1_xmsti;
+    sensitive << w_m0_busy;
+    sensitive << w_m1_busy;
     sensitive << r.clk_cnt;
     sensitive << r.err_cnt;
     sensitive << r.test_cnt;
     sensitive << r.test_pause_cnt;
-    sensitive << r.m0_state;
-    sensitive << r.m0_xsize;
-    sensitive << r.m0_aw_valid;
-    sensitive << r.m0_aw_addr;
-    sensitive << r.m0_aw_xlen;
-    sensitive << r.m0_w_wait_states;
-    sensitive << r.m0_w_wait_cnt;
-    sensitive << r.m0_w_valid;
-    sensitive << r.m0_w_data;
-    sensitive << r.m0_w_strb;
-    sensitive << r.m0_w_last;
-    sensitive << r.m0_w_burst_cnt;
-    sensitive << r.m0_b_wait_states;
-    sensitive << r.m0_b_wait_cnt;
-    sensitive << r.m0_b_ready;
-    sensitive << r.m0_ar_valid;
-    sensitive << r.m0_ar_addr;
-    sensitive << r.m0_ar_xlen;
-    sensitive << r.m0_r_wait_states;
-    sensitive << r.m0_r_wait_cnt;
-    sensitive << r.m0_r_ready;
-    sensitive << r.m0_r_burst_cnt;
-    sensitive << r.m0_compare_ena;
-    sensitive << r.m0_compare_a;
-    sensitive << r.m0_compare_b;
-    sensitive << r.m1_state;
+    sensitive << r.m0_start_ena;
+    sensitive << r.m0_test_selector;
+    sensitive << r.m1_start_ena;
+    sensitive << r.m1_test_selector;
     sensitive << r.end_of_test;
     sensitive << r.end_idle;
     sensitive << r.slvstate;
@@ -160,6 +162,12 @@ accel_axictrl_bus0_tb::~accel_axictrl_bus0_tb() {
     if (xslv0) {
         delete xslv0;
     }
+    if (mst0) {
+        delete mst0;
+    }
+    if (mst1) {
+        delete mst1;
+    }
 }
 
 void accel_axictrl_bus0_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -169,32 +177,10 @@ void accel_axictrl_bus0_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
         sc_trace(o_vcd, r.err_cnt, pn + ".r.err_cnt");
         sc_trace(o_vcd, r.test_cnt, pn + ".r.test_cnt");
         sc_trace(o_vcd, r.test_pause_cnt, pn + ".r.test_pause_cnt");
-        sc_trace(o_vcd, r.m0_state, pn + ".r.m0_state");
-        sc_trace(o_vcd, r.m0_xsize, pn + ".r.m0_xsize");
-        sc_trace(o_vcd, r.m0_aw_valid, pn + ".r.m0_aw_valid");
-        sc_trace(o_vcd, r.m0_aw_addr, pn + ".r.m0_aw_addr");
-        sc_trace(o_vcd, r.m0_aw_xlen, pn + ".r.m0_aw_xlen");
-        sc_trace(o_vcd, r.m0_w_wait_states, pn + ".r.m0_w_wait_states");
-        sc_trace(o_vcd, r.m0_w_wait_cnt, pn + ".r.m0_w_wait_cnt");
-        sc_trace(o_vcd, r.m0_w_valid, pn + ".r.m0_w_valid");
-        sc_trace(o_vcd, r.m0_w_data, pn + ".r.m0_w_data");
-        sc_trace(o_vcd, r.m0_w_strb, pn + ".r.m0_w_strb");
-        sc_trace(o_vcd, r.m0_w_last, pn + ".r.m0_w_last");
-        sc_trace(o_vcd, r.m0_w_burst_cnt, pn + ".r.m0_w_burst_cnt");
-        sc_trace(o_vcd, r.m0_b_wait_states, pn + ".r.m0_b_wait_states");
-        sc_trace(o_vcd, r.m0_b_wait_cnt, pn + ".r.m0_b_wait_cnt");
-        sc_trace(o_vcd, r.m0_b_ready, pn + ".r.m0_b_ready");
-        sc_trace(o_vcd, r.m0_ar_valid, pn + ".r.m0_ar_valid");
-        sc_trace(o_vcd, r.m0_ar_addr, pn + ".r.m0_ar_addr");
-        sc_trace(o_vcd, r.m0_ar_xlen, pn + ".r.m0_ar_xlen");
-        sc_trace(o_vcd, r.m0_r_wait_states, pn + ".r.m0_r_wait_states");
-        sc_trace(o_vcd, r.m0_r_wait_cnt, pn + ".r.m0_r_wait_cnt");
-        sc_trace(o_vcd, r.m0_r_ready, pn + ".r.m0_r_ready");
-        sc_trace(o_vcd, r.m0_r_burst_cnt, pn + ".r.m0_r_burst_cnt");
-        sc_trace(o_vcd, r.m0_compare_ena, pn + ".r.m0_compare_ena");
-        sc_trace(o_vcd, r.m0_compare_a, pn + ".r.m0_compare_a");
-        sc_trace(o_vcd, r.m0_compare_b, pn + ".r.m0_compare_b");
-        sc_trace(o_vcd, r.m1_state, pn + ".r.m1_state");
+        sc_trace(o_vcd, r.m0_start_ena, pn + ".r.m0_start_ena");
+        sc_trace(o_vcd, r.m0_test_selector, pn + ".r.m0_test_selector");
+        sc_trace(o_vcd, r.m1_start_ena, pn + ".r.m1_start_ena");
+        sc_trace(o_vcd, r.m1_test_selector, pn + ".r.m1_test_selector");
         sc_trace(o_vcd, r.end_of_test, pn + ".r.end_of_test");
         sc_trace(o_vcd, r.end_idle, pn + ".r.end_idle");
         sc_trace(o_vcd, r.slvstate, pn + ".r.slvstate");
@@ -214,6 +200,12 @@ void accel_axictrl_bus0_tb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
     if (xslv0) {
         xslv0->generateVCD(i_vcd, o_vcd);
     }
+    if (mst0) {
+        mst0->generateVCD(i_vcd, o_vcd);
+    }
+    if (mst1) {
+        mst1->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void accel_axictrl_bus0_tb::init() {
@@ -223,27 +215,18 @@ void accel_axictrl_bus0_tb::init() {
 }
 
 void accel_axictrl_bus0_tb::comb() {
-    axi4_master_out_type vb_m0_xmsto;
-    axi4_master_out_type vb_m1_xmsto;
-    sc_uint<48> vb_bar;
-    sc_uint<4> vb_m0_w_burst_cnt_next;
     sc_uint<32> vb_test_cnt_inv;
 
     v = r;
-    vb_bar = 0;
-    vb_m0_w_burst_cnt_next = 0;
     vb_test_cnt_inv = 0;
 
 
-    wb_m0_xmsti = vec_o_xmsti[CFG_BUS0_XMST_GROUP0];
-    wb_m1_xmsti = vec_o_xmsti[CFG_BUS0_XMST_HDMI];
     vb_test_cnt_inv = (~r.test_cnt.read());
-    vb_m0_w_burst_cnt_next = (r.m0_w_burst_cnt.read() + 1);
-    vb_bar = 0x0000000081000000;
     v.clk_cnt = (r.clk_cnt.read() + 1);
-    v.m0_compare_ena = 0;
     v.end_of_test = 0;
     v.end_idle = (r.end_of_test.read() || r.end_idle.read());
+    v.m0_start_ena = 0;
+    v.m1_start_ena = 0;
 
     // ddr simulation with controllable wait states
     switch (r.slvstate.read()) {
@@ -254,7 +237,11 @@ void accel_axictrl_bus0_tb::comb() {
             if (w_req_write.read() == 1) {
                 v.resp_rdata = ~0ull;
             } else {
-                v.resp_rdata = mem[wb_req_addr.read()(5, 2).to_int()];
+                if (wb_req_addr.read()[25] == 0) {
+                    v.resp_rdata = mem0[wb_req_addr.read()(5, 2).to_int()];
+                } else {
+                    v.resp_rdata = mem1[wb_req_addr.read()(5, 2).to_int()];
+                }
             }
             if (r.resp_wait_states.read().or_reduce() == 0) {
                 v.resp_valid = 1;
@@ -279,151 +266,19 @@ void accel_axictrl_bus0_tb::comb() {
         break;
     }
 
-    // AXI master[0] request state machines
-    switch (r.m0_state.read()) {
-    case 0:
-        if (r.test_pause_cnt.read().or_reduce() == 0) {
-            if (r.end_of_test.read() == 1) {
-                v.m0_state = 0xF;
-            } else {
-                v.m0_state = 1;
-            }
-        }
-        break;
-    case 1:                                                 // aw request
-        v.m0_aw_valid = 1;
-        v.m0_aw_addr = (vb_bar + (r.test_cnt.read()(11, 0) << 5));
-        v.m0_w_burst_cnt = 0;
-        if ((r.m0_aw_valid.read() == 1) && (wb_m0_xmsti.read().aw_ready == 1)) {
-            v.m0_aw_valid = 0;
-            v.m0_w_data = (vb_test_cnt_inv, r.test_cnt.read()(27, 0), r.m0_w_burst_cnt.read());
-            v.m0_w_strb = 0xFF;
-            if (r.m0_w_wait_states.read().or_reduce() == 0) {
-                v.m0_w_wait_cnt = 0;
-                v.m0_w_valid = 1;
-                v.m0_w_last = (!r.m0_aw_xlen.read().or_reduce());
-                v.m0_state = 3;
-            } else {
-                v.m0_state = 2;
-                v.m0_w_wait_cnt = r.m0_w_wait_states.read();
-            }
-        }
-        break;
-    case 2:                                                 // w wait request
-        if (r.m0_w_wait_cnt.read().or_reduce() == 1) {
-            v.m0_w_wait_cnt = (r.m0_w_wait_cnt.read() - 1);
-        } else {
-            v.m0_w_valid = 1;
-            v.m0_w_last = (!r.m0_aw_xlen.read().or_reduce());
-            v.m0_state = 3;
-        }
-        break;
-    case 3:                                                 // w request
-        v.m0_w_valid = 1;
-        v.m0_w_data = (vb_test_cnt_inv, r.test_cnt.read()(27, 0), r.m0_w_burst_cnt.read());
-        if ((r.m0_w_valid.read() == 1) && (wb_m0_xmsti.read().w_ready == 1)) {
-            v.m0_w_burst_cnt = vb_m0_w_burst_cnt_next;
-            v.m0_w_data = (vb_test_cnt_inv, r.test_cnt.read()(27, 0), vb_m0_w_burst_cnt_next);
-            v.m0_w_valid = 0;
-            v.m0_w_last = 0;
-            v.m0_w_wait_cnt = r.m0_w_wait_states.read();
-            if (r.m0_aw_xlen.read().or_reduce() == 1) {
-                v.m0_aw_xlen = (r.m0_aw_xlen.read() - 1);
-                if (r.m0_w_wait_states.read().or_reduce() == 0) {
-                    v.m0_w_valid = 1;
-                    v.m0_w_last = (!r.m0_aw_xlen.read()(7, 1).or_reduce());
-                } else {
-                    v.m0_state = 2;
-                }
-            } else {
-                if (r.m0_b_wait_states.read().or_reduce() == 0) {
-                    v.m0_b_wait_cnt = 0;
-                    v.m0_b_ready = 1;
-                } else {
-                    v.m0_b_wait_cnt = r.m0_b_wait_states.read();
-                }
-                v.m0_state = 4;
-            }
-        }
-        break;
-    case 4:                                                 // b response
-        v.m0_w_burst_cnt = 0;
-        if (r.m0_b_wait_cnt.read().or_reduce() == 1) {
-            v.m0_b_wait_cnt = (r.m0_b_wait_cnt.read() - 1);
-        } else {
-            v.m0_b_ready = 1;
-            if ((r.m0_b_ready.read() == 1) && (wb_m0_xmsti.read().b_valid == 1)) {
-                v.m0_b_ready = 0;
-                v.m0_state = 5;
-                v.m0_ar_valid = 1;
-                v.m0_ar_addr = (vb_bar + (r.test_cnt.read()(11, 0) << 5));
-            }
-        }
-        break;
-    case 5:                                                 // ar request
-        v.m0_ar_valid = 1;
-        v.m0_ar_addr = (vb_bar + (r.test_cnt.read()(11, 0) << 5));
-        if ((r.m0_ar_valid.read() == 1) && (wb_m0_xmsti.read().ar_ready == 1)) {
-            v.m0_ar_valid = 0;
-            v.m0_r_burst_cnt = 0;
-            if (r.m0_r_wait_states.read().or_reduce() == 0) {
-                v.m0_r_wait_cnt = 0;
-                v.m0_r_ready = 1;
-                v.m0_state = 7;
-            } else {
-                v.m0_state = 6;
-                v.m0_r_wait_cnt = r.m0_r_wait_states.read();
-            }
-        }
-        break;
-    case 6:
-        if (r.m0_r_wait_cnt.read().or_reduce() == 1) {
-            v.m0_r_wait_cnt = (r.m0_r_wait_cnt.read() - 1);
-        } else {
-            v.m0_r_ready = 1;
-            v.m0_state = 7;
-        }
-        break;
-    case 7:                                                 // r response
-        v.m0_r_ready = 1;
-        if ((r.m0_r_ready.read() == 1) && (wb_m0_xmsti.read().r_valid == 1)) {
-            v.m0_r_burst_cnt = (r.m0_r_burst_cnt.read() + 1);
-            v.m0_r_ready = 0;
-            v.m0_compare_ena = 1;
-            v.m0_compare_a = wb_m0_xmsti.read().r_data;
-            v.m0_compare_b = (vb_test_cnt_inv, r.test_cnt.read()(27, 0), r.m0_r_burst_cnt.read());
-            if (wb_m0_xmsti.read().r_last == 1) {
-                // Goto idle
-                v.m0_state = 0;
-            } else {
-                if (r.m0_r_wait_states.read().or_reduce() == 0) {
-                    v.m0_r_ready = 1;
-                } else {
-                    v.m0_r_wait_cnt = r.m0_r_wait_states.read();
-                    v.m0_state = 6;
-                }
-            }
-        }
-        break;
-    case 15:                                                // do nothing
-        break;
-    }
-
     if (r.end_idle.read() == 1) {
         // Do nothing
     } else if ((r.test_pause_cnt.read().or_reduce() == 1)
-                && (r.m0_state.read().or_reduce() == 0)
-                && (r.m1_state.read().or_reduce() == 0)) {
+                && (w_m0_busy.read() == 0)
+                && (w_m1_busy.read() == 0)) {
         v.test_pause_cnt = (r.test_pause_cnt.read() - 1);
     } else if (r.test_pause_cnt.read().or_reduce() == 0) {
         v.test_cnt = (r.test_cnt.read() + 1);
         v.resp_wait_states = r.test_cnt.read()(1, 0);
-        v.m0_w_wait_states = r.test_cnt.read()(4, 2);
-        v.m0_b_wait_states = r.test_cnt.read()(6, 5);
-        v.m0_r_wait_states = r.test_cnt.read()(9, 7);
-        v.m0_aw_xlen = (0, r.test_cnt.read()(11, 10));
-        v.m0_ar_xlen = (0, r.test_cnt.read()(11, 10));
-        v.m0_xsize = 3;                                     // 8-bytes
+        v.m0_test_selector = r.test_cnt.read()(11, 2);
+        v.m0_start_ena = 1;
+        v.m1_test_selector = r.test_cnt.read()(10, 1);
+        v.m1_start_ena = 1;
         if (r.test_cnt.read()[13] == 1) {
             // End of test (show err_cnt)
             v.end_of_test = 1;
@@ -433,52 +288,12 @@ void accel_axictrl_bus0_tb::comb() {
         v.test_pause_cnt = 10;
     }
 
-    if (r.m0_compare_ena.read() == 1) {
-        if (r.m0_compare_a.read() != r.m0_compare_b.read()) {
-            v.err_cnt = (r.err_cnt.read() + 1);
-        }
-    }
-
-    vb_m0_xmsto.ar_valid = r.m0_ar_valid.read();
-    vb_m0_xmsto.ar_bits.addr = r.m0_ar_addr.read();
-    vb_m0_xmsto.ar_bits.len = r.m0_ar_xlen.read();
-    vb_m0_xmsto.ar_bits.size = r.m0_xsize.read();
-    vb_m0_xmsto.ar_bits.burst = 1;
-    vb_m0_xmsto.ar_bits.lock = 0;
-    vb_m0_xmsto.ar_bits.cache = 0;
-    vb_m0_xmsto.ar_bits.prot = 0;
-    vb_m0_xmsto.ar_bits.qos = 0;
-    vb_m0_xmsto.ar_bits.region = 0;
-    vb_m0_xmsto.ar_id = ~0ull;
-    vb_m0_xmsto.ar_user = ~0ull;
-    vb_m0_xmsto.aw_valid = r.m0_aw_valid.read();
-    vb_m0_xmsto.aw_bits.addr = r.m0_aw_addr.read();
-    vb_m0_xmsto.aw_bits.len = r.m0_aw_xlen.read();
-    vb_m0_xmsto.aw_bits.size = r.m0_xsize.read();
-    vb_m0_xmsto.aw_bits.burst = 1;
-    vb_m0_xmsto.aw_bits.lock = 0;
-    vb_m0_xmsto.aw_bits.cache = 0;
-    vb_m0_xmsto.aw_bits.prot = 0;
-    vb_m0_xmsto.aw_bits.qos = 0;
-    vb_m0_xmsto.aw_bits.region = 0;
-    vb_m0_xmsto.aw_id = ~0ull;
-    vb_m0_xmsto.aw_user = ~0ull;
-    vb_m0_xmsto.w_valid = r.m0_w_valid.read();
-    vb_m0_xmsto.w_data = r.m0_w_data.read();
-    vb_m0_xmsto.w_last = r.m0_w_last.read();
-    vb_m0_xmsto.w_strb = r.m0_w_strb.read();
-    vb_m0_xmsto.w_user = ~0ull;
-    vb_m0_xmsto.b_ready = r.m0_b_ready.read();
-    vb_m0_xmsto.r_ready = r.m0_r_ready.read();
-
     w_req_ready = r.req_ready.read();
     w_resp_valid = r.resp_valid.read();
     wb_resp_rdata = r.resp_rdata.read();
     w_resp_err = 0;
 
-    vec_i_xmsto[CFG_BUS0_XMST_GROUP0] = vb_m0_xmsto;
     vec_i_xmsto[CFG_BUS0_XMST_PCIE] = axi4_master_out_none;
-    vec_i_xmsto[CFG_BUS0_XMST_HDMI] = vb_m1_xmsto;
     vec_i_xslvo[CFG_BUS0_XSLV_BOOTROM] = axi4_slave_out_none;
     vec_i_xslvo[CFG_BUS0_XSLV_CLINT] = axi4_slave_out_none;
     vec_i_xslvo[CFG_BUS0_XSLV_SRAM] = axi4_slave_out_none;
@@ -491,22 +306,10 @@ void accel_axictrl_bus0_tb::comb() {
 
 void accel_axictrl_bus0_tb::test() {
     if ((w_req_write.read() == 1) && (w_req_valid.read() == 1)) {
-        mem[wb_req_addr.read()(5, 2).to_int()] = wb_req_wdata.read();
-    }
-
-    if (r.m0_compare_ena.read() == 1) {
-        if (r.m0_compare_a.read() != r.m0_compare_b.read()) {
-            std::cout << "@" << sc_time_stamp() << " + error: "
-                      << std::hex << r.m0_compare_a.read() << " != "
-                      << std::hex << r.m0_compare_b.read() << std::endl;
-        }
-    }
-    if (r.end_of_test.read() == 1) {
-        if (r.err_cnt.read() == 0) {
-            std::cout << "@" << sc_time_stamp() << " No errors. TESTS PASSED" << std::endl;
+        if (wb_req_addr.read()[25] == 0) {
+            mem0[wb_req_addr.read()(5, 2).to_int()] = wb_req_wdata.read();
         } else {
-            std::cout << "@" << sc_time_stamp() << " TESTS FAILED. Total errors = "
-                      << r.err_cnt.read() << std::endl;
+            mem1[wb_req_addr.read()(5, 2).to_int()] = wb_req_wdata.read();
         }
     }
 }

@@ -191,24 +191,53 @@ begin: comb_proc
             v.req_valid = 1'b0;
         end
         if (i_resp_valid == 1'b1) begin
-            v.r_valid = 1'b1;
-            v.r_last = 1'b0;
-            v.r_data = i_resp_rdata;
-            v.r_err = i_resp_err;
+            if ((r.r_valid == 1'b1) && (i_xslvi.r_ready == 1'b0)) begin
+                // We already requested the last value but previous was not accepted yet
+                v.r_data_buf = i_resp_rdata;
+                v.r_err_buf = i_resp_err;
+                v.r_last_buf = (r.req_valid & r.req_last & i_req_ready);
+                v.rstate = State_r_buf;
+            end else begin
+                v.r_valid = 1'b1;
+                v.r_last = 1'b0;
+                v.r_data = i_resp_rdata;
+                v.r_err = i_resp_err;
+            end
         end
     end
     State_r_last: begin
         if (i_resp_valid == 1'b1) begin
-            v.r_valid = 1'b1;
-            v.r_last = 1'b1;
-            v.r_data = i_resp_rdata;
-            v.r_err = i_resp_err;
+            if ((r.r_valid == 1'b1) && (i_xslvi.r_ready == 1'b0)) begin
+                // We already requested the last value but previous was not accepted yet
+                v.r_data_buf = i_resp_rdata;
+                v.r_err_buf = i_resp_err;
+                v.r_last_buf = 1'b1;
+                v.rstate = State_r_buf;
+            end else begin
+                v.r_valid = 1'b1;
+                v.r_last = 1'b1;
+                v.r_data = i_resp_rdata;
+                v.r_err = i_resp_err;
+            end
         end
         if ((r.r_valid == 1'b1) && (r.r_last == 1'b1) && (i_xslvi.r_ready == 1'b1)) begin
             v.ar_ready = 1'b1;
             v.r_last = 1'b0;
             v.r_valid = 1'b0;                               // We need it in a case of i_resp_valid is always HIGH
             v.rstate = State_r_idle;
+        end
+    end
+    State_r_buf: begin
+        if (i_xslvi.r_ready == 1'b1) begin
+            v.r_valid = 1'b1;
+            v.r_last = r.r_last_buf;
+            v.r_data = r.r_data_buf;
+            v.r_err = r.r_err_buf;
+            if (r.r_last_buf == 1'b1) begin
+                v.rstate = State_r_last;
+            end else begin
+                v.rstate = State_r_data;
+            end
         end
     end
     State_r_wait_writing: begin

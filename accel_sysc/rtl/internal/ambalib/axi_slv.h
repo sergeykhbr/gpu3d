@@ -57,10 +57,11 @@ SC_MODULE(axi_slv) {
     uint32_t did_;
 
     static const uint8_t State_r_idle = 0;
-    static const uint8_t State_r_addr = 0x1;
-    static const uint8_t State_r_data = 0x2;
-    static const uint8_t State_r_last = 0x4;
-    static const uint8_t State_r_wait_writing = 0x8;
+    static const uint8_t State_r_addr = 0x01;
+    static const uint8_t State_r_data = 0x02;
+    static const uint8_t State_r_last = 0x04;
+    static const uint8_t State_r_buf = 0x08;
+    static const uint8_t State_r_wait_writing = 0x10;
     static const uint8_t State_w_idle = 0;
     static const uint8_t State_w_wait_reading = 0x01;
     static const uint8_t State_w_wait_reading_light = 0x02;
@@ -70,7 +71,7 @@ SC_MODULE(axi_slv) {
     static const uint8_t State_b = 0x20;
 
     struct axi_slv_registers {
-        sc_signal<sc_uint<4>> rstate;
+        sc_signal<sc_uint<5>> rstate;
         sc_signal<sc_uint<6>> wstate;
         sc_signal<bool> ar_ready;
         sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> ar_addr;
@@ -92,6 +93,9 @@ SC_MODULE(axi_slv) {
         sc_signal<bool> r_last;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> r_data;
         sc_signal<bool> r_err;
+        sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> r_data_buf;
+        sc_signal<bool> r_err_buf;
+        sc_signal<bool> r_last_buf;
         sc_signal<bool> b_err;
         sc_signal<bool> b_valid;
         sc_signal<bool> req_valid;
@@ -126,6 +130,9 @@ SC_MODULE(axi_slv) {
         iv.r_last = 0;
         iv.r_data = 0;
         iv.r_err = 0;
+        iv.r_data_buf = 0;
+        iv.r_err_buf = 0;
+        iv.r_last_buf = 0;
         iv.b_err = 0;
         iv.b_valid = 0;
         iv.req_valid = 0;

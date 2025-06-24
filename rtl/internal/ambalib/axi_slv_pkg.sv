@@ -18,11 +18,12 @@ package axi_slv_pkg;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 
-localparam bit [3:0] State_r_idle = 4'd0;
-localparam bit [3:0] State_r_addr = 4'h1;
-localparam bit [3:0] State_r_data = 4'h2;
-localparam bit [3:0] State_r_last = 4'h4;
-localparam bit [3:0] State_r_wait_writing = 4'h8;
+localparam bit [4:0] State_r_idle = 5'd0;
+localparam bit [4:0] State_r_addr = 5'h01;
+localparam bit [4:0] State_r_data = 5'h02;
+localparam bit [4:0] State_r_last = 5'h04;
+localparam bit [4:0] State_r_buf = 5'h08;
+localparam bit [4:0] State_r_wait_writing = 5'h10;
 localparam bit [5:0] State_w_idle = 6'd0;
 localparam bit [5:0] State_w_wait_reading = 6'h01;
 localparam bit [5:0] State_w_wait_reading_light = 6'h02;
@@ -32,7 +33,7 @@ localparam bit [5:0] State_w_resp = 6'h10;
 localparam bit [5:0] State_b = 6'h20;
 
 typedef struct {
-    logic [3:0] rstate;
+    logic [4:0] rstate;
     logic [5:0] wstate;
     logic ar_ready;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] ar_addr;
@@ -54,6 +55,9 @@ typedef struct {
     logic r_last;
     logic [CFG_SYSBUS_DATA_BITS-1:0] r_data;
     logic r_err;
+    logic [CFG_SYSBUS_DATA_BITS-1:0] r_data_buf;
+    logic r_err_buf;
+    logic r_last_buf;
     logic b_err;
     logic b_valid;
     logic req_valid;
@@ -88,6 +92,9 @@ const axi_slv_registers axi_slv_r_reset = '{
     1'b0,                               // r_last
     '0,                                 // r_data
     1'b0,                               // r_err
+    '0,                                 // r_data_buf
+    1'b0,                               // r_err_buf
+    1'b0,                               // r_last_buf
     1'b0,                               // b_err
     1'b0,                               // b_valid
     1'b0,                               // req_valid

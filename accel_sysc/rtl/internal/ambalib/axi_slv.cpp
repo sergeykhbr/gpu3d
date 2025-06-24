@@ -76,6 +76,9 @@ axi_slv::axi_slv(sc_module_name name,
     sensitive << r.r_last;
     sensitive << r.r_data;
     sensitive << r.r_err;
+    sensitive << r.r_data_buf;
+    sensitive << r.r_err_buf;
+    sensitive << r.r_last_buf;
     sensitive << r.b_err;
     sensitive << r.b_valid;
     sensitive << r.req_valid;
@@ -129,6 +132,9 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.r_last, pn + ".r.r_last");
         sc_trace(o_vcd, r.r_data, pn + ".r.r_data");
         sc_trace(o_vcd, r.r_err, pn + ".r.r_err");
+        sc_trace(o_vcd, r.r_data_buf, pn + ".r.r_data_buf");
+        sc_trace(o_vcd, r.r_err_buf, pn + ".r.r_err_buf");
+        sc_trace(o_vcd, r.r_last_buf, pn + ".r.r_last_buf");
         sc_trace(o_vcd, r.b_err, pn + ".r.b_err");
         sc_trace(o_vcd, r.b_valid, pn + ".r.b_valid");
         sc_trace(o_vcd, r.req_valid, pn + ".r.req_valid");
@@ -282,24 +288,53 @@ void axi_slv::comb() {
             v.req_valid = 0;
         }
         if (i_resp_valid.read() == 1) {
-            v.r_valid = 1;
-            v.r_last = 0;
-            v.r_data = i_resp_rdata.read();
-            v.r_err = i_resp_err.read();
+            if ((r.r_valid.read() == 1) && (i_xslvi.read().r_ready == 0)) {
+                // We already requested the last value but previous was not accepted yet
+                v.r_data_buf = i_resp_rdata.read();
+                v.r_err_buf = i_resp_err.read();
+                v.r_last_buf = (r.req_valid.read() & r.req_last.read() & i_req_ready.read());
+                v.rstate = State_r_buf;
+            } else {
+                v.r_valid = 1;
+                v.r_last = 0;
+                v.r_data = i_resp_rdata.read();
+                v.r_err = i_resp_err.read();
+            }
         }
         break;
     case State_r_last:
         if (i_resp_valid.read() == 1) {
-            v.r_valid = 1;
-            v.r_last = 1;
-            v.r_data = i_resp_rdata.read();
-            v.r_err = i_resp_err.read();
+            if ((r.r_valid.read() == 1) && (i_xslvi.read().r_ready == 0)) {
+                // We already requested the last value but previous was not accepted yet
+                v.r_data_buf = i_resp_rdata.read();
+                v.r_err_buf = i_resp_err.read();
+                v.r_last_buf = 1;
+                v.rstate = State_r_buf;
+            } else {
+                v.r_valid = 1;
+                v.r_last = 1;
+                v.r_data = i_resp_rdata.read();
+                v.r_err = i_resp_err.read();
+            }
         }
         if ((r.r_valid.read() == 1) && (r.r_last.read() == 1) && (i_xslvi.read().r_ready == 1)) {
             v.ar_ready = 1;
             v.r_last = 0;
             v.r_valid = 0;                                  // We need it in a case of i_resp_valid is always HIGH
             v.rstate = State_r_idle;
+        }
+        break;
+    case State_r_buf:
+        if (i_xslvi.read().r_ready == 1) {
+            v.r_valid = 1;
+            v.r_last = r.r_last_buf.read();
+            v.r_data = r.r_data_buf.read();
+            v.r_err = r.r_err_buf.read();
+            if (r.r_last_buf.read() == 1) {
+                v.rstate = State_r_last;
+            } else {
+                v.rstate = State_r_data;
+            }
         }
         break;
     case State_r_wait_writing:
