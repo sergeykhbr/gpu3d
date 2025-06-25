@@ -1,6 +1,5 @@
 ${RTL_HOME}/internal/riverlib/river_cfg_pkg.sv
 ${RTL_HOME}/internal/riverlib/types_river_pkg.sv
-${RTL_HOME}/internal/riverlib/river_amba_pkg.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2dummy_pkg.sv
 ${RTL_HOME}/internal/riverlib/workgroup_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/regibank_pkg.sv
@@ -82,6 +81,7 @@ ${RTL_HOME}/internal/riverlib/cache/pma.sv
 ${RTL_HOME}/internal/riverlib/cache/pmp.sv
 ${RTL_HOME}/internal/riverlib/cache/cache_top.sv
 ${RTL_HOME}/internal/riverlib/river_top.sv
+${RTL_HOME}/internal/riverlib/l1_dma_snoop.sv
 ${RTL_HOME}/internal/riverlib/river_amba.sv
 ${RTL_HOME}/internal/riverlib/ic_axi4_to_l1.sv
 ${RTL_HOME}/internal/riverlib/dmi/dmidebug_pkg.sv

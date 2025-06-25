@@ -105,7 +105,8 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     mst0->i_start_test(r.m0_start_ena);
     mst0->i_test_selector(r.m0_test_selector);
     mst0->i_show_result(r.end_of_test);
-    mst0->o_test_busy(w_m0_busy);
+    mst0->o_writing(w_m0_writing);
+    mst0->o_reading(w_m0_reading);
 
     mst1 = new axi_mst_generator("mst1",
                                   0x000082000000,
@@ -118,7 +119,8 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     mst1->i_start_test(r.m1_start_ena);
     mst1->i_test_selector(r.m1_test_selector);
     mst1->i_show_result(r.end_of_test);
-    mst1->o_test_busy(w_m1_busy);
+    mst1->o_writing(w_m1_writing);
+    mst1->o_reading(w_m1_reading);
 
     mst2 = new axi_mst_generator("mst2",
                                   0x000008000000,
@@ -131,7 +133,8 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     mst2->i_start_test(r.m2_start_ena);
     mst2->i_test_selector(r.m2_test_selector);
     mst2->i_show_result(r.end_of_test);
-    mst2->o_test_busy(w_m2_busy);
+    mst2->o_writing(w_m2_writing);
+    mst2->o_reading(w_m2_reading);
 
     SC_THREAD(init);
 
@@ -178,9 +181,12 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     sensitive << w_s1_resp_valid;
     sensitive << wb_s1_resp_rdata;
     sensitive << w_s1_resp_err;
-    sensitive << w_m0_busy;
-    sensitive << w_m1_busy;
-    sensitive << w_m2_busy;
+    sensitive << w_m0_writing;
+    sensitive << w_m0_reading;
+    sensitive << w_m1_writing;
+    sensitive << w_m1_reading;
+    sensitive << w_m2_writing;
+    sensitive << w_m2_reading;
     sensitive << r.clk_cnt;
     sensitive << r.err_cnt;
     sensitive << r.test_cnt;
@@ -297,6 +303,7 @@ void accel_axictrl_bus0_tb::comb() {
     v.end_idle = (r.end_of_test.read() || r.end_idle.read());
     v.m0_start_ena = 0;
     v.m1_start_ena = 0;
+    v.m2_start_ena = 0;
 
     // ddr simulation with controllable wait states
     switch (r.s0_state.read()) {
@@ -339,16 +346,21 @@ void accel_axictrl_bus0_tb::comb() {
     if (r.end_idle.read() == 1) {
         // Do nothing
     } else if ((r.test_pause_cnt.read().or_reduce() == 1)
-                && (w_m0_busy.read() == 0)
-                && (w_m1_busy.read() == 0)) {
+                && (w_m0_writing.read() == 0)
+                && (w_m0_reading.read() == 0)
+                && (w_m1_writing.read() == 0)
+                && (w_m1_reading.read() == 0)
+                && (w_m2_writing.read() == 0)) {
         v.test_pause_cnt = (r.test_pause_cnt.read() - 1);
     } else if (r.test_pause_cnt.read().or_reduce() == 0) {
         v.test_cnt = (r.test_cnt.read() + 1);
         v.resp_s0_wait_states = r.test_cnt.read()(1, 0);
         v.m0_test_selector = r.test_cnt.read()(12, 2);
         v.m0_start_ena = 1;
-        v.m1_test_selector = r.test_cnt.read()(11, 1);
-        v.m1_start_ena = 1;
+        if (r.test_cnt.read()[0] == 0) {
+            v.m1_test_selector = r.test_cnt.read()(11, 1);
+            v.m1_start_ena = 1;
+        }
         v.m2_test_selector = 0x300;                         // Burst 4, with zero wait states
         v.m2_start_ena = 1;
         if (r.test_cnt.read()[13] == 1) {
@@ -358,6 +370,13 @@ void accel_axictrl_bus0_tb::comb() {
         v.test_pause_cnt = 10;
     } else {
         v.test_pause_cnt = 10;
+    }
+    if ((r.test_cnt.read()[0] == 1)
+            && (w_m0_reading.read() == 1)
+            && ((w_m1_writing.read() | w_m1_reading.read()) == 0)) {
+        // Check delayed writing after reading
+        v.m1_test_selector = r.test_cnt.read()(11, 1);
+        v.m1_start_ena = 1;
     }
 
     w_s0_req_ready = r.req_s0_ready.read();

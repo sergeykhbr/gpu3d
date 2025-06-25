@@ -31,7 +31,8 @@ axi_mst_generator::axi_mst_generator(sc_module_name name,
     i_start_test("i_start_test"),
     i_test_selector("i_test_selector"),
     i_show_result("i_show_result"),
-    o_test_busy("o_test_busy") {
+    o_writing("o_writing"),
+    o_reading("o_reading") {
 
     req_bar_ = req_bar;
     unique_id_ = unique_id;
@@ -89,7 +90,8 @@ void axi_mst_generator::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
         sc_trace(o_vcd, i_start_test, i_start_test.name());
         sc_trace(o_vcd, i_test_selector, i_test_selector.name());
         sc_trace(o_vcd, i_show_result, i_show_result.name());
-        sc_trace(o_vcd, o_test_busy, o_test_busy.name());
+        sc_trace(o_vcd, o_writing, o_writing.name());
+        sc_trace(o_vcd, o_reading, o_reading.name());
         sc_trace(o_vcd, r.err_cnt, pn + ".r.err_cnt");
         sc_trace(o_vcd, r.compare_cnt, pn + ".r.compare_cnt");
         sc_trace(o_vcd, r.run_cnt, pn + ".r.run_cnt");
@@ -128,11 +130,15 @@ void axi_mst_generator::comb() {
     sc_uint<48> vb_bar;
     sc_uint<4> vb_w_burst_cnt_next;
     sc_uint<32> vb_run_cnt_inv;
+    bool v_writing;
+    bool v_reading;
 
     v = r;
     vb_bar = 0;
     vb_w_burst_cnt_next = 0;
     vb_run_cnt_inv = 0;
+    v_writing = 0;
+    v_reading = 0;
 
     vb_run_cnt_inv = (~r.run_cnt.read());
     vb_w_burst_cnt_next = (r.w_burst_cnt.read() + 1);
@@ -166,6 +172,7 @@ void axi_mst_generator::comb() {
         }
         break;
     case 1:                                                 // aw request
+        v_writing = 1;
         v.aw_valid = 1;
         v.aw_addr = (vb_bar + (r.run_cnt.read()(11, 0) << 5));
         v.w_burst_cnt = 0;
@@ -202,6 +209,7 @@ void axi_mst_generator::comb() {
         }
         break;
     case 2:                                                 // w wait request
+        v_writing = 1;
         if (r.w_wait_cnt.read().or_reduce() == 1) {
             v.w_wait_cnt = (r.w_wait_cnt.read() - 1);
         } else {
@@ -211,6 +219,7 @@ void axi_mst_generator::comb() {
         }
         break;
     case 3:                                                 // w request
+        v_writing = 1;
         v.w_valid = 1;
         v.w_data = (unique_id_, vb_run_cnt_inv(27, 0), r.run_cnt.read()(27, 0), r.w_burst_cnt.read());
         if ((r.w_valid.read() == 1) && (i_xmst.read().w_ready == 1)) {
@@ -239,6 +248,7 @@ void axi_mst_generator::comb() {
         }
         break;
     case 4:                                                 // b response
+        v_writing = 1;
         v.w_burst_cnt = 0;
         if (r.b_wait_cnt.read().or_reduce() == 1) {
             v.b_wait_cnt = (r.b_wait_cnt.read() - 1);
@@ -253,6 +263,7 @@ void axi_mst_generator::comb() {
         }
         break;
     case 5:                                                 // ar request
+        v_reading = 1;
         v.ar_valid = 1;
         v.ar_addr = (vb_bar + (r.run_cnt.read()(11, 0) << 5));
         if ((r.ar_valid.read() == 1) && (i_xmst.read().ar_ready == 1)) {
@@ -269,6 +280,7 @@ void axi_mst_generator::comb() {
         }
         break;
     case 6:
+        v_reading = 1;
         if (r.r_wait_cnt.read().or_reduce() == 1) {
             v.r_wait_cnt = (r.r_wait_cnt.read() - 1);
         } else {
@@ -277,6 +289,7 @@ void axi_mst_generator::comb() {
         }
         break;
     case 7:                                                 // r response
+        v_reading = 1;
         v.r_ready = 1;
         if ((r.r_ready.read() == 1) && (i_xmst.read().r_valid == 1)) {
             v.r_burst_cnt = (r.r_burst_cnt.read() + 1);
@@ -340,7 +353,8 @@ void axi_mst_generator::comb() {
     vb_xmsto.b_ready = r.b_ready.read();
     vb_xmsto.r_ready = r.r_ready.read();
     o_xmst = vb_xmsto;
-    o_test_busy = r.state.read().or_reduce();
+    o_writing = v_writing;
+    o_reading = v_reading;
 }
 
 void axi_mst_generator::test() {

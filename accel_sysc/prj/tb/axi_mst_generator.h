@@ -30,7 +30,8 @@ SC_MODULE(axi_mst_generator) {
     sc_in<bool> i_start_test;
     sc_in<sc_uint<11>> i_test_selector;
     sc_in<bool> i_show_result;
-    sc_out<bool> o_test_busy;
+    sc_out<bool> o_writing;
+    sc_out<bool> o_reading;
 
     void comb();
     void test();

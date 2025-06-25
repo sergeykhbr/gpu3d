@@ -115,10 +115,12 @@ SC_MODULE(accel_axictrl_bus0_tb) {
     sc_signal<bool> w_s1_resp_valid;
     sc_signal<sc_uint<64>> wb_s1_resp_rdata;
     sc_signal<bool> w_s1_resp_err;
-    sc_signal<bool> w_m0_busy;
-    sc_signal<bool> w_m1_busy;
-    sc_signal<bool> w_m2_busy;
-    std::string msg;
+    sc_signal<bool> w_m0_writing;
+    sc_signal<bool> w_m0_reading;
+    sc_signal<bool> w_m1_writing;
+    sc_signal<bool> w_m1_reading;
+    sc_signal<bool> w_m2_writing;
+    sc_signal<bool> w_m2_reading;
     sc_uint<64> s0_mem0[16];
     sc_uint<64> s0_mem1[16];
     accel_axictrl_bus0_tb_registers v;
