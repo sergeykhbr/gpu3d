@@ -421,6 +421,7 @@ void axi_slv::comb() {
         if ((r.w_ready.read() == 1) && (i_xslvi.read().w_valid == 1)) {
             if (i_req_ready.read() == 0) {
                 v.wstate = State_w_buf;
+                v.w_ready = 0;
                 v.req_addr_buf = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_aw_addr_next);
                 v.req_wdata_buf = i_xslvi.read().w_data;
                 v.req_wstrb_buf = i_xslvi.read().w_strb;

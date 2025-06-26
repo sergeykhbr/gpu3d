@@ -316,6 +316,7 @@ begin: comb_proc
         if ((r.w_ready == 1'b1) && (i_xslvi.w_valid == 1'b1)) begin
             if (i_req_ready == 1'b0) begin
                 v.wstate = State_w_buf;
+                v.w_ready = 1'b0;
                 v.req_addr_buf = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_aw_addr_next};
                 v.req_wdata_buf = i_xslvi.w_data;
                 v.req_wstrb_buf = i_xslvi.w_strb;

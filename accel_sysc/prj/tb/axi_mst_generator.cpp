@@ -174,7 +174,7 @@ void axi_mst_generator::comb() {
     case 1:                                                 // aw request
         v_writing = 1;
         v.aw_valid = 1;
-        v.aw_addr = (vb_bar + (r.run_cnt.read()(11, 0) << 5));
+        v.aw_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
         v.w_burst_cnt = 0;
         if (r.w_use_axi_light.read() == 1) {
             v.w_valid = 1;
@@ -258,14 +258,14 @@ void axi_mst_generator::comb() {
                 v.b_ready = 0;
                 v.state = 5;
                 v.ar_valid = 1;
-                v.ar_addr = (vb_bar + (r.run_cnt.read()(11, 0) << 5));
+                v.ar_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
             }
         }
         break;
     case 5:                                                 // ar request
         v_reading = 1;
         v.ar_valid = 1;
-        v.ar_addr = (vb_bar + (r.run_cnt.read()(11, 0) << 5));
+        v.ar_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
         if ((r.ar_valid.read() == 1) && (i_xmst.read().ar_ready == 1)) {
             v.ar_valid = 0;
             v.r_burst_cnt = 0;
