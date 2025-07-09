@@ -35,6 +35,7 @@ SC_MODULE(axi_sram) {
     sc_out<axi4_slave_out_type> o_xslvo;                    // AXI Bridge to Slave interface
 
     void comb();
+    void ff();
 
     axi_sram(sc_module_name name,
              bool async_reset);
@@ -125,6 +126,9 @@ axi_sram<abits>::axi_sram(sc_module_name name,
     sensitive << wb_resp_rdata;
     sensitive << wb_resp_err;
     sensitive << wb_req_addr_abits;
+
+    SC_METHOD(ff);
+    sensitive << i_clk.pos();
 }
 
 template<int abits>
@@ -154,8 +158,12 @@ void axi_sram<abits>::comb() {
 
     wb_req_addr_abits = wb_req_addr.read()((abits - 1), 0);
     w_req_ready = 1;
-    w_resp_valid = 1;
     wb_resp_err = 0;
+}
+
+template<int abits>
+void axi_sram<abits>::ff() {
+    w_resp_valid = w_req_valid.read();
 }
 
 }  // namespace debugger

@@ -44,6 +44,7 @@ typedef struct {
     logic [63:0] mtime;
     clint_cpu_type hart[0: cpu_total - 1];
     logic [63:0] rdata;
+    logic resp_valid;
 } clint_registers;
 
 logic w_req_valid;
@@ -99,6 +100,7 @@ begin: comb_proc
         v.hart[i].mtimecmp = r.hart[i].mtimecmp;
     end
     v.rdata = r.rdata;
+    v.resp_valid = r.resp_valid;
     vrdata = '0;
     vb_msip = '0;
     vb_mtip = '0;
@@ -106,6 +108,7 @@ begin: comb_proc
 
     v.mtime = (r.mtime + 1);
     regidx = int'(wb_req_addr[13: 3]);
+    v.resp_valid = w_req_valid;
 
     for (int i = 0; i < cpu_total; i++) begin
         v.hart[i].mtip = 1'b0;
@@ -151,6 +154,7 @@ begin: comb_proc
             v.hart[i].mtimecmp = 64'd0;
         end
         v.rdata = '0;
+        v.resp_valid = 1'b0;
     end
 
     for (int i = 0; i < cpu_total; i++) begin
@@ -159,7 +163,7 @@ begin: comb_proc
     end
 
     w_req_ready = 1'b1;
-    w_resp_valid = 1'b1;
+    w_resp_valid = r.resp_valid;
     wb_resp_rdata = r.rdata;
     wb_resp_err = 1'b0;
     o_msip = vb_msip;
@@ -173,6 +177,7 @@ begin: comb_proc
         rin.hart[i].mtimecmp = v.hart[i].mtimecmp;
     end
     rin.rdata = v.rdata;
+    rin.resp_valid = v.resp_valid;
 end: comb_proc
 
 generate
@@ -187,6 +192,7 @@ generate
                     r.hart[i].mtimecmp <= 64'd0;
                 end
                 r.rdata <= '0;
+                r.resp_valid <= 1'b0;
             end else begin
                 r.mtime <= rin.mtime;
                 for (int i = 0; i < cpu_total; i++) begin
@@ -195,6 +201,7 @@ generate
                     r.hart[i].mtimecmp <= rin.hart[i].mtimecmp;
                 end
                 r.rdata <= rin.rdata;
+                r.resp_valid <= rin.resp_valid;
             end
         end
 
@@ -209,6 +216,7 @@ generate
                 r.hart[i].mtimecmp <= rin.hart[i].mtimecmp;
             end
             r.rdata <= rin.rdata;
+            r.resp_valid <= rin.resp_valid;
         end
 
     end: async_r_dis

@@ -58,6 +58,7 @@ SC_MODULE(clint) {
         sc_signal<sc_uint<64>> mtime;
         clint_cpu_type hart[cpu_total];
         sc_signal<sc_uint<64>> rdata;
+        sc_signal<bool> resp_valid;
     };
 
     void clint_r_reset(clint_registers& iv) {
@@ -68,6 +69,7 @@ SC_MODULE(clint) {
             iv.hart[i].mtimecmp = 0;
         }
         iv.rdata = 0;
+        iv.resp_valid = 0;
     }
 
     sc_signal<bool> w_req_valid;
@@ -149,6 +151,7 @@ clint<cpu_total>::clint(sc_module_name name,
         sensitive << r.hart[i].mtimecmp;
     }
     sensitive << r.rdata;
+    sensitive << r.resp_valid;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -178,6 +181,7 @@ void clint<cpu_total>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
             sc_trace(o_vcd, r.hart[i].mtimecmp, pn + ".r.hart(" + std::to_string(i) + ").mtimecmp");
         }
         sc_trace(o_vcd, r.rdata, pn + ".r.rdata");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
     }
 
     if (xslv0) {
@@ -199,6 +203,7 @@ void clint<cpu_total>::comb() {
         v.hart[i].mtimecmp = r.hart[i].mtimecmp.read();
     }
     v.rdata = r.rdata.read();
+    v.resp_valid = r.resp_valid.read();
     vrdata = 0;
     vb_msip = 0;
     vb_mtip = 0;
@@ -206,6 +211,7 @@ void clint<cpu_total>::comb() {
 
     v.mtime = (r.mtime.read() + 1);
     regidx = wb_req_addr.read()(13, 3).to_int();
+    v.resp_valid = w_req_valid.read();
 
     for (int i = 0; i < cpu_total; i++) {
         v.hart[i].mtip = 0;
@@ -253,7 +259,7 @@ void clint<cpu_total>::comb() {
     }
 
     w_req_ready = 1;
-    w_resp_valid = 1;
+    w_resp_valid = r.resp_valid.read();
     wb_resp_rdata = r.rdata.read();
     wb_resp_err = 0;
     o_msip = vb_msip;
@@ -273,6 +279,7 @@ void clint<cpu_total>::registers() {
             r.hart[i].mtimecmp = v.hart[i].mtimecmp.read();
         }
         r.rdata = v.rdata.read();
+        r.resp_valid = v.resp_valid.read();
     }
 }
 

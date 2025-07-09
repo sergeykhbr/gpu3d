@@ -50,6 +50,7 @@ typedef struct {
     logic [ctxmax-1:0] ip;
     plic_context_type ctx[0: ctxmax - 1];
     logic [63:0] rdata;
+    logic resp_valid;
 } plic_registers;
 
 logic w_req_valid;
@@ -121,6 +122,7 @@ begin: comb_proc
         v.ctx[i].irq_prio = r.ctx[i].irq_prio;
     end
     v.rdata = r.rdata;
+    v.resp_valid = r.resp_valid;
     vrdata = '0;
     for (int i = 0; i < ctxmax; i++) begin
         vb_irq_idx[i] = '0;
@@ -154,6 +156,7 @@ begin: comb_proc
     vb_ip = '0;
     rctx_idx = 0;
 
+    v.resp_valid = w_req_valid;
     // Warning SystemC limitation workaround:
     //   Cannot directly write into bitfields of the signals v.* registers
     //   So, use the following vb_* logic variables for that and then copy them.
@@ -305,10 +308,11 @@ begin: comb_proc
             v.ctx[i].irq_prio = 10'd0;
         end
         v.rdata = '0;
+        v.resp_valid = 1'b0;
     end
 
     w_req_ready = 1'b1;
-    w_resp_valid = 1'b1;
+    w_resp_valid = r.resp_valid;
     wb_resp_rdata = r.rdata;
     wb_resp_err = 1'b0;
     o_ip = r.ip;
@@ -326,6 +330,7 @@ begin: comb_proc
         rin.ctx[i].irq_prio = v.ctx[i].irq_prio;
     end
     rin.rdata = v.rdata;
+    rin.resp_valid = v.resp_valid;
 end: comb_proc
 
 generate
@@ -346,6 +351,7 @@ generate
                     r.ctx[i].irq_prio <= 10'd0;
                 end
                 r.rdata <= '0;
+                r.resp_valid <= 1'b0;
             end else begin
                 r.src_priority <= rin.src_priority;
                 r.pending <= rin.pending;
@@ -360,6 +366,7 @@ generate
                     r.ctx[i].irq_prio <= rin.ctx[i].irq_prio;
                 end
                 r.rdata <= rin.rdata;
+                r.resp_valid <= rin.resp_valid;
             end
         end
 
@@ -380,6 +387,7 @@ generate
                 r.ctx[i].irq_prio <= rin.ctx[i].irq_prio;
             end
             r.rdata <= rin.rdata;
+            r.resp_valid <= rin.resp_valid;
         end
 
     end: async_r_dis

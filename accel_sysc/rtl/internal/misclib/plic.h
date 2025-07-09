@@ -64,6 +64,7 @@ SC_MODULE(plic) {
         sc_signal<sc_uint<ctxmax>> ip;
         plic_context_type ctx[ctxmax];
         sc_signal<sc_uint<64>> rdata;
+        sc_signal<bool> resp_valid;
     };
 
     void plic_r_reset(plic_registers& iv) {
@@ -80,6 +81,7 @@ SC_MODULE(plic) {
             iv.ctx[i].irq_prio = 0;
         }
         iv.rdata = 0;
+        iv.resp_valid = 0;
     }
 
     sc_signal<bool> w_req_valid;
@@ -167,6 +169,7 @@ plic<ctxmax, irqmax>::plic(sc_module_name name,
         sensitive << r.ctx[i].irq_prio;
     }
     sensitive << r.rdata;
+    sensitive << r.resp_valid;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -201,6 +204,7 @@ void plic<ctxmax, irqmax>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
             sc_trace(o_vcd, r.ctx[i].irq_prio, pn + ".r.ctx(" + std::to_string(i) + ").irq_prio");
         }
         sc_trace(o_vcd, r.rdata, pn + ".r.rdata");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
     }
 
     if (xslv0) {
@@ -238,6 +242,7 @@ void plic<ctxmax, irqmax>::comb() {
         v.ctx[i].irq_prio = r.ctx[i].irq_prio.read();
     }
     v.rdata = r.rdata.read();
+    v.resp_valid = r.resp_valid.read();
     vrdata = 0;
     for (int i = 0; i < ctxmax; i++) {
         vb_irq_idx[i] = 0;
@@ -271,6 +276,7 @@ void plic<ctxmax, irqmax>::comb() {
     vb_ip = 0;
     rctx_idx = 0;
 
+    v.resp_valid = w_req_valid.read();
     // Warning SystemC limitation workaround:
     //   Cannot directly write into bitfields of the signals v.* registers
     //   So, use the following vb_* logic variables for that and then copy them.
@@ -413,7 +419,7 @@ void plic<ctxmax, irqmax>::comb() {
     }
 
     w_req_ready = 1;
-    w_resp_valid = 1;
+    w_resp_valid = r.resp_valid.read();
     wb_resp_rdata = r.rdata.read();
     wb_resp_err = 0;
     o_ip = r.ip.read();
@@ -437,6 +443,7 @@ void plic<ctxmax, irqmax>::registers() {
             r.ctx[i].irq_prio = v.ctx[i].irq_prio.read();
         }
         r.rdata = v.rdata.read();
+        r.resp_valid = v.resp_valid.read();
     }
 }
 

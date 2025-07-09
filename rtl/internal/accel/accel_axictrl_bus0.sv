@@ -157,7 +157,8 @@ begin: comb_proc
     vslvi[CFG_BUS0_XSLV_TOTAL] = axi4_slave_in_none;
 
     w_def_req_ready = 1'b1;
-    w_def_resp_valid = 1'b1;
+    v.r_def_valid = w_def_req_valid;
+    w_def_resp_valid = r.r_def_valid;
     wb_def_resp_rdata = '1;
     w_def_resp_err = 1'b1;
     i_ar_midx = CFG_BUS0_XMST_TOTAL;

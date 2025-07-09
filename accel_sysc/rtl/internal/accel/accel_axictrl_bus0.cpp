@@ -78,6 +78,7 @@ accel_axictrl_bus0::accel_axictrl_bus0(sc_module_name name,
     sensitive << w_def_resp_valid;
     sensitive << wb_def_resp_rdata;
     sensitive << w_def_resp_err;
+    sensitive << r.r_def_valid;
     sensitive << r.r_midx;
     sensitive << r.r_sidx;
     sensitive << r.w_midx;
@@ -99,6 +100,7 @@ accel_axictrl_bus0::~accel_axictrl_bus0() {
 void accel_axictrl_bus0::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, r.r_def_valid, pn + ".r.r_def_valid");
         sc_trace(o_vcd, r.r_midx, pn + ".r.r_midx");
         sc_trace(o_vcd, r.r_sidx, pn + ".r.r_sidx");
         sc_trace(o_vcd, r.w_midx, pn + ".r.w_midx");
@@ -191,7 +193,8 @@ void accel_axictrl_bus0::comb() {
     vslvi[CFG_BUS0_XSLV_TOTAL] = axi4_slave_in_none;
 
     w_def_req_ready = 1;
-    w_def_resp_valid = 1;
+    v.r_def_valid = w_def_req_valid.read();
+    w_def_resp_valid = r.r_def_valid.read();
     wb_def_resp_rdata = ~0ull;
     w_def_resp_err = 1;
     i_ar_midx = CFG_BUS0_XMST_TOTAL;

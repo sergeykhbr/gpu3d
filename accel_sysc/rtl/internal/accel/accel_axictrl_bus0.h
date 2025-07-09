@@ -47,6 +47,7 @@ SC_MODULE(accel_axictrl_bus0) {
     bool async_reset_;
 
     struct accel_axictrl_bus0_registers {
+        sc_signal<bool> r_def_valid;
         sc_signal<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>> r_midx;
         sc_signal<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>> r_sidx;
         sc_signal<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>> w_midx;
@@ -56,6 +57,7 @@ SC_MODULE(accel_axictrl_bus0) {
     };
 
     void accel_axictrl_bus0_r_reset(accel_axictrl_bus0_registers& iv) {
+        iv.r_def_valid = 0;
         iv.r_midx = CFG_BUS0_XMST_TOTAL;
         iv.r_sidx = CFG_BUS0_XSLV_TOTAL;
         iv.w_midx = CFG_BUS0_XMST_TOTAL;
