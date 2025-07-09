@@ -97,6 +97,7 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     mst0 = new axi_mst_generator("mst0",
                                   0x000081000000,
                                   0x0,
+                                  0x7FFFFFFFFFFFFFFF,
                                   0);
     mst0->i_nrst(nrst);
     mst0->i_clk(clk);
@@ -111,6 +112,7 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     mst1 = new axi_mst_generator("mst1",
                                   0x000082000000,
                                   0x1,
+                                  0x7FFFFFFFFFFFFFFF,
                                   0);
     mst1->i_nrst(nrst);
     mst1->i_clk(clk);
@@ -125,6 +127,7 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
     mst2 = new axi_mst_generator("mst2",
                                   0x000008000000,
                                   0x2,
+                                  0xCAFEF00D33221100,
                                   1);
     mst2->i_nrst(nrst);
     mst2->i_clk(clk);
@@ -355,15 +358,15 @@ void accel_axictrl_bus0_tb::comb() {
     } else if (r.test_pause_cnt.read().or_reduce() == 0) {
         v.test_cnt = (r.test_cnt.read() + 1);
         v.resp_s0_wait_states = r.test_cnt.read()(1, 0);
-        v.m0_test_selector = r.test_cnt.read()(12, 2);
+        v.m0_test_selector = (0, r.test_cnt.read()(31, 2));
         v.m0_start_ena = 1;
         if (r.test_cnt.read()[0] == 0) {
-            v.m1_test_selector = r.test_cnt.read()(11, 1);
+            v.m1_test_selector = (0, r.test_cnt.read()(31, 1));
             v.m1_start_ena = 1;
         }
-        v.m2_test_selector = 0x300;                         // Burst 4, with zero wait states
+        v.m2_test_selector = 0x00000C00;                    // Burst 4, with zero wait states
         v.m2_start_ena = 1;
-        if (r.test_cnt.read()[13] == 1) {
+        if (r.test_cnt.read()[15] == 1) {
             // End of test (show err_cnt)
             v.end_of_test = 1;
         }

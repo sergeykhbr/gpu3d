@@ -312,8 +312,10 @@ void axi_slv::comb() {
         break;
     case State_r_last:
         if (i_resp_valid.read() == 1) {
-            if ((r.r_valid.read() == 1) && (i_xslvi.read().r_ready == 0)) {
-                // We already requested the last value but previous was not accepted yet
+            if ((r.r_valid.read() == 1) && (r.r_last.read() == 1)) {
+                // Ingore this response, because it means i_resp_valid is always=1
+            } else if ((r.r_valid.read() == 1) && (i_xslvi.read().r_ready == 0)) {
+                // We already requested the last value but previous (not last) was not accepted yet
                 v.r_data_buf = i_resp_rdata.read();
                 v.r_err_buf = i_resp_err.read();
                 v.r_last_buf = 1;

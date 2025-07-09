@@ -207,8 +207,10 @@ begin: comb_proc
     end
     State_r_last: begin
         if (i_resp_valid == 1'b1) begin
-            if ((r.r_valid == 1'b1) && (i_xslvi.r_ready == 1'b0)) begin
-                // We already requested the last value but previous was not accepted yet
+            if ((r.r_valid == 1'b1) && (r.r_last == 1'b1)) begin
+                // Ingore this response, because it means i_resp_valid is always=1
+            end else if ((r.r_valid == 1'b1) && (i_xslvi.r_ready == 1'b0)) begin
+                // We already requested the last value but previous (not last) was not accepted yet
                 v.r_data_buf = i_resp_rdata;
                 v.r_err_buf = i_resp_err;
                 v.r_last_buf = 1'b1;

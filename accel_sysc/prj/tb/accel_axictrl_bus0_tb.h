@@ -47,11 +47,11 @@ SC_MODULE(accel_axictrl_bus0_tb) {
         sc_signal<sc_uint<32>> test_cnt;
         sc_signal<sc_uint<32>> test_pause_cnt;
         sc_signal<bool> m0_start_ena;
-        sc_signal<sc_uint<11>> m0_test_selector;
+        sc_signal<sc_uint<32>> m0_test_selector;
         sc_signal<bool> m1_start_ena;
-        sc_signal<sc_uint<11>> m1_test_selector;
+        sc_signal<sc_uint<32>> m1_test_selector;
         sc_signal<bool> m2_start_ena;
-        sc_signal<sc_uint<11>> m2_test_selector;
+        sc_signal<sc_uint<32>> m2_test_selector;
         sc_signal<sc_uint<2>> s0_state;
         sc_signal<bool> req_s0_ready;
         sc_signal<bool> resp_s0_valid;

@@ -22,6 +22,7 @@ namespace debugger {
 axi_mst_generator::axi_mst_generator(sc_module_name name,
                                      sc_uint<48> req_bar,
                                      sc_uint<4> unique_id,
+                                     sc_uint<64> read_compare,
                                      bool read_only)
     : sc_module(name),
     i_nrst("i_nrst"),
@@ -36,6 +37,7 @@ axi_mst_generator::axi_mst_generator(sc_module_name name,
 
     req_bar_ = req_bar;
     unique_id_ = unique_id;
+    read_compare_ = read_compare;
     read_only_ = read_only;
 
     SC_METHOD(comb);
@@ -49,8 +51,10 @@ axi_mst_generator::axi_mst_generator(sc_module_name name,
     sensitive << r.run_cnt;
     sensitive << r.state;
     sensitive << r.xsize;
+    sensitive << r.aw_wait_cnt;
     sensitive << r.aw_valid;
     sensitive << r.aw_addr;
+    sensitive << r.aw_unmap;
     sensitive << r.aw_xlen;
     sensitive << r.w_use_axi_light;
     sensitive << r.w_wait_states;
@@ -63,8 +67,10 @@ axi_mst_generator::axi_mst_generator(sc_module_name name,
     sensitive << r.b_wait_states;
     sensitive << r.b_wait_cnt;
     sensitive << r.b_ready;
+    sensitive << r.ar_wait_cnt;
     sensitive << r.ar_valid;
     sensitive << r.ar_addr;
+    sensitive << r.ar_unmap;
     sensitive << r.ar_xlen;
     sensitive << r.r_wait_states;
     sensitive << r.r_wait_cnt;
@@ -97,8 +103,10 @@ void axi_mst_generator::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
         sc_trace(o_vcd, r.run_cnt, pn + ".r.run_cnt");
         sc_trace(o_vcd, r.state, pn + ".r.state");
         sc_trace(o_vcd, r.xsize, pn + ".r.xsize");
+        sc_trace(o_vcd, r.aw_wait_cnt, pn + ".r.aw_wait_cnt");
         sc_trace(o_vcd, r.aw_valid, pn + ".r.aw_valid");
         sc_trace(o_vcd, r.aw_addr, pn + ".r.aw_addr");
+        sc_trace(o_vcd, r.aw_unmap, pn + ".r.aw_unmap");
         sc_trace(o_vcd, r.aw_xlen, pn + ".r.aw_xlen");
         sc_trace(o_vcd, r.w_use_axi_light, pn + ".r.w_use_axi_light");
         sc_trace(o_vcd, r.w_wait_states, pn + ".r.w_wait_states");
@@ -111,8 +119,10 @@ void axi_mst_generator::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
         sc_trace(o_vcd, r.b_wait_states, pn + ".r.b_wait_states");
         sc_trace(o_vcd, r.b_wait_cnt, pn + ".r.b_wait_cnt");
         sc_trace(o_vcd, r.b_ready, pn + ".r.b_ready");
+        sc_trace(o_vcd, r.ar_wait_cnt, pn + ".r.ar_wait_cnt");
         sc_trace(o_vcd, r.ar_valid, pn + ".r.ar_valid");
         sc_trace(o_vcd, r.ar_addr, pn + ".r.ar_addr");
+        sc_trace(o_vcd, r.ar_unmap, pn + ".r.ar_unmap");
         sc_trace(o_vcd, r.ar_xlen, pn + ".r.ar_xlen");
         sc_trace(o_vcd, r.r_wait_states, pn + ".r.r_wait_states");
         sc_trace(o_vcd, r.r_wait_cnt, pn + ".r.r_wait_cnt");
@@ -150,31 +160,61 @@ void axi_mst_generator::comb() {
     case 0:
         if (i_start_test.read() == 1) {
             if (read_only_ == 1) {
-                v.state = 5;
+                if (i_test_selector.read()(1, 0).or_reduce() == 0) {
+                    v.state = 5;                            // ar_request
+                } else {
+                    v.state = 14;                           // wait to ar_request
+                }
             } else {
-                v.state = 1;
+                if (i_test_selector.read()(1, 0).or_reduce() == 0) {
+                    v.state = 1;                            // aw_request
+                } else {
+                    v.state = 13;                           // wait to aw_request
+                }
             }
             v.run_cnt = (r.run_cnt.read() + 1);
-            v.w_wait_states = i_test_selector.read()(2, 0);
-            v.b_wait_states = i_test_selector.read()(4, 3);
-            v.r_wait_states = i_test_selector.read()(7, 5);
-            v.aw_xlen = (0, i_test_selector.read()(9, 8));
-            v.ar_xlen = (0, i_test_selector.read()(9, 8));
-            if ((i_test_selector.read()(9, 8).or_reduce() == 0) && (i_test_selector.read()(2, 0) == 7)) {
+            v.aw_unmap = 0;
+            v.ar_unmap = i_test_selector.read()[0];
+            v.aw_wait_cnt = i_test_selector.read()(1, 0);
+            v.ar_wait_cnt = i_test_selector.read()(1, 0);
+            v.w_wait_states = i_test_selector.read()(4, 2);
+            v.b_wait_states = i_test_selector.read()(6, 5);
+            v.r_wait_states = i_test_selector.read()(9, 7);
+            v.aw_xlen = (0, i_test_selector.read()(11, 10));
+            v.ar_xlen = (0, i_test_selector.read()(11, 10));
+            if ((i_test_selector.read()(11, 10).or_reduce() == 0) && (i_test_selector.read()(4, 2) == 7)) {
                 v.w_use_axi_light = 1;
             } else {
                 v.w_use_axi_light = 0;
             }
             v.xsize = 3;                                    // 8-bytes
-            if (i_test_selector.read()[10] == 1) {
+            if (i_test_selector.read()[12] == 1) {
                 v.xsize = 2;                                // 4-bytes
             }
+        }
+        break;
+    case 13:                                                // wait to aw request
+        if (r.aw_wait_cnt.read().or_reduce() == 1) {
+            v.aw_wait_cnt = (r.aw_wait_cnt.read() - 1);
+        } else {
+            v.state = 1;                                    // aw_request
+        }
+        break;
+    case 14:                                                // wait to ar request
+        if (r.ar_wait_cnt.read().or_reduce() == 1) {
+            v.ar_wait_cnt = (r.ar_wait_cnt.read() - 1);
+        } else {
+            v.state = 5;                                    // ar_request
         }
         break;
     case 1:                                                 // aw request
         v_writing = 1;
         v.aw_valid = 1;
-        v.aw_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
+        if (r.aw_unmap.read() == 0) {
+            v.aw_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
+        } else {
+            v.aw_addr = 0xFFFFFFFFFC00;
+        }
         v.w_burst_cnt = 0;
         if (r.w_use_axi_light.read() == 1) {
             v.w_valid = 1;
@@ -258,14 +298,22 @@ void axi_mst_generator::comb() {
                 v.b_ready = 0;
                 v.state = 5;
                 v.ar_valid = 1;
-                v.ar_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
+                if (r.ar_unmap.read() == 0) {
+                    v.ar_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
+                } else {
+                    v.ar_addr = 0xFFFFFFFFFC00;
+                }
             }
         }
         break;
     case 5:                                                 // ar request
         v_reading = 1;
         v.ar_valid = 1;
-        v.ar_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
+        if (r.ar_unmap.read() == 0) {
+            v.ar_addr = (vb_bar + (r.run_cnt.read()(6, 0) << 5));
+        } else {
+            v.ar_addr = 0xFFFFFFFFFC00;
+        }
         if ((r.ar_valid.read() == 1) && (i_xmst.read().ar_ready == 1)) {
             v.ar_valid = 0;
             v.r_burst_cnt = 0;
@@ -294,9 +342,17 @@ void axi_mst_generator::comb() {
         if ((r.r_ready.read() == 1) && (i_xmst.read().r_valid == 1)) {
             v.r_burst_cnt = (r.r_burst_cnt.read() + 1);
             v.r_ready = 0;
-            v.compare_ena = (!read_only_);
+            v.compare_ena = 1;
             v.compare_a = i_xmst.read().r_data;
-            v.compare_b = (unique_id_, vb_run_cnt_inv(27, 0), r.run_cnt.read()(27, 0), r.r_burst_cnt.read());
+            if (r.ar_unmap.read() == 0) {
+                if (read_only_ == 0) {
+                    v.compare_b = (unique_id_, vb_run_cnt_inv(27, 0), r.run_cnt.read()(27, 0), r.r_burst_cnt.read());
+                } else {
+                    v.compare_b = read_compare_;
+                }
+            } else {
+                v.compare_b = 0xFFFFFFFFFFFFFFFF;
+            }
             if (i_xmst.read().r_last == 1) {
                 // Goto idle
                 v.state = 0;

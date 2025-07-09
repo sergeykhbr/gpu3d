@@ -241,6 +241,8 @@ void accel_axictrl_bus0::comb() {
 
     if ((r.r_sidx.read() != CFG_BUS0_XSLV_TOTAL) && (v_r_fire == 0)) {
         v_r_busy = 1;
+    } else {
+        v_r_busy = wb_def_xslvo.read().r_valid;
     }
 
     if (((r.w_sidx.read() != CFG_BUS0_XSLV_TOTAL) && (v_w_fire == 0))

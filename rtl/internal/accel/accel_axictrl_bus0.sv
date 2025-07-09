@@ -207,6 +207,8 @@ begin: comb_proc
 
     if ((r.r_sidx != CFG_BUS0_XSLV_TOTAL) && (v_r_fire == 1'b0)) begin
         v_r_busy = 1'b1;
+    end else begin
+        v_r_busy = wb_def_xslvo.r_valid;
     end
 
     if (((r.w_sidx != CFG_BUS0_XSLV_TOTAL) && (v_w_fire == 1'b0))
