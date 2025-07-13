@@ -42,7 +42,7 @@ int sc_main(int argc, char *argv[]) {
     duration = 4;
     units = SC_MS;
     accel_axi2apb_bus1_tb *tb = new accel_axi2apb_bus1_tb("tb");
-#elif 1
+#elif 0
     duration = 22;
     units = SC_MS;
     accel_axictrl_bus0_tb *tb = new accel_axictrl_bus0_tb("tb");
@@ -55,7 +55,7 @@ int sc_main(int argc, char *argv[]) {
     units = SC_MS;
     asic_accel_top_tb *tb = new asic_accel_top_tb("tb");
 #endif
-    tb->generateVCD(0, vcd_);
+    //tb->generateVCD(0, vcd_);
 
     sc_start(10, SC_NS);
     std::cout << "@" << sc_time_stamp()

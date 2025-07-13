@@ -211,7 +211,7 @@ void accel_axictrl_bus0::comb() {
                 vslvi[ii].aw_id = (vmsto[i].aw_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
                 if (vslvo[ii].aw_ready == 1) {
                     // Switch W-channel index to future w-transaction without id
-                    vb_w_select((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)) = static_cast<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>>(ii);
+                    vb_w_select((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)) = static_cast<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>>(ii);
                     vb_w_active[i] = 1;
                 }
             }
@@ -222,14 +222,14 @@ void accel_axictrl_bus0::comb() {
     // W-channel
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
         if ((vmsto[i].w_valid == 1) && (r.w_active.read()[i] == 1)) {
-            vmsti[i].w_ready = vslvo[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready;
-            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_valid = vmsto[i].w_valid;
-            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_data = vmsto[i].w_data;
-            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_strb = vmsto[i].w_strb;
-            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_last = vmsto[i].w_last;
-            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_user = vmsto[i].w_user;
+            vmsti[i].w_ready = vslvo[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready;
+            vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_valid = vmsto[i].w_valid;
+            vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_data = vmsto[i].w_data;
+            vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_strb = vmsto[i].w_strb;
+            vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_last = vmsto[i].w_last;
+            vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_user = vmsto[i].w_user;
             if ((vmsto[i].w_last == 1)
-                    && (vslvo[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready == 1)) {
+                    && (vslvo[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready == 1)) {
                 vb_w_active[i] = 0;
             }
         }
