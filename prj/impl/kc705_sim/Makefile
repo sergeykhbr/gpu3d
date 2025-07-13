@@ -9,7 +9,6 @@ BENCH=kc705_top_tb
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
-INC+=+incdir+${RTL_HOME}/external/xilinx/ddr3_cdc_axi_sync
 INC+=+incdir+${VIPS_HOME}/ddr3
 INC+=+incdir+${VIPS_HOME}/pcie_rootport
 INC+=+incdir+${PRJ_ROOT}/tb/pcie
