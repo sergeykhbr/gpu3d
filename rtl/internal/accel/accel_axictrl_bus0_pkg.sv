@@ -20,22 +20,14 @@ import types_pnp_pkg::*;
 import types_amba_pkg::*;
 
 typedef struct {
+    logic [(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_LOG2_TOTAL)-1:0] w_select;
+    logic [CFG_BUS0_XMST_TOTAL-1:0] w_active;
     logic r_def_valid;
-    logic [CFG_BUS0_XMST_LOG2_TOTAL-1:0] r_midx;
-    logic [CFG_BUS0_XSLV_LOG2_TOTAL-1:0] r_sidx;
-    logic [CFG_BUS0_XMST_LOG2_TOTAL-1:0] w_midx;
-    logic [CFG_BUS0_XSLV_LOG2_TOTAL-1:0] w_sidx;
-    logic [CFG_BUS0_XMST_LOG2_TOTAL-1:0] b_midx;
-    logic [CFG_BUS0_XSLV_LOG2_TOTAL-1:0] b_sidx;
 } accel_axictrl_bus0_registers;
 
 const accel_axictrl_bus0_registers accel_axictrl_bus0_r_reset = '{
-    1'b0,                               // r_def_valid
-    CFG_BUS0_XMST_TOTAL,                // r_midx
-    CFG_BUS0_XSLV_TOTAL,                // r_sidx
-    CFG_BUS0_XMST_TOTAL,                // w_midx
-    CFG_BUS0_XSLV_TOTAL,                // w_sidx
-    CFG_BUS0_XMST_TOTAL,                // b_midx
-    CFG_BUS0_XSLV_TOTAL                 // b_sidx
+    '0,                                 // w_select
+    '0,                                 // w_active
+    1'b0                                // r_def_valid
 };
 endpackage: accel_axictrl_bus0_pkg

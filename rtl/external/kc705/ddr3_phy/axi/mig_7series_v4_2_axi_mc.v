@@ -96,7 +96,7 @@ module mig_7series_v4_2_axi_mc #
   parameter         C_FAMILY                        = "virtex6", 
                     // Width of all master and slave ID signals.
                     // Range: >= 1.
-  parameter integer C_S_AXI_ID_WIDTH                = 4, 
+  parameter integer C_S_AXI_ID_WIDTH                = 5, 
                     // Width of S_AXI_AWADDR, S_AXI_ARADDR, M_AXI_AWADDR and 
                     // M_AXI_ARADDR for all SI/MI slots.
                     // Range: 32.

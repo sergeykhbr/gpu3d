@@ -51,8 +51,10 @@ localparam int CFG_BUS0_XSLV_PLIC = 3;
 localparam int CFG_BUS0_XSLV_PBRIDGE = 4;
 // External DDR
 localparam int CFG_BUS0_XSLV_DDR = 5;
+// Unmapped error access
+localparam int CFG_BUS0_XSLV_UNMAP = 6;
 // Total number of the slaves devices.
-localparam int CFG_BUS0_XSLV_TOTAL = 6;
+localparam int CFG_BUS0_XSLV_TOTAL = 7;
 // Necessary bus width to store index + 1.
 localparam int CFG_BUS0_XSLV_LOG2_TOTAL = 3;                // $clog2(CFG_BUS0_XSLV_TOTAL + 1)
 
@@ -87,7 +89,11 @@ const bus0_mapinfo_vector CFG_BUS0_MAP = '{
         '{
             64'h0000000080000000,       // addr_start
             64'h00000000C0000000        // addr_end
-        }// 5, ddr, 1 GB
+        },// 5, ddr, 1 GB
+        '{
+            64'h0000000000000000,       // addr_start
+            64'h0000000000000000        // addr_end
+        }// Unampped access, lowest priority
 };
 
 endpackage: types_accel_bus0_pkg

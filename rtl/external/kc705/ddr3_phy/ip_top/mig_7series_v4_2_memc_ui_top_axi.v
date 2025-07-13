@@ -218,7 +218,7 @@ module mig_7series_v4_2_memc_ui_top_axi #
    parameter PI_VAL_ADJ            = "ON",      //ON: PI stg2 tap -1 for centering
    parameter SKIP_CALIB            = "FALSE",
    parameter TAPSPERKCLK           = 56,
-   parameter C_S_AXI_ID_WIDTH              = 4,
+   parameter C_S_AXI_ID_WIDTH              = 5,
                                              // Width of all master and slave ID signals.
                                              // # = >= 1.
    parameter C_S_AXI_ADDR_WIDTH            = 30,
