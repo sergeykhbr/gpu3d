@@ -41,7 +41,8 @@ SC_MODULE(axi_mst_generator) {
                       sc_uint<48> req_bar,
                       sc_uint<4> unique_id,
                       sc_uint<64> read_compare,
-                      bool read_only);
+                      bool read_only,
+                      bool burst_disable);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -50,6 +51,7 @@ SC_MODULE(axi_mst_generator) {
     sc_uint<4> unique_id_;
     sc_uint<64> read_compare_;
     bool read_only_;
+    bool burst_disable_;
 
     struct axi_mst_generator_registers {
         sc_signal<sc_uint<32>> err_cnt;

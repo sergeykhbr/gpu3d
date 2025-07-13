@@ -58,25 +58,25 @@ SC_MODULE(axi_slv) {
 
     static const uint8_t State_r_idle = 0;
     static const uint8_t State_r_addr = 0x01;
-    static const uint8_t State_r_data = 0x02;
-    static const uint8_t State_r_last = 0x04;
-    static const uint8_t State_r_buf = 0x08;
-    static const uint8_t State_r_wait_writing = 0x10;
+    static const uint8_t State_r_pipe = 0x02;
+    static const uint8_t State_r_resp_last = 0x04;
+    static const uint8_t State_r_wait_accept = 0x08;
+    static const uint8_t State_r_buf = 0x10;
+    static const uint8_t State_r_wait_writing = 0x20;
     static const uint8_t State_w_idle = 0;
     static const uint8_t State_w_wait_reading = 0x01;
-    static const uint8_t State_w_wait_reading_light = 0x02;
-    static const uint8_t State_w_req = 0x04;
-    static const uint8_t State_w_pipe = 0x08;
-    static const uint8_t State_w_buf = 0x10;
-    static const uint8_t State_w_resp = 0x20;
-    static const uint8_t State_b = 0x40;
+    static const uint8_t State_w_req = 0x02;
+    static const uint8_t State_w_pipe = 0x04;
+    static const uint8_t State_w_buf = 0x08;
+    static const uint8_t State_w_resp = 0x10;
+    static const uint8_t State_b = 0x20;
 
     struct axi_slv_registers {
-        sc_signal<sc_uint<5>> rstate;
-        sc_signal<sc_uint<7>> wstate;
+        sc_signal<sc_uint<6>> rstate;
+        sc_signal<sc_uint<6>> wstate;
         sc_signal<bool> ar_ready;
         sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> ar_addr;
-        sc_signal<sc_uint<9>> ar_len;
+        sc_signal<sc_uint<8>> ar_len;
         sc_signal<sc_uint<XSIZE_TOTAL>> ar_bytes;
         sc_signal<sc_uint<2>> ar_burst;
         sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> ar_id;
@@ -110,6 +110,8 @@ SC_MODULE(axi_slv) {
         sc_signal<bool> req_last_buf;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> req_wdata_buf;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> req_wstrb_buf;
+        sc_signal<bool> requested;
+        sc_signal<bool> resp_last;
     };
 
     void axi_slv_r_reset(axi_slv_registers& iv) {
@@ -151,6 +153,8 @@ SC_MODULE(axi_slv) {
         iv.req_last_buf = 0;
         iv.req_wdata_buf = 0;
         iv.req_wstrb_buf = 0;
+        iv.requested = 0;
+        iv.resp_last = 0;
     }
 
     axi_slv_registers v;

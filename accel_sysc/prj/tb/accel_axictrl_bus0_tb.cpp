@@ -98,6 +98,7 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
                                   0x000081000000,
                                   0x0,
                                   0x7FFFFFFFFFFFFFFF,
+                                  0,
                                   0);
     mst0->i_nrst(nrst);
     mst0->i_clk(clk);
@@ -113,6 +114,7 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
                                   0x000082000000,
                                   0x1,
                                   0x7FFFFFFFFFFFFFFF,
+                                  0,
                                   0);
     mst1->i_nrst(nrst);
     mst1->i_clk(clk);
@@ -128,7 +130,8 @@ accel_axictrl_bus0_tb::accel_axictrl_bus0_tb(sc_module_name name)
                                   0x000008000000,
                                   0x2,
                                   0xCAFEF00D33221100,
-                                  1);
+                                  1,
+                                  0);
     mst2->i_nrst(nrst);
     mst2->i_clk(clk);
     mst2->i_xmst(vec_o_xmsti[CFG_BUS0_XMST_HDMI]);

@@ -54,8 +54,10 @@ static const int CFG_BUS0_XSLV_PLIC = 3;
 static const int CFG_BUS0_XSLV_PBRIDGE = 4;
 // External DDR
 static const int CFG_BUS0_XSLV_DDR = 5;
+// Unmapped error access
+static const int CFG_BUS0_XSLV_UNMAP = 6;
 // Total number of the slaves devices.
-static const int CFG_BUS0_XSLV_TOTAL = 6;
+static const int CFG_BUS0_XSLV_TOTAL = 7;
 // Necessary bus width to store index + 1.
 static const int CFG_BUS0_XSLV_LOG2_TOTAL = 3;              // $clog2(CFG_BUS0_XSLV_TOTAL + 1)
 
@@ -90,7 +92,11 @@ static const mapinfo_type CFG_BUS0_MAP[CFG_BUS0_XSLV_TOTAL] = {
         {
             0x0000000080000000,         // addr_start
             0x00000000C0000000          // addr_end
-        }// 5, ddr, 1 GB
+        },// 5, ddr, 1 GB
+        {
+            0x0000000000000000,         // addr_start
+            0x0000000000000000          // addr_end
+        }// Unampped access, lowest priority
 };
 
 }  // namespace debugger

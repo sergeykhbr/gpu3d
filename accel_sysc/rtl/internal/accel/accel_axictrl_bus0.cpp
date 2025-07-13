@@ -64,9 +64,9 @@ accel_axictrl_bus0::accel_axictrl_bus0(sc_module_name name,
     for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
         sensitive << i_xslvo[i];
     }
-    sensitive << wb_def_mapinfo;
     sensitive << wb_def_xslvi;
     sensitive << wb_def_xslvo;
+    sensitive << wb_def_mapinfo;
     sensitive << w_def_req_valid;
     sensitive << wb_def_req_addr;
     sensitive << wb_def_req_size;
@@ -78,13 +78,9 @@ accel_axictrl_bus0::accel_axictrl_bus0(sc_module_name name,
     sensitive << w_def_resp_valid;
     sensitive << wb_def_resp_rdata;
     sensitive << w_def_resp_err;
+    sensitive << r.w_select;
+    sensitive << r.w_active;
     sensitive << r.r_def_valid;
-    sensitive << r.r_midx;
-    sensitive << r.r_sidx;
-    sensitive << r.w_midx;
-    sensitive << r.w_sidx;
-    sensitive << r.b_midx;
-    sensitive << r.b_sidx;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -100,13 +96,9 @@ accel_axictrl_bus0::~accel_axictrl_bus0() {
 void accel_axictrl_bus0::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, r.w_select, pn + ".r.w_select");
+        sc_trace(o_vcd, r.w_active, pn + ".r.w_active");
         sc_trace(o_vcd, r.r_def_valid, pn + ".r.r_def_valid");
-        sc_trace(o_vcd, r.r_midx, pn + ".r.r_midx");
-        sc_trace(o_vcd, r.r_sidx, pn + ".r.r_sidx");
-        sc_trace(o_vcd, r.w_midx, pn + ".r.w_midx");
-        sc_trace(o_vcd, r.w_sidx, pn + ".r.w_sidx");
-        sc_trace(o_vcd, r.b_midx, pn + ".r.b_midx");
-        sc_trace(o_vcd, r.b_sidx, pn + ".r.b_sidx");
     }
 
     if (xdef0) {
@@ -115,204 +107,164 @@ void accel_axictrl_bus0::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)
 }
 
 void accel_axictrl_bus0::comb() {
-    axi4_master_in_type vmsti[(CFG_BUS0_XMST_TOTAL + 1)];
-    axi4_master_out_type vmsto[(CFG_BUS0_XMST_TOTAL + 1)];
-    axi4_slave_in_type vslvi[(CFG_BUS0_XSLV_TOTAL + 1)];
-    axi4_slave_out_type vslvo[(CFG_BUS0_XSLV_TOTAL + 1)];
-    mapinfo_type vb_def_mapinfo;
-    int i_ar_midx;
-    int i_aw_midx;
-    int i_ar_sidx;
-    int i_aw_sidx;
-    int i_r_midx;
-    int i_r_sidx;
-    int i_w_midx;
-    int i_w_sidx;
-    int i_b_midx;
-    int i_b_sidx;
-    sc_uint<(CFG_BUS0_XMST_TOTAL + 1)> vb_axi_light;
-    bool v_aw_fire;
-    bool v_ar_fire;
-    bool v_w_fire;
-    bool v_w_busy;
-    bool v_r_fire;
-    bool v_r_busy;
-    bool v_b_fire;
-    bool v_b_busy;
+    axi4_master_in_type vmsti[CFG_BUS0_XMST_TOTAL];
+    axi4_master_out_type vmsto[CFG_BUS0_XMST_TOTAL];
+    axi4_slave_in_type vslvi[CFG_BUS0_XSLV_TOTAL];
+    axi4_slave_out_type vslvo[CFG_BUS0_XSLV_TOTAL];
+    sc_uint<(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_TOTAL)> vb_ar_select;
+    sc_uint<((CFG_BUS0_XMST_TOTAL + 1) * CFG_BUS0_XSLV_TOTAL)> vb_ar_available;
+    sc_uint<CFG_BUS0_XMST_TOTAL> vb_ar_hit;
+    sc_uint<(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_TOTAL)> vb_aw_select;
+    sc_uint<((CFG_BUS0_XMST_TOTAL + 1) * CFG_BUS0_XSLV_TOTAL)> vb_aw_available;
+    sc_uint<CFG_BUS0_XMST_TOTAL> vb_aw_hit;
+    sc_uint<(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_LOG2_TOTAL)> vb_w_select;
+    sc_uint<CFG_BUS0_XMST_TOTAL> vb_w_active;
 
     v = r;
-    for (int i = 0; i < (CFG_BUS0_XMST_TOTAL + 1); i++) {
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
         vmsti[i] = axi4_master_in_none;
     }
-    for (int i = 0; i < (CFG_BUS0_XMST_TOTAL + 1); i++) {
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
         vmsto[i] = axi4_master_out_none;
     }
-    for (int i = 0; i < (CFG_BUS0_XSLV_TOTAL + 1); i++) {
+    for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
         vslvi[i] = axi4_slave_in_none;
     }
-    for (int i = 0; i < (CFG_BUS0_XSLV_TOTAL + 1); i++) {
+    for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
         vslvo[i] = axi4_slave_out_none;
     }
-    vb_def_mapinfo = mapinfo_none;
-    i_ar_midx = 0;
-    i_aw_midx = 0;
-    i_ar_sidx = 0;
-    i_aw_sidx = 0;
-    i_r_midx = 0;
-    i_r_sidx = 0;
-    i_w_midx = 0;
-    i_w_sidx = 0;
-    i_b_midx = 0;
-    i_b_sidx = 0;
-    vb_axi_light = 0;
-    v_aw_fire = 0;
-    v_ar_fire = 0;
-    v_w_fire = 0;
-    v_w_busy = 0;
-    v_r_fire = 0;
-    v_r_busy = 0;
-    v_b_fire = 0;
-    v_b_busy = 0;
+    vb_ar_select = 0;
+    vb_ar_available = ~0ull;
+    vb_ar_hit = 0;
+    vb_aw_select = 0;
+    vb_aw_available = ~0ull;
+    vb_aw_hit = 0;
+    vb_w_select = 0;
+    vb_w_active = 0;
 
-    vb_def_mapinfo.addr_start = 0;
-    vb_def_mapinfo.addr_end = 0;
+
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
         vmsto[i] = i_xmsto[i].read();                       // Cannot read vector item from port in systemc
         vmsti[i] = axi4_master_in_none;
     }
-    // Unmapped default slots:
-    vmsto[CFG_BUS0_XMST_TOTAL] = axi4_master_out_none;
-    vmsti[CFG_BUS0_XMST_TOTAL] = axi4_master_in_none;
 
     for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
         vslvo[i] = i_xslvo[i].read();                       // Cannot read vector item from port in systemc
         vslvi[i] = axi4_slave_in_none;
     }
-    // Unmapped default slots:
-    vslvo[CFG_BUS0_XSLV_TOTAL] = wb_def_xslvo.read();
-    vslvi[CFG_BUS0_XSLV_TOTAL] = axi4_slave_in_none;
+    // Local unmapped slots:
+    vslvo[(CFG_BUS0_XSLV_TOTAL - 1)] = wb_def_xslvo.read();
+
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
+        for (int ii = 0; ii < (CFG_BUS0_XSLV_TOTAL - 1); ii++) {
+            // Connect AR channel
+            if (((CFG_BUS0_MAP[ii].addr_start >> 12) <= vmsto[i].ar_bits.addr((CFG_SYSBUS_ADDR_BITS - 1), 12))
+                    && (vmsto[i].ar_bits.addr((CFG_SYSBUS_ADDR_BITS - 1), 12) < (CFG_BUS0_MAP[ii].addr_end >> 12))) {
+                vb_ar_hit[i] = vmsto[i].ar_valid;
+                vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] = (vmsto[i].ar_valid && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+                // Update availability bit for the next master and this slave:
+                vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = ((!vmsto[i].ar_valid) && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+            }
+
+            // Connect AW channel
+            if (((CFG_BUS0_MAP[ii].addr_start >> 12) <= vmsto[i].aw_bits.addr((CFG_SYSBUS_ADDR_BITS - 1), 12))
+                    && (vmsto[i].aw_bits.addr((CFG_SYSBUS_ADDR_BITS - 1), 12) < (CFG_BUS0_MAP[ii].addr_end >> 12))) {
+                vb_aw_hit[i] = vmsto[i].aw_valid;
+                vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] = (vmsto[i].aw_valid && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+                // Update availability bit for the next master and this slave:
+                vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = ((!vmsto[i].aw_valid) && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+            }
+        }
+    }
+
+    // access to unmapped slave:
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
+        if ((vmsto[i].ar_valid == 1) && (vb_ar_hit[i] == 0)) {
+            vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = (vmsto[i].ar_valid && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
+        }
+        vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = ((!vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))])
+                && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
+
+        if ((vmsto[i].aw_valid == 1) && (vb_aw_hit[i] == 0)) {
+            vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = (vmsto[i].aw_valid && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
+        }
+        vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = ((!vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))])
+                && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
+    }
+
+    vb_w_select = r.w_select.read();
+    vb_w_active = r.w_active.read();
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
+        for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) {
+            if (vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] == 1) {
+                vmsti[i].ar_ready = vslvo[ii].ar_ready;
+                vslvi[ii].ar_valid = vmsto[i].ar_valid;
+                vslvi[ii].ar_bits = vmsto[i].ar_bits;
+                vslvi[ii].ar_user = vmsto[i].ar_user;
+                vslvi[ii].ar_id = (vmsto[i].ar_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
+            }
+            if (vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] == 1) {
+                vmsti[i].aw_ready = vslvo[ii].aw_ready;
+                vslvi[ii].aw_valid = vmsto[i].aw_valid;
+                vslvi[ii].aw_bits = vmsto[i].aw_bits;
+                vslvi[ii].aw_user = vmsto[i].aw_user;
+                vslvi[ii].aw_id = (vmsto[i].aw_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
+                if (vslvo[ii].aw_ready == 1) {
+                    // Switch W-channel index to future w-transaction without id
+                    vb_w_select((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)) = static_cast<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>>(ii);
+                    vb_w_active[i] = 1;
+                }
+            }
+        }
+    }
+    v.w_select = vb_w_select;
+
+    // W-channel
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
+        if ((vmsto[i].w_valid == 1) && (r.w_active.read()[i] == 1)) {
+            vmsti[i].w_ready = vslvo[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready;
+            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_valid = vmsto[i].w_valid;
+            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_data = vmsto[i].w_data;
+            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_strb = vmsto[i].w_strb;
+            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_last = vmsto[i].w_last;
+            vslvi[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_user = vmsto[i].w_user;
+            if ((vmsto[i].w_last == 1)
+                    && (vslvo[r.w_select.read()((((i + 1) * CFG_BUS0_XSLV_LOG2_TOTAL) - 1), (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready == 1)) {
+                vb_w_active[i] = 0;
+            }
+        }
+    }
+    v.w_active = vb_w_active;
+
+    // B-channel
+    for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) {
+        if (vslvo[ii].b_valid == 1) {
+            vslvi[ii].b_ready = vmsto[vslvo[ii].b_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].b_ready;
+            vmsti[vslvo[ii].b_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].b_valid = vslvo[ii].b_valid;
+            vmsti[vslvo[ii].b_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].b_resp = vslvo[ii].b_resp;
+            vmsti[vslvo[ii].b_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].b_user = vslvo[ii].b_user;
+            vmsti[vslvo[ii].b_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].b_id = vslvo[ii].b_id((CFG_SYSBUS_ID_BITS - 1), CFG_BUS0_XMST_LOG2_TOTAL);
+        }
+    }
+
+    // R-channel
+    for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) {
+        if (vslvo[ii].r_valid == 1) {
+            vslvi[ii].r_ready = vmsto[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_ready;
+            vmsti[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_valid = vslvo[ii].r_valid;
+            vmsti[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_data = vslvo[ii].r_data;
+            vmsti[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_last = vslvo[ii].r_last;
+            vmsti[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_resp = vslvo[ii].r_resp;
+            vmsti[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_user = vslvo[ii].r_user;
+            vmsti[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_id = vslvo[ii].r_id((CFG_SYSBUS_ID_BITS - 1), CFG_BUS0_XMST_LOG2_TOTAL);
+        }
+    }
 
     w_def_req_ready = 1;
     v.r_def_valid = w_def_req_valid.read();
     w_def_resp_valid = r.r_def_valid.read();
     wb_def_resp_rdata = ~0ull;
     w_def_resp_err = 1;
-    i_ar_midx = CFG_BUS0_XMST_TOTAL;
-    i_aw_midx = CFG_BUS0_XMST_TOTAL;
-    i_ar_sidx = CFG_BUS0_XSLV_TOTAL;
-    i_aw_sidx = CFG_BUS0_XSLV_TOTAL;
-    i_r_midx = r.r_midx.read().to_int();
-    i_r_sidx = r.r_sidx.read().to_int();
-    i_w_midx = r.w_midx.read().to_int();
-    i_w_sidx = r.w_sidx.read().to_int();
-    i_b_midx = r.b_midx.read().to_int();
-    i_b_sidx = r.b_sidx.read().to_int();
-
-    // Select Master bus:
-    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
-        vmsto[i].ar_id = (vmsto[i].ar_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
-        vmsto[i].aw_id = (vmsto[i].aw_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
-        if (vmsto[i].ar_valid == 1) {
-            i_ar_midx = i;
-        }
-        if (vmsto[i].aw_valid == 1) {
-            i_aw_midx = i;
-            vb_axi_light[i] = vmsto[i].w_valid;
-        }
-    }
-
-    // Select Slave interface:
-    for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
-        if (((CFG_BUS0_MAP[i].addr_start >> 12) <= vmsto[i_ar_midx].ar_bits.addr((CFG_SYSBUS_ADDR_BITS - 1), 12))
-                && (vmsto[i_ar_midx].ar_bits.addr((CFG_SYSBUS_ADDR_BITS - 1), 12) < (CFG_BUS0_MAP[i].addr_end >> 12))) {
-            i_ar_sidx = i;
-        }
-        if (((CFG_BUS0_MAP[i].addr_start >> 12) <= vmsto[i_aw_midx].aw_bits.addr((CFG_SYSBUS_ADDR_BITS - 1), 12))
-                && (vmsto[i_aw_midx].aw_bits.addr((CFG_SYSBUS_ADDR_BITS - 1), 12) < (CFG_BUS0_MAP[i].addr_end >> 12))) {
-            i_aw_sidx = i;
-        }
-    }
-
-    // Read Channel:
-    v_ar_fire = (vmsto[i_ar_midx].ar_valid & vslvo[i_ar_sidx].ar_ready);
-    v_r_fire = (vmsto[i_r_midx].r_ready & vslvo[i_r_sidx].r_valid & vslvo[i_r_sidx].r_last);
-    // Write channel:
-    v_aw_fire = (vmsto[i_aw_midx].aw_valid & vslvo[i_aw_sidx].aw_ready);
-    v_w_fire = (vmsto[i_w_midx].w_valid & vmsto[i_w_midx].w_last & vslvo[i_w_sidx].w_ready);
-    // Write confirm channel
-    v_b_fire = (vmsto[i_b_midx].b_ready & vslvo[i_b_sidx].b_valid);
-
-    if ((r.r_sidx.read() != CFG_BUS0_XSLV_TOTAL) && (v_r_fire == 0)) {
-        v_r_busy = 1;
-    } else {
-        v_r_busy = wb_def_xslvo.read().r_valid;
-    }
-
-    if (((r.w_sidx.read() != CFG_BUS0_XSLV_TOTAL) && (v_w_fire == 0))
-            || ((r.b_sidx.read() != CFG_BUS0_XSLV_TOTAL) && (v_b_fire == 0))) {
-        v_w_busy = 1;
-    }
-
-    if ((r.b_sidx.read() != CFG_BUS0_XSLV_TOTAL) && (v_b_fire == 0)) {
-        v_b_busy = 1;
-    }
-
-    if ((v_ar_fire == 1) && (v_r_busy == 0)) {
-        v.r_sidx = i_ar_sidx;
-        v.r_midx = i_ar_midx;
-    } else if (v_r_fire == 1) {
-        v.r_sidx = CFG_BUS0_XSLV_TOTAL;
-        v.r_midx = CFG_BUS0_XMST_TOTAL;
-    }
-
-    if ((v_aw_fire == 1) && (v_w_busy == 0)) {
-        v.w_sidx = i_aw_sidx;
-        v.w_midx = i_aw_midx;
-    } else if ((v_w_fire == 1) && (v_b_busy == 0)) {
-        v.w_sidx = CFG_BUS0_XSLV_TOTAL;
-        v.w_midx = CFG_BUS0_XMST_TOTAL;
-    }
-
-    if ((v_w_fire == 1) && (v_b_busy == 0)) {
-        v.b_sidx = r.w_sidx.read();
-        v.b_midx = r.w_midx.read();
-    } else if (v_b_fire == 1) {
-        v.b_sidx = CFG_BUS0_XSLV_TOTAL;
-        v.b_midx = CFG_BUS0_XMST_TOTAL;
-    }
-
-    vmsti[i_ar_midx].ar_ready = (vslvo[i_ar_sidx].ar_ready & (!v_r_busy));
-    vslvi[i_ar_sidx].ar_valid = (vmsto[i_ar_midx].ar_valid & (!v_r_busy));
-    vslvi[i_ar_sidx].ar_bits = vmsto[i_ar_midx].ar_bits;
-    vslvi[i_ar_sidx].ar_id = vmsto[i_ar_midx].ar_id;
-    vslvi[i_ar_sidx].ar_user = vmsto[i_ar_midx].ar_user;
-
-    vmsti[i_r_midx].r_valid = vslvo[i_r_sidx].r_valid;
-    vmsti[i_r_midx].r_resp = vslvo[i_r_sidx].r_resp;
-    vmsti[i_r_midx].r_data = vslvo[i_r_sidx].r_data;
-    vmsti[i_r_midx].r_last = vslvo[i_r_sidx].r_last;
-    vmsti[i_r_midx].r_id = vslvo[i_r_sidx].r_id((CFG_SYSBUS_USER_BITS - 1), CFG_BUS0_XMST_LOG2_TOTAL);
-    vmsti[i_r_midx].r_user = vslvo[i_r_sidx].r_user;
-    vslvi[i_r_sidx].r_ready = vmsto[i_r_midx].r_ready;
-
-    vmsti[i_aw_midx].aw_ready = (vslvo[i_aw_sidx].aw_ready & (!v_w_busy));
-    vslvi[i_aw_sidx].aw_valid = (vmsto[i_aw_midx].aw_valid & (!v_w_busy));
-    vslvi[i_aw_sidx].aw_bits = vmsto[i_aw_midx].aw_bits;
-    vslvi[i_aw_sidx].aw_id = vmsto[i_aw_midx].aw_id;
-    vslvi[i_aw_sidx].aw_user = vmsto[i_aw_midx].aw_user;
-
-    vmsti[i_w_midx].w_ready = (vslvo[i_w_sidx].w_ready & (!v_b_busy));
-    vslvi[i_w_sidx].w_valid = (vmsto[i_w_midx].w_valid & (!v_b_busy));
-    vslvi[i_w_sidx].w_data = vmsto[i_w_midx].w_data;
-    vslvi[i_w_sidx].w_last = vmsto[i_w_midx].w_last;
-    vslvi[i_w_sidx].w_strb = vmsto[i_w_midx].w_strb;
-    vslvi[i_w_sidx].w_user = vmsto[i_w_midx].w_user;
-
-    vmsti[i_b_midx].b_valid = vslvo[i_b_sidx].b_valid;
-    vmsti[i_b_midx].b_resp = vslvo[i_b_sidx].b_resp;
-    vmsti[i_b_midx].b_id = vslvo[i_b_sidx].b_id((CFG_SYSBUS_USER_BITS - 1), CFG_BUS0_XMST_LOG2_TOTAL);
-    vmsti[i_b_midx].b_user = vslvo[i_b_sidx].b_user;
-    vslvi[i_b_sidx].b_ready = vmsto[i_b_midx].b_ready;
 
     if ((!async_reset_) && (i_nrst.read() == 0)) {
         accel_axictrl_bus0_r_reset(v);
@@ -325,8 +277,8 @@ void accel_axictrl_bus0::comb() {
         o_xslvi[i] = vslvi[i];
         o_mapinfo[i] = CFG_BUS0_MAP[i];
     }
-    wb_def_xslvi = vslvi[CFG_BUS0_XSLV_TOTAL];
-    wb_def_mapinfo = vb_def_mapinfo;
+    wb_def_xslvi = vslvi[(CFG_BUS0_XSLV_TOTAL - 1)];
+    wb_def_mapinfo = CFG_BUS0_MAP[(CFG_BUS0_XSLV_TOTAL - 1)];
 }
 
 void accel_axictrl_bus0::registers() {

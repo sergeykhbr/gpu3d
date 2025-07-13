@@ -92,6 +92,8 @@ axi_slv::axi_slv(sc_module_name name,
     sensitive << r.req_last_buf;
     sensitive << r.req_wdata_buf;
     sensitive << r.req_wstrb_buf;
+    sensitive << r.requested;
+    sensitive << r.resp_last;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -152,6 +154,8 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_last_buf, pn + ".r.req_last_buf");
         sc_trace(o_vcd, r.req_wdata_buf, pn + ".r.req_wdata_buf");
         sc_trace(o_vcd, r.req_wstrb_buf, pn + ".r.req_wstrb_buf");
+        sc_trace(o_vcd, r.requested, pn + ".r.requested");
+        sc_trace(o_vcd, r.resp_last, pn + ".r.resp_last");
     }
 
 }
@@ -159,7 +163,7 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void axi_slv::comb() {
     sc_uint<12> vb_ar_addr_next;
     sc_uint<12> vb_aw_addr_next;
-    sc_uint<9> vb_ar_len_next;
+    sc_uint<8> vb_ar_len_next;
     dev_config_type vcfg;
     axi4_slave_out_type vxslvo;
 
@@ -236,20 +240,23 @@ void axi_slv::comb() {
     }
     if ((r.req_valid.read() & i_req_ready.read()) == 1) {
         v.req_valid = 0;
+        v.requested = 1;
+    } else if (i_resp_valid.read() == 1) {
+        v.requested = 0;
     }
 
     // Reading channel (write first):
     switch (r.rstate.read()) {
     case State_r_idle:
         v.ar_addr = (i_xslvi.read().ar_bits.addr - i_mapinfo.read().addr_start);
-        v.ar_len = ((0, i_xslvi.read().ar_bits.len) + 1);
+        v.ar_len = i_xslvi.read().ar_bits.len;
         v.ar_burst = i_xslvi.read().ar_bits.burst;
         v.ar_bytes = XSizeToBytes(i_xslvi.read().ar_bits.size);
         v.ar_last = (!i_xslvi.read().ar_bits.len.or_reduce());
         v.ar_id = i_xslvi.read().ar_id;
         v.ar_user = i_xslvi.read().ar_user;
         if ((r.ar_ready.read() == 1) && (i_xslvi.read().ar_valid == 1)) {
-            if ((i_xslvi.read().aw_valid == 1) || (r.wstate.read().or_reduce() == 1)) {
+            if (((i_xslvi.read().aw_valid & r.aw_ready.read()) == 1) || (r.wstate.read().or_reduce() == 1)) {
                 v.rstate = State_r_wait_writing;
             } else {
                 v.rstate = State_r_addr;
@@ -264,74 +271,114 @@ void axi_slv::comb() {
         }
         break;
     case State_r_addr:
-        v.req_valid = i_xslvi.read().r_ready;
-        if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1)) {
-            if (r.ar_len.read() > 0x001) {
+        if (i_req_ready.read() == 1) {
+            v.resp_last = r.req_last.read();
+            if (r.req_last.read() == 1) {
+                v.rstate = State_r_resp_last;
+            } else {
+                v.rstate = State_r_pipe;
                 v.ar_len = (r.ar_len.read() - 1);
                 v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_ar_addr_next);
-                v.req_last = (!vb_ar_len_next(8, 1).or_reduce());
-                v.rstate = State_r_data;
-            } else {
-                v.req_valid = 0;
-                v.ar_len = 0;
-                v.ar_last = 1;
-                v.rstate = State_r_last;
+                v.req_last = (!vb_ar_len_next.or_reduce());
+                v.req_valid = 1;
             }
         }
         break;
-    case State_r_data:
-        v.req_valid = i_xslvi.read().r_ready;
-        if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1)) {
-            if (r.ar_len.read() > 0x001) {
-                v.ar_len = vb_ar_len_next;
-                v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_ar_addr_next);
-                v.req_last = (!vb_ar_len_next(8, 1).or_reduce());
-            } else {
-                v.ar_len = 0;
-                v.req_last = 1;
+    case State_r_pipe:
+        //   r_ready  | resp_valid | req_ready |
+        //      0     |     0      |     0     | do nothing
+        //      0     |     0      |     1     | --- cannot be second ack without resp --
+        //      0     |     1      |     0     | r_wait_accept
+        //      0     |     1      |     1     | r_wait_accept (-> bufferred)
+        //      1     |     0      |     0     | do nothing
+        //      1     |     0      |     1     | --- cannot be second ack without resp --
+        //      1     |     1      |     0     | r_addr
+        //      1     |     1      |     1     | stay here, latch new data
+        if (i_resp_valid.read() == 1) {
+            v.r_valid = 1;
+            v.r_last = 0;
+            v.r_data = i_resp_rdata.read();
+            v.r_err = i_resp_err.read();
+            if ((i_xslvi.read().r_ready == 1) && (i_req_ready.read() == 0)) {
+                v.rstate = State_r_addr;
+            } else if (i_xslvi.read().r_ready == 0) {
+                v.rstate = State_r_wait_accept;
             }
         }
-        if ((r.req_valid.read() & r.req_last.read() & i_req_ready.read()) == 1) {
-            v.rstate = State_r_last;
-            v.req_valid = 0;
+        if (i_req_ready.read() == 1) {
+            v.resp_last = r.req_last.read();
+            if (r.req_last.read() == 1) {
+                v.rstate = State_r_resp_last;
+            } else if (i_xslvi.read().r_ready == 0) {
+                // Goto r_wait_accept without new request
+            } else {
+                v.ar_len = (r.ar_len.read() - 1);
+                v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_ar_addr_next);
+                v.req_last = (!vb_ar_len_next.or_reduce());
+                v.req_valid = 1;
+            }
         }
+        break;
+    case State_r_resp_last:
         if (i_resp_valid.read() == 1) {
             if ((r.r_valid.read() == 1) && (i_xslvi.read().r_ready == 0)) {
-                // We already requested the last value but previous was not accepted yet
-                v.r_data_buf = i_resp_rdata.read();
-                v.r_err_buf = i_resp_err.read();
-                v.r_last_buf = (r.req_valid.read() & r.req_last.read() & i_req_ready.read());
-                v.rstate = State_r_buf;
-            } else {
-                v.r_valid = 1;
-                v.r_last = 0;
-                v.r_data = i_resp_rdata.read();
-                v.r_err = i_resp_err.read();
-            }
-        }
-        break;
-    case State_r_last:
-        if (i_resp_valid.read() == 1) {
-            if ((r.r_valid.read() == 1) && (r.r_last.read() == 1)) {
-                // Ingore this response, because it means i_resp_valid is always=1
-            } else if ((r.r_valid.read() == 1) && (i_xslvi.read().r_ready == 0)) {
-                // We already requested the last value but previous (not last) was not accepted yet
                 v.r_data_buf = i_resp_rdata.read();
                 v.r_err_buf = i_resp_err.read();
                 v.r_last_buf = 1;
                 v.rstate = State_r_buf;
             } else {
                 v.r_valid = 1;
-                v.r_last = 1;
                 v.r_data = i_resp_rdata.read();
                 v.r_err = i_resp_err.read();
+                v.r_last = 1;
+                v.rstate = State_r_wait_accept;
             }
         }
-        if ((r.r_valid.read() == 1) && (r.r_last.read() == 1) && (i_xslvi.read().r_ready == 1)) {
-            v.ar_ready = 1;
-            v.r_last = 0;
-            v.r_valid = 0;                                  // We need it in a case of i_resp_valid is always HIGH
-            v.rstate = State_r_idle;
+        break;
+    case State_r_wait_accept:
+        if (i_xslvi.read().r_ready == 1) {
+            if (r.r_last.read() == 1) {
+                v.rstate = State_r_idle;
+                v.r_last = 0;
+            } else if (i_resp_valid.read() == 1) {
+                v.r_valid = 1;
+                v.r_data = i_resp_rdata.read();
+                v.r_err = i_resp_err.read();
+                v.r_last = r.resp_last.read();
+            } else if ((r.req_valid.read() == 1) && (i_req_ready.read() == 0)) {
+                // the last request still wasn't accepted since pipe stage
+                v.rstate = State_r_addr;
+            } else if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1)) {
+                if (r.req_last.read() == 1) {
+                    v.rstate = State_r_resp_last;
+                } else {
+                    v.rstate = State_r_pipe;
+                }
+            } else if (r.requested.read() == 1) {
+                // The latest one was already requested and request was accepeted
+                // Just wait i_resp_valid here
+            } else {
+                v.rstate = State_r_addr;
+                v.ar_len = (r.ar_len.read() - 1);
+                v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_ar_addr_next);
+                v.req_last = (!vb_ar_len_next.or_reduce());
+                v.req_valid = 1;
+            }
+        } else if ((r.r_valid.read() == 1) && (r.r_last.read() == 0) && (i_resp_valid.read() == 1)) {
+            // We already requested the last value but previous was not accepted yet
+            v.r_data_buf = i_resp_rdata.read();
+            v.r_err_buf = i_resp_err.read();
+            v.r_last_buf = r.resp_last.read();
+            v.rstate = State_r_buf;
+        } else if ((r.r_last.read() == 0) && (i_resp_valid.read() == 1)) {
+            // We recieve new data after some pause
+            v.r_data = i_resp_rdata.read();
+            v.r_err = i_resp_err.read();
+            v.r_last = r.resp_last.read();
+            v.r_valid = 1;
+        }
+        if (i_req_ready.read() == 1) {
+            v.resp_last = r.req_last.read();
         }
         break;
     case State_r_buf:
@@ -340,11 +387,7 @@ void axi_slv::comb() {
             v.r_last = r.r_last_buf.read();
             v.r_data = r.r_data_buf.read();
             v.r_err = r.r_err_buf.read();
-            if (r.r_last_buf.read() == 1) {
-                v.rstate = State_r_last;
-            } else {
-                v.rstate = State_r_data;
-            }
+            v.rstate = State_r_wait_accept;
         }
         break;
     case State_r_wait_writing:
@@ -367,7 +410,6 @@ void axi_slv::comb() {
     // Writing channel:
     switch (r.wstate.read()) {
     case State_w_idle:
-        v.w_ready = 1;
         v.aw_addr = (i_xslvi.read().aw_bits.addr - i_mapinfo.read().addr_start);
         v.aw_burst = i_xslvi.read().aw_bits.burst;
         v.aw_bytes = XSizeToBytes(i_xslvi.read().aw_bits.size);
@@ -375,28 +417,11 @@ void axi_slv::comb() {
         v.aw_id = i_xslvi.read().aw_id;
         v.aw_user = i_xslvi.read().aw_user;
         if ((r.aw_ready.read() == 1) && (i_xslvi.read().aw_valid == 1)) {
-            v.req_wdata = i_xslvi.read().w_data;
-            v.req_wstrb = i_xslvi.read().w_strb;
-            if ((r.w_ready.read() == 1) && (i_xslvi.read().w_valid == 1)) {
-                // AXI Light support:
-                v.wstate = State_w_pipe;
-                v.w_last = i_xslvi.read().w_last;
-                if (r.rstate.read().or_reduce() == 1) {
-                    // Postpone writing
-                    v.w_ready = 0;
-                    v.wstate = State_w_wait_reading_light;
-                } else {
-                    // Start writing now
-                    v.req_addr = (i_xslvi.read().aw_bits.addr - i_mapinfo.read().addr_start);
-                    v.req_bytes = XSizeToBytes(i_xslvi.read().aw_bits.size);
-                    v.req_last = i_xslvi.read().w_last;
-                    v.req_write = 1;
-                    v.req_valid = 1;
-                    v.w_ready = i_req_ready.read();
-                }
-            } else if (r.rstate.read().or_reduce() == 1) {
+            // Warning: Do not try to support AXI Light here!!
+            //     It is Devil that overcomplicates your inteconnect and stuck your system
+            //     when 2 masters (AXI and AXI Light) will try to write into the same slave.
+            if (r.rstate.read().or_reduce() == 1) {
                 v.wstate = State_w_wait_reading;
-                v.w_ready = 0;
             } else {
                 v.req_addr = (i_xslvi.read().aw_bits.addr - i_mapinfo.read().addr_start);
                 v.req_bytes = XSizeToBytes(i_xslvi.read().aw_bits.size);
@@ -437,7 +462,6 @@ void axi_slv::comb() {
             }
         }
         if ((r.req_valid.read() == 1) && (r.req_last.read() == 1) && (i_req_ready.read() == 1)) {
-            v.req_last = 0;
             v.wstate = State_w_resp;
         }
         if ((i_resp_valid.read() == 1) && (i_xslvi.read().w_valid == 0) && (r.req_valid.read() == 0)) {
@@ -474,23 +498,11 @@ void axi_slv::comb() {
             v.wstate = State_w_req;
         }
         break;
-    case State_w_wait_reading_light:
-        // Not ready to accept new data before writing the last one
-        if ((r.rstate.read().or_reduce() == 0) || ((r.r_valid.read() & r.r_last.read() & i_xslvi.read().r_ready) == 1)) {
-            v.req_valid = 1;
-            v.req_write = 1;
-            v.req_addr = r.aw_addr.read();
-            v.req_bytes = r.aw_bytes.read();
-            v.req_last = r.w_last.read();
-            v.wstate = State_w_pipe;
-        }
-        break;
     case State_b:
         if ((r.b_valid.read() == 1) && (i_xslvi.read().b_ready == 1)) {
             v.b_valid = 0;
             v.b_err = 0;
             v.aw_ready = 1;
-            v.w_ready = 1;                                  // AXI light
             v.wstate = State_w_idle;
         }
         break;

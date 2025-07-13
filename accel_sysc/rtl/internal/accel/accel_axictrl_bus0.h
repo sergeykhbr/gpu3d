@@ -47,28 +47,20 @@ SC_MODULE(accel_axictrl_bus0) {
     bool async_reset_;
 
     struct accel_axictrl_bus0_registers {
+        sc_signal<sc_uint<(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_LOG2_TOTAL)>> w_select;
+        sc_signal<sc_uint<CFG_BUS0_XMST_TOTAL>> w_active;
         sc_signal<bool> r_def_valid;
-        sc_signal<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>> r_midx;
-        sc_signal<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>> r_sidx;
-        sc_signal<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>> w_midx;
-        sc_signal<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>> w_sidx;
-        sc_signal<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>> b_midx;
-        sc_signal<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>> b_sidx;
     };
 
     void accel_axictrl_bus0_r_reset(accel_axictrl_bus0_registers& iv) {
+        iv.w_select = 0;
+        iv.w_active = 0;
         iv.r_def_valid = 0;
-        iv.r_midx = CFG_BUS0_XMST_TOTAL;
-        iv.r_sidx = CFG_BUS0_XSLV_TOTAL;
-        iv.w_midx = CFG_BUS0_XMST_TOTAL;
-        iv.w_sidx = CFG_BUS0_XSLV_TOTAL;
-        iv.b_midx = CFG_BUS0_XMST_TOTAL;
-        iv.b_sidx = CFG_BUS0_XSLV_TOTAL;
     }
 
-    sc_signal<mapinfo_type> wb_def_mapinfo;
     sc_signal<axi4_slave_in_type> wb_def_xslvi;
     sc_signal<axi4_slave_out_type> wb_def_xslvo;
+    sc_signal<mapinfo_type> wb_def_mapinfo;
     sc_signal<bool> w_def_req_valid;
     sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> wb_def_req_addr;
     sc_signal<sc_uint<8>> wb_def_req_size;

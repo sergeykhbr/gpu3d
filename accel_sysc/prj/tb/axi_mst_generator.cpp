@@ -23,7 +23,8 @@ axi_mst_generator::axi_mst_generator(sc_module_name name,
                                      sc_uint<48> req_bar,
                                      sc_uint<4> unique_id,
                                      sc_uint<64> read_compare,
-                                     bool read_only)
+                                     bool read_only,
+                                     bool burst_disable)
     : sc_module(name),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
@@ -39,6 +40,7 @@ axi_mst_generator::axi_mst_generator(sc_module_name name,
     unique_id_ = unique_id;
     read_compare_ = read_compare;
     read_only_ = read_only;
+    burst_disable_ = burst_disable;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -180,8 +182,13 @@ void axi_mst_generator::comb() {
             v.w_wait_states = i_test_selector.read()(4, 2);
             v.b_wait_states = i_test_selector.read()(6, 5);
             v.r_wait_states = i_test_selector.read()(9, 7);
-            v.aw_xlen = (0, i_test_selector.read()(11, 10));
-            v.ar_xlen = (0, i_test_selector.read()(11, 10));
+            if (burst_disable_ == 0) {
+                v.aw_xlen = (0, i_test_selector.read()(11, 10));
+                v.ar_xlen = (0, i_test_selector.read()(11, 10));
+            } else {
+                v.aw_xlen = 0;
+                v.ar_xlen = 0;
+            }
             if ((i_test_selector.read()(11, 10).or_reduce() == 0) && (i_test_selector.read()(4, 2) == 7)) {
                 v.w_use_axi_light = 1;
             } else {
@@ -228,6 +235,7 @@ void axi_mst_generator::comb() {
             v.w_strb = 0xFF;
             if ((r.w_valid.read() == 1) && (i_xmst.read().w_ready == 1)) {
                 v.w_valid = 0;
+                v.w_last = 0;
                 if (r.b_wait_states.read().or_reduce() == 0) {
                     v.b_wait_cnt = 0;
                     v.b_ready = 1;
