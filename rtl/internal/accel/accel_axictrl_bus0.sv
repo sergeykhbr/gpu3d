@@ -136,6 +136,8 @@ begin: comb_proc
                 vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] = (vmsto[i].ar_valid && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
                 // Update availability bit for the next master and this slave:
                 vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = ((~vmsto[i].ar_valid) && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+            end else begin
+                vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)];
             end
 
             // Connect AW channel
@@ -145,6 +147,8 @@ begin: comb_proc
                 vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] = (vmsto[i].aw_valid && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
                 // Update availability bit for the next master and this slave:
                 vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = ((~vmsto[i].aw_valid) && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+            end else begin
+                vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)];
             end
         end
     end

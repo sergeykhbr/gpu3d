@@ -164,6 +164,8 @@ void accel_axictrl_bus0::comb() {
                 vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] = (vmsto[i].ar_valid && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
                 // Update availability bit for the next master and this slave:
                 vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = ((!vmsto[i].ar_valid) && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+            } else {
+                vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)];
             }
 
             // Connect AW channel
@@ -173,6 +175,8 @@ void accel_axictrl_bus0::comb() {
                 vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] = (vmsto[i].aw_valid && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
                 // Update availability bit for the next master and this slave:
                 vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = ((!vmsto[i].aw_valid) && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+            } else {
+                vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)];
             }
         }
     }

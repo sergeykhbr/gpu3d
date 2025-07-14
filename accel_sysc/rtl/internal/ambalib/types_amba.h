@@ -22,7 +22,7 @@ namespace debugger {
 static const int CFG_SYSBUS_ADDR_BITS = 48;
 static const int CFG_LOG2_SYSBUS_DATA_BYTES = 3;
 static const int CFG_SYSBUS_ID_BITS = 5;
-static const int CFG_SYSBUS_USER_BITS = 3;                  // 1 bit per device + 2 bits axictrl (4 masters)
+static const int CFG_SYSBUS_USER_BITS = 3;
 
 static const int CFG_SYSBUS_DATA_BYTES = (1 << CFG_LOG2_SYSBUS_DATA_BYTES);
 static const int CFG_SYSBUS_DATA_BITS = (8 * CFG_SYSBUS_DATA_BYTES);
