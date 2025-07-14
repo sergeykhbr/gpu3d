@@ -25,7 +25,7 @@ namespace debugger {
 
 SC_MODULE(accel_axi2apb_bus1) {
  public:
-    sc_in<bool> i_clk;                                      // CPU clock
+    sc_in<bool> i_clk;                                      // APB clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<mapinfo_type> i_mapinfo;                          // Base address information from the interconnect port
     sc_out<dev_config_type> o_cfg;                          // Slave config descriptor

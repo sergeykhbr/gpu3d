@@ -20,7 +20,7 @@ module accel_axi2apb_bus1 #(
     parameter logic async_reset = 1'b0
 )
 (
-    input logic i_clk,                                      // CPU clock
+    input logic i_clk,                                      // APB clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // Base address information from the interconnect port
     output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor

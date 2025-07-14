@@ -25,7 +25,7 @@ namespace debugger {
 
 SC_MODULE(accel_axictrl_bus0) {
  public:
-    sc_in<bool> i_clk;                                      // CPU clock
+    sc_in<bool> i_clk;                                      // Bus clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_out<dev_config_type> o_cfg;                          // Slave config descriptor
     sc_vector<sc_in<axi4_master_out_type>> i_xmsto;         // AXI4 masters output vector

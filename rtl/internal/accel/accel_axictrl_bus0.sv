@@ -20,7 +20,7 @@ module accel_axictrl_bus0 #(
     parameter logic async_reset = 1'b0
 )
 (
-    input logic i_clk,                                      // CPU clock
+    input logic i_clk,                                      // Bus clock
     input logic i_nrst,                                     // Reset: active LOW
     output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor
     input types_accel_bus0_pkg::bus0_xmst_out_vector i_xmsto,// AXI4 masters output vector
