@@ -26,8 +26,8 @@ module pcie_dma #(
     // PCIE EP - DMA engine interface
     input logic [15:0] i_pcie_completer_id,                 // Bus, Device, Function
     output logic [3:0] o_dma_state,                         // State machine debug output, connected to APB controller
-    input types_dma_pkg::pcie_dma64_in_type i_pcie_dmai,    // PCIE-EP to system DMA requests
-    output types_dma_pkg::pcie_dma64_out_type o_pcie_dmao,  // System DMA responds to PCIE EP
+    input types_pcie_dma_pkg::pcie_dma64_in_type i_pcie_dmai,// PCIE-EP to system DMA requests
+    output types_pcie_dma_pkg::pcie_dma64_out_type o_pcie_dmao,// System DMA responds to PCIE EP
     // DMA engine interface - System on Chip interface
     output types_pnp_pkg::dev_config_type o_xmst_cfg,       // PCIE DMA master interface descriptor
     input types_amba_pkg::axi4_master_in_type i_xmsti,
@@ -37,9 +37,9 @@ module pcie_dma #(
     output logic [63:0] o_dbg_payload
 );
 
-import types_dma_pkg::*;
 import types_pnp_pkg::*;
 import types_amba_pkg::*;
+import types_pcie_dma_pkg::*;
 import pcie_cfg_pkg::*;
 import pcie_dma_pkg::*;
 

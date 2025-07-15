@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package types_dma_pkg;
+package types_pcie_dma_pkg;
 
 
 
@@ -58,4 +58,4 @@ const pcie_dma64_in_type pcie_dma64_in_none = '{
     1'b0                                // valid
 };
 
-endpackage: types_dma_pkg
+endpackage: types_pcie_dma_pkg

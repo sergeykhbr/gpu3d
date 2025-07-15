@@ -19,7 +19,7 @@ import types_accel_bus0_pkg::*;
 import types_accel_bus1_pkg::*;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
-import types_dma_pkg::*;
+import types_pcie_dma_pkg::*;
 import river_cfg_pkg::*;
 import target_cfg_pkg::*;
 

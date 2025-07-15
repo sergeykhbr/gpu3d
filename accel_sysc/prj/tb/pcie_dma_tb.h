@@ -16,9 +16,9 @@
 #pragma once
 
 #include <systemc.h>
-#include "../../rtl/internal/ambalib/types_dma.h"
 #include "../../rtl/internal/ambalib/types_pnp.h"
 #include "../../rtl/internal/ambalib/types_amba.h"
+#include "../../rtl/internal/pcie_dma/types_pcie_dma.h"
 #include "../../rtl/sim/pll/pll_generic.h"
 #include "../../rtl/internal/ambalib/axi_slv.h"
 #include "../../rtl/internal/pcie_dma/pcie_dma.h"

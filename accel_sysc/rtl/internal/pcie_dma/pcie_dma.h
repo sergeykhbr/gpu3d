@@ -16,9 +16,9 @@
 #pragma once
 
 #include <systemc.h>
-#include "../ambalib/types_dma.h"
 #include "../ambalib/types_pnp.h"
 #include "../ambalib/types_amba.h"
+#include "types_pcie_dma.h"
 #include "pcie_cfg.h"
 #include "../cdc/cdc_afifo.h"
 #include "pcie_io_ep.h"

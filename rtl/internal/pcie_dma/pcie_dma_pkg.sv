@@ -15,9 +15,9 @@
 // 
 package pcie_dma_pkg;
 
-import types_dma_pkg::*;
 import types_pnp_pkg::*;
 import types_amba_pkg::*;
+import types_pcie_dma_pkg::*;
 import pcie_cfg_pkg::*;
 
 // 

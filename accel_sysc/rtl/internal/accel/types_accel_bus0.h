@@ -58,8 +58,8 @@ static const int CFG_BUS0_XSLV_DDR = 5;
 static const int CFG_BUS0_XSLV_UNMAP = 6;
 // Total number of the slaves devices.
 static const int CFG_BUS0_XSLV_TOTAL = 7;
-// Necessary bus width to store index + 1.
-static const int CFG_BUS0_XSLV_LOG2_TOTAL = 3;              // $clog2(CFG_BUS0_XSLV_TOTAL + 1)
+// Necessary bus width to store index.
+static const int CFG_BUS0_XSLV_LOG2_TOTAL = 3;              // $clog2(CFG_BUS0_XSLV_TOTAL)
 
 typedef sc_vector<sc_signal<axi4_master_in_type>> bus0_xmst_in_vector;
 typedef sc_vector<sc_signal<axi4_master_out_type>> bus0_xmst_out_vector;
