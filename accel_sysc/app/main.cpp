@@ -55,7 +55,7 @@ int sc_main(int argc, char *argv[]) {
     units = SC_MS;
     asic_accel_top_tb *tb = new asic_accel_top_tb("tb");
 #endif
-    //tb->generateVCD(0, vcd_);
+    tb->generateVCD(0, vcd_);
 
     sc_start(10, SC_NS);
     std::cout << "@" << sc_time_stamp()
