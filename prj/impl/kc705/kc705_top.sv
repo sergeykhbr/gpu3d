@@ -81,7 +81,7 @@ module kc705_top #(
 
   import types_amba_pkg::*;
   import types_pnp_pkg::*;
-  import types_dma_pkg::*;
+  import types_pcie_dma_pkg::*;
 
   logic             ib_rst;
   logic             ib_clk_tcxo;
