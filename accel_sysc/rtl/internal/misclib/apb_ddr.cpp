@@ -22,15 +22,19 @@ namespace debugger {
 apb_ddr::apb_ddr(sc_module_name name,
                  bool async_reset)
     : sc_module(name),
-    i_clk("i_clk"),
-    i_nrst("i_nrst"),
+    i_apb_nrst("i_apb_nrst"),
+    i_apb_clk("i_apb_clk"),
+    i_ddr_nrst("i_ddr_nrst"),
+    i_ddr_clk("i_ddr_clk"),
     i_mapinfo("i_mapinfo"),
     o_cfg("o_cfg"),
     i_apbi("i_apbi"),
     o_apbo("o_apbo"),
-    i_pll_locked("i_pll_locked"),
     i_init_calib_done("i_init_calib_done"),
     i_device_temp("i_device_temp"),
+    o_sr_req("o_sr_req"),
+    o_ref_req("o_ref_req"),
+    o_zq_req("o_zq_req"),
     i_sr_active("i_sr_active"),
     i_ref_ack("i_ref_ack"),
     i_zq_ack("i_zq_ack") {
@@ -42,8 +46,8 @@ apb_ddr::apb_ddr(sc_module_name name,
                          async_reset,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_DDRCTRL);
-    pslv0->i_clk(i_clk);
-    pslv0->i_nrst(i_nrst);
+    pslv0->i_clk(i_apb_clk);
+    pslv0->i_nrst(i_apb_nrst);
     pslv0->i_mapinfo(i_mapinfo);
     pslv0->o_cfg(o_cfg);
     pslv0->i_apbi(i_apbi);
@@ -57,10 +61,12 @@ apb_ddr::apb_ddr(sc_module_name name,
     pslv0->i_resp_err(r.resp_err);
 
     SC_METHOD(comb);
-    sensitive << i_nrst;
+    sensitive << i_apb_nrst;
+    sensitive << i_apb_clk;
+    sensitive << i_ddr_nrst;
+    sensitive << i_ddr_clk;
     sensitive << i_mapinfo;
     sensitive << i_apbi;
-    sensitive << i_pll_locked;
     sensitive << i_init_calib_done;
     sensitive << i_device_temp;
     sensitive << i_sr_active;
@@ -81,8 +87,8 @@ apb_ddr::apb_ddr(sc_module_name name,
     sensitive << r.resp_err;
 
     SC_METHOD(registers);
-    sensitive << i_nrst;
-    sensitive << i_clk.pos();
+    sensitive << i_apb_nrst;
+    sensitive << i_apb_clk.pos();
 }
 
 apb_ddr::~apb_ddr() {
@@ -94,11 +100,17 @@ apb_ddr::~apb_ddr() {
 void apb_ddr::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, i_apb_nrst, i_apb_nrst.name());
+        sc_trace(o_vcd, i_apb_clk, i_apb_clk.name());
+        sc_trace(o_vcd, i_ddr_nrst, i_ddr_nrst.name());
+        sc_trace(o_vcd, i_ddr_clk, i_ddr_clk.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
-        sc_trace(o_vcd, i_pll_locked, i_pll_locked.name());
         sc_trace(o_vcd, i_init_calib_done, i_init_calib_done.name());
         sc_trace(o_vcd, i_device_temp, i_device_temp.name());
+        sc_trace(o_vcd, o_sr_req, o_sr_req.name());
+        sc_trace(o_vcd, o_ref_req, o_ref_req.name());
+        sc_trace(o_vcd, o_zq_req, o_zq_req.name());
         sc_trace(o_vcd, i_sr_active, i_sr_active.name());
         sc_trace(o_vcd, i_ref_ack, i_ref_ack.name());
         sc_trace(o_vcd, i_zq_ack, i_zq_ack.name());
@@ -124,7 +136,7 @@ void apb_ddr::comb() {
     v = r;
     vb_rdata = 0;
 
-    v.pll_locked = i_pll_locked.read();
+    v.pll_locked = i_ddr_nrst.read();
     v.init_calib_done = i_init_calib_done.read();
     v.device_temp = i_device_temp.read();
     v.sr_active = i_sr_active.read();
@@ -153,13 +165,17 @@ void apb_ddr::comb() {
     v.resp_valid = w_req_valid.read();
     v.resp_rdata = vb_rdata;
 
-    if ((!async_reset_) && (i_nrst.read() == 0)) {
+    if ((!async_reset_) && (i_apb_nrst.read() == 0)) {
         apb_ddr_r_reset(v);
     }
+
+    o_sr_req = 0;
+    o_ref_req = 0;
+    o_zq_req = 0;
 }
 
 void apb_ddr::registers() {
-    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+    if ((async_reset_ == 1) && (i_apb_nrst.read() == 0)) {
         apb_ddr_r_reset(r);
     } else {
         r = v;

@@ -66,6 +66,22 @@ SC_MODULE(asic_accel_top_tb) {
     sc_signal<bool> w_hdmi_spdif;
     sc_signal<bool> w_hdmi_spdif_out;
     sc_signal<bool> w_hdmi_int;
+    // DDR PHY pins:
+    sc_signal<bool> w_ddr3_reset_n;
+    sc_signal<bool> w_ddr3_ck_n;
+    sc_signal<bool> w_ddr3_ck_p;
+    sc_signal<bool> w_ddr3_cke;
+    sc_signal<bool> w_ddr3_cs_n;
+    sc_signal<bool> w_ddr3_ras_n;
+    sc_signal<bool> w_ddr3_cas_n;
+    sc_signal<bool> w_ddr3_we_n;
+    sc_signal<sc_uint<8>> wb_ddr3_dm;
+    sc_signal<sc_uint<3>> wb_ddr3_ba;
+    sc_signal<sc_uint<14>> wb_ddr3_addr;
+    sc_signal<sc_uint<64>> wb_ddr3_dq;
+    sc_signal<sc_uint<8>> wb_ddr3_dqs_n;
+    sc_signal<sc_uint<8>> wb_ddr3_dqs_p;
+    sc_signal<bool> w_ddr3_odt;
     sc_signal<bool> w_bufo_i2c0_sda;
     sc_signal<bool> w_vipo_i2c0_sda;
     sc_signal<bool> w_vipo_i2c0_sda_dir;

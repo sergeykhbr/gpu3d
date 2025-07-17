@@ -92,6 +92,21 @@ asic_accel_top_tb::asic_accel_top_tb(sc_module_name name)
     tt->o_hdmi_spdif(w_hdmi_spdif);
     tt->i_hdmi_spdif_out(w_hdmi_spdif_out);
     tt->i_hdmi_int(w_hdmi_int);
+    tt->o_ddr3_reset_n(w_ddr3_reset_n);
+    tt->o_ddr3_ck_n(w_ddr3_ck_n);
+    tt->o_ddr3_ck_p(w_ddr3_ck_p);
+    tt->o_ddr3_cke(w_ddr3_cke);
+    tt->o_ddr3_cs_n(w_ddr3_cs_n);
+    tt->o_ddr3_ras_n(w_ddr3_ras_n);
+    tt->o_ddr3_cas_n(w_ddr3_cas_n);
+    tt->o_ddr3_we_n(w_ddr3_we_n);
+    tt->o_ddr3_dm(wb_ddr3_dm);
+    tt->o_ddr3_ba(wb_ddr3_ba);
+    tt->o_ddr3_addr(wb_ddr3_addr);
+    tt->io_ddr3_dq(wb_ddr3_dq);
+    tt->io_ddr3_dqs_n(wb_ddr3_dqs_n);
+    tt->io_ddr3_dqs_p(wb_ddr3_dqs_p);
+    tt->o_ddr3_odt(w_ddr3_odt);
 
     SC_THREAD(init);
 

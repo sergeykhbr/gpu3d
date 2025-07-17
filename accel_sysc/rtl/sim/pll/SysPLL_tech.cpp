@@ -25,6 +25,7 @@ SysPLL_tech::SysPLL_tech(sc_module_name name)
     i_clk_tcxo("i_clk_tcxo"),
     o_clk_sys("o_clk_sys"),
     o_clk_ddr("o_clk_ddr"),
+    o_clk_ddr_phy("o_clk_ddr_phy"),
     o_clk_pcie("o_clk_pcie"),
     o_locked("o_locked") {
 
@@ -40,6 +41,7 @@ void SysPLL_tech::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_clk_tcxo, i_clk_tcxo.name());
         sc_trace(o_vcd, o_clk_sys, o_clk_sys.name());
         sc_trace(o_vcd, o_clk_ddr, o_clk_ddr.name());
+        sc_trace(o_vcd, o_clk_ddr_phy, o_clk_ddr_phy.name());
         sc_trace(o_vcd, o_clk_pcie, o_clk_pcie.name());
         sc_trace(o_vcd, o_locked, o_locked.name());
     }

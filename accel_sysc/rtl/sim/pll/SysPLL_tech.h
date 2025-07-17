@@ -24,7 +24,8 @@ SC_MODULE(SysPLL_tech) {
     sc_in<bool> i_reset;                                    // Active HIGH
     sc_in<bool> i_clk_tcxo;
     sc_out<bool> o_clk_sys;                                 // Bus clock 40 MHz
-    sc_out<bool> o_clk_ddr;                                 // DDR clock 200 MHz
+    sc_out<bool> o_clk_ddr;                                 // DDR controller clock 200 MHz
+    sc_out<bool> o_clk_ddr_phy;                             // DDR PHY clock 800 MHz
     sc_out<bool> o_clk_pcie;                                // PCIE PHY 100 MHz
     sc_out<bool> o_locked;
 

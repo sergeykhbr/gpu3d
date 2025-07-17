@@ -62,14 +62,51 @@ accel_soc::accel_soc(sc_module_name name,
     i_prci_pdevcfg("i_prci_pdevcfg"),
     o_prci_apbi("o_prci_apbi"),
     i_prci_apbo("i_prci_apbo"),
-    o_ddr_pmapinfo("o_ddr_pmapinfo"),
-    i_ddr_pdevcfg("i_ddr_pdevcfg"),
-    o_ddr_apbi("o_ddr_apbi"),
-    i_ddr_apbo("i_ddr_apbo"),
-    o_ddr_xmapinfo("o_ddr_xmapinfo"),
-    i_ddr_xdevcfg("i_ddr_xdevcfg"),
-    o_ddr_xslvi("o_ddr_xslvi"),
-    i_ddr_xslvo("i_ddr_xslvo"),
+    o_ddr_aw_id("o_ddr_aw_id"),
+    o_ddr_aw_addr("o_ddr_aw_addr"),
+    o_ddr_aw_len("o_ddr_aw_len"),
+    o_ddr_aw_size("o_ddr_aw_size"),
+    o_ddr_aw_burst("o_ddr_aw_burst"),
+    o_ddr_aw_lock("o_ddr_aw_lock"),
+    o_ddr_aw_cache("o_ddr_aw_cache"),
+    o_ddr_aw_prot("o_ddr_aw_prot"),
+    o_ddr_aw_qos("o_ddr_aw_qos"),
+    o_ddr_aw_valid("o_ddr_aw_valid"),
+    i_ddr_aw_ready("i_ddr_aw_ready"),
+    o_ddr_w_data("o_ddr_w_data"),
+    o_ddr_w_strb("o_ddr_w_strb"),
+    o_ddr_w_last("o_ddr_w_last"),
+    o_ddr_w_valid("o_ddr_w_valid"),
+    i_ddr_w_ready("i_ddr_w_ready"),
+    o_ddr_b_ready("o_ddr_b_ready"),
+    i_ddr_b_id("i_ddr_b_id"),
+    i_ddr_b_resp("i_ddr_b_resp"),
+    i_ddr_b_valid("i_ddr_b_valid"),
+    o_ddr_ar_id("o_ddr_ar_id"),
+    o_ddr_ar_addr("o_ddr_ar_addr"),
+    o_ddr_ar_len("o_ddr_ar_len"),
+    o_ddr_ar_size("o_ddr_ar_size"),
+    o_ddr_ar_burst("o_ddr_ar_burst"),
+    o_ddr_ar_lock("o_ddr_ar_lock"),
+    o_ddr_ar_cache("o_ddr_ar_cache"),
+    o_ddr_ar_prot("o_ddr_ar_prot"),
+    o_ddr_ar_qos("o_ddr_ar_qos"),
+    o_ddr_ar_valid("o_ddr_ar_valid"),
+    i_ddr_ar_ready("i_ddr_ar_ready"),
+    o_ddr_r_ready("o_ddr_r_ready"),
+    i_ddr_r_id("i_ddr_r_id"),
+    i_ddr_r_data("i_ddr_r_data"),
+    i_ddr_r_resp("i_ddr_r_resp"),
+    i_ddr_r_last("i_ddr_r_last"),
+    i_ddr_r_valid("i_ddr_r_valid"),
+    i_ddr_app_init_calib_done("i_ddr_app_init_calib_done"),
+    i_ddr_app_temp("i_ddr_app_temp"),
+    o_ddr_app_sr_req("o_ddr_app_sr_req"),
+    o_ddr_app_ref_req("o_ddr_app_ref_req"),
+    o_ddr_app_zq_req("o_ddr_app_zq_req"),
+    i_ddr_app_sr_active("i_ddr_app_sr_active"),
+    i_ddr_app_ref_ack("i_ddr_app_ref_ack"),
+    i_ddr_app_zq_ack("i_ddr_app_zq_ack"),
     i_pcie_clk("i_pcie_clk"),
     i_pcie_nrst("i_pcie_nrst"),
     i_pcie_completer_id("i_pcie_completer_id"),
@@ -95,6 +132,7 @@ accel_soc::accel_soc(sc_module_name name,
     plic0 = 0;
     uart1 = 0;
     gpio0 = 0;
+    pddr0 = 0;
     i2c0 = 0;
     hdmi0 = 0;
     pcidma0 = 0;
@@ -158,8 +196,8 @@ accel_soc::accel_soc(sc_module_name name,
     afifo_ddr0->o_xslvo(axiso[CFG_BUS0_XSLV_DDR]);
     afifo_ddr0->i_xmst_nrst(i_ddr_nrst);
     afifo_ddr0->i_xmst_clk(i_ddr_clk);
-    afifo_ddr0->o_xmsto(o_ddr_xslvi);
-    afifo_ddr0->i_xmsti(i_ddr_xslvo);
+    afifo_ddr0->o_xmsto(wb_ddr_xslvi);
+    afifo_ddr0->i_xmsti(wb_ddr_xslvo);
 
     group0 = new Workgroup("group0",
                             async_reset,
@@ -257,6 +295,25 @@ accel_soc::accel_soc(sc_module_name name,
     gpio0->o_gpio_dir(o_gpio_dir);
     gpio0->o_gpio(o_gpio);
     gpio0->o_irq(wb_irq_gpio);
+
+    pddr0 = new apb_ddr("pddr0",
+                         async_reset);
+    pddr0->i_apb_nrst(i_apb_nrst);
+    pddr0->i_apb_clk(i_apb_clk);
+    pddr0->i_ddr_nrst(i_ddr_nrst);
+    pddr0->i_ddr_clk(i_ddr_clk);
+    pddr0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_DDR]);
+    pddr0->o_cfg(dev_pnp[SOC_PNP_DDR_APB]);
+    pddr0->i_apbi(apbi[CFG_BUS1_PSLV_DDR]);
+    pddr0->o_apbo(apbo[CFG_BUS1_PSLV_DDR]);
+    pddr0->i_init_calib_done(i_ddr_app_init_calib_done);
+    pddr0->i_device_temp(i_ddr_app_temp);
+    pddr0->o_sr_req(o_ddr_app_sr_req);
+    pddr0->o_ref_req(o_ddr_app_ref_req);
+    pddr0->o_zq_req(o_ddr_app_zq_req);
+    pddr0->i_sr_active(i_ddr_app_sr_active);
+    pddr0->i_ref_ack(i_ddr_app_ref_ack);
+    pddr0->i_zq_ack(i_ddr_app_zq_ack);
 
     i2c0 = new apb_i2c("i2c0",
                         async_reset);
@@ -359,10 +416,22 @@ accel_soc::accel_soc(sc_module_name name,
     sensitive << i_hdmi_int;
     sensitive << i_prci_pdevcfg;
     sensitive << i_prci_apbo;
-    sensitive << i_ddr_pdevcfg;
-    sensitive << i_ddr_apbo;
-    sensitive << i_ddr_xdevcfg;
-    sensitive << i_ddr_xslvo;
+    sensitive << i_ddr_aw_ready;
+    sensitive << i_ddr_w_ready;
+    sensitive << i_ddr_b_id;
+    sensitive << i_ddr_b_resp;
+    sensitive << i_ddr_b_valid;
+    sensitive << i_ddr_ar_ready;
+    sensitive << i_ddr_r_id;
+    sensitive << i_ddr_r_data;
+    sensitive << i_ddr_r_resp;
+    sensitive << i_ddr_r_last;
+    sensitive << i_ddr_r_valid;
+    sensitive << i_ddr_app_init_calib_done;
+    sensitive << i_ddr_app_temp;
+    sensitive << i_ddr_app_sr_active;
+    sensitive << i_ddr_app_ref_ack;
+    sensitive << i_ddr_app_zq_ack;
     sensitive << i_pcie_clk;
     sensitive << i_pcie_nrst;
     sensitive << i_pcie_completer_id;
@@ -398,6 +467,8 @@ accel_soc::accel_soc(sc_module_name name,
     }
     sensitive << wb_group0_xmsto;
     sensitive << wb_group0_xmsti;
+    sensitive << wb_ddr_xslvi;
+    sensitive << wb_ddr_xslvo;
     sensitive << wb_pbridge_xslvi;
     sensitive << wb_pbridge_xslvo;
     sensitive << wb_clint_mtimer;
@@ -440,6 +511,9 @@ accel_soc::~accel_soc() {
     }
     if (gpio0) {
         delete gpio0;
+    }
+    if (pddr0) {
+        delete pddr0;
     }
     if (i2c0) {
         delete i2c0;
@@ -509,10 +583,51 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
         sc_trace(o_vcd, o_prci_apbi, o_prci_apbi.name());
         sc_trace(o_vcd, i_prci_apbo, i_prci_apbo.name());
-        sc_trace(o_vcd, o_ddr_apbi, o_ddr_apbi.name());
-        sc_trace(o_vcd, i_ddr_apbo, i_ddr_apbo.name());
-        sc_trace(o_vcd, o_ddr_xslvi, o_ddr_xslvi.name());
-        sc_trace(o_vcd, i_ddr_xslvo, i_ddr_xslvo.name());
+        sc_trace(o_vcd, o_ddr_aw_id, o_ddr_aw_id.name());
+        sc_trace(o_vcd, o_ddr_aw_addr, o_ddr_aw_addr.name());
+        sc_trace(o_vcd, o_ddr_aw_len, o_ddr_aw_len.name());
+        sc_trace(o_vcd, o_ddr_aw_size, o_ddr_aw_size.name());
+        sc_trace(o_vcd, o_ddr_aw_burst, o_ddr_aw_burst.name());
+        sc_trace(o_vcd, o_ddr_aw_lock, o_ddr_aw_lock.name());
+        sc_trace(o_vcd, o_ddr_aw_cache, o_ddr_aw_cache.name());
+        sc_trace(o_vcd, o_ddr_aw_prot, o_ddr_aw_prot.name());
+        sc_trace(o_vcd, o_ddr_aw_qos, o_ddr_aw_qos.name());
+        sc_trace(o_vcd, o_ddr_aw_valid, o_ddr_aw_valid.name());
+        sc_trace(o_vcd, i_ddr_aw_ready, i_ddr_aw_ready.name());
+        sc_trace(o_vcd, o_ddr_w_data, o_ddr_w_data.name());
+        sc_trace(o_vcd, o_ddr_w_strb, o_ddr_w_strb.name());
+        sc_trace(o_vcd, o_ddr_w_last, o_ddr_w_last.name());
+        sc_trace(o_vcd, o_ddr_w_valid, o_ddr_w_valid.name());
+        sc_trace(o_vcd, i_ddr_w_ready, i_ddr_w_ready.name());
+        sc_trace(o_vcd, o_ddr_b_ready, o_ddr_b_ready.name());
+        sc_trace(o_vcd, i_ddr_b_id, i_ddr_b_id.name());
+        sc_trace(o_vcd, i_ddr_b_resp, i_ddr_b_resp.name());
+        sc_trace(o_vcd, i_ddr_b_valid, i_ddr_b_valid.name());
+        sc_trace(o_vcd, o_ddr_ar_id, o_ddr_ar_id.name());
+        sc_trace(o_vcd, o_ddr_ar_addr, o_ddr_ar_addr.name());
+        sc_trace(o_vcd, o_ddr_ar_len, o_ddr_ar_len.name());
+        sc_trace(o_vcd, o_ddr_ar_size, o_ddr_ar_size.name());
+        sc_trace(o_vcd, o_ddr_ar_burst, o_ddr_ar_burst.name());
+        sc_trace(o_vcd, o_ddr_ar_lock, o_ddr_ar_lock.name());
+        sc_trace(o_vcd, o_ddr_ar_cache, o_ddr_ar_cache.name());
+        sc_trace(o_vcd, o_ddr_ar_prot, o_ddr_ar_prot.name());
+        sc_trace(o_vcd, o_ddr_ar_qos, o_ddr_ar_qos.name());
+        sc_trace(o_vcd, o_ddr_ar_valid, o_ddr_ar_valid.name());
+        sc_trace(o_vcd, i_ddr_ar_ready, i_ddr_ar_ready.name());
+        sc_trace(o_vcd, o_ddr_r_ready, o_ddr_r_ready.name());
+        sc_trace(o_vcd, i_ddr_r_id, i_ddr_r_id.name());
+        sc_trace(o_vcd, i_ddr_r_data, i_ddr_r_data.name());
+        sc_trace(o_vcd, i_ddr_r_resp, i_ddr_r_resp.name());
+        sc_trace(o_vcd, i_ddr_r_last, i_ddr_r_last.name());
+        sc_trace(o_vcd, i_ddr_r_valid, i_ddr_r_valid.name());
+        sc_trace(o_vcd, i_ddr_app_init_calib_done, i_ddr_app_init_calib_done.name());
+        sc_trace(o_vcd, i_ddr_app_temp, i_ddr_app_temp.name());
+        sc_trace(o_vcd, o_ddr_app_sr_req, o_ddr_app_sr_req.name());
+        sc_trace(o_vcd, o_ddr_app_ref_req, o_ddr_app_ref_req.name());
+        sc_trace(o_vcd, o_ddr_app_zq_req, o_ddr_app_zq_req.name());
+        sc_trace(o_vcd, i_ddr_app_sr_active, i_ddr_app_sr_active.name());
+        sc_trace(o_vcd, i_ddr_app_ref_ack, i_ddr_app_ref_ack.name());
+        sc_trace(o_vcd, i_ddr_app_zq_ack, i_ddr_app_zq_ack.name());
         sc_trace(o_vcd, i_pcie_clk, i_pcie_clk.name());
         sc_trace(o_vcd, i_pcie_nrst, i_pcie_nrst.name());
         sc_trace(o_vcd, i_pcie_completer_id, i_pcie_completer_id.name());
@@ -543,6 +658,9 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (gpio0) {
         gpio0->generateVCD(i_vcd, o_vcd);
+    }
+    if (pddr0) {
+        pddr0->generateVCD(i_vcd, o_vcd);
     }
     if (i2c0) {
         i2c0->generateVCD(i_vcd, o_vcd);
@@ -576,6 +694,9 @@ void accel_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void accel_soc::comb() {
     sc_uint<1> v_gnd1;
     sc_biguint<SOC_PLIC_IRQ_TOTAL> vb_ext_irqs;
+    dev_config_type vb_ddr_xcfg;
+    mapinfo_type vb_ddr_mapinfo;
+    axi4_slave_out_type vb_ddr_xslvo;                       // systemc compatibility
 
     v_gnd1 = 0;
     vb_ext_irqs = 0;
@@ -615,12 +736,56 @@ void accel_soc::comb() {
     dev_pnp[SOC_PNP_PRCI] = i_prci_pdevcfg.read();
 
     // DDR:
-    o_ddr_xmapinfo = bus0_mapinfo[CFG_BUS0_XSLV_DDR];
-    dev_pnp[SOC_PNP_DDR_AXI] = i_ddr_xdevcfg.read();
-    o_ddr_pmapinfo = bus1_mapinfo[CFG_BUS1_PSLV_DDR];
-    dev_pnp[SOC_PNP_DDR_APB] = i_ddr_pdevcfg.read();
-    o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
-    apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo.read();
+    o_ddr_aw_id = wb_ddr_xslvi.read().aw_id;
+    // Warning: we should do (addr - start_addr)[29:0], but BAR is 0x80000000
+    o_ddr_aw_addr = wb_ddr_xslvi.read().aw_bits.addr(29, 0);
+    o_ddr_aw_len = wb_ddr_xslvi.read().aw_bits.len;
+    o_ddr_aw_size = wb_ddr_xslvi.read().aw_bits.size;
+    o_ddr_aw_burst = wb_ddr_xslvi.read().aw_bits.burst;
+    o_ddr_aw_lock = wb_ddr_xslvi.read().aw_bits.lock;
+    o_ddr_aw_cache = wb_ddr_xslvi.read().aw_bits.cache;
+    o_ddr_aw_prot = wb_ddr_xslvi.read().aw_bits.prot;
+    o_ddr_aw_qos = wb_ddr_xslvi.read().aw_bits.qos;
+    o_ddr_aw_valid = wb_ddr_xslvi.read().aw_valid;
+    vb_ddr_xslvo.aw_ready = i_ddr_aw_ready.read();
+    o_ddr_w_data = wb_ddr_xslvi.read().w_data;
+    o_ddr_w_strb = wb_ddr_xslvi.read().w_strb;
+    o_ddr_w_last = wb_ddr_xslvi.read().w_last;
+    o_ddr_w_valid = wb_ddr_xslvi.read().w_valid;
+    vb_ddr_xslvo.w_ready = i_ddr_w_ready.read();
+    o_ddr_b_ready = wb_ddr_xslvi.read().b_ready;
+    vb_ddr_xslvo.b_id = i_ddr_b_id.read();
+    vb_ddr_xslvo.b_resp = i_ddr_b_resp.read();
+    vb_ddr_xslvo.b_valid = i_ddr_b_valid.read();
+    vb_ddr_xslvo.b_user = 0;
+    o_ddr_ar_id = wb_ddr_xslvi.read().ar_id;
+    // Warning: we should do (addr - start_addr)[29:0], but BAR is 0x80000000
+    o_ddr_ar_addr = wb_ddr_xslvi.read().ar_bits.addr(29, 0);
+    o_ddr_ar_len = wb_ddr_xslvi.read().ar_bits.len;
+    o_ddr_ar_size = wb_ddr_xslvi.read().ar_bits.size;
+    o_ddr_ar_burst = wb_ddr_xslvi.read().ar_bits.burst;
+    o_ddr_ar_lock = wb_ddr_xslvi.read().ar_bits.lock;
+    o_ddr_ar_cache = wb_ddr_xslvi.read().ar_bits.cache;
+    o_ddr_ar_prot = wb_ddr_xslvi.read().ar_bits.prot;
+    o_ddr_ar_qos = wb_ddr_xslvi.read().ar_bits.qos;
+    o_ddr_ar_valid = wb_ddr_xslvi.read().ar_valid;
+    vb_ddr_xslvo.ar_ready = i_ddr_ar_ready.read();
+    o_ddr_r_ready = wb_ddr_xslvi.read().r_ready;
+    vb_ddr_xslvo.r_id = i_ddr_r_id.read();
+    vb_ddr_xslvo.r_user = 0;
+    vb_ddr_xslvo.r_data = i_ddr_r_data.read();
+    vb_ddr_xslvo.r_resp = i_ddr_r_resp.read();
+    vb_ddr_xslvo.r_last = i_ddr_r_last.read();
+    vb_ddr_xslvo.r_valid = i_ddr_r_valid.read();
+    wb_ddr_xslvo = vb_ddr_xslvo;                            // SystemC compatibility
+    vb_ddr_mapinfo = bus0_mapinfo[CFG_BUS0_XSLV_DDR];
+    vb_ddr_xcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vb_ddr_xcfg.descrtype = PNP_CFG_TYPE_SLAVE;
+    vb_ddr_xcfg.addr_start = vb_ddr_mapinfo.addr_start;
+    vb_ddr_xcfg.addr_end = vb_ddr_mapinfo.addr_end;
+    vb_ddr_xcfg.vid = VENDOR_OPTIMITECH;
+    vb_ddr_xcfg.did = OPTIMITECH_SRAM;
+    dev_pnp[SOC_PNP_DDR_AXI] = vb_ddr_xcfg;
     // SD-controlled disabled:
     dev_pnp[SOC_PNP_SDCTRL_REG] = dev_config_none;
     dev_pnp[SOC_PNP_SDCTRL_MEM] = dev_config_none;

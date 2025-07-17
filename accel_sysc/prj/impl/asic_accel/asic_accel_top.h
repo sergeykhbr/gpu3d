@@ -27,7 +27,7 @@
 #include "../../../rtl/sim/io/ibuf_tech.h"
 #include "../../../rtl/sim/pll/SysPLL_tech.h"
 #include "../../../rtl/internal/misclib/apb_prci.h"
-#include "../../../rtl/external/ddr3_phy/ddr3_tech.h"
+#include "../../../rtl/sim/ddr3_phy/ddr3_tech.h"
 #include "../../../rtl/internal/accel/accel_soc.h"
 #include "sv_func.h"
 
@@ -64,6 +64,22 @@ SC_MODULE(asic_accel_top) {
     sc_out<bool> o_hdmi_spdif;                              // Sound channel output
     sc_in<bool> i_hdmi_spdif_out;                           // Reverse sound channel
     sc_in<bool> i_hdmi_int;                                 // External interrupt from HDMI transmitter
+    // DDR signals:
+    sc_out<bool> o_ddr3_reset_n;
+    sc_out<bool> o_ddr3_ck_n;
+    sc_out<bool> o_ddr3_ck_p;
+    sc_out<bool> o_ddr3_cke;
+    sc_out<bool> o_ddr3_cs_n;                               // Chip select active LOW
+    sc_out<bool> o_ddr3_ras_n;
+    sc_out<bool> o_ddr3_cas_n;
+    sc_out<bool> o_ddr3_we_n;                               // Write enable active LOW
+    sc_out<sc_uint<8>> o_ddr3_dm;                           // Data mask
+    sc_out<sc_uint<3>> o_ddr3_ba;                           // Bank address
+    sc_out<sc_uint<14>> o_ddr3_addr;
+    sc_inout<sc_uint<64>> io_ddr3_dq;
+    sc_inout<sc_uint<8>> io_ddr3_dqs_n;                     // Data strob positive
+    sc_inout<sc_uint<8>> io_ddr3_dqs_p;                     // Data strob negative
+    sc_out<bool> o_ddr3_odt;                                // on-die termination
 
 
     asic_accel_top(sc_module_name name,
@@ -100,8 +116,53 @@ SC_MODULE(asic_accel_top) {
     sc_signal<bool> w_dmreset;
     sc_signal<bool> w_sys_clk;
     sc_signal<bool> w_ddr_clk;
+    sc_signal<bool> w_ddr_phy_clk;
     sc_signal<bool> w_pcie_clk;
     sc_signal<bool> w_pll_lock;
+    // DDR AXI slave interface:
+    sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> wb_ddr_aw_id;
+    sc_signal<sc_uint<30>> wb_ddr_aw_addr;
+    sc_signal<sc_uint<8>> wb_ddr_aw_len;
+    sc_signal<sc_uint<3>> wb_ddr_aw_size;
+    sc_signal<sc_uint<2>> wb_ddr_aw_burst;
+    sc_signal<bool> w_ddr_aw_lock;
+    sc_signal<sc_uint<4>> wb_ddr_aw_cache;
+    sc_signal<sc_uint<3>> wb_ddr_aw_prot;
+    sc_signal<sc_uint<4>> wb_ddr_aw_qos;
+    sc_signal<bool> w_ddr_aw_valid;
+    sc_signal<bool> w_ddr_aw_ready;
+    sc_signal<sc_uint<64>> wb_ddr_w_data;
+    sc_signal<sc_uint<8>> wb_ddr_w_strb;
+    sc_signal<bool> w_ddr_w_last;
+    sc_signal<bool> w_ddr_w_valid;
+    sc_signal<bool> w_ddr_w_ready;
+    sc_signal<bool> w_ddr_b_ready;
+    sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> wb_ddr_b_id;
+    sc_signal<sc_uint<2>> wb_ddr_b_resp;
+    sc_signal<bool> w_ddr_b_valid;
+    sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> wb_ddr_ar_id;
+    sc_signal<sc_uint<30>> wb_ddr_ar_addr;
+    sc_signal<sc_uint<8>> wb_ddr_ar_len;
+    sc_signal<sc_uint<3>> wb_ddr_ar_size;
+    sc_signal<sc_uint<2>> wb_ddr_ar_burst;
+    sc_signal<bool> w_ddr_ar_lock;
+    sc_signal<sc_uint<4>> wb_ddr_ar_cache;
+    sc_signal<sc_uint<3>> wb_ddr_ar_prot;
+    sc_signal<sc_uint<4>> wb_ddr_ar_qos;
+    sc_signal<bool> w_ddr_ar_valid;
+    sc_signal<bool> w_ddr_ar_ready;
+    sc_signal<bool> w_ddr_r_ready;
+    sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> wb_ddr_r_id;
+    sc_signal<sc_uint<64>> wb_ddr_r_data;
+    sc_signal<sc_uint<2>> wb_ddr_r_resp;
+    sc_signal<bool> w_ddr_r_last;
+    sc_signal<bool> w_ddr_r_valid;
+    sc_signal<bool> w_ddr_app_sr_req;
+    sc_signal<bool> w_ddr_app_ref_req;
+    sc_signal<bool> w_ddr_app_zq_req;
+    sc_signal<bool> w_ddr_app_sr_active;
+    sc_signal<bool> w_ddr_app_ref_ack;
+    sc_signal<bool> w_ddr_app_zq_ack;
     sc_signal<mapinfo_type> ddr_xmapinfo;
     sc_signal<dev_config_type> ddr_xdev_cfg;
     sc_signal<axi4_slave_out_type> ddr_xslvo;
@@ -112,7 +173,8 @@ SC_MODULE(asic_accel_top) {
     sc_signal<apb_out_type> ddr_apbo;
     sc_signal<bool> w_ddr_ui_nrst;
     sc_signal<bool> w_ddr_ui_clk;
-    sc_signal<bool> w_ddr3_init_calib_complete;
+    sc_signal<bool> w_ddr3_init_calib_done;
+    sc_signal<sc_uint<12>> wb_ddr3_temperature;
     sc_signal<bool> w_pcie_phy_lnk_up;
     sc_signal<mapinfo_type> prci_pmapinfo;
     sc_signal<dev_config_type> prci_dev_cfg;
@@ -139,7 +201,7 @@ SC_MODULE(asic_accel_top) {
     ibuf_tech *ihdmiint;
     SysPLL_tech *pll0;
     apb_prci *prci0;
-    ddr3_tech *ddr3;
+    ddr3_tech<14, 3, 8, 0, 30, 5> *ddr3;
     accel_soc *soc0;
 
 };

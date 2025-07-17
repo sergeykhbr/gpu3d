@@ -45,7 +45,22 @@ asic_accel_top::asic_accel_top(sc_module_name name,
     o_hdmi_d("o_hdmi_d"),
     o_hdmi_spdif("o_hdmi_spdif"),
     i_hdmi_spdif_out("i_hdmi_spdif_out"),
-    i_hdmi_int("i_hdmi_int") {
+    i_hdmi_int("i_hdmi_int"),
+    o_ddr3_reset_n("o_ddr3_reset_n"),
+    o_ddr3_ck_n("o_ddr3_ck_n"),
+    o_ddr3_ck_p("o_ddr3_ck_p"),
+    o_ddr3_cke("o_ddr3_cke"),
+    o_ddr3_cs_n("o_ddr3_cs_n"),
+    o_ddr3_ras_n("o_ddr3_ras_n"),
+    o_ddr3_cas_n("o_ddr3_cas_n"),
+    o_ddr3_we_n("o_ddr3_we_n"),
+    o_ddr3_dm("o_ddr3_dm"),
+    o_ddr3_ba("o_ddr3_ba"),
+    o_ddr3_addr("o_ddr3_addr"),
+    io_ddr3_dq("io_ddr3_dq"),
+    io_ddr3_dqs_n("io_ddr3_dqs_n"),
+    io_ddr3_dqs_p("io_ddr3_dqs_p"),
+    o_ddr3_odt("o_ddr3_odt") {
 
     async_reset_ = async_reset;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
@@ -124,6 +139,7 @@ asic_accel_top::asic_accel_top(sc_module_name name,
     pll0->i_clk_tcxo(ib_clk_tcxo);
     pll0->o_clk_sys(w_sys_clk);
     pll0->o_clk_ddr(w_ddr_clk);
+    pll0->o_clk_ddr_phy(w_ddr_phy_clk);
     pll0->o_clk_pcie(w_pcie_clk);
     pll0->o_locked(w_pll_lock);
 
@@ -133,7 +149,7 @@ asic_accel_top::asic_accel_top(sc_module_name name,
     prci0->i_pwrreset(i_rst);
     prci0->i_dmireset(w_dmreset);
     prci0->i_sys_locked(w_pll_lock);
-    prci0->i_ddr_locked(w_ddr3_init_calib_complete);
+    prci0->i_ddr_locked(w_ddr3_init_calib_done);
     prci0->i_pcie_phy_rst(w_pcie_user_rst);
     prci0->i_pcie_phy_clk(w_pcie_user_clk);
     prci0->i_pcie_phy_lnk_up(w_pcie_phy_lnk_up);
@@ -189,14 +205,51 @@ asic_accel_top::asic_accel_top(sc_module_name name,
     soc0->i_prci_pdevcfg(prci_dev_cfg);
     soc0->o_prci_apbi(prci_apbi);
     soc0->i_prci_apbo(prci_apbo);
-    soc0->o_ddr_pmapinfo(ddr_pmapinfo);
-    soc0->i_ddr_pdevcfg(ddr_pdev_cfg);
-    soc0->o_ddr_apbi(ddr_apbi);
-    soc0->i_ddr_apbo(ddr_apbo);
-    soc0->o_ddr_xmapinfo(ddr_xmapinfo);
-    soc0->i_ddr_xdevcfg(ddr_xdev_cfg);
-    soc0->o_ddr_xslvi(ddr_xslvi);
-    soc0->i_ddr_xslvo(ddr_xslvo);
+    soc0->o_ddr_aw_id(wb_ddr_aw_id);
+    soc0->o_ddr_aw_addr(wb_ddr_aw_addr);
+    soc0->o_ddr_aw_len(wb_ddr_aw_len);
+    soc0->o_ddr_aw_size(wb_ddr_aw_size);
+    soc0->o_ddr_aw_burst(wb_ddr_aw_burst);
+    soc0->o_ddr_aw_lock(w_ddr_aw_lock);
+    soc0->o_ddr_aw_cache(wb_ddr_aw_cache);
+    soc0->o_ddr_aw_prot(wb_ddr_aw_prot);
+    soc0->o_ddr_aw_qos(wb_ddr_aw_qos);
+    soc0->o_ddr_aw_valid(w_ddr_aw_valid);
+    soc0->i_ddr_aw_ready(w_ddr_aw_ready);
+    soc0->o_ddr_w_data(wb_ddr_w_data);
+    soc0->o_ddr_w_strb(wb_ddr_w_strb);
+    soc0->o_ddr_w_last(w_ddr_w_last);
+    soc0->o_ddr_w_valid(w_ddr_w_valid);
+    soc0->i_ddr_w_ready(w_ddr_w_ready);
+    soc0->o_ddr_b_ready(w_ddr_b_ready);
+    soc0->i_ddr_b_id(wb_ddr_b_id);
+    soc0->i_ddr_b_resp(wb_ddr_b_resp);
+    soc0->i_ddr_b_valid(w_ddr_b_valid);
+    soc0->o_ddr_ar_id(wb_ddr_ar_id);
+    soc0->o_ddr_ar_addr(wb_ddr_ar_addr);
+    soc0->o_ddr_ar_len(wb_ddr_ar_len);
+    soc0->o_ddr_ar_size(wb_ddr_ar_size);
+    soc0->o_ddr_ar_burst(wb_ddr_ar_burst);
+    soc0->o_ddr_ar_lock(w_ddr_ar_lock);
+    soc0->o_ddr_ar_cache(wb_ddr_ar_cache);
+    soc0->o_ddr_ar_prot(wb_ddr_ar_prot);
+    soc0->o_ddr_ar_qos(wb_ddr_ar_qos);
+    soc0->o_ddr_ar_valid(w_ddr_ar_valid);
+    soc0->i_ddr_ar_ready(w_ddr_ar_ready);
+    soc0->o_ddr_r_ready(w_ddr_r_ready);
+    soc0->i_ddr_r_id(wb_ddr_r_id);
+    soc0->i_ddr_r_data(wb_ddr_r_data);
+    soc0->i_ddr_r_resp(wb_ddr_r_resp);
+    soc0->i_ddr_r_last(w_ddr_r_last);
+    soc0->i_ddr_r_valid(w_ddr_r_valid);
+    soc0->i_ddr_app_init_calib_done(w_ddr3_init_calib_done);
+    soc0->i_ddr_app_temp(wb_ddr3_temperature);
+    soc0->o_ddr_app_sr_req(w_ddr_app_sr_req);
+    soc0->o_ddr_app_ref_req(w_ddr_app_ref_req);
+    soc0->o_ddr_app_zq_req(w_ddr_app_zq_req);
+    soc0->i_ddr_app_sr_active(w_ddr_app_sr_active);
+    soc0->i_ddr_app_ref_ack(w_ddr_app_ref_ack);
+    soc0->i_ddr_app_zq_ack(w_ddr_app_zq_ack);
     soc0->i_pcie_clk(w_pcie_user_clk);
     soc0->i_pcie_nrst(w_pcie_nrst);
     soc0->i_pcie_completer_id(wb_pcie_completer_id);
@@ -205,22 +258,78 @@ asic_accel_top::asic_accel_top(sc_module_name name,
 
     // ----------------------------------------
     // External IPs
-    ddr3 = new ddr3_tech("ddr3");
-    ddr3->i_apb_nrst(w_sys_nrst);
-    ddr3->i_apb_clk(w_sys_clk);
-    ddr3->i_xslv_nrst(w_sys_nrst);
-    ddr3->i_xslv_clk(w_sys_clk);
-    ddr3->i_xmapinfo(ddr_xmapinfo);
-    ddr3->o_xcfg(ddr_xdev_cfg);
-    ddr3->i_xslvi(ddr_xslvi);
-    ddr3->o_xslvo(ddr_xslvo);
-    ddr3->i_pmapinfo(ddr_pmapinfo);
-    ddr3->o_pcfg(ddr_pdev_cfg);
-    ddr3->i_apbi(ddr_apbi);
-    ddr3->o_apbo(ddr_apbo);
+    ddr3 = new ddr3_tech<14,
+                         3,
+                         8,
+                         0,
+                         30,
+                         5>("ddr3");
+    ddr3->i_nrst(w_sys_nrst);
+    ddr3->i_ctrl_clk(w_ddr_clk);
+    ddr3->i_phy_clk(w_ddr_phy_clk);
+    ddr3->i_ref_clk200(ib_clk_tcxo);
     ddr3->o_ui_nrst(w_ddr_ui_nrst);
     ddr3->o_ui_clk(w_ddr_ui_clk);
-    ddr3->o_init_calib_done(w_ddr3_init_calib_complete);
+    ddr3->o_ddr3_reset_n(o_ddr3_reset_n);
+    ddr3->o_ddr3_ck_n(o_ddr3_ck_n);
+    ddr3->o_ddr3_ck_p(o_ddr3_ck_p);
+    ddr3->o_ddr3_cke(o_ddr3_cke);
+    ddr3->o_ddr3_cs_n(o_ddr3_cs_n);
+    ddr3->o_ddr3_ras_n(o_ddr3_ras_n);
+    ddr3->o_ddr3_cas_n(o_ddr3_cas_n);
+    ddr3->o_ddr3_we_n(o_ddr3_we_n);
+    ddr3->o_ddr3_dm(o_ddr3_dm);
+    ddr3->o_ddr3_ba(o_ddr3_ba);
+    ddr3->o_ddr3_addr(o_ddr3_addr);
+    ddr3->io_ddr3_dq(io_ddr3_dq);
+    ddr3->io_ddr3_dqs_n(io_ddr3_dqs_n);
+    ddr3->io_ddr3_dqs_p(io_ddr3_dqs_p);
+    ddr3->o_ddr3_odt(o_ddr3_odt);
+    ddr3->o_init_calib_done(w_ddr3_init_calib_done);
+    ddr3->o_temperature(wb_ddr3_temperature);
+    ddr3->i_sr_req(w_ddr_app_sr_req);
+    ddr3->i_ref_req(w_ddr_app_ref_req);
+    ddr3->i_zq_req(w_ddr_app_zq_req);
+    ddr3->o_sr_active(w_ddr_app_sr_active);
+    ddr3->o_ref_ack(w_ddr_app_ref_ack);
+    ddr3->o_zq_ack(w_ddr_app_zq_ack);
+    ddr3->i_aw_id(wb_ddr_aw_id);
+    ddr3->i_aw_addr(wb_ddr_aw_addr);
+    ddr3->i_aw_len(wb_ddr_aw_len);
+    ddr3->i_aw_size(wb_ddr_aw_size);
+    ddr3->i_aw_burst(wb_ddr_aw_burst);
+    ddr3->i_aw_lock(w_ddr_aw_lock);
+    ddr3->i_aw_cache(wb_ddr_aw_cache);
+    ddr3->i_aw_prot(wb_ddr_aw_prot);
+    ddr3->i_aw_qos(wb_ddr_aw_qos);
+    ddr3->i_aw_valid(w_ddr_aw_valid);
+    ddr3->o_aw_ready(w_ddr_aw_ready);
+    ddr3->i_w_data(wb_ddr_w_data);
+    ddr3->i_w_strb(wb_ddr_w_strb);
+    ddr3->i_w_last(w_ddr_w_last);
+    ddr3->i_w_valid(w_ddr_w_valid);
+    ddr3->o_w_ready(w_ddr_w_ready);
+    ddr3->i_b_ready(w_ddr_b_ready);
+    ddr3->o_b_id(wb_ddr_b_id);
+    ddr3->o_b_resp(wb_ddr_b_resp);
+    ddr3->o_b_valid(w_ddr_b_valid);
+    ddr3->i_ar_id(wb_ddr_ar_id);
+    ddr3->i_ar_addr(wb_ddr_ar_addr);
+    ddr3->i_ar_len(wb_ddr_ar_len);
+    ddr3->i_ar_size(wb_ddr_ar_size);
+    ddr3->i_ar_burst(wb_ddr_ar_burst);
+    ddr3->i_ar_lock(w_ddr_ar_lock);
+    ddr3->i_ar_cache(wb_ddr_ar_cache);
+    ddr3->i_ar_prot(wb_ddr_ar_prot);
+    ddr3->i_ar_qos(wb_ddr_ar_qos);
+    ddr3->i_ar_valid(w_ddr_ar_valid);
+    ddr3->o_ar_ready(w_ddr_ar_ready);
+    ddr3->i_r_ready(w_ddr_r_ready);
+    ddr3->o_r_id(wb_ddr_r_id);
+    ddr3->o_r_data(wb_ddr_r_data);
+    ddr3->o_r_resp(wb_ddr_r_resp);
+    ddr3->o_r_last(w_ddr_r_last);
+    ddr3->o_r_valid(w_ddr_r_valid);
 }
 
 asic_accel_top::~asic_accel_top() {
@@ -299,6 +408,21 @@ void asic_accel_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_hdmi_spdif, o_hdmi_spdif.name());
         sc_trace(o_vcd, i_hdmi_spdif_out, i_hdmi_spdif_out.name());
         sc_trace(o_vcd, i_hdmi_int, i_hdmi_int.name());
+        sc_trace(o_vcd, o_ddr3_reset_n, o_ddr3_reset_n.name());
+        sc_trace(o_vcd, o_ddr3_ck_n, o_ddr3_ck_n.name());
+        sc_trace(o_vcd, o_ddr3_ck_p, o_ddr3_ck_p.name());
+        sc_trace(o_vcd, o_ddr3_cke, o_ddr3_cke.name());
+        sc_trace(o_vcd, o_ddr3_cs_n, o_ddr3_cs_n.name());
+        sc_trace(o_vcd, o_ddr3_ras_n, o_ddr3_ras_n.name());
+        sc_trace(o_vcd, o_ddr3_cas_n, o_ddr3_cas_n.name());
+        sc_trace(o_vcd, o_ddr3_we_n, o_ddr3_we_n.name());
+        sc_trace(o_vcd, o_ddr3_dm, o_ddr3_dm.name());
+        sc_trace(o_vcd, o_ddr3_ba, o_ddr3_ba.name());
+        sc_trace(o_vcd, o_ddr3_addr, o_ddr3_addr.name());
+        sc_trace(o_vcd, io_ddr3_dq, io_ddr3_dq.name());
+        sc_trace(o_vcd, io_ddr3_dqs_n, io_ddr3_dqs_n.name());
+        sc_trace(o_vcd, io_ddr3_dqs_p, io_ddr3_dqs_p.name());
+        sc_trace(o_vcd, o_ddr3_odt, o_ddr3_odt.name());
     }
 
     if (iclk0) {

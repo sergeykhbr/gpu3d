@@ -24,18 +24,22 @@ namespace debugger {
 
 SC_MODULE(apb_ddr) {
  public:
-    sc_in<bool> i_clk;                                      // APB clock
-    sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_in<bool> i_apb_nrst;                                 // APB Reset: active LOW
+    sc_in<bool> i_apb_clk;                                  // APB clock domain
+    sc_in<bool> i_ddr_nrst;                                 // DDR clock domain: PLL locked
+    sc_in<bool> i_ddr_clk;                                  // DDR clock domain
     sc_in<mapinfo_type> i_mapinfo;                          // interconnect slot information
     sc_out<dev_config_type> o_cfg;                          // Device descriptor
     sc_in<apb_in_type> i_apbi;                              // APB input interface
     sc_out<apb_out_type> o_apbo;                            // APB output interface
-    sc_in<bool> i_pll_locked;                               // PLL locked
     sc_in<bool> i_init_calib_done;                          // DDR initialization done
     sc_in<sc_uint<12>> i_device_temp;                       // Temperature monitor value
-    sc_in<bool> i_sr_active;
-    sc_in<bool> i_ref_ack;
-    sc_in<bool> i_zq_ack;
+    sc_out<bool> o_sr_req;                                  // Self-refresh request (low-power mode)
+    sc_out<bool> o_ref_req;                                 // Periodic refresh request ~7.8 us
+    sc_out<bool> o_zq_req;                                  // ZQ calibration request. Startup and runtime maintenance
+    sc_in<bool> i_sr_active;                                // Self-resfresh is active (low-power mode or sleep)
+    sc_in<bool> i_ref_ack;                                  // Refresh request acknowledged
+    sc_in<bool> i_zq_ack;                                   // ZQ calibration request acknowledged
 
     void comb();
     void registers();
