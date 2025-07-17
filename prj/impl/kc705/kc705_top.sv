@@ -456,7 +456,7 @@ ddr3_tech #(
     .SIMULATION(SIMULATION)
 ) ddr0 (
     .i_nrst(w_pll_lock),
-    .i_ctrl_clk(w_ddr_clk),        // Controller clock: 200 MHz
+    .i_ctrl_clk(ib_clk_tcxo),//w_ddr_clk),        // Controller clock: 200 MHz
     .i_phy_clk(w_ddr_phy_clk),     // PHY clock: must be 4:1 CONTROLLER_CLK_PERIOD for UberDDR
     .i_ref_clk200(ib_clk_tcxo),    // 200MHz
     .o_ui_nrst(w_ddr_ui_nrst),     // xilinx generte ddr clock inside ddr controller
