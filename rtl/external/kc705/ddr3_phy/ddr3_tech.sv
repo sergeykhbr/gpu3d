@@ -16,30 +16,22 @@
 
 module ddr3_tech
 #(
-    parameter int async_reset = 0,
+    parameter int ROW_BITS = 14,                            // Row address width
+    parameter int BA_BITS = 3,                              // Bank address width
+    parameter int LANE_TOTAL = 8,                           // Lane is: 8 dq (byte) + 1 dm (mask) + 1 dqs_n/dqs_p (strob)
+    parameter int DUAL_RANK = 0,                            // 1=Enable dual DDR; 0=disable.
+    parameter int AXI_SIZE_LOG2 = 30,                       // 30 = 1GB (default). Bus address width
+    parameter int AXI_ID_BITS = 5,                          // Custom ID field width
     parameter SYSCLK_TYPE           = "DIFFERENTIAL",
     parameter SIM_BYPASS_INIT_CAL   = "OFF",
     parameter SIMULATION            = "FALSE"
 )
 (
-    input i_ctrl_clk,      // UberDDR3: CONTROLLER_CLK_PERIOD
-    input i_phy_clk,       // UberDDR3: DDR3_CLK_PERIOD must be 4:1 CONTROLLER_CLK_PERIOD
-    input i_ref_clk200,    // UberDDR3: 200MHz
-    input i_apb_nrst,
-    input i_apb_clk,
-    input i_xslv_nrst,
-    input i_xslv_clk,
-    // AXI memory access (ddr clock)
-    input types_amba_pkg::mapinfo_type i_xmapinfo,
-    output types_pnp_pkg::dev_config_type o_xcfg,
-    input types_amba_pkg::axi4_slave_in_type i_xslvi,
-    output types_amba_pkg::axi4_slave_out_type o_xslvo,
-    // APB control interface (sys clock):
-    input types_amba_pkg::mapinfo_type i_pmapinfo,
-    output types_pnp_pkg::dev_config_type o_pcfg,
-    input types_amba_pkg::apb_in_type i_apbi,
-    output types_amba_pkg::apb_out_type o_apbo,
-    // to SOC:
+    input logic i_nrst,                                     // DDR reset active LOW. Connected to IODELAY
+    input logic i_ctrl_clk,                                 // DDR Controller clock: MIG 200 MHz, UberDDR 1:4 PHY clock
+    input logic i_phy_clk,                                  // PHY clock default for DDR3 800 MHz
+    input logic i_ref_clk200,                               // Reference clock for internal mmcm
+    // 
     output o_ui_nrst,  // xilinx generte ddr clock inside ddr controller
     output o_ui_clk,  // xilinx generte ddr clock inside ddr controller
     // DDR signals:
@@ -58,46 +50,64 @@ module ddr3_tech
     inout [7:0] io_ddr3_dqs_n,
     inout [7:0] io_ddr3_dqs_p,
     output [0:0] o_ddr3_odt,
-    output logic o_init_calib_done
+    output logic o_init_calib_done,                         // DDR calibration done, active HIGH
+    output logic [11:0] o_temperature,                      // Device temperature
+    input logic i_sr_req,                                   // Self-refresh request (low-power mode)
+    input logic i_ref_req,                                  // Periodic refresh request ~7.8 us
+    input logic i_zq_req,                                   // ZQ calibration request. Startup and runtime maintenance
+    output logic o_sr_active,                               // Self-resfresh is active (low-power mode or sleep)
+    output logic o_ref_ack,                                 // Refresh request acknoledged
+    output logic o_zq_ack,                                  // ZQ calibration request acknowledged
+    // AXI slave interface:
+    input logic [AXI_ID_BITS-1:0] i_aw_id,
+    input logic [AXI_SIZE_LOG2-1:0] i_aw_addr,
+    input logic [7:0] i_aw_len,
+    input logic [2:0] i_aw_size,
+    input logic [1:0] i_aw_burst,
+    input logic i_aw_lock,
+    input logic [3:0] i_aw_cache,
+    input logic [2:0] i_aw_prot,
+    input logic [3:0] i_aw_qos,
+    input logic i_aw_valid,
+    output logic o_aw_ready,
+    input logic [63:0] i_w_data,
+    input logic [7:0] i_w_strb,
+    input logic i_w_last,
+    input logic i_w_valid,
+    output logic o_w_ready,
+    input logic i_b_ready,
+    output logic [AXI_ID_BITS-1:0] o_b_id,
+    output logic [1:0] o_b_resp,
+    output logic o_b_valid,
+    input logic [AXI_ID_BITS-1:0] i_ar_id,
+    input logic [AXI_SIZE_LOG2-1:0] i_ar_addr,
+    input logic [7:0] i_ar_len,
+    input logic [2:0] i_ar_size,
+    input logic [1:0] i_ar_burst,
+    input logic i_ar_lock,
+    input logic [3:0] i_ar_cache,
+    input logic [2:0] i_ar_prot,
+    input logic [3:0] i_ar_qos,
+    input logic i_ar_valid,
+    output logic o_ar_ready,
+    input logic i_r_ready,
+    output logic [AXI_ID_BITS-1:0] o_r_id,
+    output logic [63:0] o_r_data,
+    output logic [1:0] o_r_resp,
+    output logic o_r_last,
+    output logic o_r_valid
 );
 
-import types_amba_pkg::*;
-import types_pnp_pkg::*;
-
 bit w_ddr_mmcm_locked;
-bit w_ddr_app_sr_active;
-bit w_ddr_app_ref_ack;
-bit w_ddr_app_zq_ack;
-bit w_ddr_init_calib_complete;
-bit [11:0] wb_ddr_device_temp;
 bit w_ui_rst;
 
-  apb_ddr #(
-    .async_reset(async_reset)
-  ) apb0 (
-    .i_clk(i_apb_clk),
-    .i_nrst(i_apb_nrst),
-    .i_mapinfo(i_pmapinfo),
-    .o_cfg(o_pcfg),
-    .i_apbi(i_apbi),
-    .o_apbo(o_apbo),
-    .i_pll_locked(w_ddr_mmcm_locked),
-    .i_init_calib_done(w_ddr_init_calib_complete),
-    .i_device_temp(wb_ddr_device_temp),
-    .i_sr_active(w_ddr_app_sr_active),
-    .i_ref_ack(w_ddr_app_ref_ack),
-    .i_zq_ack(w_ddr_app_zq_ack)
-  );
+assign o_ui_nrst = ~w_ui_rst;
 
-  assign o_ui_nrst = ~w_ui_rst;
-  assign o_init_calib_done = w_ddr_init_calib_complete;
-
-
-  mig_ddr3 #(
+mig_ddr3 #(
     .SYSCLK_TYPE(SYSCLK_TYPE), // "NO_BUFFER,"DIFFERENTIAL"
     .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),  // "FAST"-for simulation true; "OFF"
     .SIMULATION(SIMULATION)
-  ) mig0 (
+) mig0 (
     .ddr3_dq(io_ddr3_dq),
     .ddr3_dqs_n(io_ddr3_dqs_n),
     .ddr3_dqs_p(io_ddr3_dqs_p),
@@ -115,69 +125,58 @@ bit w_ui_rst;
     .ddr3_odt(o_ddr3_odt),
     .sys_clk_p(1'b0),
     .sys_clk_n(1'b0),
-    .sys_clk_i(i_xslv_clk),
+    .sys_clk_i(i_ctrl_clk),//i_xslv_clk),
     .ui_clk(o_ui_clk),
     .ui_clk_sync_rst(w_ui_rst),
     .mmcm_locked(w_ddr_mmcm_locked),
-    .aresetn(i_xslv_nrst),
-    .app_sr_req(1'b0),
-    .app_ref_req(1'b0),
-    .app_zq_req(1'b0),
-    .app_sr_active(w_ddr_app_sr_active),
-    .app_ref_ack(w_ddr_app_ref_ack),
-    .app_zq_ack(w_ddr_app_zq_ack),
-    .s_axi_awid(i_xslvi.aw_id),
-    .s_axi_awaddr(i_xslvi.aw_bits.addr[29:0]),
-    .s_axi_awlen(i_xslvi.aw_bits.len),
-    .s_axi_awsize(i_xslvi.aw_bits.size),
-    .s_axi_awburst(i_xslvi.aw_bits.burst),
-    .s_axi_awlock(i_xslvi.aw_bits.lock),
-    .s_axi_awcache(i_xslvi.aw_bits.cache),
-    .s_axi_awprot(i_xslvi.aw_bits.prot),
-    .s_axi_awqos(i_xslvi.aw_bits.qos),
-    .s_axi_awvalid(i_xslvi.aw_valid),
-    .s_axi_awready(o_xslvo.aw_ready),
-    .s_axi_wdata(i_xslvi.w_data),
-    .s_axi_wstrb(i_xslvi.w_strb),
-    .s_axi_wlast(i_xslvi.w_last),
-    .s_axi_wvalid(i_xslvi.w_valid),
-    .s_axi_wready(o_xslvo.w_ready),
-    .s_axi_bready(i_xslvi.b_ready),
-    .s_axi_bid(o_xslvo.b_id),
-    .s_axi_bresp(o_xslvo.b_resp),
-    .s_axi_bvalid(o_xslvo.b_valid),
-    .s_axi_arid(i_xslvi.ar_id),
-    .s_axi_araddr(i_xslvi.ar_bits.addr[29:0]),
-    .s_axi_arlen(i_xslvi.ar_bits.len),
-    .s_axi_arsize(i_xslvi.ar_bits.size),
-    .s_axi_arburst(i_xslvi.ar_bits.burst),
-    .s_axi_arlock(i_xslvi.ar_bits.lock),
-    .s_axi_arcache(i_xslvi.ar_bits.cache),
-    .s_axi_arprot(i_xslvi.ar_bits.prot),
-    .s_axi_arqos(i_xslvi.ar_bits.qos),
-    .s_axi_arvalid(i_xslvi.ar_valid),
-    .s_axi_arready(o_xslvo.ar_ready),
-    .s_axi_rready(i_xslvi.r_ready),
-    .s_axi_rid(o_xslvo.r_id),
-    .s_axi_rdata(o_xslvo.r_data),
-    .s_axi_rresp(o_xslvo.r_resp),
-    .s_axi_rlast(o_xslvo.r_last),
-    .s_axi_rvalid(o_xslvo.r_valid),
-    .init_calib_complete(w_ddr_init_calib_complete),
-    .device_temp(wb_ddr_device_temp),
-    .sys_rst(i_xslv_nrst)  // active LOW. Connected to IODELAY
+    .aresetn(i_nrst),
+    .app_sr_req(i_sr_req),
+    .app_ref_req(i_ref_req),
+    .app_zq_req(i_zq_req),
+    .app_sr_active(o_sr_active),
+    .app_ref_ack(o_ref_ack),
+    .app_zq_ack(o_zq_ack),
+    .s_axi_awid(i_aw_id),
+    .s_axi_awaddr(i_aw_addr),
+    .s_axi_awlen(i_aw_len),
+    .s_axi_awsize(i_aw_size),
+    .s_axi_awburst(i_aw_burst),
+    .s_axi_awlock(i_aw_lock),
+    .s_axi_awcache(i_aw_cache),
+    .s_axi_awprot(i_aw_prot),
+    .s_axi_awqos(i_aw_qos),
+    .s_axi_awvalid(i_aw_valid),
+    .s_axi_awready(o_aw_ready),
+    .s_axi_wdata(i_w_data),
+    .s_axi_wstrb(i_w_strb),
+    .s_axi_wlast(i_w_last),
+    .s_axi_wvalid(i_w_valid),
+    .s_axi_wready(o_w_ready),
+    .s_axi_bready(i_b_ready),
+    .s_axi_bid(o_b_id),
+    .s_axi_bresp(o_b_resp),
+    .s_axi_bvalid(o_b_valid),
+    .s_axi_arid(i_ar_id),
+    .s_axi_araddr(i_ar_addr),
+    .s_axi_arlen(i_ar_len),
+    .s_axi_arsize(i_ar_size),
+    .s_axi_arburst(i_ar_burst),
+    .s_axi_arlock(i_ar_lock),
+    .s_axi_arcache(i_ar_cache),
+    .s_axi_arprot(i_ar_prot),
+    .s_axi_arqos(i_ar_qos),
+    .s_axi_arvalid(i_ar_valid),
+    .s_axi_arready(o_ar_ready),
+    .s_axi_rready(i_r_ready),
+    .s_axi_rid(o_r_id),
+    .s_axi_rdata(o_r_data),
+    .s_axi_rresp(o_r_resp),
+    .s_axi_rlast(o_r_last),
+    .s_axi_rvalid(o_r_valid),
+    .init_calib_complete(o_init_calib_done),
+    .device_temp(o_temperature),
+    .sys_rst(i_nrst)  // active LOW. Connected to IODELAY
   );
 
-  // TODO: fix me with registers
-  assign o_xslvo.r_user = '0;
-  assign o_xslvo.b_user = '0;
-
-
-  assign o_xcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
-  assign o_xcfg.descrtype = PNP_CFG_TYPE_SLAVE;
-  assign o_xcfg.addr_start = i_xmapinfo.addr_start;
-  assign o_xcfg.addr_end = i_xmapinfo.addr_end;
-  assign o_xcfg.vid = VENDOR_OPTIMITECH;
-  assign o_xcfg.did = OPTIMITECH_SRAM;
 
 endmodule

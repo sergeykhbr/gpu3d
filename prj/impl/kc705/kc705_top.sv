@@ -67,7 +67,6 @@ module kc705_top #(
     inout [7:0] io_ddr3_dqs_n,
     inout [7:0] io_ddr3_dqs_p,
     output [0:0] o_ddr3_odt,
-    output o_ddr3_init_calib_complete,
     // PCI-Express Interface
     input i_pcie_nrst,
     input i_pcie_clk_p,   // sys_clk_p in reference example (dedicated PCI Express oscillator 100 MHz)
@@ -128,26 +127,60 @@ logic w_ddr_clk;
 logic w_ddr_phy_clk;
 logic w_pll_lock;
 
-  // DDR interface
-  mapinfo_type ddr_xmapinfo;
-  dev_config_type ddr_xdev_cfg;
-  axi4_slave_out_type ddr_xslvo;
-  axi4_slave_in_type ddr_xslvi;
-
-  mapinfo_type ddr_pmapinfo;
-  dev_config_type ddr_pdev_cfg;
-  apb_in_type ddr_apbi;
-  apb_out_type ddr_apbo;
-
-  logic w_ddr_ui_nrst;
-  logic w_ddr_ui_clk;
-  logic w_ddr3_init_calib_complete;
-
-  // PRCI intefrace:
-  mapinfo_type prci_pmapinfo;
-  dev_config_type prci_dev_cfg;
-  apb_in_type prci_apbi;
-  apb_out_type prci_apbo;
+// DDR interface
+logic w_ddr_ui_nrst;
+logic w_ddr_ui_clk;
+logic w_ddr3_init_calib_done;
+logic [11:0] wb_ddr3_temperature;
+logic w_ddr_app_sr_req;
+logic w_ddr_app_ref_req;
+logic w_ddr_app_zq_req;
+logic w_ddr_app_sr_active;
+logic w_ddr_app_ref_ack;
+logic w_ddr_app_zq_ack;
+// DDR AXI slave interface:
+logic [CFG_SYSBUS_ID_BITS-1:0] wb_ddr_aw_id;
+logic [29:0] wb_ddr_aw_addr;
+logic [7:0] wb_ddr_aw_len;
+logic [2:0] wb_ddr_aw_size;
+logic [1:0] wb_ddr_aw_burst;
+logic w_ddr_aw_lock;
+logic [3:0] wb_ddr_aw_cache;
+logic [2:0] wb_ddr_aw_prot;
+logic [3:0] wb_ddr_aw_qos;
+logic w_ddr_aw_valid;
+logic w_ddr_aw_ready;
+logic [63:0] wb_ddr_w_data;
+logic [7:0] wb_ddr_w_strb;
+logic w_ddr_w_last;
+logic w_ddr_w_valid;
+logic w_ddr_w_ready;
+logic w_ddr_b_ready;
+logic [CFG_SYSBUS_ID_BITS-1:0] wb_ddr_b_id;
+logic [1:0] wb_ddr_b_resp;
+logic w_ddr_b_valid;
+logic [CFG_SYSBUS_ID_BITS-1:0] wb_ddr_ar_id;
+logic [29:0] wb_ddr_ar_addr;
+logic [7:0] wb_ddr_ar_len;
+logic [2:0] wb_ddr_ar_size;
+logic [1:0] wb_ddr_ar_burst;
+logic w_ddr_ar_lock;
+logic [3:0] wb_ddr_ar_cache;
+logic [2:0] wb_ddr_ar_prot;
+logic [3:0] wb_ddr_ar_qos;
+logic w_ddr_ar_valid;
+logic w_ddr_ar_ready;
+logic w_ddr_r_ready;
+logic [CFG_SYSBUS_ID_BITS-1:0] wb_ddr_r_id;
+logic [63:0] wb_ddr_r_data;
+logic [1:0] wb_ddr_r_resp;
+logic w_ddr_r_last;
+logic w_ddr_r_valid;
+// PRCI intefrace:
+mapinfo_type prci_pmapinfo;
+dev_config_type prci_dev_cfg;
+apb_in_type prci_apbi;
+apb_out_type prci_apbo;
 
   // PCIE interface
   wire w_pcie_user_clk;
@@ -268,8 +301,6 @@ ibuf_tech ihdmiint (
   obuf_tech ojtdo0(.o(o_jtag_tdo), .i(ob_jtag_tdo));   
   obuf_tech ojvrf0(.o(o_jtag_vref), .i(ob_jtag_vref)); 
 
-  assign o_ddr3_init_calib_complete = w_ddr3_init_calib_complete;
-  
 
   SysPLL_tech pll0(
     .i_reset(ib_rst),
@@ -289,7 +320,7 @@ ibuf_tech ihdmiint (
     .i_pwrreset(ib_rst),
     .i_dmireset(w_dmreset),
     .i_sys_locked(w_pll_lock),
-    .i_ddr_locked(w_ddr3_init_calib_complete),
+    .i_ddr_locked(w_ddr3_init_calib_done),
     .i_pcie_phy_rst(w_pcie_user_rst),
     .i_pcie_phy_clk(w_pcie_user_clk),
     .i_pcie_phy_lnk_up(w_pcie_phy_lnk_up),
@@ -360,14 +391,51 @@ ibuf_tech ihdmiint (
     .o_prci_apbi(prci_apbi),
     .i_prci_apbo(prci_apbo),
     // DDR:
-    .o_ddr_pmapinfo(ddr_pmapinfo),
-    .i_ddr_pdevcfg(ddr_pdev_cfg),
-    .o_ddr_apbi(ddr_apbi),
-    .i_ddr_apbo(ddr_apbo),
-    .o_ddr_xmapinfo(ddr_xmapinfo),
-    .i_ddr_xdevcfg(ddr_xdev_cfg),
-    .o_ddr_xslvi(ddr_xslvi),
-    .i_ddr_xslvo(ddr_xslvo),
+    .o_ddr_aw_id(wb_ddr_aw_id),
+    .o_ddr_aw_addr(wb_ddr_aw_addr),
+    .o_ddr_aw_len(wb_ddr_aw_len),
+    .o_ddr_aw_size(wb_ddr_aw_size),
+    .o_ddr_aw_burst(wb_ddr_aw_burst),
+    .o_ddr_aw_lock(w_ddr_aw_lock),
+    .o_ddr_aw_cache(wb_ddr_aw_cache),
+    .o_ddr_aw_prot(wb_ddr_aw_prot),
+    .o_ddr_aw_qos(wb_ddr_aw_qos),
+    .o_ddr_aw_valid(w_ddr_aw_valid),
+    .i_ddr_aw_ready(w_ddr_aw_ready),
+    .o_ddr_w_data(wb_ddr_w_data),
+    .o_ddr_w_strb(wb_ddr_w_strb),
+    .o_ddr_w_last(w_ddr_w_last),
+    .o_ddr_w_valid(w_ddr_w_valid),
+    .i_ddr_w_ready(w_ddr_w_ready),
+    .o_ddr_b_ready(w_ddr_b_ready),
+    .i_ddr_b_id(wb_ddr_b_id),
+    .i_ddr_b_resp(wb_ddr_b_resp),
+    .i_ddr_b_valid(w_ddr_b_valid),
+    .o_ddr_ar_id(wb_ddr_ar_id),
+    .o_ddr_ar_addr(wb_ddr_ar_addr),
+    .o_ddr_ar_len(wb_ddr_ar_len),
+    .o_ddr_ar_size(wb_ddr_ar_size),
+    .o_ddr_ar_burst(wb_ddr_ar_burst),
+    .o_ddr_ar_lock(w_ddr_ar_lock),
+    .o_ddr_ar_cache(wb_ddr_ar_cache),
+    .o_ddr_ar_prot(wb_ddr_ar_prot),
+    .o_ddr_ar_qos(wb_ddr_ar_qos),
+    .o_ddr_ar_valid(w_ddr_ar_valid),
+    .i_ddr_ar_ready(w_ddr_ar_ready),
+    .o_ddr_r_ready(w_ddr_r_ready),
+    .i_ddr_r_id(wb_ddr_r_id),
+    .i_ddr_r_data(wb_ddr_r_data),
+    .i_ddr_r_resp(wb_ddr_r_resp),
+    .i_ddr_r_last(w_ddr_r_last),
+    .i_ddr_r_valid(w_ddr_r_valid),
+    .i_ddr_app_init_calib_done(w_ddr3_init_calib_done),
+    .i_ddr_app_temp(wb_ddr3_temperature),
+    .o_ddr_app_sr_req(w_ddr_app_sr_req),
+    .o_ddr_app_ref_req(w_ddr_app_ref_req),
+    .o_ddr_app_zq_req(w_ddr_app_zq_req),
+    .i_ddr_app_sr_active(w_ddr_app_sr_active),
+    .i_ddr_app_ref_ack(w_ddr_app_ref_ack),
+    .i_ddr_app_zq_ack(w_ddr_app_zq_ack),
     // PCIE:
     .i_pcie_clk(w_pcie_user_clk),
     .i_pcie_nrst(w_pcie_nrst),
@@ -377,31 +445,22 @@ ibuf_tech ihdmiint (
   );
 
 ddr3_tech #(
-    .async_reset(async_reset),
+    .ROW_BITS(14),
+    .BA_BITS(3),
+    .LANE_TOTAL(8),
+    .DUAL_RANK(0),
+    .AXI_SIZE_LOG2(30),
+    .AXI_ID_BITS(CFG_SYSBUS_ID_BITS),
     .SYSCLK_TYPE("NO_BUFFER"), // "NO_BUFFER,"DIFFERENTIAL"
     .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),  // "FAST"-for simulation true; "OFF"
     .SIMULATION(SIMULATION)
 ) ddr0 (
-    .i_ctrl_clk(w_ddr_clk),        // CONTROLLER_CLK_PERIOD
-    .i_phy_clk(w_ddr_phy_clk),     // DDR3_CLK_PERIOD must be 4:1 CONTROLLER_CLK_PERIOD
+    .i_nrst(w_pll_lock),
+    .i_ctrl_clk(w_ddr_clk),        // Controller clock: 200 MHz
+    .i_phy_clk(w_ddr_phy_clk),     // PHY clock: must be 4:1 CONTROLLER_CLK_PERIOD for UberDDR
     .i_ref_clk200(ib_clk_tcxo),    // 200MHz
-     // AXI memory access (ddr clock)
-    .i_xslv_nrst(w_sys_nrst),
-    .i_xslv_clk(ib_clk_tcxo),
-    .i_xmapinfo(ddr_xmapinfo),
-    .o_xcfg(ddr_xdev_cfg),
-    .i_xslvi(ddr_xslvi),
-    .o_xslvo(ddr_xslvo),
-    // APB control interface (sys clock):
-    .i_apb_nrst(w_sys_nrst),
-    .i_apb_clk(w_sys_clk),
-    .i_pmapinfo(ddr_pmapinfo),
-    .o_pcfg(ddr_pdev_cfg),
-    .i_apbi(ddr_apbi),
-    .o_apbo(ddr_apbo),
-    // to SOC:
-    .o_ui_nrst(w_ddr_ui_nrst),  // xilinx generte ddr clock inside ddr controller
-    .o_ui_clk(w_ddr_ui_clk),  // xilinx generte ddr clock inside ddr controller
+    .o_ui_nrst(w_ddr_ui_nrst),     // xilinx generte ddr clock inside ddr controller
+    .o_ui_clk(w_ddr_ui_clk),       // xilinx generte ddr clock inside ddr controller
     // DDR signals:
     .io_ddr3_dq(io_ddr3_dq),
     .io_ddr3_dqs_n(io_ddr3_dqs_n),
@@ -418,7 +477,51 @@ ddr3_tech #(
     .o_ddr3_cs_n(o_ddr3_cs_n),
     .o_ddr3_dm(o_ddr3_dm),
     .o_ddr3_odt(o_ddr3_odt),
-    .o_init_calib_done(w_ddr3_init_calib_complete)
+    .o_init_calib_done(w_ddr3_init_calib_done),
+    .o_temperature(wb_ddr3_temperature),
+    .i_sr_req(w_ddr_app_sr_req),
+    .i_ref_req(w_ddr_app_ref_req),
+    .i_zq_req(w_ddr_app_zq_req),
+    .o_sr_active(w_ddr_app_sr_active),
+    .o_ref_ack(w_ddr_app_ref_ack),
+    .o_zq_ack(w_ddr_app_zq_ack),
+    .i_aw_id(wb_ddr_aw_id),
+    .i_aw_addr(wb_ddr_aw_addr),
+    .i_aw_len(wb_ddr_aw_len),
+    .i_aw_size(wb_ddr_aw_size),
+    .i_aw_burst(wb_ddr_aw_burst),
+    .i_aw_lock(w_ddr_aw_lock),
+    .i_aw_cache(wb_ddr_aw_cache),
+    .i_aw_prot(wb_ddr_aw_prot),
+    .i_aw_qos(wb_ddr_aw_qos),
+    .i_aw_valid(w_ddr_aw_valid),
+    .o_aw_ready(w_ddr_aw_ready),
+    .i_w_data(wb_ddr_w_data),
+    .i_w_strb(wb_ddr_w_strb),
+    .i_w_last(w_ddr_w_last),
+    .i_w_valid(w_ddr_w_valid),
+    .o_w_ready(w_ddr_w_ready),
+    .i_b_ready(w_ddr_b_ready),
+    .o_b_id(wb_ddr_b_id),
+    .o_b_resp(wb_ddr_b_resp),
+    .o_b_valid(w_ddr_b_valid),
+    .i_ar_id(wb_ddr_ar_id),
+    .i_ar_addr(wb_ddr_ar_addr),
+    .i_ar_len(wb_ddr_ar_len),
+    .i_ar_size(wb_ddr_ar_size),
+    .i_ar_burst(wb_ddr_ar_burst),
+    .i_ar_lock(w_ddr_ar_lock),
+    .i_ar_cache(wb_ddr_ar_cache),
+    .i_ar_prot(wb_ddr_ar_prot),
+    .i_ar_qos(wb_ddr_ar_qos),
+    .i_ar_valid(w_ddr_ar_valid),
+    .o_ar_ready(w_ddr_ar_ready),
+    .i_r_ready(w_ddr_r_ready),
+    .o_r_id(wb_ddr_r_id),
+    .o_r_data(wb_ddr_r_data),
+    .o_r_resp(wb_ddr_r_resp),
+    .o_r_last(w_ddr_r_last),
+    .o_r_valid(w_ddr_r_valid)
 );
 
 

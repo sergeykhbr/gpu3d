@@ -20,18 +20,22 @@ module apb_ddr #(
     parameter logic async_reset = 1'b0
 )
 (
-    input logic i_clk,                                      // APB clock
-    input logic i_nrst,                                     // Reset: active LOW
+    input logic i_apb_nrst,                                 // APB Reset: active LOW
+    input logic i_apb_clk,                                  // APB clock domain
+    input logic i_ddr_nrst,                                 // DDR clock domain: PLL locked
+    input logic i_ddr_clk,                                  // DDR clock domain
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
     output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB input interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB output interface
-    input logic i_pll_locked,                               // PLL locked
     input logic i_init_calib_done,                          // DDR initialization done
     input logic [11:0] i_device_temp,                       // Temperature monitor value
-    input logic i_sr_active,
-    input logic i_ref_ack,
-    input logic i_zq_ack
+    output logic o_sr_req,                                  // Self-refresh request (low-power mode)
+    output logic o_ref_req,                                 // Periodic refresh request ~7.8 us
+    output logic o_zq_req,                                  // ZQ calibration request. Startup and runtime maintenance
+    input logic i_sr_active,                                // Self-resfresh is active (low-power mode or sleep)
+    input logic i_ref_ack,                                  // Refresh request acknowledged
+    input logic i_zq_ack                                    // ZQ calibration request acknowledged
 );
 
 import types_amba_pkg::*;
@@ -50,8 +54,8 @@ apb_slv #(
     .vid(VENDOR_OPTIMITECH),
     .did(OPTIMITECH_DDRCTRL)
 ) pslv0 (
-    .i_clk(i_clk),
-    .i_nrst(i_nrst),
+    .i_clk(i_apb_clk),
+    .i_nrst(i_apb_nrst),
     .i_mapinfo(i_mapinfo),
     .o_cfg(o_cfg),
     .i_apbi(i_apbi),
@@ -73,7 +77,7 @@ begin: comb_proc
     v = r;
     vb_rdata = '0;
 
-    v.pll_locked = i_pll_locked;
+    v.pll_locked = i_ddr_nrst;
     v.init_calib_done = i_init_calib_done;
     v.device_temp = i_device_temp;
     v.sr_active = i_sr_active;
@@ -102,9 +106,13 @@ begin: comb_proc
     v.resp_valid = w_req_valid;
     v.resp_rdata = vb_rdata;
 
-    if ((~async_reset) && (i_nrst == 1'b0)) begin
+    if ((~async_reset) && (i_apb_nrst == 1'b0)) begin
         v = apb_ddr_r_reset;
     end
+
+    o_sr_req = 1'b0;
+    o_ref_req = 1'b0;
+    o_zq_req = 1'b0;
 
     rin = v;
 end: comb_proc
@@ -112,8 +120,8 @@ end: comb_proc
 generate
     if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin
-            if (i_nrst == 1'b0) begin
+        always_ff @(posedge i_apb_clk, negedge i_apb_nrst) begin
+            if (i_apb_nrst == 1'b0) begin
                 r <= apb_ddr_r_reset;
             end else begin
                 r <= rin;
@@ -123,7 +131,7 @@ generate
     end: async_r_en
     else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin
+        always_ff @(posedge i_apb_clk) begin
             r <= rin;
         end
 

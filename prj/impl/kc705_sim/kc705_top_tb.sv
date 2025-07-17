@@ -88,11 +88,11 @@ logic w_vipo_i2c0_sda_dir;
     wire [7:0] io_ddr3_dqs_p;
     wire [7:0] io_ddr3_dqs_n;
     wire [0:0] o_ddr3_odt;
-    wire o_ddr3_init_calib_complete;
     // delayed
     wire [DDR3_DQ_WIDTH-1:0]  wb_ddr3_dq_sdram;
     wire [DDR3_DQS_WIDTH-1:0] wb_ddr3_dqs_p_sdram;
     wire [DDR3_DQS_WIDTH-1:0] wb_ddr3_dqs_n_sdram;
+    wire o_ddr3_init_calib_complete;
     // PCIE
     wire rp_sys_clk;
     // PCI-Express Interface
@@ -154,6 +154,7 @@ logic w_vipo_i2c0_sda_dir;
     clk_cnt <= clk_cnt + 1;
   end
   assign sys_rst_n = ~i_rst;
+  assign o_ddr3_init_calib_complete = tt.w_ddr3_init_calib_done;
 
   kc705_top #(
     .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
@@ -203,7 +204,6 @@ logic w_vipo_i2c0_sda_dir;
     .io_ddr3_dqs_p(io_ddr3_dqs_p),
     .io_ddr3_dqs_n(io_ddr3_dqs_n),
     .o_ddr3_odt(o_ddr3_odt),
-    .o_ddr3_init_calib_complete(o_ddr3_init_calib_complete),
     // PCI-Express Interface
     .i_pcie_nrst(sys_rst_n),
     .i_pcie_clk_p(i_pcie_clk_p),
