@@ -187,10 +187,10 @@ void RegIntBank::comb() {
     }
 
     // Debug port has lower priority to avoid system hangup due the tags error
-    if ((i_wena.read() == 1) && (i_waddr.read().or_reduce() == 1) && (((!i_inorder.read()) || v_inordered) == 1)) {
+    if ((i_wena.read() == 1) && (i_waddr.read().or_reduce() == 1) && (((!i_inorder.read()) || v_inordered) != 0)) {
         v.arr[int_waddr].val = i_wdata.read();
         v.arr[int_waddr].tag = i_wtag.read();
-    } else if ((i_dport_ena.read() && i_dport_write.read()) == 1) {
+    } else if ((i_dport_ena.read() && i_dport_write.read()) != 0) {
         if (i_dport_addr.read().or_reduce() == 1) {
             v.arr[int_daddr].val = i_dport_wdata.read();
         }

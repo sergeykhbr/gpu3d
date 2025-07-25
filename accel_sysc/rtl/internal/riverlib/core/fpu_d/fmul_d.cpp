@@ -197,23 +197,23 @@ void DoubleMul::comb() {
     signA = r.a.read()[63];
     signB = r.b.read()[63];
 
-    if (r.a.read()(62, 0).or_reduce() == 0) {
+    if (r.a.read()(62, 0) == 0) {
         zeroA = 1;
     }
 
-    if (r.b.read()(62, 0).or_reduce() == 0) {
+    if (r.b.read()(62, 0) == 0) {
         zeroB = 1;
     }
 
     mantA(51, 0) = r.a.read()(51, 0);
     mantA[52] = 0;
-    if (r.a.read()(62, 52).or_reduce() == 1) {
+    if (r.a.read()(62, 52) != 0) {
         mantA[52] = 1;
     }
 
     mantB(51, 0) = r.b.read()(51, 0);
     mantB[52] = 0;
-    if (r.b.read()(62, 52).or_reduce() == 1) {
+    if (r.b.read()(62, 52) != 0) {
         mantB[52] = 1;
     }
 
@@ -221,7 +221,7 @@ void DoubleMul::comb() {
     expAB_t = ((0, r.a.read()(62, 52)) + (0, r.b.read()(62, 52)));
     expAB = ((0, expAB_t) - 1023);
 
-    if (r.ena.read()[0] == 1) {
+    if (r.ena.read()[0] != 0) {
         v.expAB = expAB;
         v.zeroA = zeroA;
         v.zeroB = zeroB;
@@ -232,9 +232,9 @@ void DoubleMul::comb() {
     w_imul_ena = r.ena.read()[1];
 
     // imul53 module:
-    if (wb_imul_result.read()[105] == 1) {
+    if (wb_imul_result.read()[105] != 0) {
         mantAlign = wb_imul_result.read()(105, 1);
-    } else if (wb_imul_result.read()[104] == 1) {
+    } else if (wb_imul_result.read()[104] != 0) {
         mantAlign = wb_imul_result.read()(104, 0);
     } else {
         for (int i = 1; i < 105; i++) {
@@ -245,20 +245,20 @@ void DoubleMul::comb() {
     }
 
     expAlign_t = (r.expAB.read() + 1);
-    if (wb_imul_result.read()[105] == 1) {
+    if (wb_imul_result.read()[105] != 0) {
         expAlign = expAlign_t;
-    } else if ((r.a.read()(62, 52).or_reduce() == 0) || (r.b.read()(62, 52).or_reduce() == 0)) {
+    } else if ((r.a.read()(62, 52) == 0) || (r.b.read()(62, 52) == 0)) {
         expAlign = (expAlign_t - (0, wb_imul_shift.read()));
     } else {
         expAlign = (r.expAB.read() - (0, wb_imul_shift.read()));
     }
 
     // IMPORTANT exception! new ZERO value
-    if ((expAlign[12] == 1) || (expAlign.or_reduce() == 0)) {
+    if ((expAlign[12] != 0) || (expAlign.or_reduce() == 0)) {
         if ((wb_imul_shift.read().or_reduce() == 0)
-                || (wb_imul_result.read()[105] == 1)
-                || (r.a.read()(62, 52).or_reduce() == 0)
-                || (r.b.read()(62, 52).or_reduce() == 0)) {
+                || (wb_imul_result.read()[105] != 0)
+                || (r.a.read()(62, 52) == 0)
+                || (r.b.read()(62, 52) == 0)) {
             postShift = ((~expAlign(11, 0)) + 2);
         } else {
             postShift = ((~expAlign(11, 0)) + 1);
@@ -295,7 +295,7 @@ void DoubleMul::comb() {
             }
         }
     }
-    if (r.ena.read()[2] == 1) {
+    if (r.ena.read()[2] != 0) {
         v.mantPostScale = mantPostScale;
     }
 
@@ -318,20 +318,20 @@ void DoubleMul::comb() {
     if (r.b.read()(62, 52) == 0x7FF) {
         nanB = 1;
     }
-    if (r.a.read()(51, 0).or_reduce() == 0) {
+    if (r.a.read()(51, 0) == 0) {
         mantZeroA = 1;
     }
-    if (r.b.read()(51, 0).or_reduce() == 0) {
+    if (r.b.read()(51, 0) == 0) {
         mantZeroB = 1;
     }
 
     // Result multiplexers:
     if ((nanA && mantZeroA && r.zeroB.read()) || (nanB && mantZeroB && r.zeroA.read())) {
         v_res_sign = 1;
-    } else if ((nanA && (!mantZeroA)) == 1) {
+    } else if ((nanA && (!mantZeroA)) != 0) {
         // when both values are NaN, value B has higher priority if sign=1
         v_res_sign = (signA || (nanA && signB));
-    } else if ((nanB && (!mantZeroB)) == 1) {
+    } else if ((nanB && (!mantZeroB)) != 0) {
         v_res_sign = signB;
     } else {
         v_res_sign = (r.a.read()[63] ^ r.b.read()[63]);
@@ -341,7 +341,7 @@ void DoubleMul::comb() {
         vb_res_exp = r.a.read()(62, 52);
     } else if (nanB == 1) {
         vb_res_exp = r.b.read()(62, 52);
-    } else if ((r.expAlign.read()[11] || r.zeroA.read() || r.zeroB.read()) == 1) {
+    } else if ((r.expAlign.read()[11] || r.zeroA.read() || r.zeroB.read()) != 0) {
         vb_res_exp = 0;
     } else if (r.overflow.read() == 1) {
         vb_res_exp = ~0ull;
@@ -354,7 +354,7 @@ void DoubleMul::comb() {
             || (nanB && mantZeroB && (!mantZeroA))
             || ((!nanA) && (!nanB) && r.overflow.read())) {
         vb_res_mant = 0;
-    } else if ((nanA && (!(nanB && signB))) == 1) {
+    } else if ((nanA && (!(nanB && signB))) != 0) {
         // when both values are NaN, value B has higher priority if sign=1
         vb_res_mant = (1, r.a.read()(50, 0));
     } else if (nanB == 1) {
@@ -363,7 +363,7 @@ void DoubleMul::comb() {
         vb_res_mant = (mantShort(51, 0) + rndBit);
     }
 
-    if (r.ena.read()[3] == 1) {
+    if (r.ena.read()[3] != 0) {
         v.result = (v_res_sign, vb_res_exp, vb_res_mant);
         v.illegal_op = (nanA || nanB);
         v.busy = 0;

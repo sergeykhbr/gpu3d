@@ -243,7 +243,7 @@ void apb_i2c::comb() {
                 v.payload = (r.payload.read()(23, 0), r.rxbyte.read());
                 // A master receiver must signal an end of data to the
                 // transmitter by not generating ACK on the last byte
-                if (r.byte_cnt.read()(3, 1).or_reduce() == 1) {
+                if (r.byte_cnt.read()(3, 1).or_reduce() != 0) {
                     v.shiftreg = 0;
                 } else {
                     v.shiftreg = ~0ull;
@@ -339,9 +339,9 @@ void apb_i2c::comb() {
                 v.err_ack_data = 0;
                 v.ie = wb_req_wdata.read()[12];
                 v.irq = wb_req_wdata.read()[13];
-                if (wb_req_wdata.read()[16] == 1) {
+                if (wb_req_wdata.read()[16] != 0) {
                     v.nreset = 1;
-                } else if (wb_req_wdata.read()[17] == 1) {
+                } else if (wb_req_wdata.read()[17] != 0) {
                     v.nreset = 0;
                 }
             }

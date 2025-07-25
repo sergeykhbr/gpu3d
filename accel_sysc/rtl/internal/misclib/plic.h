@@ -290,15 +290,15 @@ void plic<ctxmax, irqmax>::comb() {
     }
 
     for (int i = 1; i < irqmax; i++) {
-        if ((i_irq_request.read()[i] == 1) && (r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int() > 0)) {
+        if ((i_irq_request.read()[i] != 0) && (r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int() > 0)) {
             vb_pending[i] = 1;
         }
     }
 
     for (int n = 0; n < ctxmax; n++) {
         for (int i = 0; i < irqmax; i++) {
-            if ((r.pending.read()[i] == 1)
-                    && (r.ctx[n].ie.read()[i] == 1)
+            if ((r.pending.read()[i] != 0)
+                    && (r.ctx[n].ie.read()[i] != 0)
                     && (r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int() > r.ctx[n].priority_th.read())) {
                 vb_ctx_ip_prio[n]((4 * i) + 4 - 1, (4 * i)) = r.src_priority.read()((4 * i) + 4 - 1, (4 * i));
                 vb_ctx_prio_mask[n][r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int()] = 1;
@@ -309,7 +309,7 @@ void plic<ctxmax, irqmax>::comb() {
     // Select max priority in each context
     for (int n = 0; n < ctxmax; n++) {
         for (int i = 0; i < 16; i++) {
-            if (r.ctx[n].prio_mask.read()[i] == 1) {
+            if (r.ctx[n].prio_mask.read()[i] != 0) {
                 vb_ctx_sel_prio[n] = i;
             }
         }
@@ -337,10 +337,10 @@ void plic<ctxmax, irqmax>::comb() {
     rctx_idx = wb_req_addr.read()(20, 12).to_int();
     if (wb_req_addr.read()(21, 12) == 0) {                  // src_prioirty
         // 0x000000..0x001000: Irq 0 unused
-        if (wb_req_addr.read()(11, 3).or_reduce() == 1) {
+        if (wb_req_addr.read()(11, 3).or_reduce() != 0) {
             vrdata(3, 0) = r.src_priority.read()((8 * wb_req_addr.read()(11, 3)) + 4 - 1, (8 * wb_req_addr.read()(11, 3))).to_uint64();
             if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-                if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
+                if (wb_req_wstrb.read()(3, 0).or_reduce() != 0) {
                     vb_src_priority((8 * wb_req_addr.read()(11, 3)) + 4 - 1, (8 * wb_req_addr.read()(11, 3))) = wb_req_wdata.read()(3, 0);
                 }
             }
@@ -348,7 +348,7 @@ void plic<ctxmax, irqmax>::comb() {
 
         vrdata(35, 32) = r.src_priority.read()(((8 * wb_req_addr.read()(11, 3)) + 32) + 4 - 1, ((8 * wb_req_addr.read()(11, 3)) + 32)).to_uint64();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
+            if (wb_req_wstrb.read()(7, 4).or_reduce() != 0) {
                 vb_src_priority(((8 * wb_req_addr.read()(11, 3)) + 32) + 4 - 1, ((8 * wb_req_addr.read()(11, 3)) + 32)) = wb_req_wdata.read()(35, 32);
             }
         }
@@ -356,10 +356,10 @@ void plic<ctxmax, irqmax>::comb() {
         // 0x001000..0x001080
         vrdata = r.pending.read()((64 * wb_req_addr.read()(6, 3)) + 64 - 1, (64 * wb_req_addr.read()(6, 3))).to_uint64();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
+            if (wb_req_wstrb.read()(3, 0).or_reduce() != 0) {
                 vb_pending((64 * wb_req_addr.read()(6, 3)) + 32 - 1, (64 * wb_req_addr.read()(6, 3))) = wb_req_wdata.read()(31, 0);
             }
-            if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
+            if (wb_req_wstrb.read()(7, 4).or_reduce() != 0) {
                 vb_pending(((64 * wb_req_addr.read()(6, 3)) + 32) + 32 - 1, ((64 * wb_req_addr.read()(6, 3)) + 32)) = wb_req_wdata.read()(63, 32);
             }
         }
@@ -369,10 +369,10 @@ void plic<ctxmax, irqmax>::comb() {
         // 0x002000,0x002080,...,0x200000
         vrdata = r.ctx[wb_req_addr.read()(11, 7)].ie.read()((64 * wb_req_addr.read()(6, 3)) + 64 - 1, (64 * wb_req_addr.read()(6, 3))).to_uint64();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
+            if (wb_req_wstrb.read()(3, 0).or_reduce() != 0) {
                 vb_ctx_ie[wb_req_addr.read()(11, 7)]((64 * wb_req_addr.read()(6, 3)) + 32 - 1, (64 * wb_req_addr.read()(6, 3))) = wb_req_wdata.read()(31, 0);
             }
-            if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
+            if (wb_req_wstrb.read()(7, 4).or_reduce() != 0) {
                 vb_ctx_ie[wb_req_addr.read()(11, 7)](((64 * wb_req_addr.read()(6, 3)) + 32) + 32 - 1, ((64 * wb_req_addr.read()(6, 3)) + 32)) = wb_req_wdata.read()(63, 32);
             }
         }
@@ -383,14 +383,14 @@ void plic<ctxmax, irqmax>::comb() {
             vrdata(3, 0) = r.ctx[rctx_idx].priority_th.read();
             vrdata(41, 32) = r.ctx[rctx_idx].irq_idx.read();
             // claim/ complete. Reading clears pending bit
-            if (r.ip.read()[rctx_idx] == 1) {
+            if (r.ip.read()[rctx_idx] != 0) {
                 vb_pending[r.ctx[rctx_idx].irq_idx.read()] = 0;
             }
             if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-                if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
+                if (wb_req_wstrb.read()(3, 0).or_reduce() != 0) {
                     vb_ctx_priority_th[rctx_idx] = wb_req_wdata.read()(3, 0);
                 }
-                if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
+                if (wb_req_wstrb.read()(7, 4).or_reduce() != 0) {
                     // claim/ complete. Reading clears pedning bit
                     vb_ctx_irq_idx[rctx_idx] = 0;
                 }

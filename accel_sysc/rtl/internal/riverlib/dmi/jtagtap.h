@@ -315,7 +315,7 @@ void jtagtap<abits, irlen, idcode>::comb() {
         }
         if (rnh.ir.read() == IR_DTMCONTROL) {
             v_dmi_hardreset = rh.dr.read()[DTMCONTROL_DMIHARDRESET];
-            if (rh.dr.read()[DTMCONTROL_DMIRESET] == 1) {
+            if (rh.dr.read()[DTMCONTROL_DMIRESET] != 0) {
                 vb_err_sticky = DMISTAT_SUCCESS;
             }
         } else if (rnh.ir.read() == IR_BYPASS) {

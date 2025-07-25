@@ -58,9 +58,9 @@ void AluLogic::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void AluLogic::comb() {
     v = r;
 
-    if (i_mode.read()[1] == 1) {
+    if (i_mode.read()[1] != 0) {
         v.res = (i_a1.read() | i_a2.read());
-    } else if (i_mode.read()[2] == 1) {
+    } else if (i_mode.read()[2] != 0) {
         v.res = (i_a1.read() ^ i_a2.read());
     } else {
         v.res = (i_a1.read() & i_a2.read());

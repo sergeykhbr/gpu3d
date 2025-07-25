@@ -528,17 +528,17 @@ sc_uint<4> InstrExecute::irq2idx(sc_uint<IRQ_TOTAL> irqbus) {
     //     2. External interrupts first
     //     3. SW interrupts seconds
     //     4. Timer interrupts last
-    if (irqbus[IRQ_MEIP] == 1) {
+    if (irqbus[IRQ_MEIP] != 0) {
         ret = IRQ_MEIP;
-    } else if (irqbus[IRQ_MSIP] == 1) {
+    } else if (irqbus[IRQ_MSIP] != 0) {
         ret = IRQ_MSIP;
-    } else if (irqbus[IRQ_MTIP] == 1) {
+    } else if (irqbus[IRQ_MTIP] != 0) {
         ret = IRQ_MTIP;
-    } else if (irqbus[IRQ_SEIP] == 1) {
+    } else if (irqbus[IRQ_SEIP] != 0) {
         ret = IRQ_SEIP;
-    } else if (irqbus[IRQ_SSIP] == 1) {
+    } else if (irqbus[IRQ_SSIP] != 0) {
         ret = IRQ_SSIP;
-    } else if (irqbus[IRQ_STIP] == 1) {
+    } else if (irqbus[IRQ_STIP] != 0) {
         ret = IRQ_STIP;
     }
     return ret;
@@ -717,29 +717,29 @@ void InstrExecute::comb() {
         vb_rdata2 = r.rdata2_amo.read();
         v_check_tag1 = 1;
         v_check_tag2 = 1;
-    } else if (mux.isa_type[ISA_R_type] == 1) {
+    } else if (mux.isa_type[ISA_R_type] != 0) {
         vb_rdata1 = i_rdata1.read();
         vb_rdata2 = i_rdata2.read();
         v_check_tag1 = 1;
         v_check_tag2 = 1;
-    } else if (mux.isa_type[ISA_I_type] == 1) {
+    } else if (mux.isa_type[ISA_I_type] != 0) {
         vb_rdata1 = i_rdata1.read();
         vb_rdata2 = mux.imm;
         v_check_tag1 = 1;
-    } else if (mux.isa_type[ISA_SB_type] == 1) {
+    } else if (mux.isa_type[ISA_SB_type] != 0) {
         vb_rdata1 = i_rdata1.read();
         vb_rdata2 = i_rdata2.read();
         vb_off = mux.imm;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
-    } else if (mux.isa_type[ISA_UJ_type] == 1) {
+    } else if (mux.isa_type[ISA_UJ_type] != 0) {
         vb_rdata1 = mux.pc;
         vb_off = mux.imm;
         v_check_tag1 = 1;
-    } else if (mux.isa_type[ISA_U_type] == 1) {
+    } else if (mux.isa_type[ISA_U_type] != 0) {
         vb_rdata1 = mux.pc;
         vb_rdata2 = mux.imm;
-    } else if (mux.isa_type[ISA_S_type] == 1) {
+    } else if (mux.isa_type[ISA_S_type] != 0) {
         vb_rdata1 = i_rdata1.read();
         vb_rdata2 = i_rdata2.read();
         vb_off = mux.imm;
@@ -747,21 +747,21 @@ void InstrExecute::comb() {
         v_check_tag2 = 1;
     }
     // AMO value read from memory[rs1]
-    if ((wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) == 1) {
+    if ((wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) != 0) {
         vb_rdata1_amo = 0;
     } else if (i_mem_valid.read() == 1) {
         if (mux.rv32 == 1) {
             // All AMO are sign-extended:
-            if (r.memop_memaddr.read()[2] == 1) {
+            if (r.memop_memaddr.read()[2] != 0) {
                 vb_rdata1_amo(31, 0) = i_mem_rdata.read()(63, 32);
-                if ((mux.memop_sign_ext == 1) && (i_mem_rdata.read()[63] == 1)) {
+                if ((mux.memop_sign_ext == 1) && (i_mem_rdata.read()[63] != 0)) {
                     vb_rdata1_amo(63, 32) = ~0ull;
                 } else {
                     vb_rdata1_amo(63, 32) = 0;
                 }
             } else {
                 vb_rdata1_amo(31, 0) = i_mem_rdata.read()(31, 0);
-                if ((mux.memop_sign_ext == 1) && (i_mem_rdata.read()[31] == 1)) {
+                if ((mux.memop_sign_ext == 1) && (i_mem_rdata.read()[31] != 0)) {
                     vb_rdata1_amo(63, 32) = ~0ull;
                 } else {
                     vb_rdata1_amo(63, 32) = 0;
@@ -815,7 +815,7 @@ void InstrExecute::comb() {
             || (wv[Instr_BGEU] && v_geu)
             || (wv[Instr_BLT] && v_lt)
             || (wv[Instr_BLTU] && v_ltu)
-            || (wv[Instr_BNE] && v_neq)) == 1) {
+            || (wv[Instr_BNE] && v_neq)) != 0) {
         v_pc_branch = 1;
     }
 
@@ -830,19 +830,19 @@ void InstrExecute::comb() {
     w_mul_hsu = wv[Instr_MULHSU];
 
     v_instr_misaligned = mux.pc[0];
-    if (((wv[Instr_LD] == 1) && (vb_memop_memaddr_load(2, 0).or_reduce() == 1))
-            || (((wv[Instr_LW] || wv[Instr_LWU]) == 1) && (vb_memop_memaddr_load(1, 0).or_reduce() == 1))
-            || (((wv[Instr_LH] || wv[Instr_LHU]) == 1) && (vb_memop_memaddr_load[0] == 1))) {
+    if (((wv[Instr_LD] != 0) && (vb_memop_memaddr_load(2, 0) != 0))
+            || (((wv[Instr_LW] || wv[Instr_LWU]) != 0) && (vb_memop_memaddr_load(1, 0) != 0))
+            || (((wv[Instr_LH] || wv[Instr_LHU]) != 0) && (vb_memop_memaddr_load[0] != 0))) {
         v_load_misaligned = 1;
     }
-    if (((wv[Instr_SD] && (vb_memop_memaddr_store(2, 0).or_reduce() == 1)) == 1)
-            || ((wv[Instr_SW] && (vb_memop_memaddr_store(1, 0).or_reduce() == 1)) == 1)
-            || ((wv[Instr_SH] && (vb_memop_memaddr_store[0] == 1)) == 1)) {
+    if (((wv[Instr_SD] && (vb_memop_memaddr_store(2, 0) != 0)) != 0)
+            || ((wv[Instr_SW] && (vb_memop_memaddr_store(1, 0) != 0)) != 0)
+            || ((wv[Instr_SH] && (vb_memop_memaddr_store[0] != 0)) != 0)) {
         v_store_misaligned = 1;
     }
-    if (((i_dbg_mem_req_size.read() == 3) && (i_dbg_mem_req_addr.read()(2, 0).or_reduce() == 1))
-            || ((i_dbg_mem_req_size.read() == 2) && (i_dbg_mem_req_addr.read()(1, 0).or_reduce() == 1))
-            || ((i_dbg_mem_req_size.read() == 1) && (i_dbg_mem_req_addr.read()[0] == 1))) {
+    if (((i_dbg_mem_req_size.read() == 3) && (i_dbg_mem_req_addr.read()(2, 0) != 0))
+            || ((i_dbg_mem_req_size.read() == 2) && (i_dbg_mem_req_addr.read()(1, 0) != 0))
+            || ((i_dbg_mem_req_size.read() == 1) && (i_dbg_mem_req_addr.read()[0] != 0))) {
         v_debug_misaligned = 1;
     }
     if (i_stack_overflow.read() == 1) {
@@ -876,9 +876,9 @@ void InstrExecute::comb() {
 
     if (v_pc_branch == 1) {
         vb_prog_npc = (mux.pc + vb_off);
-    } else if (wv[Instr_JAL] == 1) {
+    } else if (wv[Instr_JAL] != 0) {
         vb_prog_npc = (vb_rdata1 + vb_off);
-    } else if (wv[Instr_JALR] == 1) {
+    } else if (wv[Instr_JALR] != 0) {
         vb_prog_npc = (vb_rdata1 + vb_rdata2);
         vb_prog_npc[0] = 0;
     } else {
@@ -967,10 +967,10 @@ void InstrExecute::comb() {
     }
     vb_select[Res_Zero] = (!vb_select((Res_Total - 1), (Res_Zero + 1)).or_reduce());// load memory, fence
 
-    if (((wv[Instr_JAL] || wv[Instr_JALR]) == 1) && (mux.waddr == REG_RA)) {
+    if (((wv[Instr_JAL] || wv[Instr_JALR]) != 0) && (mux.waddr == REG_RA)) {
         v_call = 1;
     }
-    if ((wv[Instr_JALR] == 1)
+    if ((wv[Instr_JALR] != 0)
             && (vb_rdata2.or_reduce() == 0)
             && (mux.waddr != REG_RA)
             && (mux.radr1 == REG_RA)) {
@@ -1009,29 +1009,29 @@ void InstrExecute::comb() {
             || wv[Instr_FENCE]
             || wv[Instr_FENCE_I]
             || wv[Instr_SFENCE_VMA]);
-    if (wv[Instr_CSRRC] == 1) {
+    if (wv[Instr_CSRRC] != 0) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr.read();
         vb_csr_cmd_wdata = (i_csr_resp_data.read() & (~r.rdata1.read()));
-    } else if (wv[Instr_CSRRCI] == 1) {
+    } else if (wv[Instr_CSRRCI] != 0) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr.read();
         vb_csr_cmd_wdata((RISCV_ARCH - 1), 5) = i_csr_resp_data.read()((RISCV_ARCH - 1), 5);
         vb_csr_cmd_wdata(4, 0) = (i_csr_resp_data.read()(4, 0) & (~r.radr1.read()(4, 0)));// zero-extending 5 to 64-bits
-    } else if (wv[Instr_CSRRS] == 1) {
+    } else if (wv[Instr_CSRRS] != 0) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr.read();
         vb_csr_cmd_wdata = (i_csr_resp_data.read() | r.rdata1.read());
-    } else if (wv[Instr_CSRRSI] == 1) {
+    } else if (wv[Instr_CSRRSI] != 0) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr.read();
         vb_csr_cmd_wdata((RISCV_ARCH - 1), 5) = i_csr_resp_data.read()((RISCV_ARCH - 1), 5);
         vb_csr_cmd_wdata(4, 0) = (i_csr_resp_data.read()(4, 0) | r.radr1.read()(4, 0));// zero-extending 5 to 64-bits
-    } else if (wv[Instr_CSRRW] == 1) {
+    } else if (wv[Instr_CSRRW] != 0) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr.read();
         vb_csr_cmd_wdata = r.rdata1.read();
-    } else if (wv[Instr_CSRRWI] == 1) {
+    } else if (wv[Instr_CSRRWI] != 0) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr.read();
         vb_csr_cmd_wdata(4, 0) = r.radr1.read()(4, 0);      // zero-extending 5 to 64-bits
@@ -1057,7 +1057,7 @@ void InstrExecute::comb() {
             vb_csr_cmd_type = CsrReq_ExceptionCmd;
             vb_csr_cmd_addr = EXCEPTION_InstrIllegal;       // Illegal instruction
             vb_csr_cmd_wdata = mux.instr;
-        } else if (wv[Instr_EBREAK] == 1) {
+        } else if (wv[Instr_EBREAK] != 0) {
             vb_csr_cmd_type = CsrReq_BreakpointCmd;
             vb_csr_cmd_addr = EXCEPTION_Breakpoint;
         } else if (v_load_misaligned == 1) {
@@ -1094,35 +1094,35 @@ void InstrExecute::comb() {
         } else if (r.stack_underflow.read() == 1) {
             vb_csr_cmd_type = CsrReq_ExceptionCmd;
             vb_csr_cmd_addr = EXCEPTION_StackUnderflow;     // Stack Underflow
-        } else if (wv[Instr_ECALL] == 1) {
+        } else if (wv[Instr_ECALL] != 0) {
             vb_csr_cmd_type = CsrReq_ExceptionCmd;
             vb_csr_cmd_addr = EXCEPTION_CallFromXMode;      // Environment call
         } else if (i_irq_pending.read().or_reduce() == 1) {
             vb_csr_cmd_type = CsrReq_InterruptCmd;
             vb_csr_cmd_addr = irq2idx(i_irq_pending.read());
-        } else if (wv[Instr_WFI] == 1) {
+        } else if (wv[Instr_WFI] != 0) {
             vb_csr_cmd_type = CsrReq_WfiCmd;
             vb_csr_cmd_addr = mux.instr(14, 12);            // PRIV field
-        } else if (wv[Instr_MRET] == 1) {
+        } else if (wv[Instr_MRET] != 0) {
             vb_csr_cmd_type = CsrReq_TrapReturnCmd;
             vb_csr_cmd_addr = PRV_M;
-        } else if (wv[Instr_HRET] == 1) {
+        } else if (wv[Instr_HRET] != 0) {
             vb_csr_cmd_type = CsrReq_TrapReturnCmd;
             vb_csr_cmd_addr = PRV_H;
-        } else if (wv[Instr_SRET] == 1) {
+        } else if (wv[Instr_SRET] != 0) {
             vb_csr_cmd_type = CsrReq_TrapReturnCmd;
             vb_csr_cmd_addr = PRV_S;
-        } else if (wv[Instr_URET] == 1) {
+        } else if (wv[Instr_URET] != 0) {
             vb_csr_cmd_type = CsrReq_TrapReturnCmd;
             vb_csr_cmd_addr = PRV_U;
-        } else if (wv[Instr_FENCE] == 1) {
+        } else if (wv[Instr_FENCE] != 0) {
             vb_csr_cmd_type = CsrReq_FenceCmd;
             vb_csr_cmd_addr = 0x001;                        // [0]=fence; [1] fence_i [2]=vma
-        } else if (wv[Instr_FENCE_I] == 1) {
+        } else if (wv[Instr_FENCE_I] != 0) {
             vb_csr_cmd_type = CsrReq_FenceCmd;
             vb_csr_cmd_addr = 0x002;                        // [0]=fence; [1] fence_i [2]=vma
             vb_csr_cmd_wdata = ~0ull;                       // flush address
-        } else if (wv[Instr_SFENCE_VMA] == 1) {
+        } else if (wv[Instr_SFENCE_VMA] != 0) {
             vb_csr_cmd_type = CsrReq_FenceCmd;
             vb_csr_cmd_addr = 0x004;                        // [0]=fence; [1] fence_i [2]=vma
             if (mux.radr1.or_reduce() == 0) {               // must be set to zero in standard extension for fence and fence.i 
@@ -1141,25 +1141,25 @@ void InstrExecute::comb() {
     wb_select[Res_Ra].res = r.res_ra.read();
 
     // Select result:
-    if (r.select.read()[Res_Reg2] == 1) {
+    if (r.select.read()[Res_Reg2] != 0) {
         vb_res = wb_select[Res_Reg2].res.read();
-    } else if (r.select.read()[Res_Npc] == 1) {
+    } else if (r.select.read()[Res_Npc] != 0) {
         vb_res = wb_select[Res_Npc].res.read();
-    } else if (r.select.read()[Res_Ra] == 1) {
+    } else if (r.select.read()[Res_Ra] != 0) {
         vb_res = wb_select[Res_Ra].res.read();
-    } else if (r.select.read()[Res_Csr] == 1) {
+    } else if (r.select.read()[Res_Csr] != 0) {
         vb_res = wb_select[Res_Csr].res.read();
-    } else if (r.select.read()[Res_Alu] == 1) {
+    } else if (r.select.read()[Res_Alu] != 0) {
         vb_res = wb_select[Res_Alu].res.read();
-    } else if (r.select.read()[Res_AddSub] == 1) {
+    } else if (r.select.read()[Res_AddSub] != 0) {
         vb_res = wb_select[Res_AddSub].res.read();
-    } else if (r.select.read()[Res_Shifter] == 1) {
+    } else if (r.select.read()[Res_Shifter] != 0) {
         vb_res = wb_select[Res_Shifter].res.read();
-    } else if (r.select.read()[Res_IMul] == 1) {
+    } else if (r.select.read()[Res_IMul] != 0) {
         vb_res = wb_select[Res_IMul].res.read();
-    } else if (r.select.read()[Res_IDiv] == 1) {
+    } else if (r.select.read()[Res_IDiv] != 0) {
         vb_res = wb_select[Res_IDiv].res.read();
-    } else if (r.select.read()[Res_FPU] == 1) {
+    } else if (r.select.read()[Res_FPU] != 0) {
         vb_res = wb_select[Res_FPU].res.read();
     } else {
         vb_res = 0;
@@ -1208,7 +1208,7 @@ void InstrExecute::comb() {
                 v.page_fault_w = 0;
                 v.stack_overflow = 0;
                 v.stack_underflow = 0;
-            } else if ((vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) == 1) {
+            } else if ((vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) != 0) {
                 v.state = State_WaitMulti;
             } else if (i_amo.read() == 1) {
                 v_memop_ena = 1;
@@ -1220,7 +1220,7 @@ void InstrExecute::comb() {
                 } else {
                     v.amostate = AmoState_Read;
                 }
-            } else if ((i_memop_load.read() || i_memop_store.read()) == 1) {
+            } else if ((i_memop_load.read() || i_memop_store.read()) != 0) {
                 v_memop_ena = 1;
                 vb_memop_wdata = vb_rdata2;
                 if (i_memop_ready.read() == 0) {
@@ -1268,12 +1268,12 @@ void InstrExecute::comb() {
                         v.csr_req_data = mux.instr;
                         v.csr_req_rmw = 0;
                     }
-                } else if (r.csr_req_type.read()[CsrReq_HaltBit] == 1) {
+                } else if (r.csr_req_type.read()[CsrReq_HaltBit] != 0) {
                     v.valid = 0;
                     v.state = State_Halted;
-                } else if (r.csr_req_type.read()[CsrReq_BreakpointBit] == 1) {
+                } else if (r.csr_req_type.read()[CsrReq_BreakpointBit] != 0) {
                     v.valid = 0;
-                    if (i_csr_resp_data.read()[0] == 1) {
+                    if (i_csr_resp_data.read()[0] != 0) {
                         // ebreakm is set
                         v.state = State_Halted;
                     } else {
@@ -1284,14 +1284,14 @@ void InstrExecute::comb() {
                     }
                 } else if ((r.csr_req_type.read()[CsrReq_ExceptionBit]
                             || r.csr_req_type.read()[CsrReq_InterruptBit]
-                            || r.csr_req_type.read()[CsrReq_ResumeBit]) == 1) {
+                            || r.csr_req_type.read()[CsrReq_ResumeBit]) != 0) {
                     v.valid = wv[Instr_ECALL];              // No valid strob should be generated for all exceptions except ECALL
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena.read() == 0) {
                         v.npc = i_csr_resp_data.read();
                     }
-                } else if (r.csr_req_type.read()[CsrReq_WfiBit] == 1) {
-                    if (i_csr_resp_data.read()[0] == 1) {
+                } else if (r.csr_req_type.read()[CsrReq_WfiBit] != 0) {
+                    if (i_csr_resp_data.read()[0] != 0) {
                         // Invalid WFI instruction in current mode
                         v.csrstate = CsrState_Req;
                         v.csr_req_type = CsrReq_ExceptionCmd;
@@ -1302,7 +1302,7 @@ void InstrExecute::comb() {
                         v.valid = 1;
                         v.state = State_Wfi;
                     }
-                } else if (r.csr_req_type.read()[CsrReq_TrapReturnBit] == 1) {
+                } else if (r.csr_req_type.read()[CsrReq_TrapReturnBit] != 0) {
                     v.valid = 1;
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena.read() == 0) {
@@ -1366,7 +1366,7 @@ void InstrExecute::comb() {
         // Wait end of multiclock instructions
         if ((wb_select[Res_IMul].valid.read()
                 || wb_select[Res_IDiv].valid.read()
-                || wb_select[Res_FPU].valid.read()) == 1) {
+                || wb_select[Res_FPU].valid.read()) != 0) {
             v.state = State_Idle;
             v_reg_ena = r.waddr.read().or_reduce();
             vb_reg_waddr = r.waddr.read();
@@ -1417,7 +1417,7 @@ void InstrExecute::comb() {
         }
         break;
     case State_Wfi:
-        if ((i_haltreq.read() || i_wakeup.read()) == 1) {
+        if ((i_haltreq.read() || i_wakeup.read()) != 0) {
             v.state = State_Idle;
         }
         break;
@@ -1492,7 +1492,7 @@ void InstrExecute::comb() {
         v.memop_wdata = vb_memop_wdata;
         if ((v_memop_debug == 0)
                 && ((mux.memop_type[MemopType_Store] == 0)
-                        || (mux.memop_type[MemopType_Release] == 1))) {
+                        || (mux.memop_type[MemopType_Release] != 0))) {
             // Error code of the instruction SC (store with release) should
             // be written into register
             v.tagcnt = vb_tagcnt_next;

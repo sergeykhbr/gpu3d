@@ -437,10 +437,10 @@ void CacheTop::comb() {
     vb_resp_ctrl_addr((CFG_CPU_ADDR_BITS - 1), 0) = i.resp_addr.read();
     vb_resp_data_addr((CFG_CPU_ADDR_BITS - 1), 0) = d.resp_addr.read();
     if (CFG_CPU_ADDR_BITS < RISCV_ARCH) {
-        if (i.resp_addr.read()[(CFG_CPU_ADDR_BITS - 1)] == 1) {
+        if (i.resp_addr.read()[(CFG_CPU_ADDR_BITS - 1)] != 0) {
             vb_resp_ctrl_addr((RISCV_ARCH - 1), CFG_CPU_ADDR_BITS) = ~0ull;
         }
-        if (d.resp_addr.read()[(CFG_CPU_ADDR_BITS - 1)] == 1) {
+        if (d.resp_addr.read()[(CFG_CPU_ADDR_BITS - 1)] != 0) {
             vb_resp_data_addr((RISCV_ARCH - 1), CFG_CPU_ADDR_BITS) = ~0ull;
         }
     }

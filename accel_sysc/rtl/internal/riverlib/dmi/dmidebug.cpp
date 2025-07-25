@@ -305,10 +305,10 @@ void dmidebug::comb() {
     t_progbuf = r.progbuf_data.read();
     t_idx = r.regidx.read()(3, 0).to_int();
 
-    if ((r.haltreq.read() & i_halted.read()[hsel]) == 1) {
+    if ((r.haltreq.read() & i_halted.read()[hsel]) != 0) {
         v.haltreq = 0;
     }
-    if ((r.resumereq.read() & (!i_halted.read()[hsel])) == 1) {
+    if ((r.resumereq.read() & (!i_halted.read()[hsel])) != 0) {
         v.resumereq = 0;
         v.resumeack = 1;
     }
@@ -341,7 +341,7 @@ void dmidebug::comb() {
             if (r.regwr.read() == 1) {
                 v.data0 = r.wdata.read();
             }
-            if ((r.autoexecdata.read()[0] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+            if ((r.autoexecdata.read()[0] != 0) && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
@@ -353,7 +353,7 @@ void dmidebug::comb() {
             if (r.regwr.read() == 1) {
                 v.data1 = r.wdata.read();
             }
-            if ((r.autoexecdata.read()[1] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+            if ((r.autoexecdata.read()[1] != 0) && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
@@ -365,7 +365,7 @@ void dmidebug::comb() {
             if (r.regwr.read() == 1) {
                 v.data2 = r.wdata.read();
             }
-            if ((r.autoexecdata.read()[2] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+            if ((r.autoexecdata.read()[2] != 0) && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
@@ -377,7 +377,7 @@ void dmidebug::comb() {
             if (r.regwr.read() == 1) {
                 v.data3 = r.wdata.read();
             }
-            if ((r.autoexecdata.read()[3] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+            if ((r.autoexecdata.read()[3] != 0) && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
@@ -392,17 +392,17 @@ void dmidebug::comb() {
             vb_resp_data[1] = r.ndmreset.read();
             vb_resp_data[0] = r.dmactive.read();
             if (r.regwr.read() == 1) {
-                if (r.wdata.read()[31] == 1) {
+                if (r.wdata.read()[31] != 0) {
                     // Do not set cmderr before/after ndmreset
                     if (((r.wdata.read()[1] || r.ndmreset.read()) == 0)
-                            && (i_halted.read()[vb_hartselnext] == 1)) {
+                            && (i_halted.read()[vb_hartselnext] != 0)) {
                         v.cmderr = CMDERR_WRONGSTATE;
                     } else {
                         v.haltreq = 1;
                     }
-                } else if (r.wdata.read()[30] == 1) {
+                } else if (r.wdata.read()[30] != 0) {
                     // resumereq must be ignored if haltreq is set (@see spec)
-                    if (i_halted.read()[vb_hartselnext] == 1) {
+                    if (i_halted.read()[vb_hartselnext] != 0) {
                         v.resumereq = 1;
                     } else {
                         v.cmderr = CMDERR_WRONGSTATE;
@@ -410,9 +410,9 @@ void dmidebug::comb() {
                 }
                 v.hartreset = r.wdata.read()[29];
                 v.hartsel = r.wdata.read()(((16 + CFG_LOG2_CPU_MAX) - 1), 16);
-                if (r.wdata.read()[3] == 1) {               // setresethaltreq
+                if (r.wdata.read()[3] != 0) {               // setresethaltreq
                     v.resethaltreq = 1;
-                } else if (r.wdata.read()[2] == 1) {        // clearresethaltreq
+                } else if (r.wdata.read()[2] != 0) {        // clearresethaltreq
                     v.resethaltreq = 0;
                 }
                 v.ndmreset = r.wdata.read()[1];             // 1=Reset whole system including all harts
@@ -438,7 +438,7 @@ void dmidebug::comb() {
             vb_resp_data(3, 0) = 2;                         // version: dbg spec v0.13
         } else if (r.regidx.read() == 0x12) {               // hartinfo
             // Not available core should returns 0
-            if (i_available.read()[hsel] == 1) {
+            if (i_available.read()[hsel] != 0) {
                 vb_resp_data(23, 20) = CFG_DSCRATCH_REG_TOTAL;// nscratch
                 vb_resp_data[16] = 0;                       // dataaccess: 0=CSR shadowed;1=memory shadowed
                 vb_resp_data(15, 12) = 0;                   // datasize
@@ -477,7 +477,7 @@ void dmidebug::comb() {
                 t_progbuf((32 * t_idx) + 32 - 1, (32 * t_idx)) = r.wdata.read();
                 v.progbuf_data = t_progbuf;
             }
-            if ((r.autoexecprogbuf.read()[t_idx] == 1)
+            if ((r.autoexecprogbuf.read()[t_idx] != 0)
                     && (r.cmderr.read() == CMDERR_NONE)) {
                 if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
@@ -511,7 +511,7 @@ void dmidebug::comb() {
         v.postincrement = r.command.read()[CmdPostincrementBit];
         if (r.command.read()(31, 24) == 0) {
             // Register access command
-            if (r.command.read()[CmdTransferBit] == 1) {    // transfer
+            if (r.command.read()[CmdTransferBit] != 0) {    // transfer
                 v.cmdstate = CMD_STATE_REQUEST;
                 v.cmd_regaccess = 1;
                 v.cmd_read = (!r.command.read()[CmdWriteBit]);
@@ -521,7 +521,7 @@ void dmidebug::comb() {
                 v.dport_addr = (0, r.command.read()(15, 0));
                 v.dport_wdata = (r.data1.read(), r.data0.read());
                 v.dport_size = r.command.read()(22, 20);
-            } else if (r.command.read()[CmdPostexecBit] == 1) {// no transfer only buffer execution
+            } else if (r.command.read()[CmdPostexecBit] != 0) {// no transfer only buffer execution
                 v.cmdstate = CMD_STATE_REQUEST;
 
                 v.dport_req_valid = 1;
@@ -532,7 +532,7 @@ void dmidebug::comb() {
             }
         } else if (r.command.read()(31, 24) == 1) {
             // Quick access command
-            if (i_halted.read()[hsel] == 1) {
+            if (i_halted.read()[hsel] != 0) {
                 v.cmderr = CMDERR_WRONGSTATE;
                 v.cmdstate = CMD_STATE_IDLE;
             } else {
@@ -628,7 +628,7 @@ void dmidebug::comb() {
                     //        command (e.g. while executing the Program Buffer).
                     v.cmderr = CMDERR_EXCEPTION;
                 }
-            } else if ((r.cmd_regaccess.read() == 1) && (r.command.read()[CmdPostexecBit] == 1)) {
+            } else if ((r.cmd_regaccess.read() == 1) && (r.command.read()[CmdPostexecBit] != 0)) {
                 v.dport_req_valid = 1;
                 v.cmd_progexec = 1;
                 v.cmd_regaccess = 0;
@@ -645,7 +645,7 @@ void dmidebug::comb() {
         }
         break;
     case CMD_STATE_WAIT_HALTED:
-        if (i_halted.read()[hsel] == 1) {
+        if (i_halted.read()[hsel] != 0) {
             v.cmdstate = CMD_STATE_REQUEST;
 
             v.dport_req_valid = 1;

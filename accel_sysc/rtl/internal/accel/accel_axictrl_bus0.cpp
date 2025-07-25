@@ -183,13 +183,13 @@ void accel_axictrl_bus0::comb() {
 
     // access to unmapped slave:
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
-        if ((vmsto[i].ar_valid == 1) && (vb_ar_hit[i] == 0)) {
+        if ((vmsto[i].ar_valid != 0) && (vb_ar_hit[i] == 0)) {
             vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = (vmsto[i].ar_valid && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
         }
         vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = ((!vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))])
                 && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
 
-        if ((vmsto[i].aw_valid == 1) && (vb_aw_hit[i] == 0)) {
+        if ((vmsto[i].aw_valid != 0) && (vb_aw_hit[i] == 0)) {
             vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = (vmsto[i].aw_valid && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
         }
         vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = ((!vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))])
@@ -200,20 +200,20 @@ void accel_axictrl_bus0::comb() {
     vb_w_active = r.w_active.read();
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
         for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) {
-            if (vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] == 1) {
+            if (vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] != 0) {
                 vmsti[i].ar_ready = vslvo[ii].ar_ready;
                 vslvi[ii].ar_valid = vmsto[i].ar_valid;
                 vslvi[ii].ar_bits = vmsto[i].ar_bits;
                 vslvi[ii].ar_user = vmsto[i].ar_user;
                 vslvi[ii].ar_id = (vmsto[i].ar_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
             }
-            if (vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] == 1) {
+            if (vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] != 0) {
                 vmsti[i].aw_ready = vslvo[ii].aw_ready;
                 vslvi[ii].aw_valid = vmsto[i].aw_valid;
                 vslvi[ii].aw_bits = vmsto[i].aw_bits;
                 vslvi[ii].aw_user = vmsto[i].aw_user;
                 vslvi[ii].aw_id = (vmsto[i].aw_id, static_cast<sc_uint<CFG_BUS0_XMST_LOG2_TOTAL>>(i));
-                if (vslvo[ii].aw_ready == 1) {
+                if (vslvo[ii].aw_ready != 0) {
                     // Switch W-channel index to future w-transaction without id
                     vb_w_select((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)) = static_cast<sc_uint<CFG_BUS0_XSLV_LOG2_TOTAL>>(ii);
                     vb_w_active[i] = 1;
@@ -225,15 +225,15 @@ void accel_axictrl_bus0::comb() {
 
     // W-channel
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
-        if ((vmsto[i].w_valid == 1) && (r.w_active.read()[i] == 1)) {
+        if ((vmsto[i].w_valid != 0) && (r.w_active.read()[i] != 0)) {
             vmsti[i].w_ready = vslvo[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready;
             vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_valid = vmsto[i].w_valid;
             vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_data = vmsto[i].w_data;
             vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_strb = vmsto[i].w_strb;
             vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_last = vmsto[i].w_last;
             vslvi[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_user = vmsto[i].w_user;
-            if ((vmsto[i].w_last == 1)
-                    && (vslvo[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready == 1)) {
+            if ((vmsto[i].w_last != 0)
+                    && (vslvo[r.w_select.read()((i * CFG_BUS0_XSLV_LOG2_TOTAL) + CFG_BUS0_XSLV_LOG2_TOTAL - 1, (i * CFG_BUS0_XSLV_LOG2_TOTAL)).to_int()].w_ready != 0)) {
                 vb_w_active[i] = 0;
             }
         }
@@ -242,7 +242,7 @@ void accel_axictrl_bus0::comb() {
 
     // B-channel
     for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) {
-        if (vslvo[ii].b_valid == 1) {
+        if (vslvo[ii].b_valid != 0) {
             vslvi[ii].b_ready = vmsto[vslvo[ii].b_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].b_ready;
             vmsti[vslvo[ii].b_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].b_valid = vslvo[ii].b_valid;
             vmsti[vslvo[ii].b_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].b_resp = vslvo[ii].b_resp;
@@ -253,7 +253,7 @@ void accel_axictrl_bus0::comb() {
 
     // R-channel
     for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) {
-        if (vslvo[ii].r_valid == 1) {
+        if (vslvo[ii].r_valid != 0) {
             vslvi[ii].r_ready = vmsto[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_ready;
             vmsti[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_valid = vslvo[ii].r_valid;
             vmsti[vslvo[ii].r_id((CFG_BUS0_XMST_LOG2_TOTAL - 1), 0).to_int()].r_data = vslvo[ii].r_data;

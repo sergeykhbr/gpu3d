@@ -457,14 +457,14 @@ void CsrRegs::comb() {
     vb_pmp_napot_mask = 0x0000000000000007;
 
     vb_xtvec_off_edeleg = r.xmode[iM].xtvec_off.read();
-    if ((r.mode.read() <= PRV_S) && (r.medeleg.read()[r.cmd_addr.read()(4, 0).to_int()] == 1)) {
+    if ((r.mode.read() <= PRV_S) && (r.medeleg.read()[r.cmd_addr.read()(4, 0).to_int()] != 0)) {
         // Exception delegation to S-mode
         v_medeleg_ena = 1;
         vb_xtvec_off_edeleg = r.xmode[iS].xtvec_off.read();
     }
 
     vb_xtvec_off_ideleg = r.xmode[iM].xtvec_off.read();
-    if ((r.mode.read() <= PRV_S) && (r.mideleg.read()[r.cmd_addr.read()(3, 0).to_int()] == 1)) {
+    if ((r.mode.read() <= PRV_S) && (r.mideleg.read()[r.cmd_addr.read()(3, 0).to_int()] != 0)) {
         // Interrupt delegation to S-mode
         v_mideleg_ena = 1;
         vb_xtvec_off_ideleg = r.xmode[iS].xtvec_off.read();
@@ -480,33 +480,33 @@ void CsrRegs::comb() {
             v.cmd_addr = i_req_addr.read();
             v.cmd_data = i_req_data.read();
             v.cmd_exception = 0;
-            if (i_req_type.read()[CsrReq_ExceptionBit] == 1) {
+            if (i_req_type.read()[CsrReq_ExceptionBit] != 0) {
                 v.state = State_Exception;
                 if (i_req_addr.read() == EXCEPTION_CallFromXMode) {
                     v.cmd_addr = (i_req_addr.read() + r.mode.read());
                 }
-            } else if (i_req_type.read()[CsrReq_BreakpointBit] == 1) {
+            } else if (i_req_type.read()[CsrReq_BreakpointBit] != 0) {
                 v.state = State_Breakpoint;
-            } else if (i_req_type.read()[CsrReq_HaltBit] == 1) {
+            } else if (i_req_type.read()[CsrReq_HaltBit] != 0) {
                 v.state = State_Halt;
-            } else if (i_req_type.read()[CsrReq_ResumeBit] == 1) {
+            } else if (i_req_type.read()[CsrReq_ResumeBit] != 0) {
                 v.state = State_Resume;
-            } else if (i_req_type.read()[CsrReq_InterruptBit] == 1) {
+            } else if (i_req_type.read()[CsrReq_InterruptBit] != 0) {
                 v.state = State_Interrupt;
-            } else if (i_req_type.read()[CsrReq_TrapReturnBit] == 1) {
+            } else if (i_req_type.read()[CsrReq_TrapReturnBit] != 0) {
                 v.state = State_TrapReturn;
-            } else if (i_req_type.read()[CsrReq_WfiBit] == 1) {
+            } else if (i_req_type.read()[CsrReq_WfiBit] != 0) {
                 v.state = State_Wfi;
-            } else if (i_req_type.read()[CsrReq_FenceBit] == 1) {
+            } else if (i_req_type.read()[CsrReq_FenceBit] != 0) {
                 v.state = State_Fence;
-                if (i_req_addr.read()[0] == 1) {
+                if (i_req_addr.read()[0] != 0) {
                     // FENCE
                     v.fencestate = Fence_DataBarrier;
-                } else if (i_req_addr.read()[1] == 1) {
+                } else if (i_req_addr.read()[1] != 0) {
                     // FENCE.I
                     v_flushmmu = 1;
                     v.fencestate = Fence_DataFlush;
-                } else if ((i_req_addr.read()[2] == 1)
+                } else if ((i_req_addr.read()[2] != 0)
                             && (!((r.tvm.read() == 1) && (r.mode.read()[1] == 0)))) {
                     // FENCE.VMA: is illegal in S-mode when TVM bit=1
                     v_flushmmu = 1;
@@ -990,7 +990,7 @@ void CsrRegs::comb() {
     } else if (r.cmd_addr.read() == 0x30A) {                // menvcfg: [MRW] Machine environment configuration register
     } else if (r.cmd_addr.read() == 0x747) {                // mseccfg: [MRW] Machine security configuration register
     } else if (r.cmd_addr.read()(11, 4) == 0x3A) {          // pmpcfg0..63: [MRW] Physical memory protection configuration
-        if (r.cmd_addr.read()[0] == 1) {
+        if (r.cmd_addr.read()[0] != 0) {
             v.cmd_exception = 1;                            // RV32 only
         } else if (t_pmpcfgidx < CFG_PMP_TBL_SIZE) {
             for (int i = 0; i < 8; i++) {
@@ -1007,7 +1007,7 @@ void CsrRegs::comb() {
                 && (r.cmd_addr.read() <= 0x3EF)) {
         // pmpaddr0..63: [MRW] Physical memory protection address register
         for (int i = 0; i < (RISCV_ARCH - 2); i++) {
-            if ((r.cmd_data.read()[i] == 1) && (v_napot_shift == 0)) {
+            if ((r.cmd_data.read()[i] != 0) && (v_napot_shift == 0)) {
                 vb_pmp_napot_mask = ((vb_pmp_napot_mask << 1) | 1);
             } else {
                 v_napot_shift = 1;
@@ -1164,7 +1164,7 @@ void CsrRegs::comb() {
     }
 
     // Step is not enabled or interrupt enabled during stepping
-    if (((!r.dcsr_step.read()) || r.dcsr_stepie.read()) == 1) {
+    if (((!r.dcsr_step.read()) || r.dcsr_stepie.read()) != 0) {
         if (r.xmode[iM].xie.read()) {
             // ALL not-delegated interrupts
             vb_irq_ena = (~r.mideleg.read());
@@ -1197,7 +1197,7 @@ void CsrRegs::comb() {
             v.pmp_flags = 0;
         } else if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 1) {
             // TOR: Top of range
-            if (r.pmp_end_addr.read()[0] == 1) {
+            if (r.pmp_end_addr.read()[0] != 0) {
                 v.pmp_start_addr = (r.pmp_end_addr.read() + 1);
             } else {
                 v.pmp_start_addr = r.pmp_end_addr.read();

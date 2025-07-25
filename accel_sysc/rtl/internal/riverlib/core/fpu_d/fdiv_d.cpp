@@ -207,30 +207,30 @@ void DoubleDiv::comb() {
     signA = r.a.read()[63];
     signB = r.b.read()[63];
 
-    if (r.a.read()(62, 0).or_reduce() == 0) {
+    if (r.a.read()(62, 0) == 0) {
         zeroA = 1;
     }
 
-    if (r.b.read()(62, 0).or_reduce() == 0) {
+    if (r.b.read()(62, 0) == 0) {
         zeroB = 1;
     }
 
     mantA(51, 0) = r.a.read()(51, 0);
     mantA[52] = 0;
-    if (r.a.read()(62, 52).or_reduce() == 1) {
+    if (r.a.read()(62, 52) != 0) {
         mantA[52] = 1;
     }
 
     mantB(51, 0) = r.b.read()(51, 0);
     mantB[52] = 0;
-    if (r.b.read()(62, 52).or_reduce() == 1) {
+    if (r.b.read()(62, 52) != 0) {
         mantB[52] = 1;
         divisor = mantB;
     } else {
         // multiplexer for operation with zero expanent
         divisor = mantB;
         for (int i = 1; i < 53; i++) {
-            if ((preShift.or_reduce() == 0) && (mantB[(52 - i)] == 1)) {
+            if ((preShift.or_reduce() == 0) && (mantB[(52 - i)] != 0)) {
                 divisor = (mantB << i);
                 preShift = i;
             }
@@ -241,7 +241,7 @@ void DoubleDiv::comb() {
     expAB_t = ((0, r.a.read()(62, 52)) + 1023);
     expAB = ((0, expAB_t) - (0, r.b.read()(62, 52)));       // signed value
 
-    if (r.ena.read()[0] == 1) {
+    if (r.ena.read()[0] != 0) {
         v.divisor = divisor;
         v.preShift = preShift;
         v.expAB = expAB;
@@ -261,14 +261,14 @@ void DoubleDiv::comb() {
     }
 
     expShift = ((0, r.preShift.read()) - (0, wb_idiv_lshift.read()));
-    if ((r.b.read()(62, 52).or_reduce() == 0) && (r.a.read()(62, 52).or_reduce() == 1)) {
+    if ((r.b.read()(62, 52) == 0) && (r.a.read()(62, 52) != 0)) {
         expShift = (expShift - 1);
-    } else if ((r.b.read()(62, 52).or_reduce() == 1) && (r.a.read()(62, 52).or_reduce() == 0)) {
+    } else if ((r.b.read()(62, 52) != 0) && (r.a.read()(62, 52) == 0)) {
         expShift = (expShift + 1);
     }
 
     expAlign = (r.expAB.read() + (expShift[11], expShift));
-    if (expAlign[12] == 1) {
+    if (expAlign[12] != 0) {
         postShift = ((~expAlign(11, 0)) + 2);
     } else {
         postShift = 0;
@@ -298,7 +298,7 @@ void DoubleDiv::comb() {
             }
         }
     }
-    if (r.ena.read()[2] == 1) {
+    if (r.ena.read()[2] != 0) {
         v.mantPostScale = mantPostScale;
     }
 
@@ -321,10 +321,10 @@ void DoubleDiv::comb() {
     if (r.b.read()(62, 52) == 0x7FF) {
         nanB = 1;
     }
-    if (r.a.read()(51, 0).or_reduce() == 0) {
+    if (r.a.read()(51, 0) == 0) {
         mantZeroA = 1;
     }
-    if (r.b.read()(51, 0).or_reduce() == 0) {
+    if (r.b.read()(51, 0) == 0) {
         mantZeroB = 1;
     }
 
@@ -341,40 +341,40 @@ void DoubleDiv::comb() {
         res[63] = (r.a.read()[63] ^ r.b.read()[63]);
     }
 
-    if ((nanB && (!mantZeroB)) == 1) {
+    if ((nanB && (!mantZeroB)) != 0) {
         res(62, 52) = r.b.read()(62, 52);
-    } else if (((r.underflow.read() || r.zeroA.read()) && (!r.zeroB.read())) == 1) {
+    } else if (((r.underflow.read() || r.zeroA.read()) && (!r.zeroB.read())) != 0) {
         res(62, 52) = 0;
-    } else if ((r.overflow.read() || r.zeroB.read()) == 1) {
+    } else if ((r.overflow.read() || r.zeroB.read()) != 0) {
         res(62, 52) = ~0ull;
     } else if (nanA == 1) {
         res(62, 52) = r.a.read()(62, 52);
-    } else if (((nanB && mantZeroB) || r.expAlign.read()[11]) == 1) {
+    } else if (((nanB && mantZeroB) || r.expAlign.read()[11]) != 0) {
         res(62, 52) = 0;
     } else {
         res(62, 52) = (r.expAlign.read()(10, 0) + (mantOnes && rndBit && (!r.overflow.read())));
     }
 
     if (((r.zeroA.read() && r.zeroB.read())
-            || (nanA && mantZeroA && nanB && mantZeroB)) == 1) {
+            || (nanA && mantZeroA && nanB && mantZeroB)) != 0) {
         res[51] = 1;
         res(50, 0) = 0;
-    } else if ((nanA && (!mantZeroA)) == 1) {
+    } else if ((nanA && (!mantZeroA)) != 0) {
         res[51] = 1;
         res(50, 0) = r.a.read()(50, 0);
-    } else if ((nanB && (!mantZeroB)) == 1) {
+    } else if ((nanB && (!mantZeroB)) != 0) {
         res[51] = 1;
         res(50, 0) = r.b.read()(50, 0);
     } else if ((r.overflow.read()
                 || r.nanRes.read()
                 || (nanA && mantZeroA)
-                || (nanB && mantZeroB)) == 1) {
+                || (nanB && mantZeroB)) != 0) {
         res(51, 0) = 0;
     } else {
         res(51, 0) = (mantShort(51, 0) + rndBit);
     }
 
-    if (r.ena.read()[3] == 1) {
+    if (r.ena.read()[3] != 0) {
         v.result = res;
         v.illegal_op = (nanA || nanB);
         v.busy = 0;

@@ -263,7 +263,7 @@ void afifo_xslv_tb::test_clk2() {
             mem[wb_slv_o_req_addr.read()(5, 2).to_int()] = wb_slv_o_req_wdata.read();
         }
         rd_addr = wb_slv_o_req_addr.read()(5, 2);
-        if ((w_slv_o_req_valid.read() & (!v_busy)) == 1) {
+        if ((w_slv_o_req_valid.read() & (!v_busy)) != 0) {
             rd_data = mem[wb_slv_o_req_addr.read()(5, 2).to_int()];
         }
         rd_valid = (rd_valid(1, 0), (w_slv_o_req_valid.read() & (!v_busy)));

@@ -162,19 +162,19 @@ void IntMul::comb() {
     v_ena = 0;
 
 
-    if (i_a1.read()(62, 0).or_reduce() == 1) {
+    if (i_a1.read()(62, 0) != 0) {
         v_a1s_nzero = 1;
     }
-    if ((v_a1s_nzero && i_a1.read()[63]) == 1) {
+    if ((v_a1s_nzero && i_a1.read()[63]) != 0) {
         vb_a1s = ((~i_a1.read()) + 1);
     } else {
         vb_a1s = i_a1.read();
     }
 
-    if (i_a2.read()(62, 0).or_reduce() == 1) {
+    if (i_a2.read()(62, 0) != 0) {
         v_a2s_nzero = 1;
     }
-    if ((v_a2s_nzero && i_a2.read()[63]) == 1) {
+    if ((v_a2s_nzero && i_a2.read()[63]) != 0) {
         vb_a2s = ((~i_a2.read()) + 1);
     } else {
         vb_a2s = i_a2.read();
@@ -189,11 +189,11 @@ void IntMul::comb() {
         v.zero = 0;
         if (i_rv32.read() == 1) {
             vb_a1 = i_a1.read()(31, 0);
-            if ((i_unsigned.read() == 0) && (i_a1.read()[31] == 1)) {
+            if ((i_unsigned.read() == 0) && (i_a1.read()[31] != 0)) {
                 vb_a1(63, 32) = ~0ull;
             }
             vb_a2 = i_a2.read()(31, 0);
-            if ((i_unsigned.read() == 0) && (i_a2.read()[31] == 1)) {
+            if ((i_unsigned.read() == 0) && (i_a2.read()[31] != 0)) {
                 vb_a2(63, 32) = ~0ull;
             }
         } else if (i_high.read() == 1) {
@@ -228,7 +228,7 @@ void IntMul::comb() {
         v.a2_dbg = i_a2.read();
     }
 
-    if (r.ena.read()[0] == 1) {
+    if (r.ena.read()[0] != 0) {
         for (int i = 0; i < 32; i++) {
             wb_mux_lvl0 = r.a2.read()((2 * i) + 2 - 1, (2 * i));
             if (wb_mux_lvl0 == 0) {
@@ -248,7 +248,7 @@ void IntMul::comb() {
         }
     }
 
-    if (r.ena.read()[1] == 1) {
+    if (r.ena.read()[1] != 0) {
         for (int i = 0; i < 8; i++) {
             wb_lvl2[i] = ((sc_biguint<74>(r.lvl1[((2 * i) + 1)].read()) << 4)
                     + sc_biguint<74>(r.lvl1[(2 * i)].read()));
@@ -259,7 +259,7 @@ void IntMul::comb() {
         }
     }
 
-    if (r.ena.read()[2] == 1) {
+    if (r.ena.read()[2] != 0) {
         v.busy = 0;
         for (int i = 0; i < 2; i++) {
             wb_lvl4[i] = ((sc_biguint<100>(r.lvl3[((2 * i) + 1)].read()) << 16)

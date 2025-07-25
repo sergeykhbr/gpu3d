@@ -336,24 +336,24 @@ void l1_dma_snoop<abits>::comb() {
                 v.state = state_ar;
                 v.req_wdata = 0;
                 v.req_wstrb = 0;
-                if (i_req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 1) {
+                if (i_req_mem_type.read()[REQ_MEM_TYPE_CACHED] != 0) {
                     v.req_cached = ARCACHE_WRBACK_READ_ALLOCATE;
                 } else {
                     v.req_cached = ARCACHE_DEVICE_NON_BUFFERABLE;
                 }
-                if (coherence_ena_ == 1) {
+                if (coherence_ena_ != 0) {
                     v.req_ar_snoop = reqtype2arsnoop(i_req_mem_type.read());
                 }
             } else {
                 v.state = state_aw;
                 v.req_wdata = i_req_mem_data.read();
                 v.req_wstrb = i_req_mem_strob.read();
-                if (i_req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 1) {
+                if (i_req_mem_type.read()[REQ_MEM_TYPE_CACHED] != 0) {
                     v.req_cached = AWCACHE_WRBACK_WRITE_ALLOCATE;
                 } else {
                     v.req_cached = AWCACHE_DEVICE_NON_BUFFERABLE;
                 }
-                if (coherence_ena_ == 1) {
+                if (coherence_ena_ != 0) {
                     v.req_aw_snoop = reqtype2awsnoop(i_req_mem_type.read());
                 }
             }
@@ -441,7 +441,7 @@ void l1_dma_snoop<abits>::comb() {
     case snoop_cr:
         if (i_resp_snoop_valid.read() == 1) {
             v_cr_valid = 1;
-            if ((i_resp_snoop_flags.read()[TAG_FL_VALID] == 1)
+            if ((i_resp_snoop_flags.read()[TAG_FL_VALID] != 0)
                     && ((i_resp_snoop_flags.read()[DTAG_FL_SHARED] == 0)
                             || (r.ac_snoop.read() == AC_SNOOP_READ_UNIQUE))) {
                 // Need second request with cache access
@@ -506,7 +506,7 @@ void l1_dma_snoop<abits>::comb() {
         break;
     }
 
-    if ((coherence_ena_ == 1)
+    if ((coherence_ena_ != 0)
             && (v_snoop_next_ready == 1)
             && (i_msti.read().ac_valid == 1)) {
         req_snoop_valid = 1;

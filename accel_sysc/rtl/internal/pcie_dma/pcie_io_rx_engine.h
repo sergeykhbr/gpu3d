@@ -293,21 +293,21 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
     vb_addr_mdw = 0;
 
 
-    if (i_m_axis_rx_tuser.read()[2] == 1) {                 // Select BAR0 region
+    if (i_m_axis_rx_tuser.read()[2] != 0) {                 // Select BAR0 region
         vb_bar_offset = 0x008000000;                        // BAR0, 32-bits, 2MB, SRAM
-    } else if (i_m_axis_rx_tuser.read()[3] == 1) {          // Select BAR1 region
+    } else if (i_m_axis_rx_tuser.read()[3] != 0) {          // Select BAR1 region
         vb_bar_offset = 0x010000000;                        // BAR1, 32-bits, 2MB
     } else {
         vb_bar_offset = 0x080000000;                        // BAR2/BAR3 64-bits, 16MB to DDR
     }
 
-    if (r.req_be.read()[0] == 1) {
+    if (r.req_be.read()[0] != 0) {
         vb_req_addr_1_0 = 0;
-    } else if (r.req_be.read()[1] == 1) {
+    } else if (r.req_be.read()[1] != 0) {
         vb_req_addr_1_0 = 1;
-    } else if (r.req_be.read()[2] == 1) {
+    } else if (r.req_be.read()[2] != 0) {
         vb_req_addr_1_0 = 2;
-    } else if (r.req_be.read()[3] == 1) {
+    } else if (r.req_be.read()[3] != 0) {
         vb_req_addr_1_0 = 3;
     }
     // Max implemented BAR is 4GB so take 32-bits of address
@@ -425,7 +425,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             v.req_bytes = vb_req_bytes;
             v.wr_data = (i_m_axis_rx_tdata.read()(63, 32), i_m_axis_rx_tdata.read()(63, 32));
             v.wr_data_dw1 = i_m_axis_rx_tdata.read()(63, 32);
-            if (i_m_axis_rx_tdata.read()[2] == 1) {
+            if (i_m_axis_rx_tdata.read()[2] != 0) {
                 v.wr_strob = (r.req_be.read()(3, 0), r.req_be.read()(7, 4));
             } else {
                 v.wr_strob = r.req_be.read();
@@ -449,7 +449,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
         if (i_m_axis_rx_tvalid.read() == 1) {
             v.req_addr = vb_addr_mdw;
             v.req_bytes = vb_req_bytes;
-            if (i_m_axis_rx_tdata.read()[34] == 1) {
+            if (i_m_axis_rx_tdata.read()[34] != 0) {
                 v.wr_strob = (r.req_be.read()(3, 0), r.req_be.read()(7, 4));
             } else {
                 v.wr_strob = r.req_be.read();
@@ -463,7 +463,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             v.m_axis_rx_tready = (i_req_mem_ready.read() & (!i_m_axis_rx_tlast.read()));
             v.req_valid = 1;
             v.req_last = i_m_axis_rx_tlast.read();
-            if ((i_m_axis_rx_tkeep.read()(7, 4).or_reduce() == 1) && (i_m_axis_rx_tkeep.read()(3, 0).or_reduce() == 1)) {
+            if ((i_m_axis_rx_tkeep.read()(7, 4) != 0) && (i_m_axis_rx_tkeep.read()(3, 0) != 0)) {
                 if (r.wr_dw1_valid.read() == 1) {
                     v.wr_data = (i_m_axis_rx_tdata.read()(31, 0), r.wr_data_dw1.read());
                     v.wr_data_dw1 = i_m_axis_rx_tdata.read()(63, 32);
@@ -495,7 +495,7 @@ void pcie_io_rx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             v.req_addr = vb_addr_ldw;
             v.req_bytes = vb_req_bytes;
             v.wr_data = (i_m_axis_rx_tdata.read()(63, 32), i_m_axis_rx_tdata.read()(63, 32));
-            if (i_m_axis_rx_tdata.read()[2] == 1) {
+            if (i_m_axis_rx_tdata.read()[2] != 0) {
                 v.wr_strob = (r.req_be.read()(3, 0), r.req_be.read()(7, 4));
             } else {
                 v.wr_strob = r.req_be.read();

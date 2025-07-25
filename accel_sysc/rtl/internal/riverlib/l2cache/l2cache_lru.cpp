@@ -272,7 +272,7 @@ void L2CacheLru::comb() {
     if (i_flush_valid.read() == 1) {
         v.req_flush = 1;
         v.req_flush_all = i_flush_address.read()[0];
-        if (i_flush_address.read()[0] == 1) {
+        if (i_flush_address.read()[0] != 0) {
             v.req_flush_cnt = FLUSH_ALL_VALUE;
             v.req_flush_addr = 0;
         } else {
@@ -282,7 +282,7 @@ void L2CacheLru::comb() {
     }
 
     for (int i = 0; i < L1CACHE_BYTES_PER_LINE; i++) {
-        if (r.req_wstrb.read()[i] == 1) {
+        if (r.req_wstrb.read()[i] != 0) {
             vb_req_mask((8 * i) + 8 - 1, (8 * i)) = 0xFF;
         }
     }
@@ -329,10 +329,10 @@ void L2CacheLru::comb() {
                 v_line_cs_write = 0;
                 v_invalidate = 1;
                 v.state = State_TranslateAddress;
-            } else if (r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1) {
+            } else if (r.req_type.read()[L2_REQ_TYPE_UNIQUE] != 0) {
                 v_line_cs_write = 0;
                 v_invalidate = 1;
-            } else if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+            } else if (r.req_type.read()[L2_REQ_TYPE_WRITE] != 0) {
                 // Modify tagged mem output with request and write back
                 v_line_cs_write = 1;
                 v_line_wflags[TAG_FL_VALID] = 1;
@@ -352,15 +352,15 @@ void L2CacheLru::comb() {
             v.state = State_Idle;
         } else {
             // Miss
-            if ((r.req_type.read()[L2_REQ_TYPE_WRITE] == 1)
-                    && (r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1)) {
+            if ((r.req_type.read()[L2_REQ_TYPE_WRITE] != 0)
+                    && (r.req_type.read()[L2_REQ_TYPE_UNIQUE] != 0)) {
                 // This command analog of invalidate line
                 // no need to read it form memory
                 v.state = State_Idle;
                 v_resp_valid = 1;
             } else if ((r.req_type.read()[L2_REQ_TYPE_WRITE] == 0)
                         && (r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 0)
-                        && (r.req_type.read()[L2_REQ_TYPE_SNOOP] == 1)) {
+                        && (r.req_type.read()[L2_REQ_TYPE_SNOOP] != 0)) {
                 v.state = State_Idle;
                 v_resp_valid = 1;
 
@@ -379,15 +379,15 @@ void L2CacheLru::comb() {
         v.req_mem_valid = 1;
         v.state = State_WaitGrant;
 
-        if (r.req_type.read()[L2_REQ_TYPE_CACHED] == 1) {
-            if ((line_rflags_o.read()[TAG_FL_VALID] == 1)
-                    && (line_rflags_o.read()[L2TAG_FL_DIRTY] == 1)) {
+        if (r.req_type.read()[L2_REQ_TYPE_CACHED] != 0) {
+            if ((line_rflags_o.read()[TAG_FL_VALID] != 0)
+                    && (line_rflags_o.read()[L2TAG_FL_DIRTY] != 0)) {
                 v.write_first = 1;
                 v.req_mem_type = WriteBack();
                 v.mem_addr = (line_raddr_o.read()((CFG_CPU_ADDR_BITS - 1), CFG_L2_LOG2_BYTES_PER_LINE) << CFG_L2_LOG2_BYTES_PER_LINE);
             } else {
                 v.mem_addr = (r.req_addr.read()((CFG_CPU_ADDR_BITS - 1), CFG_L2_LOG2_BYTES_PER_LINE) << CFG_L2_LOG2_BYTES_PER_LINE);
-                if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+                if (r.req_type.read()[L2_REQ_TYPE_WRITE] != 0) {
                     v.req_mem_type = ReadMakeUnique();
                 } else {
                     v.req_mem_type = ReadShared();
@@ -398,7 +398,7 @@ void L2CacheLru::comb() {
         } else {
             v.mem_addr = r.req_addr.read();
             v.mem_wstrb = (0, r.req_wstrb.read());
-            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+            if (r.req_type.read()[L2_REQ_TYPE_WRITE] != 0) {
                 v.req_mem_type = WriteNoSnoop();
             } else {
                 v.req_mem_type = ReadNoSnoop();
@@ -414,7 +414,7 @@ void L2CacheLru::comb() {
         if (i_req_mem_ready.read() == 1) {
             if ((r.write_flush.read() == 1)
                     || (r.write_first.read() == 1)
-                    || ((r.req_type.read()[L2_REQ_TYPE_WRITE] == 1)
+                    || ((r.req_type.read()[L2_REQ_TYPE_WRITE] != 0)
                             && (r.req_type.read()[L2_REQ_TYPE_CACHED] == 0))) {
                 v.state = State_WriteBus;
             } else {
@@ -436,7 +436,7 @@ void L2CacheLru::comb() {
         break;
     case State_CheckResp:
         if ((r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0)
-                || (r.rb_resp.read()[1] == 1)) {
+                || (r.rb_resp.read()[1] != 0)) {
             // uncached read only (write goes to WriteBus) or cached load-modify fault
             v_resp_valid = 1;
             vb_resp_rdata = vb_uncached_data;
@@ -447,7 +447,7 @@ void L2CacheLru::comb() {
             v_line_cs_write = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
             vb_line_wstrb = ~0ull;                          // write full line
-            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+            if (r.req_type.read()[L2_REQ_TYPE_WRITE] != 0) {
                 // Modify tagged mem output with request before write
                 vb_req_type[L2_REQ_TYPE_WRITE] = 0;
                 v.req_type = vb_req_type;
@@ -470,7 +470,7 @@ void L2CacheLru::comb() {
                 v.mem_addr = (r.req_addr.read()((CFG_CPU_ADDR_BITS - 1), CFG_L2_LOG2_BYTES_PER_LINE) << CFG_L2_LOG2_BYTES_PER_LINE);
                 v.req_mem_valid = 1;
                 v.write_first = 0;
-                if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+                if (r.req_type.read()[L2_REQ_TYPE_WRITE] != 0) {
                     // read request: read-modify-save cache line
                     v.req_mem_type = ReadMakeUnique();
                 } else {
@@ -496,8 +496,8 @@ void L2CacheLru::comb() {
         v.cache_line_o = line_rdata_o.read();
         v_direct_access = r.req_flush_all.read();
         v_line_cs_write = r.req_flush_all.read();
-        if ((line_rflags_o.read()[TAG_FL_VALID] == 1)
-                && (line_rflags_o.read()[L2TAG_FL_DIRTY] == 1)) {
+        if ((line_rflags_o.read()[TAG_FL_VALID] != 0)
+                && (line_rflags_o.read()[L2TAG_FL_DIRTY] != 0)) {
             // Off-load valid line
             v.write_flush = 1;
             v.mem_addr = line_raddr_o.read();

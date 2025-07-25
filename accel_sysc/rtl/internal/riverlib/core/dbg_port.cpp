@@ -273,7 +273,7 @@ void DbgPort::comb() {
         v.resp_error = 0;
         v.progbuf_ena = 0;
         if (i_dport_req_valid.read() == 1) {
-            if (i_dport_type.read()[DPortReq_RegAccess] == 1) {
+            if (i_dport_type.read()[DPortReq_RegAccess] != 0) {
                 v.dport_write = i_dport_type.read()[DPortReq_Write];
                 v.dport_addr = i_dport_addr.read();
                 v.dport_wdata = i_dport_wdata.read();
@@ -291,9 +291,9 @@ void DbgPort::comb() {
                 } else {
                     v.dstate = wait_to_accept;
                 }
-            } else if (i_dport_type.read()[DPortReq_Progexec] == 1) {
+            } else if (i_dport_type.read()[DPortReq_Progexec] != 0) {
                 v.dstate = exec_progbuf_start;
-            } else if (i_dport_type.read()[DPortReq_MemAccess] == 1) {
+            } else if (i_dport_type.read()[DPortReq_MemAccess] != 0) {
                 v.dstate = abstract_mem_request;
                 v.dport_write = i_dport_type.read()[DPortReq_Write];
                 v.dport_addr = i_dport_addr.read();
@@ -319,7 +319,7 @@ void DbgPort::comb() {
         }
         vb_csr_req_addr = r.dport_addr.read()(11, 0);
         vb_csr_req_data = r.dport_wdata.read();
-        if ((r.req_accepted.read() && i_csr_resp_valid.read()) == 1) {
+        if ((r.req_accepted.read() && i_csr_resp_valid.read()) != 0) {
             vrdata = i_csr_resp_data.read();
             v.dstate = wait_to_accept;
         }

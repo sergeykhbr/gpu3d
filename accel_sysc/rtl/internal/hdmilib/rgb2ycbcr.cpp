@@ -170,7 +170,7 @@ void rgb2ycbcr::comb() {
     v.hsync = (r.hsync.read()(6, 0), i_hsync.read());
     v.vsync = (r.vsync.read()(6, 0), i_vsync.read());
     v.de = (r.de.read()(6, 0), i_de.read());
-    if (r.even.read()[6] == 1) {
+    if (r.even.read()[6] != 0) {
         // {Cb, Y} scaled down to 64 (multiplier gives 14 bits unsigned scale to 8-bits)
         v.ycbcr422 = (wb_res1.read()(13, 6), wb_res0.read()(13, 6));
     } else {

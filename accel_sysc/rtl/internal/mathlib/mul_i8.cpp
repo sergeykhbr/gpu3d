@@ -95,12 +95,12 @@ void mul_i8::comb() {
     vb_lvl1_30 = 0;
     vb_lvl1_31 = 0;
 
-    if ((i_signed.read() == 1) && (i_a.read()[7] == 1)) {
+    if ((i_signed.read() == 1) && (i_a.read()[7] != 0)) {
         v.ua = ((~i_a.read()) + 1);
     } else {
         v.ua = i_a.read();
     }
-    if ((i_signed.read() == 1) && (i_b.read()[7] == 1)) {
+    if ((i_signed.read() == 1) && (i_b.read()[7] != 0)) {
         v.ub = ((~i_b.read()) + 1);
     } else {
         v.ub = i_b.read();
@@ -108,37 +108,37 @@ void mul_i8::comb() {
     v.inv = (r.inv.read()(2, 0), (i_signed.read() & (i_a.read()[7] ^ i_b.read()[7])));
 
     // Level 1, bits[1:0]
-    if (r.ub.read()[0] == 1) {
+    if (r.ub.read()[0] != 0) {
         vb_lvl1_00 = (0, r.ua.read());
     }
-    if (r.ub.read()[1] == 1) {
+    if (r.ub.read()[1] != 0) {
         vb_lvl1_01 = (r.ua.read() << 1);
     }
     v.lvl1_0 = (vb_lvl1_00 + vb_lvl1_01);
 
     // Level 1, bits[3:2]
-    if (r.ub.read()[2] == 1) {
+    if (r.ub.read()[2] != 0) {
         vb_lvl1_10 = (0, r.ua.read());
     }
-    if (r.ub.read()[3] == 1) {
+    if (r.ub.read()[3] != 0) {
         vb_lvl1_11 = (r.ua.read() << 1);
     }
     v.lvl1_1 = (vb_lvl1_10 + vb_lvl1_11);
 
     // Level 1, bits[5:4]
-    if (r.ub.read()[4] == 1) {
+    if (r.ub.read()[4] != 0) {
         vb_lvl1_20 = (0, r.ua.read());
     }
-    if (r.ub.read()[5] == 1) {
+    if (r.ub.read()[5] != 0) {
         vb_lvl1_21 = (r.ua.read() << 1);
     }
     v.lvl1_2 = (vb_lvl1_20 + vb_lvl1_21);
 
     // Level 1, bits[7:6]
-    if (r.ub.read()[6] == 1) {
+    if (r.ub.read()[6] != 0) {
         vb_lvl1_30 = (0, r.ua.read());
     }
-    if (r.ub.read()[7] == 1) {
+    if (r.ub.read()[7] != 0) {
         vb_lvl1_31 = (r.ua.read() << 1);
     }
     v.lvl1_3 = (vb_lvl1_30 + vb_lvl1_31);
@@ -152,7 +152,7 @@ void mul_i8::comb() {
 
     // Level 3, result
     v.lvl3 = ((0, r.lvl2_0.read()) + (r.lvl2_1.read()(11, 0) << 4));
-    if (r.inv.read()[3] == 1) {
+    if (r.inv.read()[3] != 0) {
         v.res = ((~r.lvl3.read()) + 1);
     } else {
         v.res = r.lvl3.read();

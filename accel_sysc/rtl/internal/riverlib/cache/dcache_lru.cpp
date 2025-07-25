@@ -323,7 +323,7 @@ void DCacheLru::comb() {
     if (i_flush_valid.read() == 1) {
         v.req_flush = 1;
         v.req_flush_all = i_flush_address.read()[0];
-        if (i_flush_address.read()[0] == 1) {
+        if (i_flush_address.read()[0] != 0) {
             v.req_flush_cnt = FLUSH_ALL_VALUE;
             v.req_flush_addr = 0;
         } else {
@@ -333,7 +333,7 @@ void DCacheLru::comb() {
     }
 
     for (int i = 0; i < 8; i++) {
-        if (r.req_wstrb.read()[i] == 1) {
+        if (r.req_wstrb.read()[i] != 0) {
             vb_req_mask((8 * i) + 8 - 1, (8 * i)) = 0xFF;
         }
     }
@@ -375,7 +375,7 @@ void DCacheLru::comb() {
             // Hit
             v_resp_valid = 1;
             if (i_resp_ready.read() == 1) {
-                if (r.req_type.read()[MemopType_Store] == 1) {
+                if (r.req_type.read()[MemopType_Store] != 0) {
                     // Modify tagged mem output with request and write back
                     v_line_cs_write = 1;
                     v_line_wflags[TAG_FL_VALID] = 1;
@@ -385,10 +385,10 @@ void DCacheLru::comb() {
                     v.req_type = t_req_type;                // clear MemopType_Store bit
                     vb_line_wstrb = vb_line_rdata_o_wstrb;
                     vb_line_wdata = vb_line_rdata_o_modified;
-                    if (r.req_type.read()[MemopType_Release] == 1) {
+                    if (r.req_type.read()[MemopType_Release] != 0) {
                         vb_resp_data = 0;
                     }
-                    if ((r.req_type.read()[MemopType_Release] == 1)
+                    if ((r.req_type.read()[MemopType_Release] != 0)
                             && (line_rflags_o.read()[DTAG_FL_RESERVED] == 0)) {
                         // ignore writing if cacheline wasn't reserved before:
                         v_line_cs_write = 0;
@@ -396,7 +396,7 @@ void DCacheLru::comb() {
                         vb_resp_data = 1;                   // return error
                         v.state = State_Idle;
                     } else {
-                        if (coherence_ena_ && (line_rflags_o.read()[DTAG_FL_SHARED] == 1)) {
+                        if (coherence_ena_ && (line_rflags_o.read()[DTAG_FL_SHARED] != 0)) {
                             // Make line: 'shared' -> 'unique' using write request
                             v.write_share = 1;
                             v.state = State_TranslateAddress;
@@ -410,7 +410,7 @@ void DCacheLru::comb() {
                         }
                     }
                 } else if ((r.req_type.read()[MemopType_Store] == 0)
-                            && (r.req_type.read()[MemopType_Reserve] == 1)) {
+                            && (r.req_type.read()[MemopType_Reserve] != 0)) {
                     // Load with reserve
                     v_line_cs_write = 1;
                     v_line_wflags = line_rflags_o.read();
@@ -425,8 +425,8 @@ void DCacheLru::comb() {
             }
         } else {
             // Miss
-            if ((r.req_type.read()[MemopType_Store] == 1)
-                    && (r.req_type.read()[MemopType_Release] == 1)) {
+            if ((r.req_type.read()[MemopType_Store] != 0)
+                    && (r.req_type.read()[MemopType_Release] != 0)) {
                 vb_resp_data = 1;                           // return error. Cannot store into unreserved cache line
                 v.state = State_Idle;
             } else {
@@ -435,7 +435,7 @@ void DCacheLru::comb() {
         }
         break;
     case State_TranslateAddress:
-        if ((r.req_type.read()[MemopType_Store] == 1) && (i_pmp_w.read() == 0)) {
+        if ((r.req_type.read()[MemopType_Store] != 0) && (i_pmp_w.read() == 0)) {
             v.load_fault = 1;
             t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
@@ -454,8 +454,8 @@ void DCacheLru::comb() {
                 if (r.write_share.read() == 1) {
                     v.req_mem_type = WriteLineUnique();
                     v.mem_addr = (line_raddr_o.read()((CFG_CPU_ADDR_BITS - 1), CFG_LOG2_L1CACHE_BYTES_PER_LINE) << CFG_LOG2_L1CACHE_BYTES_PER_LINE);
-                } else if ((line_rflags_o.read()[TAG_FL_VALID] == 1)
-                            && (line_rflags_o.read()[DTAG_FL_DIRTY] == 1)) {
+                } else if ((line_rflags_o.read()[TAG_FL_VALID] != 0)
+                            && (line_rflags_o.read()[DTAG_FL_DIRTY] != 0)) {
                     v.write_first = 1;
                     v.req_mem_type = WriteBack();
                     v.mem_addr = (line_raddr_o.read()((CFG_CPU_ADDR_BITS - 1), CFG_LOG2_L1CACHE_BYTES_PER_LINE) << CFG_LOG2_L1CACHE_BYTES_PER_LINE);
@@ -463,7 +463,7 @@ void DCacheLru::comb() {
                     // 1. Read -> Save cache
                     // 2. Read -> Modify -> Save cache
                     v.mem_addr = (r.req_addr.read()((CFG_CPU_ADDR_BITS - 1), CFG_LOG2_L1CACHE_BYTES_PER_LINE) << CFG_LOG2_L1CACHE_BYTES_PER_LINE);
-                    if (r.req_type.read()[MemopType_Store] == 1) {
+                    if (r.req_type.read()[MemopType_Store] != 0) {
                         v.req_mem_type = ReadMakeUnique();
                     } else {
                         v.req_mem_type = ReadShared();
@@ -477,7 +477,7 @@ void DCacheLru::comb() {
                 v.mem_addr = r.req_addr.read();
                 v.mem_wstrb = (0, r.req_wstrb.read());
                 v.req_mem_size = r.req_size.read();
-                if (r.req_type.read()[MemopType_Store] == 1) {
+                if (r.req_type.read()[MemopType_Store] != 0) {
                     v.req_mem_type = WriteNoSnoop();
                 } else {
                     v.req_mem_type = ReadNoSnoop();
@@ -494,7 +494,7 @@ void DCacheLru::comb() {
             if ((r.write_flush.read() == 1)
                     || (r.write_first.read() == 1)
                     || (r.write_share.read() == 1)
-                    || ((r.req_type.read()[MemopType_Store] == 1)
+                    || ((r.req_type.read()[MemopType_Store] != 0)
                             && (r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0))) {
                 v.state = State_WriteBus;
             } else {
@@ -541,7 +541,7 @@ void DCacheLru::comb() {
             v_line_wflags[DTAG_FL_SHARED] = 1;
             v_line_wflags[DTAG_FL_RESERVED] = r.req_type.read()[MemopType_Reserve];
             vb_line_wstrb = ~0ull;                          // write full line
-            if (r.req_type.read()[MemopType_Store] == 1) {
+            if (r.req_type.read()[MemopType_Store] != 0) {
                 // Modify tagged mem output with request before write
                 t_req_type[MemopType_Store] = 0;
                 v.req_type = t_req_type;                    // clear MemopType_Store bit
@@ -570,7 +570,7 @@ void DCacheLru::comb() {
                 v.mem_addr = (r.req_addr.read()((CFG_CPU_ADDR_BITS - 1), CFG_LOG2_L1CACHE_BYTES_PER_LINE) << CFG_LOG2_L1CACHE_BYTES_PER_LINE);
                 v.req_mem_valid = 1;
                 v.write_first = 0;
-                if (r.req_type.read()[MemopType_Store] == 1) {
+                if (r.req_type.read()[MemopType_Store] != 0) {
                     // read request: read-modify-save cache line
                     v.req_mem_type = ReadMakeUnique();
                 } else {
@@ -605,8 +605,8 @@ void DCacheLru::comb() {
         v.cache_line_o = line_rdata_o.read();
         v_direct_access = r.req_flush_all.read();
         v_line_cs_write = r.req_flush_all.read();
-        if ((line_rflags_o.read()[TAG_FL_VALID] == 1)
-                && (line_rflags_o.read()[DTAG_FL_DIRTY] == 1)) {
+        if ((line_rflags_o.read()[TAG_FL_VALID] != 0)
+                && (line_rflags_o.read()[DTAG_FL_DIRTY] != 0)) {
             // Off-load valid line
             v.write_flush = 1;
             v.mem_addr = line_raddr_o.read();

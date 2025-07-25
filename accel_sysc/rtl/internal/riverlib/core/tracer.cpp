@@ -241,7 +241,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
         case 0:
             switch (instr(15, 13)) {
             case 0:
-                if (instr(12, 2).or_reduce() == 0) {
+                if (instr(12, 2) == 0) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "ERROR");
                     ostr = std::string(tstr);
                 } else {
@@ -282,7 +282,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
         case 1:
             switch (instr(15, 13)) {
             case 0:
-                if (instr(12, 2).or_reduce() == 0) {
+                if (instr(12, 2) == 0) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.nop");
                     ostr = std::string(tstr);
                 } else {
@@ -291,7 +291,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 }
                 break;
             case 1:
-                if (instr(11, 7).or_reduce() == 0) {
+                if (instr(11, 7) == 0) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "ERROR");
                     ostr = std::string(tstr);
                 } else {
@@ -300,7 +300,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 }
                 break;
             case 2:
-                if (instr(11, 7).or_reduce() == 0) {
+                if (instr(11, 7) == 0) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "ERROR");
                     ostr = std::string(tstr);
                 } else {
@@ -312,7 +312,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 if (instr(11, 7) == 2) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.addi16sp");
                     ostr = std::string(tstr);
-                } else if (instr(11, 7).or_reduce() == 1) {
+                } else if (instr(11, 7) != 0) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.lui");
                     ostr = std::string(tstr);
                 } else {
@@ -353,10 +353,10 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                     } else if ((instr[12] == 0) && (instr(6, 5) == 3)) {
                         RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.and");
                         ostr = std::string(tstr);
-                    } else if ((instr[12] == 1) && (instr(6, 5) == 0)) {
+                    } else if ((instr[12] != 0) && (instr(6, 5) == 0)) {
                         RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.subw");
                         ostr = std::string(tstr);
-                    } else if ((instr[12] == 1) && (instr(6, 5) == 1)) {
+                    } else if ((instr[12] != 0) && (instr(6, 5) == 1)) {
                         RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.addw");
                         ostr = std::string(tstr);
                     } else {
@@ -409,10 +409,10 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 } else if ((instr[12] == 0) && (instr(6, 2) != 0)) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.mv");
                     ostr = std::string(tstr);
-                } else if ((instr[12] == 1) && (instr(6, 2) == 0) && (instr(11, 7) == 0)) {
+                } else if ((instr[12] != 0) && (instr(6, 2) == 0) && (instr(11, 7) == 0)) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.ebreak");
                     ostr = std::string(tstr);
-                } else if ((instr[12] == 1) && (instr(6, 2) == 0)) {
+                } else if ((instr[12] != 0) && (instr(6, 2) == 0)) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "c.jalr");
                     ostr = std::string(tstr);
                 } else {
@@ -513,7 +513,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 ostr = std::string(tstr);
                 break;
             case 1:
-                if (instr(31, 26).or_reduce() == 0) {
+                if (instr(31, 26) == 0) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "slli");
                     ostr = std::string(tstr);
                 } else {
@@ -534,7 +534,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 ostr = std::string(tstr);
                 break;
             case 5:
-                if (instr(31, 26).or_reduce() == 0) {
+                if (instr(31, 26) == 0) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "srli");
                     ostr = std::string(tstr);
                 } else if (instr(31, 26) == 0x10) {
@@ -648,7 +648,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                     ostr = std::string(tstr);
                     break;
                 case 0x02:
-                    if (instr(24, 20).or_reduce() == 0) {
+                    if (instr(24, 20) == 0) {
                         RISCV_sprintf(tstr, sizeof(tstr), "%10s", "lr.w");
                         ostr = std::string(tstr);
                     } else {
@@ -704,7 +704,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                     ostr = std::string(tstr);
                     break;
                 case 0x02:
-                    if (instr(24, 20).or_reduce() == 0) {
+                    if (instr(24, 20) == 0) {
                         RISCV_sprintf(tstr, sizeof(tstr), "%10s", "lr.d");
                         ostr = std::string(tstr);
                     } else {
@@ -925,7 +925,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 }
                 break;
             case 1:
-                if (instr(31, 25).or_reduce() == 0) {
+                if (instr(31, 25) == 0) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "sllw");
                     ostr = std::string(tstr);
                 } else {
@@ -1098,7 +1098,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 }
                 break;
             case 0x71:
-                if ((instr(24, 20).or_reduce() == 0) && (instr(14, 12).or_reduce() == 0)) {
+                if ((instr(24, 20) == 0) && (instr(14, 12) == 0)) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fmov.x.d");
                     ostr = std::string(tstr);
                 } else {
@@ -1107,7 +1107,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 }
                 break;
             case 0x79:
-                if ((instr(24, 20).or_reduce() == 0) && (instr(14, 12).or_reduce() == 0)) {
+                if ((instr(24, 20) == 0) && (instr(14, 12) == 0)) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fmov.d.x");
                     ostr = std::string(tstr);
                 } else {
@@ -1376,7 +1376,7 @@ void Tracer::comb() {
         v.trace_tbl[wcnt].memaction[memcnt].ignored = 0;
         v.trace_tbl[wcnt].memaction[memcnt].complete = 0;
         if ((i_e_waddr.read().or_reduce() == 0)
-                || ((i_e_memop_type.read()[MemopType_Store] == 1)
+                || ((i_e_memop_type.read()[MemopType_Store] != 0)
                         && (i_e_memop_type.read()[MemopType_Release] == 0))) {
             v.trace_tbl[wcnt].memaction[memcnt].complete = 1;
         }
@@ -1401,7 +1401,7 @@ void Tracer::comb() {
                     checked = 1;
                     v.trace_tbl[xcnt].memaction[i].complete = 1;
                     v.trace_tbl[xcnt].memaction[i].ignored = i_reg_ignored.read();
-                    if (r.trace_tbl[xcnt].memaction[i].sc_release.read() == 1) {
+                    if (r.trace_tbl[xcnt].memaction[i].sc_release.read() != 0) {
                         if (i_m_wdata.read() == 1) {
                             v.trace_tbl[xcnt].memaction[i].ignored = 1;
                         }

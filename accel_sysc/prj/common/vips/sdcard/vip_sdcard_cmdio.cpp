@@ -221,7 +221,7 @@ void vip_sdcard_cmdio::comb() {
     case CMDSTATE_REQ_STARTBIT:
         v_busy = 0;
         v_crc7_clear = 1;
-        if ((r.spi_mode.read() && i_cs.read()) == 1) {
+        if ((r.spi_mode.read() && i_cs.read()) != 0) {
             // Do nothing
         } else if ((r.cmdz.read() == 1) && (i_cmd.read() == 0)) {
             v.cs = i_cs.read();
@@ -273,7 +273,7 @@ void vip_sdcard_cmdio::comb() {
         if (r.txbit.read() == 1) {
             v.cmd_state = CMDSTATE_WAIT_RESP;
             v.cmd_req_valid = 1;
-            if ((r.cmd_rxshift.read()(45, 40).or_reduce() == 0) && (r.cs.read() == 0)) {
+            if ((r.cmd_rxshift.read()(45, 40) == 0) && (r.cs.read() == 0)) {
                 // CMD0 with CS = 0 (CD_DAT3)
                 v.spi_mode = 1;
             }

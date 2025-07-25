@@ -123,7 +123,7 @@ void Double2Long::comb() {
 
     mantA(51, 0) = i_a.read()(51, 0);
     mantA[52] = 0;
-    if (i_a.read()(62, 52).or_reduce() == 1) {
+    if (i_a.read()(62, 52) != 0) {
         mantA[52] = 1;
     }
 
@@ -147,7 +147,7 @@ void Double2Long::comb() {
             expMax = 1085;
         }
     } else {
-        if ((r.op_signed.read() || r.signA.read()) == 1) {
+        if ((r.op_signed.read() || r.signA.read()) != 0) {
             expMax = 1085;
         } else {
             expMax = 1086;
@@ -181,7 +181,7 @@ void Double2Long::comb() {
         }
     }
 
-    if (r.ena.read()[0] == 1) {
+    if (r.ena.read()[0] != 0) {
         v.overflow = overflow;
         v.underflow = underflow;
         v.mantPostScale = mantPostScale;
@@ -212,7 +212,7 @@ void Double2Long::comb() {
         }
     }
 
-    if (r.ena.read()[1] == 1) {
+    if (r.ena.read()[1] != 0) {
         v.result = res;
         v.busy = 0;
     }

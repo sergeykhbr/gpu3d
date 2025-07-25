@@ -70,13 +70,13 @@ void IntAddSub::comb() {
     vb_res = 0;
 
     // To support 32-bits instruction transform 32-bits operands to 64 bits
-    if (i_mode.read()[0] == 1) {
+    if (i_mode.read()[0] != 0) {
         vb_rdata1(31, 0) = i_a1.read()(31, 0);
         vb_rdata2(31, 0) = i_a2.read()(31, 0);
-        if (vb_rdata1[31] == 1) {
+        if (vb_rdata1[31] != 0) {
             vb_rdata1(63, 32) = ~0ull;
         }
-        if (vb_rdata2[31] == 1) {
+        if (vb_rdata2[31] != 0) {
             vb_rdata2(63, 32) = ~0ull;
         }
     } else {
@@ -86,12 +86,12 @@ void IntAddSub::comb() {
 
     vb_add = (vb_rdata1 + vb_rdata2);
     vb_sub = (vb_rdata1 - vb_rdata2);
-    if (i_mode.read()[2] == 1) {
+    if (i_mode.read()[2] != 0) {
         vb_res = vb_add;
-    } else if (i_mode.read()[3] == 1) {
+    } else if (i_mode.read()[3] != 0) {
         vb_res = vb_sub;
-    } else if (i_mode.read()[4] == 1) {
-        if (i_mode.read()[1] == 1) {
+    } else if (i_mode.read()[4] != 0) {
+        if (i_mode.read()[1] != 0) {
             // unsigned less
             if (vb_rdata1 < vb_rdata2) {
                 vb_res[0] = 1;
@@ -100,8 +100,8 @@ void IntAddSub::comb() {
             // signed less
             vb_res[0] = vb_sub[63];
         }
-    } else if (i_mode.read()[5] == 1) {
-        if (i_mode.read()[1] == 1) {
+    } else if (i_mode.read()[5] != 0) {
+        if (i_mode.read()[1] != 0) {
             // unsigned min
             if (vb_rdata1 < vb_rdata2) {
                 vb_res = vb_rdata1;
@@ -110,14 +110,14 @@ void IntAddSub::comb() {
             }
         } else {
             // signed min
-            if (vb_sub[63] == 1) {
+            if (vb_sub[63] != 0) {
                 vb_res = vb_rdata1;
             } else {
                 vb_res = vb_rdata2;
             }
         }
-    } else if (i_mode.read()[6] == 1) {
-        if (i_mode.read()[1] == 1) {
+    } else if (i_mode.read()[6] != 0) {
+        if (i_mode.read()[1] != 0) {
             // unsigned max
             if (vb_rdata1 < vb_rdata2) {
                 vb_res = vb_rdata2;
@@ -126,15 +126,15 @@ void IntAddSub::comb() {
             }
         } else {
             // signed max
-            if (vb_sub[63] == 1) {
+            if (vb_sub[63] != 0) {
                 vb_res = vb_rdata2;
             } else {
                 vb_res = vb_rdata1;
             }
         }
     }
-    if (i_mode.read()[0] == 1) {
-        if (vb_res[31] == 1) {
+    if (i_mode.read()[0] != 0) {
+        if (vb_res[31] != 0) {
             vb_res(63, 32) = ~0ull;
         } else {
             vb_res(63, 32) = 0;

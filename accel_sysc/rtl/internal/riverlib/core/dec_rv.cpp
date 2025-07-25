@@ -227,9 +227,9 @@ void DecoderRv::comb() {
             }
             break;
         case 0x02:
-            if ((vb_opcode2 == 2) && (vb_instr(24, 20).or_reduce() == 0)) {
+            if ((vb_opcode2 == 2) && (vb_instr(24, 20) == 0)) {
                 vb_dec[Instr_LR_W] = 1;
-            } else if ((vb_opcode2 == 3) && (vb_instr(24, 20).or_reduce() == 0)) {
+            } else if ((vb_opcode2 == 3) && (vb_instr(24, 20) == 0)) {
                 vb_dec[Instr_LR_D] = 1;
             } else {
                 v_error = 1;
@@ -404,7 +404,7 @@ void DecoderRv::comb() {
         vb_radr1 = (0, vb_instr(19, 15));
         vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm = vb_instr(31, 20);
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
         }
         switch (vb_opcode2) {
@@ -448,7 +448,7 @@ void DecoderRv::comb() {
         vb_radr1 = (0, vb_instr(19, 15));
         vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm = vb_instr(31, 20);
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
         }
         switch (vb_opcode2) {
@@ -534,7 +534,7 @@ void DecoderRv::comb() {
         vb_dec[Instr_AUIPC] = 1;
         vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(31, 12) = vb_instr(31, 12);
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 32) = ~0ull;
         }
         break;
@@ -543,7 +543,7 @@ void DecoderRv::comb() {
         vb_radr1 = (0, vb_instr(19, 15));
         vb_radr2 = vb_instr(24, 20);
         vb_imm(11, 1) = (vb_instr[7], vb_instr(30, 25), vb_instr(11, 8));
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
         }
         switch (vb_opcode2) {
@@ -575,7 +575,7 @@ void DecoderRv::comb() {
         vb_dec[Instr_JAL] = 1;
         vb_waddr = (0, vb_instr(11, 7));                    // rd
         vb_imm(19, 1) = (vb_instr(19, 12), vb_instr[20], vb_instr(30, 21));
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 20) = ~0ull;
         }
         break;
@@ -584,7 +584,7 @@ void DecoderRv::comb() {
         vb_radr1 = (0, vb_instr(19, 15));
         vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(11, 0) = vb_instr(31, 20);
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
         }
         switch (vb_opcode2) {
@@ -601,7 +601,7 @@ void DecoderRv::comb() {
         vb_radr1 = (0, vb_instr(19, 15));
         vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(11, 0) = vb_instr(31, 20);
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
         }
         switch (vb_opcode2) {
@@ -636,7 +636,7 @@ void DecoderRv::comb() {
         vb_dec[Instr_LUI] = 1;
         vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(31, 12) = vb_instr(31, 12);
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 32) = ~0ull;
         }
         break;
@@ -645,7 +645,7 @@ void DecoderRv::comb() {
         vb_radr1 = (0, vb_instr(19, 15));
         vb_radr2 = (0, vb_instr(24, 20));
         vb_imm(11, 0) = (vb_instr(31, 25), vb_instr(11, 7));
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
         }
         switch (vb_opcode2) {
@@ -672,7 +672,7 @@ void DecoderRv::comb() {
         vb_waddr = vb_instr(11, 7);                         // rd
         vb_csr_addr = vb_instr(31, 20);
         vb_imm(11, 0) = vb_instr(31, 20);
-        if (vb_instr[31] == 1) {
+        if (vb_instr[31] != 0) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
         }
         switch (vb_opcode2) {
@@ -741,7 +741,7 @@ void DecoderRv::comb() {
                 vb_radr1 = (0, vb_instr(19, 15));
                 vb_waddr = (1, vb_instr(11, 7));            // rd
                 vb_imm(11, 0) = vb_instr(31, 20);
-                if (vb_instr[31] == 1) {
+                if (vb_instr[31] != 0) {
                     vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
                 }
                 if (vb_opcode2 == 3) {
@@ -755,7 +755,7 @@ void DecoderRv::comb() {
                 vb_radr1 = (0, vb_instr(19, 15));
                 vb_radr2 = (1, vb_instr(24, 20));
                 vb_imm(11, 0) = (vb_instr(31, 25), vb_instr(11, 7));
-                if (vb_instr[31] == 1) {
+                if (vb_instr[31] != 0) {
                     vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
                 }
                 if (vb_opcode2 == 3) {
@@ -833,7 +833,7 @@ void DecoderRv::comb() {
                     break;
                 case 0x71:
                     vb_waddr[5] = 0;
-                    if ((vb_instr(24, 20).or_reduce() == 0) && (vb_opcode2.or_reduce() == 0)) {
+                    if ((vb_instr(24, 20) == 0) && (vb_opcode2.or_reduce() == 0)) {
                         vb_dec[Instr_FMOV_X_D] = 1;
                     } else {
                         v_error = 1;
@@ -841,7 +841,7 @@ void DecoderRv::comb() {
                     break;
                 case 0x79:
                     vb_radr1[5] = 0;
-                    if ((vb_instr(24, 20).or_reduce() == 0) && (vb_opcode2.or_reduce() == 0)) {
+                    if ((vb_instr(24, 20) == 0) && (vb_opcode2.or_reduce() == 0)) {
                         vb_dec[Instr_FMOV_D_X] = 1;
                     } else {
                         v_error = 1;
@@ -970,7 +970,7 @@ void DecoderRv::comb() {
             || vb_dec[Instr_AMOMAXU_D]
             || vb_dec[Instr_AMOSWAP_D]
             || vb_dec[Instr_LR_D]
-            || vb_dec[Instr_SC_D]) == 1) {
+            || vb_dec[Instr_SC_D]) != 0) {
         vb_memop_size = MEMOP_8B;
     } else if ((vb_dec[Instr_LW]
                 || vb_dec[Instr_LWU]
@@ -985,9 +985,9 @@ void DecoderRv::comb() {
                 || vb_dec[Instr_AMOMAXU_W]
                 || vb_dec[Instr_AMOSWAP_W]
                 || vb_dec[Instr_LR_W]
-                || vb_dec[Instr_SC_W]) == 1) {
+                || vb_dec[Instr_SC_W]) != 0) {
         vb_memop_size = MEMOP_4B;
-    } else if ((vb_dec[Instr_LH] || vb_dec[Instr_LHU] || vb_dec[Instr_SH]) == 1) {
+    } else if ((vb_dec[Instr_LH] || vb_dec[Instr_LHU] || vb_dec[Instr_SH]) != 0) {
         vb_memop_size = MEMOP_2B;
     } else {
         vb_memop_size = MEMOP_1B;

@@ -278,12 +278,12 @@ void accel_axi2apb_bus1_tb::comb() {
             v.w_wait_states = r.test_cnt.read()(5, 2);
             v.b_wait_states = r.test_cnt.read()(7, 6);
             v.r_wait_states = r.test_cnt.read()(11, 8);
-            if (r.test_cnt.read()[12] == 1) {
+            if (r.test_cnt.read()[12] != 0) {
                 v.xsize = 3;                                // 8-bytes
             } else {
                 v.xsize = 2;                                // 4-bytes
             }
-            if (r.test_cnt.read()[13] == 1) {
+            if (r.test_cnt.read()[13] != 0) {
                 // End of test (show err_cnt)
                 v.end_of_test = 1;
                 v.test_state = 7;

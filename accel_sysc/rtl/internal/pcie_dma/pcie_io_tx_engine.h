@@ -354,7 +354,7 @@ void pcie_io_tx_engine<C_DATA_WIDTH, KEEP_WIDTH>::comb() {
             v.s_axis_tx_tvalid = 1;
             v.s_axis_tx_tlast = (r.rd_last.read() & (!r.rd_burst.read()));
             // Swap DWORDS for AXI
-            if (r.req_addr.read()[2] == 1) {
+            if (r.req_addr.read()[2] != 0) {
                 vb_s_axis_tx_tdata(63, 32) = r.rd_data.read()(63, 32);
             } else {
                 vb_s_axis_tx_tdata(63, 32) = r.rd_data.read()(31, 0);

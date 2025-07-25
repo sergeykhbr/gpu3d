@@ -295,7 +295,7 @@ void FpuTop::comb() {
     }
     if ((r.busy.read() == 1)
             && ((r.ivec.read()[(Instr_FMOV_X_D - Instr_FADD_D)]
-                    || r.ivec.read()[(Instr_FMOV_D_X - Instr_FADD_D)]) == 1)) {
+                    || r.ivec.read()[(Instr_FMOV_D_X - Instr_FADD_D)]) != 0)) {
         v.busy = 0;
         v.ready = 1;
         v.result = r.a.read();

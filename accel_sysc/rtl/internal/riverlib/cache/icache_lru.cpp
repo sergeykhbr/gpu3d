@@ -222,7 +222,7 @@ void ICacheLru::comb() {
     if (i_flush_valid.read() == 1) {
         v.req_flush = 1;
         v.req_flush_all = i_flush_address.read()[0];
-        if (i_flush_address.read()[0] == 1) {
+        if (i_flush_address.read()[0] != 0) {
             v.req_flush_cnt = FLUSH_ALL_VALUE;
             v.req_flush_addr = 0;
         } else {

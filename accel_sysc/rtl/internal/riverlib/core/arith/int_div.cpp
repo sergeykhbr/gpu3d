@@ -175,10 +175,10 @@ void IntDiv::comb() {
         }
     }
 
-    if ((vb_a1[63] == 1) && (vb_a1(62, 0).or_reduce() == 0)) {
+    if ((vb_a1[63] != 0) && (vb_a1(62, 0) == 0)) {
         v_a1_m0 = 1;                                        // = (1ull << 63)
     }
-    if (vb_a2.and_reduce() == 1) {
+    if (vb_a2.and_reduce() != 0) {
         v_a2_m1 = 1;                                        // = -1ll
     }
 
@@ -202,10 +202,10 @@ void IntDiv::comb() {
     if (r.rv32.read() == 1) {
         vb_div(63, 32) = 0;
         vb_rem(63, 32) = 0;
-        if (vb_div[31] == 1) {
+        if (vb_div[31] != 0) {
             vb_div(63, 32) = ~0ull;
         }
-        if (vb_rem[31] == 1) {
+        if (vb_rem[31] != 0) {
             vb_rem(63, 32) = ~0ull;
         }
     }
@@ -230,13 +230,13 @@ void IntDiv::comb() {
         if (i_rv32.read() == 1) {
             if (i_unsigned.read() == 1) {
                 v.div_on_zero = 0;
-                if (i_a2.read()(31, 0).or_reduce() == 0) {
+                if (i_a2.read()(31, 0) == 0) {
                     v.div_on_zero = 1;
                 }
                 v.overflow = 0;
             } else {
                 v.div_on_zero = 0;
-                if (i_a2.read()(30, 0).or_reduce() == 0) {
+                if (i_a2.read()(30, 0) == 0) {
                     v.div_on_zero = 1;
                 }
                 v.overflow = (v_a1_m0 && v_a2_m1);
@@ -244,13 +244,13 @@ void IntDiv::comb() {
         } else {
             if (i_unsigned.read() == 1) {
                 v.div_on_zero = 0;
-                if (i_a2.read()(63, 0).or_reduce() == 0) {
+                if (i_a2.read()(63, 0) == 0) {
                     v.div_on_zero = 1;
                 }
                 v.overflow = 0;
             } else {
                 v.div_on_zero = 0;
-                if (i_a2.read()(62, 0).or_reduce() == 0) {
+                if (i_a2.read()(62, 0) == 0) {
                     v.div_on_zero = 1;
                 }
                 v.overflow = (v_a1_m0 && v_a2_m1);
@@ -261,7 +261,7 @@ void IntDiv::comb() {
         // v.reference_div = compute_reference(i_unsigned.read(), i_rv32.read(),
         //                              i_residual.read(),
         //                              i_a1.read(), i_a2.read());
-    } else if (r.ena.read()[8] == 1) {
+    } else if (r.ena.read()[8] != 0) {
         v.busy = 0;
         if (r.resid.read() == 1) {
             if (r.overflow.read() == 1) {

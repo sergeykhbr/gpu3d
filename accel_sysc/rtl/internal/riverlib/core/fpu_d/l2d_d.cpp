@@ -107,7 +107,7 @@ void Long2Double::comb() {
     if (i_w32.read() == 0) {
         v_signA = i_a.read()[63];
         vb_A = i_a.read();
-    } else if ((i_signed.read() && i_a.read()[31]) == 1) {
+    } else if ((i_signed.read() && i_a.read()[31]) != 0) {
         v_signA = 1;
         vb_A(63, 32) = ~0ull;
         vb_A(31, 0) = i_a.read()(31, 0);
@@ -119,7 +119,7 @@ void Long2Double::comb() {
 
     if (i_ena.read() == 1) {
         v.busy = 1;
-        if ((i_signed.read() && v_signA) == 1) {
+        if ((i_signed.read() && v_signA) != 0) {
             v.signA = 1;
             v.absA = ((~vb_A) + 1);
         } else {
@@ -131,18 +131,18 @@ void Long2Double::comb() {
 
     // multiplexer, probably if/elsif in rtl:
     lshift = 63;
-    if (r.absA.read()[63] == 1) {
+    if (r.absA.read()[63] != 0) {
         mantAlign = r.absA.read();
     } else {
         for (int i = 1; i < 64; i++) {
-            if ((lshift == 63) && (r.absA.read()[(63 - i)] == 1)) {
+            if ((lshift == 63) && (r.absA.read()[(63 - i)] != 0)) {
                 mantAlign = (r.absA.read() << i);
                 lshift = i;
             }
         }
     }
 
-    if (r.ena.read()[0] == 1) {
+    if (r.ena.read()[0] != 0) {
         v.mantAlign = mantAlign;
         v.lshift = lshift;
     }
@@ -167,7 +167,7 @@ void Long2Double::comb() {
     res(62, 52) = (expAlign + (mantOnes && rndBit));
     res(51, 0) = (r.mantAlign.read()(62, 11) + rndBit);
 
-    if (r.ena.read()[1] == 1) {
+    if (r.ena.read()[1] != 0) {
         v.result = res;
         v.busy = 0;
     }

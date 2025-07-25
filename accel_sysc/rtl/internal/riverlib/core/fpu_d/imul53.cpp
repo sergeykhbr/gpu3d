@@ -132,7 +132,7 @@ void imul53::comb() {
         v.accum_ena = 1;
         v.sum = 0;
         v.shift = 0;
-    } else if (r.delay.read()[13] == 1) {
+    } else if (r.delay.read()[13] != 0) {
         v.accum_ena = 0;
     }
 
@@ -198,16 +198,16 @@ void imul53::comb() {
     }
     wb_sumInv = vb_sumInv;
 
-    if (r.sum.read()[105] == 1) {
+    if (r.sum.read()[105] != 0) {
         vb_shift = ~0ull;
         v.overflow = 1;
-    } else if (r.sum.read()[104] == 1) {
+    } else if (r.sum.read()[104] != 0) {
         vb_shift = 0;
     } else {
         vb_shift = wb_lshift.read();
     }
 
-    if (r.delay.read()[14] == 1) {
+    if (r.delay.read()[14] != 0) {
         v.shift = vb_shift;
         v.overflow = 0;
         if (vb_shift == 0x7F) {

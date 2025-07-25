@@ -113,14 +113,14 @@ void L2Dummy::comb() {
     // select source (aw has higher priority):
     if (vb_src_aw.or_reduce() == 0) {
         for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
-            if ((v_selected == 0) && (vb_src_ar[i] == 1)) {
+            if ((v_selected == 0) && (vb_src_ar[i] != 0)) {
                 vb_srcid = i;
                 v_selected = 1;
             }
         }
     } else {
         for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
-            if ((v_selected == 0) && (vb_src_aw[i] == 1)) {
+            if ((v_selected == 0) && (vb_src_aw[i] != 0)) {
                 vb_srcid = i;
                 v_selected = 1;
             }
@@ -183,7 +183,7 @@ void L2Dummy::comb() {
         vlxi[r.srcid.read().to_int()].r_resp = (0, r.resp.read());
         vlxi[r.srcid.read().to_int()].r_id = r.req_id.read();
         vlxi[r.srcid.read().to_int()].r_user = r.req_user.read();
-        if (vl1o[r.srcid.read().to_int()].r_ready == 1) {
+        if (vl1o[r.srcid.read().to_int()].r_ready != 0) {
             v.state = Idle;
         }
         break;
@@ -230,7 +230,7 @@ void L2Dummy::comb() {
         vlxi[r.srcid.read().to_int()].b_resp = r.resp.read();
         vlxi[r.srcid.read().to_int()].b_id = r.req_id.read();
         vlxi[r.srcid.read().to_int()].b_user = r.req_user.read();
-        if (vl1o[r.srcid.read().to_int()].b_ready == 1) {
+        if (vl1o[r.srcid.read().to_int()].b_ready != 0) {
             v.state = Idle;
         }
         break;

@@ -111,7 +111,7 @@ void ic_axi4_to_l1::comb() {
 
     vb_req_mask = 0;
     for (int i = 0; i < 8; i++) {
-        if (r.req_wstrb.read()[i] == 1) {
+        if (r.req_wstrb.read()[i] != 0) {
             vb_req_mask((8 * i) + 8 - 1, (8 * i)) = 0xFF;
         }
     }

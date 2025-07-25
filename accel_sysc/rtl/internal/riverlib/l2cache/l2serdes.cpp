@@ -133,7 +133,7 @@ void L2SerDes::comb() {
     vb_r_data = i_msti.read().r_data;
     vb_line_o = r.line.read();
     for (int i = 0; i < SERDES_BURST_LEN; i++) {
-        if (r.rmux.read()[i] == 1) {
+        if (r.rmux.read()[i] != 0) {
             vb_line_o((i * busw) + busw - 1, (i * busw)) = vb_r_data;
         }
     }
@@ -192,10 +192,10 @@ void L2SerDes::comb() {
     }
 
     if (v_req_mem_ready == 1) {
-        if ((i_l2o.read().ar_valid && i_msti.read().ar_ready) == 1) {
+        if ((i_l2o.read().ar_valid && i_msti.read().ar_ready) != 0) {
             v.state = State_Read;
             v.rmux = 1;
-        } else if ((i_l2o.read().aw_valid && i_msti.read().aw_ready) == 1) {
+        } else if ((i_l2o.read().aw_valid && i_msti.read().aw_ready) != 0) {
             v.line = i_l2o.read().w_data;                   // Undocumented RIVER (Axi-lite feature)
             v.wstrb = i_l2o.read().w_strb;
             v.state = State_Write;

@@ -225,10 +225,10 @@ void clint<cpu_total>::comb() {
         vrdata[0] = r.hart[regidx].msip.read();
         vrdata[32] = r.hart[(regidx + 1)].msip.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
+            if (wb_req_wstrb.read()(3, 0).or_reduce() != 0) {
                 v.hart[regidx].msip = wb_req_wdata.read()[0];
             }
-            if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
+            if (wb_req_wstrb.read()(7, 4).or_reduce() != 0) {
                 v.hart[(regidx + 1)].msip = wb_req_wdata.read()[32];
             }
         }

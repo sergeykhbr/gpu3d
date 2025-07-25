@@ -322,7 +322,7 @@ void Mmu::comb() {
 
     // Start Page Physical Address
     vb_pte_start_va(43, 0) = i_mmu_ppn.read();
-    if (i_mmu_ppn.read()[43] == 1) {
+    if (i_mmu_ppn.read()[43] != 0) {
         vb_pte_start_va(51, 44) = ~0ull;
     }
     // Page walking base Physical Address
@@ -369,7 +369,7 @@ void Mmu::comb() {
     vb_tlb_pa3(63, 39) = wb_tlb_rdata.read()(63, 39).to_uint64();
     vb_tlb_pa3(38, 0) = r.last_va.read()(38, 0);
 
-    if (wb_tlb_rdata.read()[PTE_V] == 1) {
+    if (wb_tlb_rdata.read()[PTE_V] != 0) {
         if (wb_tlb_rdata.read()(9, 8).to_uint64() == 3) {
             // 32 TB pages:
             v_tlb_hit = (!(r.last_va.read()(63, 39) ^ wb_tlb_rdata.read()(115, 91).to_uint64()));
@@ -427,7 +427,7 @@ void Mmu::comb() {
             vb_mem_req_wstrb = i_core_req_wstrb.read();
             vb_mem_req_size = i_core_req_size.read();
             v_mem_resp_ready = i_core_resp_ready.read();
-            if ((i_core_req_valid.read() && i_mem_req_ready.read()) == 1) {
+            if ((i_core_req_valid.read() && i_mem_req_ready.read()) != 0) {
                 v.state = WaitRespNoMmu;
             }
         } else if ((r.last_mmu_ena.read() == 1) && (v_last_valid == 1)) {// MMU enabled: Check the request to the same page:
@@ -445,7 +445,7 @@ void Mmu::comb() {
             vb_mem_req_wstrb = i_core_req_wstrb.read();
             vb_mem_req_size = i_core_req_size.read();
             v_mem_resp_ready = i_core_resp_ready.read();
-            if ((i_core_req_valid.read() && i_mem_req_ready.read()) == 1) {
+            if ((i_core_req_valid.read() && i_mem_req_ready.read()) != 0) {
                 v.state = WaitRespLast;
             }
         } else {
@@ -473,7 +473,7 @@ void Mmu::comb() {
         vb_mem_req_wstrb = i_core_req_wstrb.read();
         vb_mem_req_size = i_core_req_size.read();
         v_mem_resp_ready = i_core_resp_ready.read();
-        if ((i_mem_resp_valid.read() && i_core_resp_ready.read()) == 1) {
+        if ((i_mem_resp_valid.read() && i_core_resp_ready.read()) != 0) {
             if (i_mmu_ena.read() == 1) {
                 // Do not accept new request because MMU state changed
                 v_core_req_ready = 0;
@@ -498,7 +498,7 @@ void Mmu::comb() {
         vb_mem_req_wstrb = i_core_req_wstrb.read();
         vb_mem_req_size = i_core_req_size.read();
         v_mem_resp_ready = i_core_resp_ready.read();
-        if ((i_mem_resp_valid.read() && i_core_resp_ready.read()) == 1) {
+        if ((i_mem_resp_valid.read() && i_core_resp_ready.read()) != 0) {
             if (v_last_valid == 0) {
                 // Do not accept new request because of new VA request
                 v_core_req_ready = 0;
@@ -566,7 +566,7 @@ void Mmu::comb() {
             v.resp_data = i_mem_resp_data.read();
             v.resp_load_fault = i_mem_resp_load_fault.read();// Hardware error Load (unmapped access)
             v.resp_store_fault = i_mem_resp_store_fault.read();// Hardware error Store/AMO (unmapped access)
-            if ((r.tlb_hit.read() || i_mem_resp_load_fault.read() || i_mem_resp_store_fault.read()) == 1) {
+            if ((r.tlb_hit.read() || i_mem_resp_load_fault.read() || i_mem_resp_store_fault.read()) != 0) {
                 v.state = AcceptCore;
             } else {
                 v.state = HandleResp;
@@ -574,7 +574,7 @@ void Mmu::comb() {
         }
         break;
     case HandleResp:
-        if ((r.resp_data.read()[PTE_V] == 0) || (((!r.resp_data.read()[PTE_R]) && r.resp_data.read()[PTE_W]) == 1)) {// v=0 or (r=0 && w=1)
+        if ((r.resp_data.read()[PTE_V] == 0) || (((!r.resp_data.read()[PTE_R]) && r.resp_data.read()[PTE_W]) != 0)) {// v=0 or (r=0 && w=1)
             // PTE is invalid
             v.ex_page_fault = 1;
             v.state = AcceptCore;
@@ -583,11 +583,11 @@ void Mmu::comb() {
             v.state = CacheReq;
             v.tlb_level = (r.tlb_level.read() << 1);
             v.tlb_page_size = (r.tlb_page_size.read() - 1);
-            if (r.tlb_level.read()[0] == 1) {
+            if (r.tlb_level.read()[0] != 0) {
                 v.req_pa = (vb_resp_ppn, vb_level1_off);
-            } else if (r.tlb_level.read()[1] == 1) {
+            } else if (r.tlb_level.read()[1] != 0) {
                 v.req_pa = (vb_resp_ppn, vb_level2_off);
-            } else if (r.tlb_level.read()[2] == 1) {
+            } else if (r.tlb_level.read()[2] != 0) {
                 v.req_pa = (vb_resp_ppn, vb_level3_off);
             } else {
                 // It was the last level
@@ -615,13 +615,13 @@ void Mmu::comb() {
             v.last_page_size = r.tlb_page_size.read();
             v.tlb_wdata = t_tlb_wdata;
             // Pages more than 4KB support:
-            if (r.tlb_level.read()[0] == 1) {
+            if (r.tlb_level.read()[0] != 0) {
                 v.req_pa = (vb_resp_ppn(51, 27), r.last_va.read()(38, 0));
                 v.last_pa = (vb_resp_ppn(51, 27) << 27);
-            } else if (r.tlb_level.read()[1] == 1) {
+            } else if (r.tlb_level.read()[1] != 0) {
                 v.req_pa = (vb_resp_ppn(51, 18), r.last_va.read()(29, 0));
                 v.last_pa = (vb_resp_ppn(51, 18) << 18);
-            } else if (r.tlb_level.read()[2] == 1) {
+            } else if (r.tlb_level.read()[2] != 0) {
                 v.req_pa = (vb_resp_ppn(51, 9), r.last_va.read()(20, 0));
                 v.last_pa = (vb_resp_ppn(51, 9) << 9);
             } else {

@@ -93,7 +93,7 @@ void divstage64::comb() {
     wb_divisor = i_divisor.read();
 
     wb_divx1(63, 0) = wb_divisor(63, 0);
-    if (wb_divisor(123, 64).or_reduce() == 1) {
+    if (wb_divisor(123, 64) != 0) {
         wb_divx1[64] = 1;
     } else {
         wb_divx1[64] = 0;
@@ -101,7 +101,7 @@ void divstage64::comb() {
 
     wb_divx2[0] = 0;
     wb_divx2(63, 1) = wb_divisor(62, 0);
-    if (wb_divisor(123, 63).or_reduce() == 1) {
+    if (wb_divisor(123, 63) != 0) {
         wb_divx2[64] = 1;
     } else {
         wb_divx2[64] = 0;
@@ -112,7 +112,7 @@ void divstage64::comb() {
 
     wb_divx4(1, 0) = 0;
     wb_divx4(63, 2) = wb_divisor(61, 0);
-    if (wb_divisor(123, 62).or_reduce() == 1) {
+    if (wb_divisor(123, 62) != 0) {
         wb_divx4[64] = 1;
     } else {
         wb_divx4[64] = 0;
@@ -127,7 +127,7 @@ void divstage64::comb() {
 
     wb_divx8(2, 0) = 0;
     wb_divx8(63, 3) = wb_divisor(60, 0);
-    if (wb_divisor(123, 61).or_reduce() == 1) {
+    if (wb_divisor(123, 61) != 0) {
         wb_divx8[64] = 1;
     } else {
         wb_divx8[64] = 0;
@@ -135,7 +135,7 @@ void divstage64::comb() {
 
     // 7 = 8 - 1
     wb_divx7(64, 0) = (wb_divx8(64, 0) - (0, wb_divx1(63, 0)));
-    if ((wb_divx7[64] == 1) || (wb_divisor(123, 62).or_reduce() == 1)) {
+    if ((wb_divx7[64] != 0) || (wb_divisor(123, 62) != 0)) {
         wb_divx7[64] = 1;
     } else {
         wb_divx7[64] = 0;
@@ -143,7 +143,7 @@ void divstage64::comb() {
 
     // 9 = 8 + 1
     wb_divx9(64, 0) = ((0, wb_divx8(63, 0)) + (0, wb_divx1(63, 0)));
-    if ((wb_divx9[64] == 1) || (wb_divisor(123, 61).or_reduce() == 1)) {
+    if ((wb_divx9[64] != 0) || (wb_divisor(123, 61) != 0)) {
         wb_divx9[64] = 1;
     } else {
         wb_divx9[64] = 0;
@@ -151,7 +151,7 @@ void divstage64::comb() {
 
     // 10 = 8 + 2
     wb_divx10(64, 0) = ((0, wb_divx8(63, 0)) + (0, wb_divx2(63, 0)));
-    if ((wb_divx10[64] == 1) || (wb_divisor(123, 61).or_reduce() == 1)) {
+    if ((wb_divx10[64] != 0) || (wb_divisor(123, 61) != 0)) {
         wb_divx10[64] = 1;
     } else {
         wb_divx10[64] = 0;
@@ -159,7 +159,7 @@ void divstage64::comb() {
 
     // 11 = 8 + 3
     wb_divx11(64, 0) = ((0, wb_divx8(63, 0)) + (0, wb_divx3(63, 0)));
-    if ((wb_divx11[64] == 1) || (wb_divisor(123, 61).or_reduce() == 1)) {
+    if ((wb_divx11[64] != 0) || (wb_divisor(123, 61) != 0)) {
         wb_divx11[64] = 1;
     } else {
         wb_divx11[64] = 0;
@@ -173,7 +173,7 @@ void divstage64::comb() {
     // 16 = divisor << 4
     wb_divx16(3, 0) = 0;
     wb_divx16(63, 4) = wb_divisor(59, 0);
-    if (wb_divisor(123, 60).or_reduce() == 1) {
+    if (wb_divisor(123, 60) != 0) {
         wb_divx16[64] = 1;
     } else {
         wb_divx16[64] = 0;
@@ -181,7 +181,7 @@ void divstage64::comb() {
 
     // 13 = 16 - 3
     wb_divx13(64, 0) = (wb_divx16(64, 0) - (0, wb_divx3(63, 0)));
-    if ((wb_divx13[64] == 1) || (wb_divisor(123, 61).or_reduce() == 1)) {
+    if ((wb_divx13[64] != 0) || (wb_divisor(123, 61) != 0)) {
         wb_divx13[64] = 1;
     } else {
         wb_divx13[64] = 0;
@@ -194,7 +194,7 @@ void divstage64::comb() {
 
     // 15 = 16 - 1
     wb_divx15(64, 0) = (wb_divx16(64, 0) - (0, wb_divx1(63, 0)));
-    if ((wb_divx15[64] == 1) || (wb_divisor(123, 61).or_reduce() == 1)) {
+    if ((wb_divx15[64] != 0) || (wb_divisor(123, 61) != 0)) {
         wb_divx15[64] = 1;
     } else {
         wb_divx15[64] = 0;

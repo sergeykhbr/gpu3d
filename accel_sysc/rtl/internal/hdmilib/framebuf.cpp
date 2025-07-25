@@ -209,7 +209,7 @@ void framebuf::comb() {
 
     switch (r.state.read()) {
     case STATE_Idle:
-        if ((r.difcnt.read()[8] == 1) || (r.difcnt.read() <= 96)) {
+        if ((r.difcnt.read()[8] != 0) || (r.difcnt.read() <= 96)) {
             v.req_valid = 1;
             v.req_addr = (r.wr_row.read(), r.wr_col.read(), 0);// 2 Bytes per pixel
             v.state = STATE_Request;
@@ -257,12 +257,12 @@ void framebuf::comb() {
 
     if (i_de.read() == 1) {
         v.mux_ena = (r.mux_ena.read()(2, 0), r.mux_ena.read()[3]);
-        if (r.mux_ena.read()[0] == 1) {
+        if (r.mux_ena.read()[0] != 0) {
             v_rd_ena = 1;
             v.rd_addr = (r.rd_addr.read() + 1);
             v.rd_col = (r.rd_col.read() + 4);               // 64-bits contains 4x16-bits pixels
         }
-    } else if ((r.de.read()[0] == 1) && (i_de.read() == 0)) {
+    } else if ((r.de.read()[0] != 0) && (i_de.read() == 0)) {
         // Back front of the de (end of row)
         v.rd_addr = ((r.rd_addr.read()(7, 6) + 1) << 6);
         v.mux_ena = 0x1;
@@ -273,7 +273,7 @@ void framebuf::comb() {
         v.difcnt = (r.difcnt.read() + 1);
     } else if ((i_resp_2d_valid.read() == 0) && (v_rd_ena == 1)) {
         v.difcnt = (r.difcnt.read() - 1);
-    } else if ((i_hsync.read() == 0) && (r.h_sync.read()[0] == 1)) {
+    } else if ((i_hsync.read() == 0) && (r.h_sync.read()[0] != 0)) {
         // correction, we can write more than used
         v.difcnt = r.wr_col.read()(11, 2);
     }
@@ -326,22 +326,22 @@ void framebuf::comb() {
     }
     v.pix_sel = r.mux_ena.read();
 
-    if (r.ring_sel.read()[0] == 1) {
+    if (r.ring_sel.read()[0] != 0) {
         vb_ring_rdata = wb_ring0_rdata.read();
-    } else if (r.ring_sel.read()[1] == 1) {
+    } else if (r.ring_sel.read()[1] != 0) {
         vb_ring_rdata = wb_ring1_rdata.read();
-    } else if (r.ring_sel.read()[2] == 1) {
+    } else if (r.ring_sel.read()[2] != 0) {
         vb_ring_rdata = wb_ring2_rdata.read();
     } else {
         vb_ring_rdata = wb_ring3_rdata.read();
     }
     if (r.de.read().or_reduce() == 0) {
         vb_pix = 0;
-    } else if (r.pix_sel.read()[0] == 1) {
+    } else if (r.pix_sel.read()[0] != 0) {
         vb_pix = vb_ring_rdata(15, 0);
-    } else if (r.pix_sel.read()[1] == 1) {
+    } else if (r.pix_sel.read()[1] != 0) {
         vb_pix = vb_ring_rdata(31, 16);
-    } else if (r.pix_sel.read()[2] == 1) {
+    } else if (r.pix_sel.read()[2] != 0) {
         vb_pix = vb_ring_rdata(47, 32);
     } else {
         vb_pix = vb_ring_rdata(63, 48);

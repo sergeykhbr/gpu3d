@@ -220,25 +220,25 @@ void axi_slv::comb() {
         }
     }
 
-    if ((i_xslvi.read().ar_valid & r.ar_ready.read()) == 1) {
+    if ((i_xslvi.read().ar_valid & r.ar_ready.read()) != 0) {
         v.ar_ready = 0;
     }
-    if ((i_xslvi.read().aw_valid & r.aw_ready.read()) == 1) {
+    if ((i_xslvi.read().aw_valid & r.aw_ready.read()) != 0) {
         v.aw_ready = 0;
     }
-    if ((i_xslvi.read().w_valid & r.w_ready.read()) == 1) {
+    if ((i_xslvi.read().w_valid & r.w_ready.read()) != 0) {
         v.w_ready = 0;
     }
-    if ((i_xslvi.read().r_ready & r.r_valid.read()) == 1) {
+    if ((i_xslvi.read().r_ready & r.r_valid.read()) != 0) {
         v.r_err = 0;
         v.r_last = 0;
         v.r_valid = 0;
     }
-    if ((i_xslvi.read().b_ready & r.b_valid.read()) == 1) {
+    if ((i_xslvi.read().b_ready & r.b_valid.read()) != 0) {
         v.b_err = 0;
         v.b_valid = 0;
     }
-    if ((r.req_valid.read() & i_req_ready.read()) == 1) {
+    if ((r.req_valid.read() & i_req_ready.read()) != 0) {
         v.req_valid = 0;
         v.requested = 1;
     } else if (i_resp_valid.read() == 1) {
@@ -256,7 +256,7 @@ void axi_slv::comb() {
         v.ar_id = i_xslvi.read().ar_id;
         v.ar_user = i_xslvi.read().ar_user;
         if ((r.ar_ready.read() == 1) && (i_xslvi.read().ar_valid == 1)) {
-            if (((i_xslvi.read().aw_valid & r.aw_ready.read()) == 1) || (r.wstate.read().or_reduce() == 1)) {
+            if (((i_xslvi.read().aw_valid & r.aw_ready.read()) != 0) || (r.wstate.read().or_reduce() == 1)) {
                 v.rstate = State_r_wait_writing;
             } else {
                 v.rstate = State_r_addr;
@@ -392,7 +392,7 @@ void axi_slv::comb() {
         break;
     case State_r_wait_writing:
         if (((r.wstate.read().or_reduce() == 0) && (i_xslvi.read().aw_valid == 0))
-                || ((r.req_valid.read() & r.req_last.read() & i_req_ready.read()) == 1)) {
+                || ((r.req_valid.read() & r.req_last.read() & i_req_ready.read()) != 0)) {
             // End of writing, start reading
             v.req_valid = 1;
             v.req_write = 0;
@@ -490,7 +490,7 @@ void axi_slv::comb() {
         break;
     case State_w_wait_reading:
         // ready to accept new data (no latched data)
-        if ((r.rstate.read().or_reduce() == 0) || ((r.r_valid.read() & r.r_last.read() & i_xslvi.read().r_ready) == 1)) {
+        if ((r.rstate.read().or_reduce() == 0) || ((r.r_valid.read() & r.r_last.read() & i_xslvi.read().r_ready) != 0)) {
             v.w_ready = 1;
             v.req_write = 1;
             v.req_addr = r.aw_addr.read();

@@ -244,12 +244,12 @@ void apb_pnp<cfg_slots>::comb() {
 
     if (wb_req_addr.read()(11, 2) == 0) {
         vrdata = hwid_;
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.irq = 1;
         }
     } else if (wb_req_addr.read()(11, 2) == 1) {
         vrdata = r.fw_id.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.fw_id = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 2) {
@@ -261,62 +261,62 @@ void apb_pnp<cfg_slots>::comb() {
         vrdata = 0;
     } else if (wb_req_addr.read()(11, 2) == 4) {
         vrdata = r.idt_l.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.idt_l = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 5) {
         vrdata = r.idt_m.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.idt_m = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 6) {
         vrdata = r.malloc_addr_l.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.malloc_addr_l = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 7) {
         vrdata = r.malloc_addr_m.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.malloc_addr_m = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 8) {
         vrdata = r.malloc_size_l.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.malloc_size_l = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 9) {
         vrdata = r.malloc_size_m.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.malloc_size_m = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 10) {
         vrdata = r.fwdbg1.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.fwdbg1 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 11) {
         vrdata = r.fwdbg2.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.fwdbg2 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 12) {
         vrdata = r.fwdbg3.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.fwdbg3 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 13) {
         vrdata = r.fwdbg4.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.fwdbg4 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 14) {
         vrdata = r.fwdbg5.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.fwdbg5 = wb_req_wdata.read();
         }
     } else if (wb_req_addr.read()(11, 2) == 15) {
         vrdata = r.fwdbg6.read();
-        if ((w_req_valid.read() & w_req_write.read()) == 1) {
+        if ((w_req_valid.read() & w_req_write.read()) != 0) {
             v.fwdbg6 = wb_req_wdata.read();
         }
     } else if ((wb_req_addr.read()(11, 2) >= 16)

@@ -128,7 +128,7 @@ void BpBTB::comb() {
         vb_pc_nshift[i] = (vb_pc_equal[(i - 1)] || vb_pc_nshift[(i - 1)]);
     }
 
-    if ((i_we.read() && (!v_dont_update)) == 1) {
+    if ((i_we.read() && (!v_dont_update)) != 0) {
         v.btb[0].exec = i_e.read();
         v.btb[0].pc = i_we_pc.read();
         v.btb[0].npc = i_we_npc.read();

@@ -263,19 +263,19 @@ void DoubleAdd::comb() {
 
     mantA(51, 0) = r.a.read()(51, 0);
     mantA[52] = 0;
-    if (r.a.read()(62, 52).or_reduce() == 1) {
+    if (r.a.read()(62, 52) != 0) {
         mantA[52] = 1;
     }
 
     mantB(51, 0) = r.b.read()(51, 0);
     mantB[52] = 0;
-    if (r.b.read()(62, 52).or_reduce() == 1) {
+    if (r.b.read()(62, 52) != 0) {
         mantB[52] = 1;
     }
 
-    if ((r.a.read()(62, 52).or_reduce() == 1) && (r.b.read()(62, 52).or_reduce() == 0)) {
+    if ((r.a.read()(62, 52) != 0) && (r.b.read()(62, 52) == 0)) {
         expDif = (r.a.read()(62, 52) - 1);
-    } else if ((r.a.read()(62, 52).or_reduce() == 0) && (r.b.read()(62, 52).or_reduce() == 1)) {
+    } else if ((r.a.read()(62, 52) == 0) && (r.b.read()(62, 52) != 0)) {
         expDif = (1 - r.b.read()(62, 52));
     } else {
         expDif = (r.a.read()(62, 52) - r.b.read()(62, 52));
@@ -333,7 +333,7 @@ void DoubleAdd::comb() {
         vb_mantMore = mantB;
         vb_mantLess = mantA;
     }
-    if (r.ena.read()[0] == 1) {
+    if (r.ena.read()[0] != 0) {
         v.flMore = v_flMore;
         v.flEqual = v_flEqual;
         v.flLess = v_flLess;
@@ -348,7 +348,7 @@ void DoubleAdd::comb() {
     // M = {mantM, 52'd0}
     mantLessScale = r.mantLess.read().to_uint64();
     mantLessScale = (mantLessScale << 52);
-    if (r.ena.read()[1] == 1) {
+    if (r.ena.read()[1] != 0) {
         v.mantLessScale = 0;
         for (int i = 0; i < 105; i++) {
             if (i == r.preShift.read()) {
@@ -361,13 +361,13 @@ void DoubleAdd::comb() {
     mantMoreScale = (mantMoreScale << 52);
 
     // 106-bits adder/subtractor
-    if ((signA ^ signOpB) == 1) {
+    if ((signA ^ signOpB) != 0) {
         vb_mantSum = (mantMoreScale - r.mantLessScale.read());
     } else {
         vb_mantSum = (mantMoreScale + r.mantLessScale.read());
     }
 
-    if (r.ena.read()[2] == 1) {
+    if (r.ena.read()[2] != 0) {
         v.mantSum = vb_mantSum;
     }
 
@@ -378,30 +378,30 @@ void DoubleAdd::comb() {
     }
 
     for (int i = 0; i < 64; i++) {
-        if ((vb_lshift_p1.or_reduce() == 0) && (vb_mantSumInv[i] == 1)) {
+        if ((vb_lshift_p1.or_reduce() == 0) && (vb_mantSumInv[i] != 0)) {
             vb_lshift_p1 = i;
         }
     }
 
     for (int i = 0; i < 41; i++) {
-        if ((vb_lshift_p2.or_reduce() == 0) && (vb_mantSumInv[(64 + i)] == 1)) {
+        if ((vb_lshift_p2.or_reduce() == 0) && (vb_mantSumInv[(64 + i)] != 0)) {
             vb_lshift_p2 = i;
             vb_lshift_p2[6] = 1;
         }
     }
 
     // multiplexer
-    if (r.mantSum.read()[105] == 1) {
+    if (r.mantSum.read()[105] != 0) {
         // shift right
         vb_lshift = ~0ull;
-    } else if (r.mantSum.read()[104] == 1) {
+    } else if (r.mantSum.read()[104] != 0) {
         vb_lshift = 0;
     } else if (vb_lshift_p1.or_reduce() == 1) {
         vb_lshift = vb_lshift_p1;
     } else {
         vb_lshift = vb_lshift_p2;
     }
-    if (r.ena.read()[3] == 1) {
+    if (r.ena.read()[3] != 0) {
         v.lshift = vb_lshift;
     }
 
@@ -430,14 +430,14 @@ void DoubleAdd::comb() {
             vb_expPostScale = ((0, r.expMore.read()) - (0, r.lshift.read()));
         }
     }
-    if ((signA ^ signOpB) == 1) {
+    if ((signA ^ signOpB) != 0) {
         // subtractor only: result value becomes with exp=0
         if ((r.expMore.read().or_reduce() == 1)
-                && ((vb_expPostScale[11] == 1) || (vb_expPostScale.or_reduce() == 0))) {
+                && ((vb_expPostScale[11] != 0) || (vb_expPostScale.or_reduce() == 0))) {
             vb_expPostScale = (vb_expPostScale - 1);
         }
     }
-    if (r.ena.read()[4] == 1) {
+    if (r.ena.read()[4] != 0) {
         v.mantAlign = vb_mantAlign;
         v.expPostScale = vb_expPostScale;
         v.expPostScaleInv = ((~vb_expPostScale) + 1);
@@ -446,14 +446,14 @@ void DoubleAdd::comb() {
     // Mantissa post-scale:
     //    Scaled = SumScale>>(-ExpSum) only if ExpSum < 0;
     vb_mantPostScale = r.mantAlign.read();
-    if (r.expPostScale.read()[11] == 1) {
+    if (r.expPostScale.read()[11] != 0) {
         for (int i = 1; i < 105; i++) {
             if (i == r.expPostScaleInv.read().to_int()) {
                 vb_mantPostScale = (r.mantAlign.read() >> i);
             }
         }
     }
-    if (r.ena.read()[5] == 1) {
+    if (r.ena.read()[5] != 0) {
         v.mantPostScale = vb_mantPostScale;
     }
 
@@ -471,15 +471,15 @@ void DoubleAdd::comb() {
     rndBit = (r.mantPostScale.read()[51] && (!(mant05 && (!mantEven))));
 
     // Check borders
-    if (r.a.read()(51, 0).or_reduce() == 0) {
+    if (r.a.read()(51, 0) == 0) {
         mantZeroA = 1;
     }
-    if (r.b.read()(51, 0).or_reduce() == 0) {
+    if (r.b.read()(51, 0) == 0) {
         mantZeroB = 1;
     }
 
     // Exceptions
-    if ((r.a.read()(62, 0).or_reduce() == 0) && (r.b.read()(62, 0).or_reduce() == 0)) {
+    if ((r.a.read()(62, 0) == 0) && (r.b.read()(62, 0) == 0)) {
         allZero = 1;
     }
     if (r.mantPostScale.read().or_reduce() == 0) {
@@ -497,7 +497,7 @@ void DoubleAdd::comb() {
     }
 
     // Result multiplexers:
-    if ((nanAB && signOp) == 1) {
+    if ((nanAB && signOp) != 0) {
         resAdd[63] = (signA ^ signOpB);
     } else if (nanA == 1) {
         // when both values are NaN, value B has higher priority if sign=1
@@ -512,18 +512,18 @@ void DoubleAdd::comb() {
         resAdd[63] = r.signOpMore.read();
     }
 
-    if ((nanA || nanB) == 1) {
+    if ((nanA || nanB) != 0) {
         resAdd(62, 52) = ~0ull;
-    } else if ((r.expPostScale.read()[11] == 1) || (sumZero == 1)) {
+    } else if ((r.expPostScale.read()[11] != 0) || (sumZero == 1)) {
         resAdd(62, 52) = 0;
     } else {
         resAdd(62, 52) = (r.expPostScale.read() + (mantOnes && rndBit && (!overflow)));
     }
 
-    if ((nanA && mantZeroA && nanB && mantZeroB) == 1) {
+    if ((nanA && mantZeroA && nanB && mantZeroB) != 0) {
         resAdd[51] = signOp;
         resAdd(50, 0) = 0;
-    } else if ((nanA && (!(nanB && signOpB))) == 1) {
+    } else if ((nanA && (!(nanB && signOpB))) != 0) {
         // when both values are NaN, value B has higher priority if sign=1
         resAdd[51] = 1;
         resAdd(50, 0) = r.a.read()(50, 0);
@@ -545,7 +545,7 @@ void DoubleAdd::comb() {
     resLE(63, 1) = 0;
     resLE[0] = (r.flLess.read() || r.flEqual.read());
 
-    if ((nanA || nanB) == 1) {
+    if ((nanA || nanB) != 0) {
         resMax = r.b.read();
     } else if (r.flMore.read() == 1) {
         resMax = r.a.read();
@@ -553,7 +553,7 @@ void DoubleAdd::comb() {
         resMax = r.b.read();
     }
 
-    if ((nanA || nanB) == 1) {
+    if ((nanA || nanB) != 0) {
         resMin = r.b.read();
     } else if (r.flLess.read() == 1) {
         resMin = r.a.read();
@@ -561,7 +561,7 @@ void DoubleAdd::comb() {
         resMin = r.b.read();
     }
 
-    if (r.ena.read()[6] == 1) {
+    if (r.ena.read()[6] != 0) {
         if (r.eq.read() == 1) {
             v.result = resEQ;
         } else if (r.lt.read() == 1) {

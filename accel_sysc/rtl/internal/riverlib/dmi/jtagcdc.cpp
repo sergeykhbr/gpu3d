@@ -100,7 +100,7 @@ void jtagcdc::comb() {
 
     v.l1 = vb_bus;
     v.l2 = r.l1.read();
-    if ((r.l2.read()[0] && (!r.req_valid.read()) && (!r.req_accepted.read())) == 1) {
+    if ((r.l2.read()[0] && (!r.req_valid.read()) && (!r.req_accepted.read())) != 0) {
         // To avoid request repeading
         v.req_valid = 1;
         v.req_write = r.l2.read()[1];
@@ -110,7 +110,7 @@ void jtagcdc::comb() {
     } else if (i_dmi_req_ready.read() == 1) {
         v.req_valid = 0;
     }
-    if ((r.l2.read()[0] && r.req_valid.read() && i_dmi_req_ready.read()) == 1) {
+    if ((r.l2.read()[0] && r.req_valid.read() && i_dmi_req_ready.read()) != 0) {
         v.req_accepted = 1;
     } else if (r.l2.read()[0] == 0) {
         v.req_accepted = 0;

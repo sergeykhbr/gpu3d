@@ -369,7 +369,7 @@ void accel_axictrl_bus0_tb::comb() {
         }
         v.m2_test_selector = 0x00000C00;                    // Burst 4, with zero wait states
         v.m2_start_ena = 1;
-        if (r.test_cnt.read()[15] == 1) {
+        if (r.test_cnt.read()[15] != 0) {
             // End of test (show err_cnt)
             v.end_of_test = 1;
         }
@@ -377,7 +377,7 @@ void accel_axictrl_bus0_tb::comb() {
     } else {
         v.test_pause_cnt = 10;
     }
-    if ((r.test_cnt.read()[0] == 1)
+    if ((r.test_cnt.read()[0] != 0)
             && (w_m0_reading.read() == 1)
             && ((w_m1_writing.read() | w_m1_reading.read()) == 0)) {
         // Check delayed writing after reading

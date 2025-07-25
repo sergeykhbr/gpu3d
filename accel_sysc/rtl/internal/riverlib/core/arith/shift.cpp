@@ -82,12 +82,12 @@ void Shifter::comb() {
     v64 = i_a1.read();
     v32 = i_a1.read()(31, 0);
 
-    if (i_a1.read()[63] == 1) {
+    if (i_a1.read()[63] != 0) {
         msk64 = ~0ull;
     } else {
         msk64 = 0;
     }
-    if (i_a1.read()[31] == 1) {
+    if (i_a1.read()[31] != 0) {
         msk32 = ~0ull;
     } else {
         msk32 = 0;
@@ -583,29 +583,29 @@ void Shifter::comb() {
         break;
     }
 
-    if (wb_sllw[31] == 1) {
+    if (wb_sllw[31] != 0) {
         wb_sllw(63, 32) = ~0ull;
     } else {
         wb_sllw(63, 32) = 0;
     }
 
-    if (wb_srlw[31] == 1) {
+    if (wb_srlw[31] != 0) {
         // when shift right == 0 and a1[31] = 1
         wb_srlw(63, 32) = ~0ull;
     }
 
-    if (i_mode.read()[0] == 1) {
-        if (i_mode.read()[1] == 1) {
+    if (i_mode.read()[0] != 0) {
+        if (i_mode.read()[1] != 0) {
             v.res = wb_sllw;
-        } else if (i_mode.read()[2] == 1) {
+        } else if (i_mode.read()[2] != 0) {
             v.res = wb_srlw;
         } else {
             v.res = wb_sraw;
         }
     } else {
-        if (i_mode.read()[1] == 1) {
+        if (i_mode.read()[1] != 0) {
             v.res = wb_sll;
-        } else if (i_mode.read()[2] == 1) {
+        } else if (i_mode.read()[2] != 0) {
             v.res = wb_srl;
         } else {
             v.res = wb_sra;

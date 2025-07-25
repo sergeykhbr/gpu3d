@@ -344,7 +344,7 @@ void vip_sdcard_ctrl::comb() {
         break;
     case DATASTATE_START:
         v.bitcnt = (r.bitcnt.read() + 1);
-        if (r.bitcnt.read()(2, 0).and_reduce() == 1) {
+        if (r.bitcnt.read()(2, 0).and_reduce() != 0) {
             v.crc16_clear = 0;
             v.crc16_next = 1;
             if (r.bitcnt.read()(12, 3) == 512) {
@@ -361,7 +361,7 @@ void vip_sdcard_ctrl::comb() {
         break;
     case DATASTATE_CRC15:
         v.bitcnt = (r.bitcnt.read() + 1);
-        if (r.bitcnt.read()(3, 0).and_reduce() == 1) {
+        if (r.bitcnt.read()(3, 0).and_reduce() != 0) {
             v.datastate = DATASTATE_IDLE;
             v.dat_trans = 0;
         }

@@ -176,7 +176,7 @@ void accel_axi2apb_bus1::comb() {
                 v.pvalid = 1;
                 v.pslverr = 1;
                 v.prdata = ~0ull;
-            } else if (wb_req_addr.read()[2] == 1) {
+            } else if (wb_req_addr.read()[2] != 0) {
                 v.pwdata = (0, wb_req_wdata.read()(63, 32));
                 v.pstrb = (0, wb_req_wstrb.read()(7, 4));
                 if (wb_req_size.read() > 4) {
@@ -198,7 +198,7 @@ void accel_axi2apb_bus1::comb() {
         break;
     case State_access:
         v.pslverr = vapbo[iselidx].pslverr;
-        if (vapbo[iselidx].pready == 1) {
+        if (vapbo[iselidx].pready != 0) {
             v.penable = 0;
             if ((r.size.read() == 8) && (r.paddr.read()[2] == 0)) {
                 v.paddr = (r.paddr.read() + 4);

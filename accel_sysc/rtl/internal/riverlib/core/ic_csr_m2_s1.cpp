@@ -117,7 +117,7 @@ void ic_csr_m2_s1::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void ic_csr_m2_s1::comb() {
     v = r;
 
-    if ((r.acquired.read() == 0) && ((i_m0_req_valid.read() || i_m1_req_valid.read()) == 1)) {
+    if ((r.acquired.read() == 0) && ((i_m0_req_valid.read() || i_m1_req_valid.read()) != 0)) {
         v.acquired = 1;
         if (i_m0_req_valid) {
             v.midx = 0;
@@ -125,12 +125,12 @@ void ic_csr_m2_s1::comb() {
             v.midx = 1;
         }
     }
-    if (((r.midx.read() == 0) && ((i_s0_resp_valid.read() && i_m0_resp_ready.read()) == 1))
-            || ((r.midx.read() == 1) && ((i_s0_resp_valid.read() && i_m1_resp_ready.read()) == 1))) {
+    if (((r.midx.read() == 0) && ((i_s0_resp_valid.read() && i_m0_resp_ready.read()) != 0))
+            || ((r.midx.read() == 1) && ((i_s0_resp_valid.read() && i_m1_resp_ready.read()) != 0))) {
         v.acquired = 0;
     }
 
-    if ((r.midx.read() == 0) || (((!r.acquired.read()) && i_m0_req_valid.read()) == 1)) {
+    if ((r.midx.read() == 0) || (((!r.acquired.read()) && i_m0_req_valid.read()) != 0)) {
         o_s0_req_valid = i_m0_req_valid.read();
         o_m0_req_ready = i_s0_req_ready.read();
         o_s0_req_type = i_m0_req_type.read();

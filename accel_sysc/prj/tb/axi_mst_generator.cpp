@@ -161,14 +161,14 @@ void axi_mst_generator::comb() {
     switch (r.state.read()) {
     case 0:
         if (i_start_test.read() == 1) {
-            if (read_only_ == 1) {
-                if (i_test_selector.read()(1, 0).or_reduce() == 0) {
+            if (read_only_ != 0) {
+                if (i_test_selector.read()(1, 0) == 0) {
                     v.state = 5;                            // ar_request
                 } else {
                     v.state = 14;                           // wait to ar_request
                 }
             } else {
-                if (i_test_selector.read()(1, 0).or_reduce() == 0) {
+                if (i_test_selector.read()(1, 0) == 0) {
                     v.state = 1;                            // aw_request
                 } else {
                     v.state = 13;                           // wait to aw_request
@@ -189,13 +189,13 @@ void axi_mst_generator::comb() {
                 v.aw_xlen = 0;
                 v.ar_xlen = 0;
             }
-            if ((i_test_selector.read()(11, 10).or_reduce() == 0) && (i_test_selector.read()(4, 2) == 7)) {
+            if ((i_test_selector.read()(11, 10) == 0) && (i_test_selector.read()(4, 2) == 7)) {
                 v.w_use_axi_light = 1;
             } else {
                 v.w_use_axi_light = 0;
             }
             v.xsize = 3;                                    // 8-bytes
-            if (i_test_selector.read()[12] == 1) {
+            if (i_test_selector.read()[12] != 0) {
                 v.xsize = 2;                                // 4-bytes
             }
         }

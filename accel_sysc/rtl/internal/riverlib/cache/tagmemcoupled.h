@@ -243,10 +243,10 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     vb_index = i_addr.read()(((ibits + lnbits) - 1), lnbits);
     vb_index_next = vb_addr_next(((ibits + lnbits) - 1), lnbits);
 
-    if (i_addr.read()((lnbits - 1), 2).and_reduce() == 1) {
+    if (i_addr.read()((lnbits - 1), 2).and_reduce() != 0) {
         v_use_overlay = 1;
     }
-    if (r.req_addr.read()((lnbits - 1), 2).and_reduce() == 1) {
+    if (r.req_addr.read()((lnbits - 1), 2).and_reduce() != 0) {
         v_use_overlay_r = 1;
     }
 

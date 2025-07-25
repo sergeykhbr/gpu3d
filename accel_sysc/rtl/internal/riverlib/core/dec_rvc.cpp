@@ -188,7 +188,7 @@ void DecoderRvc::comb() {
         vb_radr1 = vb_instr(11, 7);                         // rs1
         vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(4, 0) = vb_instr(6, 2);
-        if (vb_instr[12] == 1) {
+        if (vb_instr[12] != 0) {
             vb_imm((RISCV_ARCH - 1), 5) = ~0ull;
         }
         break;
@@ -206,7 +206,7 @@ void DecoderRvc::comb() {
         vb_radr1 = (0, vb_instr(11, 7));                    // rs1
         vb_waddr = (0, vb_instr(11, 7));                    // rd
         vb_imm(4, 0) = vb_instr(6, 2);
-        if (vb_instr[12] == 1) {
+        if (vb_instr[12] != 0) {
             vb_imm((RISCV_ARCH - 1), 5) = ~0ull;
         }
         break;
@@ -222,7 +222,7 @@ void DecoderRvc::comb() {
         vb_dec[Instr_ADDI] = 1;
         vb_waddr = (0, vb_instr(11, 7));                    // rd
         vb_imm(4, 0) = vb_instr(6, 2);
-        if (vb_instr[12] == 1) {
+        if (vb_instr[12] != 0) {
             vb_imm((RISCV_ARCH - 1), 5) = ~0ull;
         }
         break;
@@ -247,7 +247,7 @@ void DecoderRvc::comb() {
             vb_radr1 = 0x02;                                // rs1 = sp
             vb_waddr = 0x02;                                // rd = sp
             vb_imm(8, 4) = (vb_instr(4, 3), vb_instr[5], vb_instr[2], vb_instr[6]);
-            if (vb_instr[12] == 1) {
+            if (vb_instr[12] != 0) {
                 vb_imm((RISCV_ARCH - 1), 9) = ~0ull;
             }
         } else {
@@ -255,7 +255,7 @@ void DecoderRvc::comb() {
             vb_dec[Instr_LUI] = 1;
             vb_waddr = (0, vb_instr(11, 7));                // rd
             vb_imm(16, 12) = vb_instr(6, 2);
-            if (vb_instr[12] == 1) {
+            if (vb_instr[12] != 0) {
                 vb_imm((RISCV_ARCH - 1), 17) = ~0ull;
             }
         }
@@ -286,7 +286,7 @@ void DecoderRvc::comb() {
             vb_radr1 = (0x1, vb_instr(9, 7));               // rs1
             vb_waddr = (0x1, vb_instr(9, 7));               // rd
             vb_imm(4, 0) = vb_instr(6, 2);
-            if (vb_instr[12] == 1) {
+            if (vb_instr[12] != 0) {
                 vb_imm((RISCV_ARCH - 1), 5) = ~0ull;
             }
         } else if (vb_instr[12] == 0) {
@@ -329,7 +329,7 @@ void DecoderRvc::comb() {
     case OPCODE_C_JR_MV_EBREAK_JALR_ADD:
         vb_isa_type[ISA_I_type] = 1;
         if (vb_instr[12] == 0) {
-            if (vb_instr(6, 2).or_reduce() == 0) {
+            if (vb_instr(6, 2) == 0) {
                 vb_dec[Instr_JALR] = 1;
                 vb_radr1 = (0, vb_instr(11, 7));            // rs1
             } else {
@@ -338,9 +338,9 @@ void DecoderRvc::comb() {
                 vb_waddr = (0, vb_instr(11, 7));            // rd
             }
         } else {
-            if ((vb_instr(11, 7).or_reduce() == 0) && (vb_instr(6, 2).or_reduce() == 0)) {
+            if ((vb_instr(11, 7) == 0) && (vb_instr(6, 2) == 0)) {
                 vb_dec[Instr_EBREAK] = 1;
-            } else if (vb_instr(6, 2).or_reduce() == 0) {
+            } else if (vb_instr(6, 2) == 0) {
                 vb_dec[Instr_JALR] = 1;
                 vb_radr1 = (0, vb_instr(11, 7));            // rs1
                 vb_waddr = 0x01;
@@ -363,7 +363,7 @@ void DecoderRvc::comb() {
                 vb_instr[2],
                 vb_instr[11],
                 vb_instr(5, 3));
-        if (vb_instr[12] == 1) {
+        if (vb_instr[12] != 0) {
             vb_imm((RISCV_ARCH - 1), 11) = ~0ull;
         }
         break;
@@ -379,7 +379,7 @@ void DecoderRvc::comb() {
         vb_dec[Instr_BEQ] = 1;
         vb_radr1 = (0x1, vb_instr(9, 7));                   // rs1
         vb_imm(7, 1) = (vb_instr(6, 5), vb_instr[2], vb_instr(11, 10), vb_instr(4, 3));
-        if (vb_instr[12] == 1) {
+        if (vb_instr[12] != 0) {
             vb_imm((RISCV_ARCH - 1), 8) = ~0ull;
         }
         break;
@@ -402,7 +402,7 @@ void DecoderRvc::comb() {
         vb_dec[Instr_BNE] = 1;
         vb_radr1 = (0x1, vb_instr(9, 7));                   // rs1
         vb_imm(7, 1) = (vb_instr(6, 5), vb_instr[2], vb_instr(11, 10), vb_instr(4, 3));
-        if (vb_instr[12] == 1) {
+        if (vb_instr[12] != 0) {
             vb_imm((RISCV_ARCH - 1), 8) = ~0ull;
         }
         break;
@@ -421,9 +421,9 @@ void DecoderRvc::comb() {
     v_memop_store = (vb_dec[Instr_SD] || vb_dec[Instr_SW]);
     v_memop_load = (vb_dec[Instr_LD] || vb_dec[Instr_LW]);
     v_memop_sign_ext = (vb_dec[Instr_LD] || vb_dec[Instr_LW]);
-    if ((vb_dec[Instr_LD] || vb_dec[Instr_SD]) == 1) {
+    if ((vb_dec[Instr_LD] || vb_dec[Instr_SD]) != 0) {
         vb_memop_size = MEMOP_8B;
-    } else if ((vb_dec[Instr_LW] || vb_dec[Instr_SW]) == 1) {
+    } else if ((vb_dec[Instr_LW] || vb_dec[Instr_SW]) != 0) {
         vb_memop_size = MEMOP_4B;
     } else {
         vb_memop_size = MEMOP_8B;

@@ -295,7 +295,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
         vb_hit_idx = r.req_addr.read()((waybits - 1), 0);
     } else {
         for (int i = 0; i < NWAYS; i++) {
-            if (way_o[i].hit.read() == 1) {
+            if (way_o[i].hit.read() != 0) {
                 vb_hit_idx = i;
             }
         }
@@ -334,7 +334,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
     if (snoop == 1) {
         for (int i = 0; i < NWAYS; i++) {
             // tagmem already cleared snoop flags if there's no snoop hit
-            if (way_o[i].snoop_flags.read()[FL_VALID] == 1) {
+            if (way_o[i].snoop_flags.read()[FL_VALID] != 0) {
                 vb_snoop_flags = way_o[i].snoop_flags.read();
             }
         }
