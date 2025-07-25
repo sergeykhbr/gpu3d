@@ -67,7 +67,7 @@ SC_MODULE(fmul_tb) {
     fmul_tb_registers r;
 
     pll_generic *pll0;
-    fmul_generic<32, 8> *mul_fp32;
+    fmul_generic<32, 8, 6> *mul_fp32;
 
 };
 

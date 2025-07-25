@@ -23,7 +23,8 @@
 namespace debugger {
 
 template<int fbits = 32,                                    // Input format: FP32 = 32, FP16 = 16, BF16 = 16
-         int expbits = 8>                                   // Exponent bitwidth: FP64 = 11, FP32 = 8, FP16 = 5, BF16 = 8
+         int expbits = 8,                                   // Exponent bitwidth: FP64 = 11, FP32 = 8, FP16 = 5, BF16 = 8
+         int shiftbits = 6>                                 // Mantissa scale factor bits: must be $clog2(2*(fbits-expbits)), avoid using $clog2
 SC_MODULE(fmul_generic) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
@@ -47,9 +48,8 @@ SC_MODULE(fmul_generic) {
  private:
     bool async_reset_;
 
-    static const int mantbits = 23;                         // Mantissa bitwidth: FP64 = 52, FP32 = 23, FP16 = 10, BF16 = 7
+    static const int mantbits = ((fbits - expbits) - 1);    // Encoded mantissa bitwidth: FP64 = 52, FP32 = 23, FP16 = 10, BF16 = 7
     static const int mantmaxbits = (2 * (mantbits + 1));    // Mantissa maximum bitwidth before shifting
-    static const int shiftbits = 6;                         // Mantissa shift value: must be $clog2(mantmaxbits)
     static const int explevel = ((1 << (expbits - 1)) - 1); // Level 1 for exponent: 1023 (double); 127 (fp32)
     static const int hex_chunks = ((mantbits + 3) / 4);     // Number of hex multipliers
     static const int latency = (hex_chunks + 7);            // Cycles: 1 in latch + hex_chunks + 2 scaler + 2 rnd + 1 out latch + 1?
@@ -116,9 +116,9 @@ SC_MODULE(fmul_generic) {
 
 };
 
-template<int fbits, int expbits>
-fmul_generic<fbits, expbits>::fmul_generic(sc_module_name name,
-                                           bool async_reset)
+template<int fbits, int expbits, int shiftbits>
+fmul_generic<fbits, expbits, shiftbits>::fmul_generic(sc_module_name name,
+                                                      bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -217,8 +217,8 @@ fmul_generic<fbits, expbits>::fmul_generic(sc_module_name name,
     sensitive << i_clk.pos();
 }
 
-template<int fbits, int expbits>
-fmul_generic<fbits, expbits>::~fmul_generic() {
+template<int fbits, int expbits, int shiftbits>
+fmul_generic<fbits, expbits, shiftbits>::~fmul_generic() {
     for (int i = 0; i < hex_chunks; i++) {
         if (stagex[i]) {
             delete stagex[i];
@@ -229,8 +229,8 @@ fmul_generic<fbits, expbits>::~fmul_generic() {
     }
 }
 
-template<int fbits, int expbits>
-void fmul_generic<fbits, expbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+template<int fbits, int expbits, int shiftbits>
+void fmul_generic<fbits, expbits, shiftbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_ena, i_ena.name());
@@ -274,8 +274,8 @@ void fmul_generic<fbits, expbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_fi
     }
 }
 
-template<int fbits, int expbits>
-void fmul_generic<fbits, expbits>::comb() {
+template<int fbits, int expbits, int shiftbits>
+void fmul_generic<fbits, expbits, shiftbits>::comb() {
     sc_uint<5> vb_ena;
     sc_uint<(mantbits + 2)> vb_mant_res_rnd;
     sc_uint<(expbits + 2)> vb_exp_res_rnd;
@@ -432,8 +432,8 @@ void fmul_generic<fbits, expbits>::comb() {
     o_valid = r.ena.read()[(latency - 1)];
 }
 
-template<int fbits, int expbits>
-void fmul_generic<fbits, expbits>::registers() {
+template<int fbits, int expbits, int shiftbits>
+void fmul_generic<fbits, expbits, shiftbits>::registers() {
     if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         fmul_generic_r_reset(r);
     } else {

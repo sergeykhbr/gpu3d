@@ -30,7 +30,8 @@ fmul_tb::fmul_tb(sc_module_name name)
     pll0->o_clk(clk);
 
     mul_fp32 = new fmul_generic<32,
-                                8>("mul_fp32",
+                                8,
+                                6>("mul_fp32",
                                    0);
     mul_fp32->i_clk(clk);
     mul_fp32->i_nrst(nrst);
