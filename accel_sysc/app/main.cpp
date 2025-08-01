@@ -24,6 +24,7 @@
 #include "../prj/tb/hdmi_tb.h"
 #include "../prj/tb/mathlib_tb.h"
 #include "../prj/tb/fmul_tb.h"
+#include "../prj/tb/fadd_tb.h"
 
 using namespace debugger;
 
@@ -51,10 +52,14 @@ int sc_main(int argc, char *argv[]) {
     apb_i2c_tb *tb = new apb_i2c_tb("tb");
 #elif 0
     pcie_dma_tb *tb = new pcie_dma_tb("tb");
-#elif 1
+#elif 0
     duration = 3;
     units = SC_US;
     fmul_tb * tb = new fmul_tb("tb");
+#elif 1
+    duration = 3;
+    units = SC_US;
+    fadd_tb * tb = new fadd_tb("tb");
 #else
     duration = 10;
     units = SC_MS;

@@ -276,7 +276,6 @@ void fmul_generic<fbits, expbits, shiftbits>::generateVCD(sc_trace_file *i_vcd, 
 
 template<int fbits, int expbits, int shiftbits>
 void fmul_generic<fbits, expbits, shiftbits>::comb() {
-    sc_uint<5> vb_ena;
     sc_uint<(mantbits + 2)> vb_mant_res_rnd;
     sc_uint<(expbits + 2)> vb_exp_res_rnd;
     bool v_underflow;
@@ -286,9 +285,9 @@ void fmul_generic<fbits, expbits, shiftbits>::comb() {
     sc_uint<(expbits + 2)> vb_expA_t;
     sc_uint<(expbits + 2)> vb_expB_t;
     sc_uint<(expbits + 2)> vb_expAB_t;
-    bool mant_even;
-    bool mant05;
-    sc_uint<1> rndBit;
+    bool v_mant_even;
+    bool v_mant05;
+    sc_uint<1> v_mant_rnd;
 
     v.ena = r.ena.read();
     v.a = r.a.read();
@@ -313,7 +312,6 @@ void fmul_generic<fbits, expbits, shiftbits>::comb() {
     v.underflow = r.underflow.read();
     v.overflow = r.overflow.read();
     v.ex = r.ex.read();
-    vb_ena = 0;
     vb_mant_res_rnd = 0;
     vb_exp_res_rnd = 0;
     v_underflow = 0;
@@ -323,11 +321,10 @@ void fmul_generic<fbits, expbits, shiftbits>::comb() {
     vb_expA_t = 0;
     vb_expB_t = 0;
     vb_expAB_t = 0;
-    mant_even = 0;
-    mant05 = 0;
-    rndBit = 0;
+    v_mant_even = 0;
+    v_mant05 = 0;
+    v_mant_rnd = 0;
 
-    vb_ena[0] = i_ena.read();
     v.ena = (r.ena.read()((latency - 2), 0), i_ena.read());
 
     v.a = i_a.read();
@@ -388,10 +385,10 @@ void fmul_generic<fbits, expbits, shiftbits>::comb() {
     v.mant_res = wb_mant_aligned.read()((mantmaxbits - 1), (mantmaxbits - (mantbits + 1)));
 
     // Rounding bit:
-    mant_even = (!wb_mant_aligned.read()[(mantmaxbits - (mantbits + 1))]);
-    rndBit = wb_mant_aligned.read()[(mantmaxbits - (mantbits + 2))];
-    mant05 = (rndBit & (!wb_mant_aligned.read()((mantmaxbits - (mantbits + 3)), 0).or_reduce()));
-    v.rnd_res = (rndBit && (!(mant05 && mant_even)));
+    v_mant_even = (!wb_mant_aligned.read()[(mantmaxbits - (mantbits + 1))]);
+    v_mant_rnd = wb_mant_aligned.read()[(mantmaxbits - (mantbits + 2))];
+    v_mant05 = (v_mant_rnd & (!wb_mant_aligned.read()((mantmaxbits - (mantbits + 3)), 0).or_reduce()));
+    v.rnd_res = (v_mant_rnd && (!(v_mant05 && v_mant_even)));
 
     vb_mant_res_rnd = ((0, r.mant_res.read()) + (0, r.rnd_res.read()));
     vb_exp_res_rnd = (r.exp_res.read() + (0, vb_mant_res_rnd((mantbits + 1), mantbits)));
